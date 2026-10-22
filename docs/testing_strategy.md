@@ -58,7 +58,7 @@ This document covers what we test, at which level, with which tools, and what ev
 
 ## 4. Test harness
 
-### 4.1 `:shared:testing`
+### 4.1 `:shared:core:testing`
 
 | Component | Purpose |
 | --- | --- |
