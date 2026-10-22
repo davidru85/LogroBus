@@ -135,6 +135,46 @@ class ModuleRulesTest {
     }
 
     @Test
+    fun lb001_domainMayNotUseAndroidPlatformLibraries() {
+        val found = violations(
+            ":shared:transit:domain",
+            external = listOf(
+                "androidx.annotation:annotation",
+                "com.google.android.gms:play-services-location",
+                "com.android.support:appcompat-v7",
+            ),
+        )
+        assertEquals(3, found.size)
+    }
+
+    @Test
+    fun lb001_ktorIsLimitedToNetworkCoreDataAndFeatureModules() {
+        val ktor = listOf("io.ktor:ktor-client-core")
+        assertEquals(emptyList<String>(), violations(":shared:core:network", external = ktor))
+        assertEquals(emptyList<String>(), violations(":shared:transit:data", external = ktor))
+        assertEquals(emptyList<String>(), violations(":shared:feature:planner", external = ktor))
+        assertEquals(1, violations(":shared:core:common", external = ktor).size)
+        assertEquals(1, violations(":shared:umbrella", external = ktor).size)
+    }
+
+    @Test
+    fun lb001_sqlDelightIsLimitedToDatabaseCoreDataAndFeatureModules() {
+        val sqlDelight = listOf("app.cash.sqldelight:runtime")
+        assertEquals(emptyList<String>(), violations(":shared:core:database", external = sqlDelight))
+        assertEquals(emptyList<String>(), violations(":shared:favourites:data", external = sqlDelight))
+        assertEquals(1, violations(":shared:core:polling", external = sqlDelight).size)
+    }
+
+    @Test
+    fun lb001_testingModuleMayDependOnCoreAndDomainModules() {
+        assertEquals(
+            emptyList<String>(),
+            violations(":shared:core:testing", ":shared:core:common", ":shared:transit:domain", ":shared:favourites:domain"),
+        )
+        assertEquals(1, violations(":shared:core:testing", ":shared:transit:data").size)
+    }
+
+    @Test
     fun lb001_unclassifiedModulesAreReported() {
         assertEquals(1, violations(":shared:misc", ":shared:core:common").size)
         assertEquals(1, violations(":shared:feature:lines", ":shared:misc").size)
