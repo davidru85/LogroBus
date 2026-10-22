@@ -7,8 +7,7 @@ package com.ruizurraca.logrobus.buildlogic
 object ModuleRules {
 
     private const val REFERENCE = "ADR-0007, docs/architecture.md §3.2"
-    private const val DOMAIN_LIBRARIES = "domain modules must not use networking or persistence libraries"
-    private val forbiddenInDomain = setOf("io.ktor", "app.cash.sqldelight")
+    private val platformGroups = listOf("androidx", "com.android", "com.google.android")
 
     /**
      * Returns one message per forbidden dependency of the module at [from].
@@ -26,23 +25,19 @@ object ModuleRules {
         val projectViolations = projectDependencies.mapNotNull { to ->
             reason(source, ModuleKind.of(to))?.let { "$from -> $to is not allowed: $it ($REFERENCE)" }
         }
-        val externalViolations = if (source is ModuleKind.Domain) {
-            externalDependencies
-                .filter { coordinate -> coordinate.substringBefore(':') in forbiddenInDomain }
-                .map { "$from -> $it is not allowed: $DOMAIN_LIBRARIES ($REFERENCE)" }
-        } else {
-            emptyList()
+        val externalViolations = externalDependencies.mapNotNull { coordinate ->
+            externalReason(source, coordinate.substringBefore(':'))
+                ?.let { "$from -> $coordinate is not allowed: $it ($REFERENCE)" }
         }
         return projectViolations + externalViolations
     }
 
     private fun reason(from: ModuleKind, to: ModuleKind): String? {
         if (to is ModuleKind.Unknown) return "the target is not a classified module"
-        if (to == ModuleKind.Core("testing") && from != ModuleKind.Core("testing")) {
-            return "production code must not depend on the testing module"
-        }
+        if (to == ModuleKind.Testing) return "production code must not depend on the testing module"
         val allowed = when (from) {
             is ModuleKind.Core -> to is ModuleKind.Core
+            ModuleKind.Testing -> to is ModuleKind.Core || to is ModuleKind.Domain
             is ModuleKind.Domain -> to == ModuleKind.Core("common")
             is ModuleKind.Data -> to is ModuleKind.Core || to == ModuleKind.Domain(from.capability)
             is ModuleKind.Feature -> to is ModuleKind.Core || to is ModuleKind.Domain
@@ -55,6 +50,22 @@ object ModuleRules {
         }
         return if (allowed) null else "a ${from.label} module may not depend on a ${to.label} module"
     }
+
+    private fun externalReason(from: ModuleKind, group: String): String? = when {
+        from is ModuleKind.Domain && platformGroups.any { group.isInGroup(it) } ->
+            "domain modules must not use platform libraries"
+        group.isInGroup("io.ktor") && !(from == ModuleKind.Core("network") || from.mayUseInfrastructure) ->
+            "only the network core, data and feature modules may use Ktor"
+        group.isInGroup("app.cash.sqldelight") && !(from == ModuleKind.Core("database") || from.mayUseInfrastructure) ->
+            "only the database core, data and feature modules may use SQLDelight"
+        else -> null
+    }
+
+    private fun String.isInGroup(group: String): Boolean = this == group || startsWith("$group.")
+
+    /** Data modules and the data packages of feature modules talk to the network and the database. */
+    private val ModuleKind.mayUseInfrastructure: Boolean
+        get() = this is ModuleKind.Data || this is ModuleKind.Feature
 
     private val ModuleKind.isShared: Boolean
         get() = this is ModuleKind.Core ||
@@ -75,6 +86,7 @@ internal sealed interface ModuleKind {
     val label: String
 
     data class Core(val name: String) : ModuleKind { override val label = "shared core" }
+    data object Testing : ModuleKind { override val label = "shared testing" }
     data class Domain(val capability: String) : ModuleKind { override val label = "domain ($capability)" }
     data class Data(val capability: String) : ModuleKind { override val label = "data ($capability)" }
     data class Feature(val name: String) : ModuleKind { override val label = "shared feature ($name)" }
@@ -105,6 +117,7 @@ internal sealed interface ModuleKind {
         }
 
         private fun ofThree(root: String, group: String, name: String): ModuleKind = when {
+            root == "shared" && group == "core" && name == "testing" -> Testing
             root == "shared" && group == "core" -> Core(name)
             root == "shared" && group == "feature" -> Feature(name)
             root == "shared" && group in capabilities && name == "domain" -> Domain(group)

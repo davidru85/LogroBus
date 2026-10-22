@@ -47,31 +47,31 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             dependsOn("testAndroidHostTest")
         }
 
-        afterEvaluate { verifyModuleRules() }
+        verifyModuleRules()
     }
 }
 
-/** `:shared:core:common` becomes `com.ruizurraca.logrobus.core.common`. */
-internal fun moduleNamespace(path: String): String =
-    (listOf("com", "ruizurraca", "logrobus") + path.removePrefix(":").split(':').drop(1)).joinToString(".")
-
+/**
+ * Checks every production dependency against [ModuleRules] when it is declared, so dependencies
+ * added late (for example in `afterEvaluate`) or in any source set or bucket are covered too.
+ */
 private fun Project.verifyModuleRules() {
-    val productionDependencies = configurations
-        .filter { configuration ->
-            val name = configuration.name
-            (name.endsWith("Api") || name.endsWith("Implementation") || name.endsWith("CompileOnly")) &&
-                !name.contains("Test")
+    val modulePath = path
+    configurations.matching { isProductionDependencyBucket(it.name) }.configureEach {
+        val bucket = name
+        dependencies.configureEach {
+            val violations = when (this) {
+                is ProjectDependency ->
+                    if (path == modulePath) emptyList() else ModuleRules.violations(modulePath, listOf(path))
+                is ExternalModuleDependency ->
+                    ModuleRules.violations(modulePath, emptyList(), listOf("$group:$name"))
+                else -> emptyList()
+            }
+            if (violations.isNotEmpty()) {
+                throw GradleException(
+                    "Module dependency rules violated in '$bucket':\n" + violations.joinToString("\n") { " - $it" },
+                )
+            }
         }
-        .flatMap { it.dependencies }
-    val projectPaths = productionDependencies
-        .filterIsInstance<ProjectDependency>()
-        .map { it.path }
-        .filter { it != path }
-    val external = productionDependencies
-        .filterIsInstance<ExternalModuleDependency>()
-        .map { "${it.group}:${it.name}" }
-    val violations = ModuleRules.violations(path, projectPaths.distinct(), external.distinct())
-    if (violations.isNotEmpty()) {
-        throw GradleException("Module dependency rules violated:\n" + violations.joinToString("\n") { " - $it" })
     }
 }
