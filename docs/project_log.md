@@ -19,6 +19,18 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-22: Bilingual README and the README rule
+
+**Done**
+- Created the project README in English (`README.md`) and Spanish (`README.es.md`), with links to switch language.
+- Added the README rule to `AGENTS.md` (§2, §10, §11, §12) and linked both READMEs from `docs/README.md`.
+
+**Decisions**
+- Every merged PR must update both READMEs. The update goes inside the PR, at least in "Recent changes" and "Project status".
+
+**Open / next**
+- Start M0 with LB-001.
+
 ## 2026-10-22: Owner decisions on OQ-13, OQ-14, OQ-15 and OQ-17
 
 **Done**
