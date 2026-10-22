@@ -10,7 +10,7 @@ NFR-MNT-03 requires an ADR for every technology choice in spec §8.3. The choice
 | --- | --- | --- | --- |
 | [0001](0001-native-ui-on-shared-kmp-core.md) | Native UI per platform on a shared KMP core | Accepted | 2026-10-22 |
 | [0002](0002-three-section-navigation.md) | Three-section navigation: Lines, Near Me, How to Get There | Accepted | 2026-10-22 |
-| [0003](0003-ios-deployment-target-and-liquid-glass.md) | iOS deployment target and Liquid Glass adoption | Proposed | 2026-10-22 |
+| [0003](0003-ios-deployment-target-and-liquid-glass.md) | iOS deployment target and Liquid Glass adoption | Accepted | 2026-10-22 |
 | [0004](0004-swift-interop-umbrella-framework-and-skie.md) | Swift interop: umbrella framework and SKIE | Proposed | 2026-10-22 |
 | [0005](0005-android-ui-stack.md) | Android UI stack: Material 3 Expressive, Navigation 3, adaptive navigation | Proposed | 2026-10-22 |
 

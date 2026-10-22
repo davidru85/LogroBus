@@ -20,7 +20,7 @@ The app has exactly three top-level tabs. This "Live Mobility and Planning" stru
 2. **Near Me** (`Cerca de mí`). A full-screen map with the user's location and nearby stop pins. Tapping a pin opens a bottom sheet with the next arrivals at that stop. When no stop is selected, the sheet lists saved stops (with live arrivals) and nearby stops, which is the list equivalent of the map.
 3. **How to Get There** (`Cómo llegar`). Origin and destination search, recommended routes combining lines, walking times and step-by-step directions.
 
-Settings and "About data" (MVP), and later news, fares and recharge points, open from a toolbar action. They are never extra tabs.
+The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live in the Near Me sheet, one tap away (OQ-17). Settings and "About data" (MVP), and later news, fares and recharge points, open from a toolbar action. They are never extra tabs.
 
 ## 2. Documentation map and precedence
 
@@ -65,11 +65,11 @@ LogroBus/
 └── scripts/                 # fixture recording, seed refresh
 ```
 
-Kotlin package root: `com.logrobus` (placeholder until OQ-14 is answered).
+Identifiers (OQ-14): Android `applicationId` and iOS bundle id are `com.ruizurraca.logrobus`, which is also the Kotlin package root. The display name is "LogroBus" and the URL scheme is `logronobus://`. Store identifiers cannot change after the first release.
 
 ## 4. Toolchain and commands
 
-Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (proposed, ADR-0003). Kotlin, AGP, Compose and every library version live only in `gradle/libs.versions.toml`.
+Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (ADR-0003). Kotlin, AGP, Compose and every library version live only in `gradle/libs.versions.toml`.
 
 The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
 

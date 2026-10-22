@@ -19,6 +19,21 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-22: Owner decisions on OQ-13, OQ-14, OQ-15 and OQ-17
+
+**Done**
+- Recorded the owner's answers in `open_questions.md`, ADR-0002, ADR-0003, `AGENTS.md`, `architecture.md` and `design_guidelines.md`.
+
+**Decisions**
+- **OQ-13:** the iOS deployment target is 18.0, with Liquid Glass on iOS 26+ and a material fallback below. ADR-0003 is now accepted.
+- **OQ-14:** the `applicationId`, bundle id and Kotlin package root are `com.ruizurraca.logrobus`. The name "LogroBus" and the scheme `logronobus://` are unchanged.
+- **OQ-15:** the app always opens on Lines. Deep links open their target tab. G1 is met with one tap to Near Me.
+- **OQ-17:** saved stops with live arrivals are shown in the Near Me sheet ("My stops").
+
+**Open / next**
+- Choose the https domain for deep links (spec §6.15) before LB-603.
+- Start M0 with LB-001.
+
 ## 2026-10-22: Project documentation bootstrapped
 
 **Done**

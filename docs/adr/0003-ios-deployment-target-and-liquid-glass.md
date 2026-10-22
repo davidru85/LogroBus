@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed (owner to confirm, OQ-13) |
+| Status | Accepted (owner confirmed on 2026-10-22, OQ-13) |
 | Date | 2026-10-22 |
 | Deciders | Project owner, tech lead |
 | Related | Spec §2.5, OQ-13, ADR-0001, `design_guidelines.md` §5 |

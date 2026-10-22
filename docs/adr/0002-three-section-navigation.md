@@ -19,7 +19,8 @@ Spec §7.1 defines a bottom bar with five destinations: Home, Lines, Map, Plan a
 
 The app has exactly three top-level tabs: Lines, Near Me and How to Get There. The spec screens are redistributed as follows:
 
-- **Home is dissolved.** Favourite lines become the Lines carousel. Favourite stops with live arrivals, and nearby stops, become sections of the Near Me bottom sheet ("My stops", "Near you"), which also serves as the list equivalent of the map (NFR-A11Y-04). Placing favourite stops in Near Me is a proposal that the owner still has to confirm (OQ-17).
+- **Home is dissolved.** Favourite lines become the Lines carousel. Favourite stops with live arrivals, and nearby stops, become sections of the Near Me bottom sheet ("My stops", "Near you"), which also serves as the list equivalent of the map (NFR-A11Y-04). The owner confirmed this placement on 2026-10-22 (OQ-17).
+- **Launch tab:** the app always opens on Lines, except when a deep link targets another tab. The owner confirmed this on 2026-10-22 (OQ-15).
 - **Map becomes Near Me.** Buses and routes are optional layers; recharge points are added as a layer in v1.0.
 - **Plan becomes How to Get There.**
 - **Stop detail** is one component, shown as a sheet in Near Me and as a pushed screen from Lines and itineraries.
@@ -32,7 +33,7 @@ Every functional requirement of the spec keeps its meaning. Only where it is pre
 
 - The navigation is simpler and task-focused: browse, now, plan.
 - The use case `GetHomeDashboard` (spec §8.4) is replaced by `ObserveSavedStopArrivals` and `GetNearbyStops`.
-- G1 (live ETAs one tap from launch) depends on the launch tab, which OQ-15 decides. With the proposed default, saved-stop ETAs are one tap away in Near Me.
+- G1 (live ETAs one tap from launch) is met with exactly one tap: launch opens Lines, and saved-stop ETAs are in Near Me. If usage data shows that commuters need zero taps, revisit the launch tab in a new ADR.
 - Secondary content is less discoverable. This is acceptable for the MVP and should be revisited with usage data.
 - FR-HOME-01 (the notice banner on Home) moves to the top of the Lines tab in v1.0.
 

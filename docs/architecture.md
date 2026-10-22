@@ -54,7 +54,7 @@ LogroBus/
 │   ├── testing/
 │   └── umbrella/
 ├── androidApp/
-│   └── src/main/kotlin/com/logrobus/android/
+│   └── src/main/kotlin/com/ruizurraca/logrobus/android/
 │       ├── LogroBusApplication.kt
 │       ├── MainActivity.kt
 │       ├── navigation/              # tabs, per-tab back stacks, deep links
@@ -289,7 +289,7 @@ flowchart TD
 
 - Stop detail is a single shared screen. It appears as a sheet over the map in Near Me, and as a pushed screen from Lines and from itinerary detail.
 - Deep links (spec §6.15) are re-targeted: `stop/{id}` opens Near Me with that stop's sheet, `line/{id}` opens Lines → Line detail, `plan?from&to` opens How to Get There pre-filled, and `news/{documentId}` opens More → News (v1.0).
-- On first launch the app opens on Lines, and afterwards it restores the last selected tab (proposal, OQ-15).
+- The app always opens on Lines (OQ-15). Deep links are the only exception: they open their target tab.
 
 ## 7. Cross-cutting concerns
 
