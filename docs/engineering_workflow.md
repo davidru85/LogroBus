@@ -108,7 +108,8 @@ See `AGENTS.md` §11. While the repository is private, the pasted `run-all.sh` s
 
 - Every dependency is declared in `gradle/libs.versions.toml` or as a Swift package with an exact version, and needs a one-line justification in the PR. A significant one also needs an ADR.
 - **Licence allow-list for code shipped in the apps:** Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, Zlib. Anything else (MPL, LGPL, GPL, AGPL, or a custom licence) needs the owner's approval until the project licence is decided (OQ-21).
-- Dependabot opens weekly update PRs (`ci_cd.md` §4). Kotlin upgrades wait for a compatible SKIE release (ADR-0004).
+- Dependabot opens weekly update PRs (`ci_cd.md` §6). Kotlin upgrades wait for a compatible SKIE release (ADR-0004).
+- **Dependabot PRs follow the README rule, with no exception** (owner decision, 2026-10-22). Before merging, add a commit to the Dependabot branch that updates both READMEs ("Recent changes") and the project log. Once someone else has pushed to its branch, Dependabot stops rebasing it, so resolve conflicts by merging `main` into the branch. Never rewrite its history.
 - Do not add analytics, advertising, attribution or fingerprinting SDKs without an ADR and the owner's approval (`security_privacy.md`).
 
 ## 10. Decisions and open questions
