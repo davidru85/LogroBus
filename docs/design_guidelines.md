@@ -27,7 +27,7 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 | 3 | How to Get There | Cómo llegar / Directions | `directions` | `arrow.triangle.turn.up.right.diamond` |
 
 - The English label for tab 3 is "Directions", because the tab bar needs a short label; the screen title reads "How to get there". This copy is a proposal.
-- On first launch the app opens on Lines. After that it restores the last selected tab (proposal, OQ-15).
+- The app always opens on Lines (OQ-15). Deep links are the only exception: they open their target tab. Saved-stop ETAs stay one tap away in Near Me, which meets G1.
 - Each tab keeps its own back stack. Re-selecting the active tab pops it to its root, or scrolls to the top if it is already at the root.
 - A toolbar action on each tab root opens **More**: Settings and About data in the MVP, plus News, Fares, Recharge points and Info in v1.0. Use a settings-style icon (`settings` / `gearshape`).
 
