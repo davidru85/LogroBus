@@ -169,7 +169,12 @@ class ModuleRulesTest {
     fun lb001_testingModuleMayDependOnCoreAndDomainModules() {
         assertEquals(
             emptyList<String>(),
-            violations(":shared:core:testing", ":shared:core:common", ":shared:transit:domain", ":shared:favourites:domain"),
+            violations(
+                ":shared:core:testing",
+                ":shared:core:common",
+                ":shared:transit:domain",
+                ":shared:favourites:domain",
+            ),
         )
         assertEquals(1, violations(":shared:core:testing", ":shared:transit:data").size)
     }

@@ -54,18 +54,18 @@ object ModuleRules {
     private fun externalReason(from: ModuleKind, group: String): String? = when {
         from is ModuleKind.Domain && platformGroups.any { group.isInGroup(it) } ->
             "domain modules must not use platform libraries"
-        group.isInGroup("io.ktor") && !(from == ModuleKind.Core("network") || from.mayUseInfrastructure) ->
+        group.isInGroup("io.ktor") && !from.mayUse(owner = ModuleKind.Core("network")) ->
             "only the network core, data and feature modules may use Ktor"
-        group.isInGroup("app.cash.sqldelight") && !(from == ModuleKind.Core("database") || from.mayUseInfrastructure) ->
+        group.isInGroup("app.cash.sqldelight") && !from.mayUse(owner = ModuleKind.Core("database")) ->
             "only the database core, data and feature modules may use SQLDelight"
         else -> null
     }
 
-    private fun String.isInGroup(group: String): Boolean = this == group || startsWith("$group.")
+    /** Infrastructure libraries belong to their core [owner] plus data modules and the data packages of features. */
+    private fun ModuleKind.mayUse(owner: ModuleKind.Core): Boolean =
+        this == owner || this is ModuleKind.Data || this is ModuleKind.Feature
 
-    /** Data modules and the data packages of feature modules talk to the network and the database. */
-    private val ModuleKind.mayUseInfrastructure: Boolean
-        get() = this is ModuleKind.Data || this is ModuleKind.Feature
+    private fun String.isInGroup(group: String): Boolean = this == group || startsWith("$group.")
 
     private val ModuleKind.isShared: Boolean
         get() = this is ModuleKind.Core ||
