@@ -31,7 +31,11 @@ fi
 
 echo "== Kotlin and Android =="
 if [ -x "$root/gradlew" ]; then
-  (cd "$root" && ./gradlew check) || status=1
+  if (cd "$root" && ./gradlew check --quiet --console=plain); then
+    echo "OK:   Gradle check: unit tests, architecture rules and build-logic tests passed"
+  else
+    status=1
+  fi
 else
   echo "SKIP: no Gradle wrapper yet (LB-001)"
 fi
