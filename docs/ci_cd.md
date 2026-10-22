@@ -26,7 +26,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 - [x] Decide the project licence (OQ-21). **No licence is granted: all rights reserved.** There is no `LICENSE` file; both READMEs state it.
 - [ ] Confirm the data-reuse position (OQ-11). **Still open:** it gates the app release, and the repository holds no source data yet. Revisit it before LB-003 commits the golden fixtures to the public repository.
 - [x] Confirm that no secrets exist in the git history. Every blob reachable from any ref was scanned (34 commits, 174 blobs, no findings). GitHub secret scanning and push protection are enabled.
-- [x] After going public: run `scripts/github/protect-main.sh`, check through the GitHub API that the protection is active, and confirm that the policy jobs run on a test PR (the LB-415 PR).
+- [x] After going public: confirm that the policy jobs run on a test PR (PR #4: all six ran and passed), then run `scripts/github/protect-main.sh` and check through the GitHub API that the protection is active.
 
 ## 2. Atomic checks: principles
 

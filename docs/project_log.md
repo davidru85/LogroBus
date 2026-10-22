@@ -27,6 +27,12 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - History scan of every blob reachable from any ref: 34 commits, 174 blobs, no secrets and no local paths.
   - Spec review: §3.4 (non-production hosts) and §3.3 (test payment pages) come from the public web bundle and hold no credentials.
 - Made the repository public, and enabled GitHub secret scanning and push protection.
+- PR #4 was the test PR: the six policy jobs ran in CI for the first time, and all passed.
+- Applied `scripts/github/protect-main.sh`. The GitHub API confirms the settings:
+  - `main` is protected, with a pull request required (0 approvals) and the six policy jobs as strict required checks;
+  - the rules are enforced for administrators, conversations must be resolved, and force pushes and deletions are blocked;
+  - linear history is not required.
+  - No real direct push to `main` was attempted: if the protection had failed, that commit would have landed on `main`. The API check stands in for it.
 - Updated `ci_cd.md`, `engineering_workflow.md`, `AGENTS.md`, `architecture.md`, `requirements.md`, the playbooks, the PR templates and both READMEs.
 
 **Decisions (owner)**
@@ -38,7 +44,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 **Open / next**
 - OQ-11 (data reuse) is still open. Revisit it before LB-003 commits golden fixtures to the public repository.
-- After CI is green on the LB-415 PR: apply `scripts/github/protect-main.sh` and verify it.
+- The `ci-gate` job (`ci_cd.md` §4) must become a required check when LB-002 adds the path-filtered Kotlin workflow.
 
 ## 2026-10-22: Dependabot PR #2: actions/checkout v5 to v7
 
