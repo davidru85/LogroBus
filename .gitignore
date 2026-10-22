@@ -1,0 +1,42 @@
+# OS and editors
+.DS_Store
+*.swp
+.idea/
+*.iml
+.vscode/
+.fleet/
+
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+local.properties
+captures/
+*.hprof
+
+# Android
+*.apk
+*.aab
+*.keystore
+*.jks
+.externalNativeBuild/
+.cxx/
+
+# Xcode / iOS
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+iosApp/Pods/
+*.xcframework
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Secrets and local config
+*.env
+secrets.properties
