@@ -121,11 +121,13 @@ flowchart TB
 
 | Module | May depend on | Must not depend on |
 | --- | --- | --- |
-| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime, Ktor (network only), SQLDelight (database only) | Any domain, data or feature module |
+| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime, Ktor (network only), SQLDelight (database only) | Any domain, data or feature module; `:shared:core:testing` |
+| `:shared:core:testing` | Core and domain modules (fakes, builders) | Data and feature modules. No production module may depend on it (test scopes only) |
 | `:shared:transit:domain`, `:shared:favourites:domain` | `:shared:core:common` | Data modules, network, database, platform APIs |
-| `:shared:transit:data`, `:shared:favourites:data` | Their own domain module and `:shared:core:*` | Feature modules |
+| `:shared:transit:data`, `:shared:favourites:data` | Their own domain module, `:shared:core:*`, Ktor and SQLDelight | Other capabilities' domains, feature modules |
 | `:shared:feature:<x>` | Domain modules, `:shared:core:*` (planner's own data package may use `:shared:core:network`) | **Other feature modules**, data modules (bound through DI) |
 | `:shared:umbrella` | Everything shared | Platform code |
+| `:android:core:*` | `:shared:core:*`, other `:android:core:*` modules | Domain, data and feature modules |
 | `:android:feature:<x>` | `:shared:feature:<x>`, domain modules, `:shared:core:*`, `:android:core:*` | Other Android or shared feature modules, data modules |
 | `:android:app` | Everything Android, `:shared:umbrella` | none |
 | iOS `Feature<X>` | `Shared` (XCFramework), `DesignSystem`, `MapUI` | Other `Feature*` targets |

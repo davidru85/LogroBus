@@ -39,6 +39,22 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **ktlint, detekt and Kover move to LB-002** (CI pipeline). `code_style.md` is updated.
 - **Android feature modules may also depend on domain modules and shared core modules**, which is inward and clean. `architecture.md` §3.2 is updated.
 
+**Review (code-reviewer subagent): verdict "changes required", 16 findings, all addressed**
+- **TDD cycle 3 (build-logic):**
+  - Dependencies are validated when declared, so RuntimeOnly buckets and late additions are covered.
+  - Platform libraries are banned in domain modules.
+  - Ktor and SQLDelight are limited to their core module, data modules and features.
+  - New Testing kind.
+  - The namespace and bucket helpers are unit-tested (23 tests).
+- **TDD cycle 4 (architecture):**
+  - The `ArchitectureRules` pure rules are unit-tested with good and bad samples.
+  - Fixed: the umbrella false positive, multi-argument includes, every form of version literal (now also in build-logic sources), and `java.`/`javax.`/`dalvik.` in domain code.
+  - New presentation-imports rule, portable paths, and an isolated-projects-safe input tree (15 tests).
+- **Hygiene:**
+  - The 9.7.1 wrapper jar now matches the official checksum.
+  - The Android JVM target and toolchain come from the catalog.
+  - Docs fixed: `AGENTS.md` status, rule 1 and scopes; the `architecture.md` dependency table; the `testing_strategy.md` heading.
+
 **Open / next**
 - LB-001 part 2: Android app and modules. Part 3: iOS app with XcodeGen and the `LogroBusUI` Swift package.
 

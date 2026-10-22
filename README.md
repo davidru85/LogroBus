@@ -94,6 +94,7 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
     - Gradle build: Kotlin 2.4.20, Android Gradle Plugin 9.3.3, Gradle 9.7.1.
     - The 19 shared modules.
     - Automatic checks of the module dependency rules and of the architecture.
+    - An independent review found 16 issues; all were addressed, with stricter rules and tests for the rules themselves.
   - Project documentation created.
   - Decided: iOS 18 minimum, identifier `com.ruizurraca.logrobus`, Lines as the launch tab, saved stops in Near Me.
   - Private GitHub repository created.
