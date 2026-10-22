@@ -95,6 +95,7 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
     - The 19 shared modules.
     - Automatic checks of the module dependency rules and of the architecture.
     - An independent review found 16 issues; all were addressed, with stricter rules and tests for the rules themselves.
+  - CI: `actions/checkout` updated from v5 to v7 (Dependabot, PR #2).
   - Project documentation created.
   - Decided: iOS 18 minimum, identifier `com.ruizurraca.logrobus`, Lines as the launch tab, saved stops in Near Me.
   - Private GitHub repository created.
