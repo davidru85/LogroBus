@@ -7,8 +7,9 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 /**
- * Module layout and package boundaries of ADR-0007 (docs/architecture.md §3).
- * Gradle-level dependency rules live in build-logic (ModuleRules).
+ * Module layout and package boundaries of ADR-0007 (docs/architecture.md §3), applied to the repository.
+ * The rules themselves are unit-tested in ArchitectureRulesTest; Gradle-level dependency rules live in
+ * build-logic (ModuleRules).
  */
 class ArchitectureTest {
 
@@ -39,23 +40,12 @@ class ArchitectureTest {
 
     private val toolModules = listOf(":tools:architecture-tests")
 
-    /** Import prefixes that domain code must not use: networking, persistence and platform APIs. */
-    private val forbiddenInDomain = listOf(
-        "io.ktor.",
-        "app.cash.sqldelight.",
-        "android.",
-        "androidx.",
-        "platform.",
-        "kotlinx.cinterop.",
-    )
+    private val ignoredDirectories = setOf("build", ".gradle", ".git", ".kotlin", ".idea")
 
     @Test
     fun lb001_settingsIncludeExactlyTheArchitectureModules() {
-        val included = Regex("""include\("([^"]+)"\)""")
-            .findAll(File(root, "settings.gradle.kts").readText())
-            .map { it.groupValues[1] }
-            .toSortedSet()
-        assertEquals((sharedModules + toolModules).toSortedSet(), included)
+        val included = ArchitectureRules.includedModules(File(root, "settings.gradle.kts").readText())
+        assertEquals((sharedModules + toolModules).toSortedSet(), included.toSortedSet())
     }
 
     @Test
@@ -68,18 +58,11 @@ class ArchitectureTest {
     }
 
     @Test
-    fun lb001_buildScriptsDeclareNoVersionLiterals() {
-        val coordinateWithVersion = Regex(""""[\w.-]+:[\w.-]+:\d[^"]*"""")
-        val versionCall = Regex("""\bversion\s*\(?\s*"\d""")
-        val ignored = setOf("build", ".gradle", ".git", ".kotlin", ".idea")
+    fun lb001_buildScriptsAndBuildLogicDeclareNoVersionLiterals() {
         val offenders = root.walkTopDown()
-            .onEnter { it.name !in ignored }
-            .filter { it.isFile && it.name.endsWith(".gradle.kts") }
-            .filter { file ->
-                val text = file.readText()
-                coordinateWithVersion.containsMatchIn(text) || versionCall.containsMatchIn(text)
-            }
-            .map { it.relativeTo(root).path }
+            .onEnter { it.name !in ignoredDirectories }
+            .filter { it.isFile && (it.name.endsWith(".gradle.kts") || it.isBuildLogicSource()) }
+            .flatMap { file -> ArchitectureRules.versionLiterals(file.readText()).map { "${file.relativePath()}: $it" } }
             .toList()
         assertEquals(emptyList<String>(), offenders)
     }
@@ -87,10 +70,7 @@ class ArchitectureTest {
     @Test
     fun lb001_sharedCodeDoesNotImportAnotherFeature() {
         val offenders = sharedFiles().flatMap { file ->
-            val ownFeature = featureOf(file.packagee?.name)
-            file.imports
-                .map { it.name }
-                .filter { imported -> featureOf(imported)?.let { it != ownFeature } == true }
+            ArchitectureRules.crossFeatureImports(file.packagee?.name, file.importNames())
                 .map { "${file.relativePath()}: $it" }
         }
         assertEquals(emptyList<String>(), offenders)
@@ -98,16 +78,20 @@ class ArchitectureTest {
 
     @Test
     fun lb001_domainCodeDoesNotImportFrameworksPlatformApisOrData() {
-        val dataPackage = Regex("""^com\.ruizurraca\.logrobus\..*\.data(\.|$)""")
         val offenders = sharedFiles()
             .filter { file -> file.packagee?.name?.let { ".domain" in it } == true }
             .flatMap { file ->
-                file.imports
-                    .map { it.name }
-                    .filter { imported ->
-                        forbiddenInDomain.any(imported::startsWith) || dataPackage.containsMatchIn(imported)
-                    }
-                    .map { "${file.relativePath()}: $it" }
+                ArchitectureRules.forbiddenDomainImports(file.importNames()).map { "${file.relativePath()}: $it" }
+            }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
+    @Test
+    fun lb001_presentationCodeDoesNotImportInfrastructureOrData() {
+        val offenders = sharedFiles()
+            .filter { file -> file.packagee?.name?.let { ".presentation" in it } == true }
+            .flatMap { file ->
+                ArchitectureRules.forbiddenPresentationImports(file.importNames()).map { "${file.relativePath()}: $it" }
             }
         assertEquals(emptyList<String>(), offenders)
     }
@@ -115,11 +99,9 @@ class ArchitectureTest {
     @Test
     fun lb001_sharedKotlinFilesLiveInTheirModuleNamespace() {
         val offenders = sharedFiles().mapNotNull { file ->
-            val segments = file.relativePath().split('/')
-            val moduleSegments = segments.drop(1).takeWhile { it != "src" }
-            val expectedPrefix = (listOf("com", "ruizurraca", "logrobus") + moduleSegments).joinToString(".")
+            val expected = ArchitectureRules.expectedNamespace(file.relativePath())
             val actual = file.packagee?.name.orEmpty()
-            val inNamespace = actual == expectedPrefix || actual.startsWith("$expectedPrefix.")
+            val inNamespace = actual == expected || actual.startsWith("$expected.")
             if (inNamespace) null else "${file.relativePath()}: $actual"
         }
         assertEquals(emptyList<String>(), offenders)
@@ -128,8 +110,12 @@ class ArchitectureTest {
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
 
-    private fun KoFileDeclaration.relativePath(): String = File(path).relativeTo(root).path
+    private fun KoFileDeclaration.importNames(): List<String> = imports.map { it.name }
 
-    private fun featureOf(name: String?): String? =
-        name?.let { Regex("""^com\.ruizurraca\.logrobus\.feature\.(\w+)""").find(it)?.groupValues?.get(1) }
+    private fun KoFileDeclaration.relativePath(): String = File(path).relativePath()
+
+    private fun File.relativePath(): String = relativeTo(root).invariantSeparatorsPath
+
+    private fun File.isBuildLogicSource(): Boolean =
+        name.endsWith(".kt") && relativePath().let { it.startsWith("build-logic/") && "/src/main/" in it }
 }
