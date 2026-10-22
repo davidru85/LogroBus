@@ -39,6 +39,16 @@ class ArchitectureTest {
 
     private val toolModules = listOf(":tools:architecture-tests")
 
+    /** Import prefixes that domain code must not use: networking, persistence and platform APIs. */
+    private val forbiddenInDomain = listOf(
+        "io.ktor.",
+        "app.cash.sqldelight.",
+        "android.",
+        "androidx.",
+        "platform.",
+        "kotlinx.cinterop.",
+    )
+
     @Test
     fun lb001_settingsIncludeExactlyTheArchitectureModules() {
         val included = Regex("""include\("([^"]+)"\)""")
@@ -65,7 +75,10 @@ class ArchitectureTest {
         val offenders = root.walkTopDown()
             .onEnter { it.name !in ignored }
             .filter { it.isFile && it.name.endsWith(".gradle.kts") }
-            .filter { file -> file.readText().let { coordinateWithVersion.containsMatchIn(it) || versionCall.containsMatchIn(it) } }
+            .filter { file ->
+                val text = file.readText()
+                coordinateWithVersion.containsMatchIn(text) || versionCall.containsMatchIn(text)
+            }
             .map { it.relativeTo(root).path }
             .toList()
         assertEquals(emptyList<String>(), offenders)
@@ -85,14 +98,15 @@ class ArchitectureTest {
 
     @Test
     fun lb001_domainCodeDoesNotImportFrameworksPlatformApisOrData() {
-        val forbiddenPrefixes = listOf("io.ktor.", "app.cash.sqldelight.", "android.", "androidx.", "platform.", "kotlinx.cinterop.")
         val dataPackage = Regex("""^com\.ruizurraca\.logrobus\..*\.data(\.|$)""")
         val offenders = sharedFiles()
             .filter { file -> file.packagee?.name?.let { ".domain" in it } == true }
             .flatMap { file ->
                 file.imports
                     .map { it.name }
-                    .filter { imported -> forbiddenPrefixes.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
+                    .filter { imported ->
+                        forbiddenInDomain.any(imported::startsWith) || dataPackage.containsMatchIn(imported)
+                    }
                     .map { "${file.relativePath()}: $it" }
             }
         assertEquals(emptyList<String>(), offenders)
@@ -105,7 +119,8 @@ class ArchitectureTest {
             val moduleSegments = segments.drop(1).takeWhile { it != "src" }
             val expectedPrefix = (listOf("com", "ruizurraca", "logrobus") + moduleSegments).joinToString(".")
             val actual = file.packagee?.name.orEmpty()
-            if (actual == expectedPrefix || actual.startsWith("$expectedPrefix.")) null else "${file.relativePath()}: $actual"
+            val inNamespace = actual == expectedPrefix || actual.startsWith("$expectedPrefix.")
+            if (inNamespace) null else "${file.relativePath()}: $actual"
         }
         assertEquals(emptyList<String>(), offenders)
     }
