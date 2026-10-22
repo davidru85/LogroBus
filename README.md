@@ -84,11 +84,16 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
 | M1 Lines | Lines section | Not started |
 | M2 Near Me | Near Me section | Not started |
 | M3 How to Get There | Trip planner | Not started |
-| M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, public repository, privacy declarations | Not started |
+| M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, privacy declarations | Not started |
 | M5 v1.0 | Offline mode, news, fares, recharge points, widget, notifications, release | Not started |
 
 ### Recent changes
 
+- **2026-10-23:**
+  - The repository is now public (LB-415):
+    - CI runs the policy checks on every pull request, and `main` is protected on GitHub.
+    - GitHub secret scanning and push protection are enabled.
+    - Licence decided: none is granted, so all rights are reserved.
 - **2026-10-22:**
   - Started LB-001, part 1 of 3:
     - Gradle build: Kotlin 2.4.20, Android Gradle Plugin 9.3.3, Gradle 9.7.1.
@@ -114,7 +119,7 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) before you start. Code and documentation are written in technical English (see the language policy in AGENTS.md). Work on a branch and open a pull request using one of the templates; nobody pushes to `main`. While the repository is private, CI does not run: run `scripts/checks/run-all.sh` and paste its summary into the pull request. Every pull request must update this README and its Spanish version, [README.es.md](README.es.md), before it is merged.
+Read [AGENTS.md](AGENTS.md) before you start. Code and documentation are written in technical English (see the language policy in AGENTS.md). Work on a branch and open a pull request using one of the templates; nobody pushes to `main`. CI runs the policy checks on every pull request, and they must pass before merging. Run `scripts/checks/run-all.sh` first and paste its summary into the pull request: it also covers the Gradle checks, which join CI later. Every pull request must update this README and its Spanish version, [README.es.md](README.es.md), before it is merged.
 
 ## Data and disclaimer
 
@@ -128,4 +133,4 @@ The terms for reusing the data are still being confirmed with the City Council.
 
 ## License
 
-No licence has been chosen yet, so all rights are reserved.
+The source code is public to read, but no licence is granted: all rights reserved. You may not copy, modify or redistribute it without the author's permission.

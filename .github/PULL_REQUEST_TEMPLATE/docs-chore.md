@@ -13,7 +13,7 @@ Title: a Conventional Commit, e.g. `docs(adr): record SKIE decision` or `ci(poli
 
 ## Local quality gates
 
-<!-- CI does not run while the repository is private (docs/ci_cd.md §1). Paste the final summary of scripts/checks/run-all.sh. -->
+<!-- CI runs the policy checks; the Gradle checks join in LB-002 (docs/ci_cd.md §1). Paste the final summary of scripts/checks/run-all.sh. -->
 
 ```text
 
