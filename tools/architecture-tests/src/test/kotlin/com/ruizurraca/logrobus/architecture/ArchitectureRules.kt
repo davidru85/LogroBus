@@ -54,6 +54,9 @@ object ArchitectureRules {
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
+    /** Gradle module paths listed as items of a workflow matrix, such as `- ":shared:core:common"`. */
+    fun workflowMatrixModules(workflow: String): Set<String> = emptySet()
+
     /** `shared/feature/lines/src/...` must use the `com.ruizurraca.logrobus.feature.lines` namespace. */
     fun expectedNamespace(relativePath: String): String {
         val moduleSegments = relativePath.split('/').drop(1).takeWhile { it != "src" }
