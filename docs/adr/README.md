@@ -8,11 +8,15 @@ NFR-MNT-03 requires an ADR for every technology choice in spec §8.3. The choice
 
 | ADR | Title | Status | Date |
 | --- | --- | --- | --- |
-| [0001](0001-native-ui-on-shared-kmp-core.md) | Native UI per platform on a shared KMP core | Accepted | 2026-10-22 |
+| [0001](0001-native-ui-on-shared-kmp-core.md) | Native UI per platform on a shared KMP core | Accepted (presentation clause superseded by 0007) | 2026-10-22 |
 | [0002](0002-three-section-navigation.md) | Three-section navigation: Lines, Near Me, How to Get There | Accepted | 2026-10-22 |
 | [0003](0003-ios-deployment-target-and-liquid-glass.md) | iOS deployment target and Liquid Glass adoption | Accepted | 2026-10-22 |
-| [0004](0004-swift-interop-umbrella-framework-and-skie.md) | Swift interop: umbrella framework and SKIE | Proposed | 2026-10-22 |
+| [0004](0004-swift-interop-umbrella-framework-and-skie.md) | Swift interop: umbrella framework and SKIE | Proposed (amended by 0007) | 2026-10-22 |
 | [0005](0005-android-ui-stack.md) | Android UI stack: Material 3 Expressive, Navigation 3, adaptive navigation | Proposed | 2026-10-22 |
+| [0006](0006-multi-agent-harness.md) | Agent-agnostic harness with thin per-agent adapters | Accepted | 2026-10-22 |
+| [0007](0007-clean-architecture-feature-modules.md) | Clean architecture with feature modules and platform-specific presentation | Accepted | 2026-10-22 |
+| [0008](0008-offline-mode-deferred.md) | Offline mode deferred to v1.0; cache-backed static data in the MVP | Accepted | 2026-10-22 |
+| [0009](0009-telemetry-contracts.md) | Telemetry contracts now, vendor later | Accepted | 2026-10-22 |
 
 Status values: `Proposed`, `Accepted`, `Superseded by ADR-nnnn`, `Deprecated`.
 

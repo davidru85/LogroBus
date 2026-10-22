@@ -4,7 +4,9 @@
 | --- | --- |
 | Status | Draft |
 | Last updated | 2026-10-22 |
-| Based on | Spec §7; ADR-0002, ADR-0003, ADR-0005 |
+| Based on | Spec §7; `requirements.md` (FR-NAV, FR-LINE-12 to 16, FR-NEAR, FR-PLAN-11 to 14); ADR-0002, ADR-0003, ADR-0005 |
+
+**Figma designs for the MVP will be delivered near the end of the MVP (LB-413).** Until then, this document's wireframes and the neutral placeholder theme are the reference. When the Figma file arrives, it becomes the visual source of truth and is linked here.
 
 This document covers how LogroBus looks and behaves: the three sections screen by screen, the platform design languages (Material 3 Expressive on Android, Liquid Glass on iOS), the visual language shared by both, UX states, accessibility and copy. Each platform should feel fully native, while the information and behaviour stay identical.
 
@@ -94,7 +96,7 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 │ │  map: both shapes, selected     │ │  collapsible (FR-LINE-04)
 │ │  direction emphasised, live 🚌  │ │  FR-LINE-06
 │ └─────────────────────────────────┘ │
-│ ( Hacia Hospital S.P. | Hacia El Arco ) │  direction toggle with headsigns
+│ ( Hacia Artesanos | Hacia M. de Falla ) │  direction toggle with headsigns
 │ ● Manuel de Falla              4 min│  stop timeline + next ETA (FR-LINE-05)
 │ │                                   │
 │ ● Avenida de Burgos           ~7 min│  "~" = low confidence (DD-09)
@@ -166,7 +168,7 @@ Results                                   Itinerary detail
 │ 🚶 4' › [10] › 🚶 3'  · 450 m a pie│       │ colour (FR-PLAN-05)             │
 │ Sale en 3 min desde Gran Vía    │       ├─────────────────────────────────┤
 ├─────────────────────────────────┤       │ 🚶 Camina 4 min (300 m) a Gran Vía│
-│ 08:25 → 08:44 · 19 min          │       │ [10] Sube hacia Hospital S.P.   │
+│ 08:25 → 08:44 · 19 min          │       │ [10] Sube hacia Artesanos       │
 │ 🚶 6' › [3] › [1] › 🚶 2'          │       │      08:22 · en directo 08:24 ~ │  FR-PLAN-06
 └─────────────────────────────────┘       │      7 paradas ▾                │
                                           │ ⬇ Bájate en Hospital San Pedro  │
@@ -185,6 +187,7 @@ Results                                   Itinerary detail
 
 **Theme**
 - Wrap the app in `MaterialExpressiveTheme` with a fixed brand `ColorScheme` for light and dark, `MotionScheme.expressive()`, the expressive typography and the shape scale.
+- **Until OQ-18 is decided, the brand palette is a neutral placeholder** (greys plus one accessible accent). It is defined as tokens in one place (NFR-MNT-04) and replaced by the Figma designs in LB-413, near the end of the MVP.
 - Dynamic colour is not used in v1, so brand surfaces stay predictable next to the data-driven line colours.
 - Expressive APIs are experimental. Opt in only inside `designsystem/` wrappers, such as `LbButtonGroup` and `LbLoadingIndicator`.
 
@@ -222,8 +225,10 @@ Liquid Glass is the navigation and control layer that floats above content. Cont
 | Favourite lines | `ScrollView(.horizontal)` + `LazyHStack` with `.scrollTargetBehavior(.viewAligned)` |
 | Refreshing | `.refreshable`; skeletons via `.redacted(reason: .placeholder)` for the first load |
 
+The MVP is **iPhone only** (NFR-PLAT-03): no iPad layouts.
+
 **Custom glass** is used only on floating map controls and the floating search field:
-- Recenter and layers buttons use `.buttonStyle(.glass)`. The single primary action, "Buscar rutas" ("Find routes") in the planner, uses `.buttonStyle(.glassProminent)` with the brand tint.
+- Recenter and layers buttons use `.buttonStyle(.glass)`. The single primary action, "Buscar rutas" ("Find routes") in the planner, uses `.buttonStyle(.glassProminent)` with the brand tint (a placeholder accent until OQ-18).
 - Neighbouring floating controls sit in a `GlassEffectContainer(spacing:)` so their shapes blend. Use `glassEffectID(_:in:)` to morph between related states, for example the layer button expanding into the layer menu.
 - Never stack glass on glass, never put glass on list rows, cards or line badges, and never tint more than one element per screen.
 - Feature code calls only the `DesignSystem/` helpers:
@@ -283,7 +288,7 @@ Settings → ETA format switches between minutes and clock time (FR-SET-01).
 | Stale | "Actualizado hace N s" in the warning colour | Same |
 | Expired | Clock-time ETAs + "Toca para actualizar" | Same |
 | Empty | One sentence + one action, no illustration | `ContentUnavailableView` with one action |
-| Offline | Non-blocking banner "Sin conexión. Mostrando datos guardados." ("You are offline. Showing saved data.") | Same, as a top inset banner |
+| Offline (v1.0 only, ADR-0008; in the MVP a missing connection is the Error state with reason "network") | Non-blocking banner "Sin conexión. Mostrando datos guardados." ("You are offline. Showing saved data.") | Same, as a top inset banner |
 | Error | Message, reason (network / server / data), "Reintentar" ("Retry") | `ContentUnavailableView` with a "Reintentar" button |
 | Partial | Content shown; logged silently | Same |
 
@@ -317,4 +322,4 @@ Settings → ETA format switches between minutes and clock time (FR-SET-01).
 | `plan.origin.current` | Mi ubicación | My location |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
-| `offline.banner` | Sin conexión. Mostrando datos guardados. | You are offline. Showing saved data. |
+| `offline.banner` (v1.0) | Sin conexión. Mostrando datos guardados. | You are offline. Showing saved data. |
