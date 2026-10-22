@@ -1,0 +1,45 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
+plugins {
+    id("logrobus.kmp.library")
+}
+
+// The single Kotlin artefact consumed by iOS (ADR-0004, ADR-0007): a static framework
+// named "Shared" (app target) and the same frameworks packaged as an XCFramework
+// (local Swift package). Exported modules are visible to Swift.
+kotlin {
+    val exported = listOf(
+        projects.shared.core.common,
+        projects.shared.core.presentation,
+        projects.shared.core.telemetry,
+        projects.shared.transit.domain,
+        projects.shared.favourites.domain,
+        projects.shared.feature.lines,
+        projects.shared.feature.stops,
+        projects.shared.feature.nearme,
+        projects.shared.feature.planner,
+        projects.shared.feature.settings,
+    )
+    val xcFramework = XCFramework("Shared")
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+            exported.forEach { export(it) }
+            xcFramework.add(this)
+        }
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            exported.forEach { api(it) }
+            implementation(projects.shared.transit.data)
+            implementation(projects.shared.favourites.data)
+            implementation(projects.shared.core.config)
+            implementation(projects.shared.core.network)
+            implementation(projects.shared.core.database)
+            implementation(projects.shared.core.location)
+            implementation(projects.shared.core.polling)
+        }
+    }
+}

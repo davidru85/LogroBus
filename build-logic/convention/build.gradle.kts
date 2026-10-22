@@ -16,3 +16,12 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+gradlePlugin {
+    plugins {
+        register("kmpLibrary") {
+            id = "logrobus.kmp.library"
+            implementationClass = "com.ruizurraca.logrobus.buildlogic.KmpLibraryConventionPlugin"
+        }
+    }
+}
