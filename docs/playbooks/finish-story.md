@@ -21,7 +21,7 @@
    - The title is the Conventional Commit subject.
    - The body follows `.github/pull_request_template.md` (or the `docs-chore.md` template for changes that do not alter app behaviour).
    - List the criteria and tick them, and add screenshots for UI changes.
-   - **Paste the real `run-all.sh` summary.** It is the required evidence while CI is inactive (`ci_cd.md` §1).
+   - **Paste the real `run-all.sh` summary.** It is the evidence for every check that CI does not run yet (`ci_cd.md` §1).
 
    ```bash
    gh pr create --base main --title "<type(scope): summary [LB-xxx]>" --body-file <filled-template.md>

@@ -15,22 +15,22 @@ This document covers how work moves from a backlog story to `main`: branching, c
 - Branch names use `<type>/LB-<id>-<short-slug>`, for example `feat/LB-205-stop-sheet`. Branches without a story use `chore/<slug>` or `docs/<slug>`.
 - One story per branch. A branch should live at most a few days; split larger stories.
 
-### 1.1 Enforcement while the repository is on GitHub Free
+### 1.1 Enforcement: GitHub protection and local gates
 
-GitHub Free does not offer branch protection or rulesets for private repositories (checked 2026-10-22). In addition, **CI does not run while the repository is private**, by the owner's rule (`ci_cd.md` §1). Until either changes (OQ-20), the rules are enforced locally:
+The repository has been public since 2026-10-23 (LB-415, OQ-20). `main` is protected on GitHub, and CI runs the policy checks on every pull request (`ci_cd.md` §1). The local gates stay in place: they catch problems before a push, and they are the only check for what has no CI job yet.
 
 | Rule | How it is enforced |
 | --- | --- |
-| No direct pushes to `main` | The `.githooks/pre-push` hook rejects them, and agents have deny rules. The owner may bypass the hook with `LOGROBUS_ALLOW_MAIN_PUSH=1` only for emergencies, and must record any bypass in `project_log.md` |
-| Gates green before merging | `scripts/checks/run-all.sh` runs locally, and its summary is pasted in the PR. The owner merges only PRs with a clean summary |
-| Conventional Commits | The `.githooks/commit-msg` hook. The PR title is checked by the author with `scripts/checks/check-conventional-title.sh` |
+| No direct pushes to `main` | GitHub branch protection, enforced for administrators too. Locally, the `.githooks/pre-push` hook rejects them and agents have deny rules |
+| Gates green before merging | The required CI checks must pass before GitHub allows the merge. `scripts/checks/run-all.sh` also runs locally, and its summary is pasted in the PR: it covers the Gradle checks until LB-002 adds them to CI |
+| Conventional Commits | The `.githooks/commit-msg` hook. The PR title is checked in CI (`PR title`) and by the author with `scripts/checks/check-conventional-title.sh` |
 | Frozen spec, doc links | The `.githooks/pre-push` hook (blocking) |
 | README parity | `scripts/checks/run-all.sh` before opening or updating a PR (blocking; its output is pasted into the PR) and the Claude Code Stop hook. The pre-push hook only warns, because TDD pushes after every cycle (`testing_strategy.md` §7.1) |
 | No secrets | The `.githooks/pre-commit` hook |
 
-Every developer and agent environment must run `scripts/bootstrap.sh` once, to install the hooks. When the repository becomes public, the same gates also run in CI (`policy-checks.yml`).
+Every developer and agent environment must run `scripts/bootstrap.sh` once, to install the hooks. The same policy gates also run in CI (`policy-checks.yml`).
 
-**`main` will be protected on GitHub** (owner decision, 2026-10-22). This becomes possible when the repository goes public, before the MVP is completed (LB-415). The owner then runs `scripts/github/protect-main.sh`, which configures:
+**`main` is protected on GitHub** (owner decision 2026-10-22, applied 2026-10-23 in LB-415) by `scripts/github/protect-main.sh`, which configures:
 - a pull request required for every change (0 required approvals, because the owner is the only maintainer and cannot approve their own PRs; the owner's merge is the approval);
 - the required status checks: the policy jobs, and later the `ci-gate` job (`ci_cd.md` §4), up to date with `main`;
 - the rules enforced for administrators too;
@@ -92,7 +92,7 @@ A story can be started when:
 
 ## 7. Definition of done
 
-See `AGENTS.md` §11. While the repository is private, the pasted `run-all.sh` summary is the evidence for the gates. Once CI is active, the CI checks are authoritative.
+See `AGENTS.md` §11. The CI checks are authoritative for the gates they run. The pasted `run-all.sh` summary is the evidence for the rest: the Gradle checks, until LB-002.
 
 ## 8. Story lifecycle
 
@@ -107,7 +107,7 @@ See `AGENTS.md` §11. While the repository is private, the pasted `run-all.sh` s
 ## 9. Dependencies
 
 - Every dependency is declared in `gradle/libs.versions.toml` or as a Swift package with an exact version, and needs a one-line justification in the PR. A significant one also needs an ADR.
-- **Licence allow-list for code shipped in the apps:** Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, Zlib. Anything else (MPL, LGPL, GPL, AGPL, or a custom licence) needs the owner's approval until the project licence is decided (OQ-21).
+- **Licence allow-list for code shipped in the apps:** Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, Zlib. Anything else (MPL, LGPL, GPL, AGPL, or a custom licence) needs the owner's approval. The project itself grants no licence (OQ-21).
 - Dependabot opens weekly update PRs (`ci_cd.md` §6). Kotlin upgrades wait for a compatible SKIE release (ADR-0004).
 - **Dependabot PRs follow the README rule, with no exception** (owner decision, 2026-10-22). Before merging, add a commit to the Dependabot branch that updates both READMEs ("Recent changes") and the project log. Once someone else has pushed to its branch, Dependabot stops rebasing it, so resolve conflicts by merging `main` into the branch. Never rewrite its history.
 - Do not add analytics, advertising, attribution or fingerprinting SDKs without an ADR and the owner's approval (`security_privacy.md`).
