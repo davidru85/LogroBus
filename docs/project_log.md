@@ -19,6 +19,29 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-22: LB-001 part 1 of 3: Gradle build, shared modules, architecture rules
+
+**Done**
+- Gradle 9.7.1 wrapper, with the distribution checksum pinned; version catalog; `build-logic` included build.
+- `ModuleRules` (16 tests) enforces the ADR-0007 module dependencies at configuration time.
+- `logrobus.kmp.library` convention plugin: Android KMP library plugin with host tests, `iosArm64` and `iosSimulatorArm64`, namespaces derived from the module path, the `ciUnitTest` alias.
+- The 19 shared modules, with the umbrella `Shared` framework and XCFramework configured.
+- `:tools:architecture-tests` (Konsist, 6 tests): exact module list, the convention plugin applied, no version literals, no cross-feature imports, clean domain imports, module namespaces.
+- TDD with two cycles, each with red, green and refactor commits. The guards were proven against deliberate violations, which were then reverted.
+
+**Decisions**
+- Versions:
+  - **Kotlin 2.4.20**, explicitly supported by SKIE 0.10.15 (2.4.21 is not yet).
+  - **AGP 9.3.3**: KGP 2.4.20 is fully supported up to AGP 9.3.1, and 9.4 is out of range.
+  - **Gradle 9.7.1**: KGP is fully supported up to 9.7.0.
+  - compileSdk 37, minSdk 26, JVM toolchain 21, Android bytecode JVM 17.
+- **No placeholder code** in shared modules without a test. The `Shared` framework links once the Android and iOS red tests introduce the first shared value (parts 2 and 3).
+- **ktlint, detekt and Kover move to LB-002** (CI pipeline). `code_style.md` is updated.
+- **Android feature modules may also depend on domain modules and shared core modules**, which is inward and clean. `architecture.md` §3.2 is updated.
+
+**Open / next**
+- LB-001 part 2: Android app and modules. Part 3: iOS app with XcodeGen and the `LogroBusUI` Swift package.
+
 ## 2026-10-22: Merge strategy: merge commits, no squash
 
 **Decisions**
