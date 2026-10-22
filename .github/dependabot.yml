@@ -1,0 +1,11 @@
+# Dependency update PRs (docs/ci_cd.md §6). The gradle and swift ecosystems are
+# added once the Gradle and Xcode projects exist (LB-001, LB-002).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+      include: scope

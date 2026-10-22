@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Git commit-msg hook: enforces Conventional Commit subjects.
+# Installed by scripts/bootstrap.sh (core.hooksPath=.githooks).
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+subject="$(head -n 1 "$1")"
+
+case "$subject" in
+  "Merge "*|"Revert "*|"fixup! "*|"squash! "*|"amend! "*) exit 0 ;;
+esac
+
+"$root/scripts/checks/check-conventional-title.sh" "$subject"

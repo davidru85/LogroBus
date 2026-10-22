@@ -2,13 +2,25 @@
 
 Guidance for AI coding agents and human contributors working on **LogroBus**. This is the canonical instruction file: `CLAUDE.md` only points here. Keep this file short, current and actionable; long-form material belongs in `docs/`.
 
+## Language policy (strict)
+
+| Context | Language |
+| --- | --- |
+| Project artefacts: code, identifiers, comments, commit messages, branch names, pull request titles and descriptions, issues, docs, ADRs | Technical English, always |
+| Agent conversation: replies, questions, plans, summaries and explanations shown to the owner | Peninsular Spanish (es-ES), unless the owner explicitly asks for another language |
+| Owner's messages | English or Spanish; both are valid input, and the reply is still in Peninsular Spanish |
+
+- In Spanish replies, keep code, identifiers, file paths and established technical terms in their English form (`ViewModel`, `pull request`, `StateFlow`).
+- Two exceptions are required by other rules: `README.es.md`, the Peninsular Spanish mirror of `README.md` (§12), and the localised UI strings, where es-ES is the default and English is also shipped.
+
 ## 1. The project in one minute
 
 LogroBus is a native Android and iOS app for Logroño's urban bus network: 13 day and night (Búho) lines, about 254 stops, real-time arrivals, live vehicles and door-to-door journey planning. Data comes from the public but undocumented and unversioned API behind `https://transporteurbano.logrono.es` (an Express BFF over SIRI real-time feeds, OpenTripPlanner and a Strapi CMS).
 
 | Layer | Technology |
 | --- | --- |
-| Shared core | Kotlin Multiplatform (KMP): domain, data, networking, persistence, normalisation, ViewModels |
+| Shared (KMP) | Clean architecture by feature module: domain, data, networking, persistence, normalisation, telemetry contracts and **presentation models** (`UiState`, UI models, mappers) |
+| Presentation layer | Platform-specific: Android ViewModels plus Compose; Swift ViewModels plus SwiftUI (ADR-0007) |
 | Android app | Kotlin, Jetpack Compose, Material 3 Expressive |
 | iOS app | Swift, SwiftUI, Liquid Glass |
 
@@ -36,35 +48,45 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 | `docs/open_questions.md` | Open questions (`OQ-nn`) with owner and answer | A question is raised or resolved |
 | `docs/project_log.md` | Dated log of work and decisions | At the end of every working session |
 | `docs/adr/` | Architecture decision records | A significant or hard-to-reverse decision is made |
+| `docs/requirements.md` | MVP scope baseline and the requirements added after the spec (`FR-NAV`, `FR-NEAR`, …) | Scope changes, with the owner's approval |
+| `docs/acceptance_criteria.md` | Given/When/Then criteria for every MVP story | A story or requirement changes |
+| `docs/testing_strategy.md` | Test levels, TDD, test harness, what each PR must test | Test practice or tooling changes |
+| `docs/engineering_workflow.md` | Branching, commits, PRs and templates, review, merge, dependencies | The workflow changes |
+| `docs/ci_cd.md` | Atomic CI checks, workflows, the private-repository rule | A check or workflow changes |
+| `docs/release_process.md` | Versioning, variants, signing, distribution, release checklist | Release practice changes |
+| `docs/security_privacy.md` | Data inventory, permissions, controls, draft store declarations | A data flow, permission or SDK changes |
+| `docs/code_style.md` | Detailed style rules and lint configuration | A style rule changes |
+| `docs/agent_harness.md`, `docs/playbooks/` | Multi-agent harness; agent-agnostic workflows and review checklists | A workflow, hook or adapter changes |
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-22):** documentation only, committed on `main`. No Gradle or Xcode project exists yet. The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-22):** documentation and agent/CI harness only. No Gradle or Xcode project exists yet. The repository stays private for now and becomes public before the MVP is completed; `main` is protected on GitHub from that point (`docs/ci_cd.md` §1). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
 ```
 LogroBus/
-├── AGENTS.md, CLAUDE.md
+├── AGENTS.md                # the rule book for every agent and human
+├── CLAUDE.md, GEMINI.md     # agent pointers to AGENTS.md (no rules of their own)
 ├── README.md, README.es.md  # project overview, English and Spanish (kept in sync)
+├── .claude/                 # Claude Code adapter: settings, hooks, reviewer agents, skills
+├── .github/                 # PR templates, CODEOWNERS, Dependabot, workflows, Copilot pointer
+├── .githooks/               # git hooks (installed by scripts/bootstrap.sh)
 ├── logrono-bus-app-functional-spec.md
 ├── docs/                    # living docs and ADRs
 ├── gradle/libs.versions.toml  # the only place versions are declared
 ├── build-logic/             # Gradle convention plugins
 ├── shared/
-│   ├── core/                # AppClock, Logger, dispatchers, AppResult, RemoteConfig, LocationProvider API
-│   ├── domain/              # entities, repository interfaces, use cases (no I/O, no platform APIs)
-│   ├── network/             # Ktor clients, DTOs, lenient decoding
-│   ├── database/            # SQLDelight schema and queries
-│   ├── data/                # repositories, mappers, normaliser, sync and polling engines
-│   ├── presentation/        # shared ViewModels, UiState, display models
-│   ├── testing/             # fakes, TestAppClock, fixture loader
-│   └── umbrella/            # Koin graph + iOS framework "Shared"
-├── androidApp/              # Compose UI, navigation, design system, MapLibre, WorkManager
-├── iosApp/                  # Xcode project: SwiftUI UI, design system, MapLibre, ViewModel bridge
+│   ├── core/                # common, config, telemetry, network, database, location, polling, presentation primitives, testing
+│   ├── transit/             # domain/ + data/: lines, stops, arrivals, vehicles (DD rules live in transit/data)
+│   ├── favourites/          # domain/ + data/: favourites, saved places, recents
+│   ├── feature/             # lines, stops, nearme, planner, settings: use cases + presentation models (UiState, UI models, mappers)
+│   └── umbrella/            # Koin graph, SharedDependencies for Swift, iOS framework "Shared"
+├── android/                 # app/ (shell), core/ (designsystem, map, navigation), feature/<x>/ (Compose + Android ViewModels)
+├── iosApp/                  # app target (shell) + Packages/LogroBusUI (DesignSystem, MapUI, Feature<X>: SwiftUI + Swift ViewModels)
+├── tools/architecture-tests/  # Konsist module and package boundary rules
 ├── fixtures/                # golden API payloads for tests (spec §10.2)
-├── seed/                    # static data snapshot bundled into both apps (FR-ERR-01)
-└── scripts/                 # fixture recording, seed refresh
+└── scripts/                 # bootstrap.sh, checks/ (quality gates), agent/ (agent hooks), github/ (repo admin), fixture tools
 ```
 
 Identifiers (OQ-14): Android `applicationId` and iOS bundle id are `com.ruizurraca.logrobus`, which is also the Kotlin package root. The display name is "LogroBus" and the URL scheme is `logronobus://`. Store identifiers cannot change after the first release.
@@ -73,6 +95,14 @@ Identifiers (OQ-14): Android `applicationId` and iOS bundle id are `com.ruizurra
 
 Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (ADR-0003). Kotlin, AGP, Compose and every library version live only in `gradle/libs.versions.toml`.
 
+These commands work today:
+
+```bash
+scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools
+scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell; Gradle and SwiftLint once they exist)
+scripts/agent/session-start.sh                    # session context, for agents without hooks
+```
+
 The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
 
 ```bash
@@ -80,13 +110,13 @@ The commands below describe the target setup. **Verify them, and correct this se
 ./gradlew allTests                                # shared tests on every target
 ./gradlew check                                   # tests + ktlint + detekt + Kover verification
 ./gradlew ktlintFormat                            # auto-format Kotlin
-./gradlew :androidApp:assembleDebug               # Android debug APK
-./gradlew :androidApp:installDebug                # install on a connected device or emulator
+./gradlew :android:app:assembleDebug              # Android debug APK
+./gradlew :android:app:installDebug              # install on a connected device or emulator
 ./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only
 
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination 'platform=iOS Simulator,name=<simulator>' test   # iOS build + tests
-(cd iosApp && swiftlint --strict)                 # Swift lint
+swiftlint --strict                                # Swift lint (config in .swiftlint.yml)
 
 scripts/record-fixtures.sh                        # re-capture golden payloads from the live source
 ```
@@ -97,18 +127,28 @@ Report the real output of the checks you ran. If you could not run something, fo
 
 Details live in `docs/architecture.md`. These rules are not negotiable without an ADR.
 
-1. **Dependency direction:** UI → `presentation` → `domain` ← `data` → `network`, `database`. Everything may use `core`. `domain` never depends on Ktor, SQLDelight, `network`, `database` or platform APIs.
-2. **DTOs stop at the data layer.** Mappers in `:shared:data` turn DTOs into domain entities (spec §5.1) and fix every source quirk exactly once (spec §5.3 and §5.4, `docs/api_spec.md`).
-3. **UI only renders.** Compose and SwiftUI screens render `UiState` from shared ViewModels and send events back. They contain no business rules, networking or ETA logic. Platform code owns navigation, permission prompts, map rendering, localised strings and OS services (widgets, background tasks).
-4. **Shared code emits meaning, platforms emit words.** Presentation exposes semantic display models such as `EtaDisplay.Minutes(4, lowConfidence = true)`. Each platform turns them into localised text and accessibility labels (spec §5.7) with its own string resources.
+1. **Clean architecture and feature modules (ADR-0007):**
+   - Dependencies point inwards: platform presentation → shared feature (use cases and presentation models) → domain modules ← data modules. `:shared:core:*` is available to all.
+   - Domain modules never depend on Ktor, SQLDelight, data modules or platform APIs.
+   - **Feature modules never depend on other feature modules**, on either platform. Cross-feature navigation goes through the app shell.
+2. **DTOs stop at the data layer.** Mappers in the data modules (`:shared:transit:data`, and planner's `data` package) turn DTOs into domain entities (spec §5.1) and fix every source quirk exactly once (spec §5.3 and §5.4, `docs/api_spec.md`).
+3. **The presentation layer is platform-specific, and its models are shared.**
+   - Android ViewModels (Kotlin) and iOS ViewModels (Swift `@Observable`) call shared use cases and build state with the **shared** `UiState` types and pure mappers from `:shared:feature:<x>/presentation`.
+   - ViewModels orchestrate (subscriptions, events, navigation effects). They contain no business rules, no networking and no ETA or formatting logic: those live in shared mappers and use cases.
+   - Views only render state and send events.
+4. **Shared code emits meaning, platforms emit words.** Presentation models carry semantic values such as `EtaDisplay.Minutes(4)` with `lowConfidence = true`. Each platform turns them into localised text and accessibility labels (spec §5.7) with its own string resources.
 5. **Time:** never use `Clock.System.now()`, `Date()` or `System.currentTimeMillis()` for business logic. Use `AppClock.now()`, which is corrected by the server offset (spec §8.6). Store `kotlin.time.Instant` in UTC and always display `Europe/Madrid`, whatever the device time zone is.
 6. **Money** is `Int` euro cents. Format it only at the UI edge, with the device locale.
 7. **Polling** goes through `PollingEngine` only, subscribed by visible screens. Polling stops in the background and uses remote-config intervals with a 10 s floor. Never add an ad-hoc timer loop.
-8. **Offline-first:** lines, stops, shapes, fares and recharge points are read from SQLDelight, seeded from `seed/` on first launch, and replaced atomically by background sync. Screens never wait on the network for static data.
+8. **Cache-backed static data, no offline mode in the MVP (ADR-0008):**
+   - Lines, stops and shapes are downloaded on first use, cached in SQLDelight and replaced atomically by background sync.
+   - Without data and without network, a screen shows the error state with Retry.
+   - Offline mode (seed bundle, offline banner, cached arrivals) is v1.0 scope: do not build it in the MVP.
 9. **Lenient networking:** decode collections item by item, and drop and log bad items. Accept any 2xx (POSTs return `201`). Treat a non-2xx status, a non-JSON body or a missing envelope key as a recoverable error for that resource only (NFR-REL-02).
 10. **Data-driven, not hard-coded:** the line catalogue, colours, name overrides, night-service text, fare-tier texts, polling intervals and kill switches come from the API or from remote config (spec §8.9). There is no line 8, and the code must not assume a fixed set of lines.
-11. **Errors:** repositories return `AppResult` with a typed `AppError` (`Network`, `Server`, `Data`, `NotFound`). ViewModels map errors to the standard UX states of spec §7.3.
-12. **DI** uses Koin. The graph is assembled in `:shared:umbrella`. Swift obtains ViewModels through the `ViewModels` factory object, never through Koin directly.
+11. **Errors:** repositories return `AppResult` with a typed `AppError` (`Network`, `Server`, `Data`, `NotFound`). The shared mappers turn errors into the standard UX states of spec §7.3.
+12. **DI** uses Koin. The graph is assembled in `:shared:umbrella`. Android ViewModels get use cases through Koin. Swift gets them from the `SharedDependencies` factory object, never through Koin directly.
+13. **Telemetry only through contracts (ADR-0009).** Use `AnalyticsTracker` (typed `AnalyticsEvent`) and `CrashReporter` from `:shared:core:telemetry`. Never reference a vendor SDK (Firebase or any other) outside the platform implementation classes.
 
 ## 6. Data rules that bite
 
@@ -139,25 +179,32 @@ Full guidance is in `docs/design_guidelines.md`.
 - Use system components first: `TabView` with `Tab`, `NavigationStack`, `.searchable`, `.sheet` with detents, and toolbars. They adopt Liquid Glass automatically on iOS 26 and later.
 - Put glass only on the floating control layer: map buttons, chips floating over the map and sheet chrome. Never put it on content such as list rows, ETA rows, line badges or cards. Group neighbouring glass controls in a `GlassEffectContainer`.
 - Use the `DesignSystem/` helpers (`adaptiveGlass`, glass button styles) so iOS 18–25 fall back to materials (ADR-0003). Don't call `.glassEffect` directly in feature code.
-- Views observe shared ViewModels only through the `@Observable` wrappers in `iosApp/Bridge/` (ADR-0004).
+- Each screen has a Swift `@MainActor @Observable` `XViewModel` in its `Feature<X>` target. It consumes shared use cases through SKIE (`for await` inside `.task {}`) and builds the shared `UiState` with the shared mappers (ADR-0007).
+- The MVP is iPhone-only: no iPad layouts or device family (NFR-PLAT-03).
 
 **Both platforms:**
-- Every data-driven screen implements the states of spec §7.3: loading, fresh, stale, expired, refreshing, empty, offline, error and partial.
+- Every data-driven screen implements the states of spec §7.3: loading, fresh, stale, expired, refreshing, empty, error and partial. The offline state comes in v1.0 (ADR-0008).
 - Accessibility (NFR-A11Y): spoken labels for ETAs and line badges, 200 % font scale without truncation, touch targets of at least 48 dp or 44 pt, a list equivalent for every map task, and live updates that never steal focus.
 - Strings: Spanish (es-ES) is the default and English ships in v1. No hard-coded UI text. Line and stop names are shown as delivered (after overrides) and never translated.
 
 ## 8. Coding conventions
 
-- **Language:** code, comments, commits and docs are in English. UI copy is in es and en.
+- **Language:** follow the language policy at the top of this file. In short, everything in the repository is in technical English, and UI copy ships in es-ES and en.
 - **Kotlin:** official code style, clean under ktlint and detekt. In shared modules everything is `internal` unless Swift or another module needs it. Inject dispatchers; never use `GlobalScope`.
 - **Naming:** `*Dto` (network), `*Mapper` (data), `XRepository` interface in domain with `XRepositoryImpl` in data, use cases as verb phrases with `operator fun invoke` (`ObserveStopArrivals`), `<Screen>ViewModel` exposing `state: StateFlow<<Screen>UiState>` and `fun onEvent(event: <Screen>Event)`.
 - **Swift-facing API:** UI models use plain types (`Int`, `String`, `Long` ARGB colours) rather than domain value classes, so they export cleanly through SKIE.
-- **Swift:** Swift 6 toolchain, clean under SwiftLint, `@MainActor` for UI-facing types, small composable views. Feature folders mirror the three sections: `Features/Lines`, `Features/NearMe`, `Features/TripPlanner`.
+- **Swift:** Swift 6 toolchain, clean under SwiftLint, `@MainActor` for UI-facing types, small composable views. Feature targets mirror the shared feature modules: `FeatureLines`, `FeatureStops`, `FeatureNearMe`, `FeaturePlanner`, `FeatureSettings`.
 - **Comments** explain why, not what. When code implements a spec rule, cite its id, for example `// DD-05: VM next-stop times are local time labelled Z`.
 - **Tests:** name them `dd05_reinterpretsWallClockInMadrid_duringCest`, without backtick names containing spaces, because Kotlin/Native and older Android runtimes reject them.
 
 ## 9. Testing requirements
 
+- **TDD is mandatory, with one commit per phase** (`docs/testing_strategy.md` §7):
+  1. Red: code the failing test, then commit `test(scope): … [LB-xxx]`.
+  2. Green: code the minimum to pass, then commit `feat|fix(scope): … [LB-xxx]`.
+  3. Refactor: improve the code, then commit `refactor(scope): … [LB-xxx]`.
+  4. Push.
+  Tests covering acceptance criteria are named after the story (`lb205_…`).
 - Unit-test every mapper, normalisation rule, ETA display rule, direction inference and fare classification. `data` and `domain` need at least 80 % line coverage (NFR-MNT-01, measured with Kover).
 - Contract tests decode the golden payloads in `fixtures/`. **Unit and integration tests never call the live source.** Only the scheduled fixture-recording job and the nightly Maestro flows do.
 - Repository tests use Ktor `MockEngine` and an in-memory SQLDelight driver. Use Turbine for flows, and `runTest` with `TestAppClock` for time.
@@ -166,9 +213,12 @@ Full guidance is in `docs/design_guidelines.md`.
 
 ## 10. Agent workflow
 
+Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, `new-adr.md`, `record-fixtures.md` and `review-checklists.md`. In Claude Code they are available as `/start-story`, `/finish-story`, `/new-adr` and `/record-fixtures`, plus the reviewer subagents (`docs/agent_harness.md`).
+
 **Before coding:**
-1. Find the story in `docs/backlog.md`, or add one if the owner asks for something new, and read the spec sections it references.
-2. Check `docs/open_questions.md`. If the work depends on an open question, implement the documented fallback or ask.
+1. Make sure `scripts/bootstrap.sh` has been run in this clone, so the git hooks are installed. Agents without hooks run `scripts/agent/session-start.sh` themselves.
+2. Find the story in `docs/backlog.md`, or add one if the owner asks for something new. Read its criteria in `docs/acceptance_criteria.md` and the requirement ids it cites.
+3. Check `docs/open_questions.md`. If the work depends on an open question, implement the documented fallback or ask.
 
 **While coding:**
 - Work in small vertical slices with tests in the same change, and keep logic in shared code unless it is inherently platform-specific.
@@ -176,7 +226,7 @@ Full guidance is in `docs/design_guidelines.md`.
 - Be a polite client of the live source: no load tests, no polling faster than the configured intervals, and always send the `User-Agent` header.
 
 **After coding:**
-1. Run the relevant checks from §4 and report the actual results.
+1. Run `scripts/checks/run-all.sh` (plus any relevant command from §4) and report the actual results.
 2. Update the story status in `docs/backlog.md`.
 3. Add an entry to `docs/project_log.md` covering what changed, the decisions taken and the follow-ups.
 4. Update `README.md` and `README.es.md`. This is mandatory for every PR (§12).
@@ -215,4 +265,6 @@ A story is done when all of these hold (spec §10.6, plus the docs):
   - Also update every other section the PR affects (features, stack, structure, getting started).
   - The two files must stay equivalent. Never update only one language.
   - A PR without both updates is not ready to merge, even if it only touches docs.
+- **Nobody pushes to `main`.** Every change goes through a branch and a pull request that uses a template (`docs/engineering_workflow.md` §3.1), and is merged by the owner with a **merge commit**. There is no squash and no rebase, so the TDD commits are preserved (`docs/engineering_workflow.md` §5).
+- **CI does not run while the repository is private** (owner rule, `docs/ci_cd.md` §1). The local gates are authoritative: the git hooks plus `scripts/checks/run-all.sh`, whose summary must be pasted into the PR.
 - Agents commit or push only when asked.

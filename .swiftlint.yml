@@ -1,0 +1,59 @@
+# SwiftLint configuration for iosApp (see docs/code_style.md §3).
+
+included:
+  - iosApp
+
+excluded:
+  - iosApp/build
+  - iosApp/DerivedData
+  - "**/Generated"
+
+opt_in_rules:
+  - accessibility_label_for_image
+  - accessibility_trait_for_button
+  - closure_spacing
+  - empty_count
+  - explicit_init
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - modifier_order
+  - redundant_nil_coalescing
+  - sorted_imports
+  - toggle_bool
+  - vertical_whitespace_closing_braces
+
+force_cast: error
+force_try: error
+
+line_length:
+  warning: 120
+  error: 160
+
+function_body_length:
+  warning: 60
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 500
+
+identifier_name:
+  excluded:
+    - id
+    - x
+    - y
+
+custom_rules:
+  direct_glass_effect:
+    name: "Direct Liquid Glass API"
+    regex: '\.glassEffect\('
+    excluded: ".*/DesignSystem/.*"
+    message: "Use adaptiveGlass(in:) from DesignSystem instead of .glassEffect (ADR-0003)."
+    severity: error
+  direct_glass_button_style:
+    name: "Direct glass button style"
+    regex: '\.buttonStyle\(\s*\.glass(Prominent)?\s*\)'
+    excluded: ".*/DesignSystem/.*"
+    message: "Use AdaptiveGlassButtonStyle or AdaptiveGlassProminentButtonStyle from DesignSystem (ADR-0003)."
+    severity: error
