@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Active; tool configurations are completed in LB-001 |
+| Status | Active; ktlint, detekt and Kover are wired in LB-002 |
 | Last updated | 2026-10-22 |
-| Config files | `.editorconfig`, `.swiftlint.yml`, `config/detekt/detekt.yml` (LB-001) |
+| Config files | `.editorconfig`, `.swiftlint.yml`, `config/detekt/detekt.yml` (LB-002) |
 
 `AGENTS.md` §8 summarises the conventions. This document holds the detailed rules and the tool configuration. Formatting is automated wherever possible: a style rule that a tool can enforce must be enforced by the tool.
 
@@ -21,7 +21,7 @@
 ### 2.1 Tooling
 
 - **ktlint**, with the `ktlint_official` code style configured in `.editorconfig`. Run `./gradlew ktlintFormat` before committing; the Claude Code post-edit hook also formats edited files when ktlint is installed.
-- **detekt**, with `config/detekt/detekt.yml` (created in LB-001) on top of the default rules. Project-specific rules:
+- **detekt**, with `config/detekt/detekt.yml` (created in LB-002) on top of the default rules. Project-specific rules:
 
 | Rule | Configuration | Why |
 | --- | --- | --- |

@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-22):** documentation and agent/CI harness only. No Gradle or Xcode project exists yet. The repository stays private for now and becomes public before the MVP is completed; `main` is protected on GitHub from that point (`docs/ci_cd.md` §1). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-22):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is in review; the Android app (part 2) and the iOS app (part 3) follow. The repository stays private for now and becomes public before the MVP is completed; `main` is protected on GitHub from that point (`docs/ci_cd.md` §1). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -93,14 +93,17 @@ Identifiers (OQ-14): Android `applicationId` and iOS bundle id are `com.ruizurra
 
 ## 4. Toolchain and commands
 
-Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (ADR-0003). Kotlin, AGP, Compose and every library version live only in `gradle/libs.versions.toml`.
+Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (ADR-0003). Kotlin (2.4.20), AGP (9.3.3), Compose and every library version live only in `gradle/libs.versions.toml`; the Gradle version (9.7.1) lives in the wrapper. If `ANDROID_HOME` is not set, create a git-ignored `local.properties` with `sdk.dir=…`.
 
 These commands work today:
 
 ```bash
 scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools
-scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell; Gradle and SwiftLint once they exist)
+scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell, Gradle check; SwiftLint once iosApp exists)
 scripts/agent/session-start.sh                    # session context, for agents without hooks
+./gradlew ciUnitTest                              # JVM unit tests: build-logic rules, shared modules, architecture rules
+./gradlew :tools:architecture-tests:test          # module layout and package boundaries (Konsist)
+./gradlew check                                   # every verification task (lint and coverage join in LB-002)
 ```
 
 The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
@@ -128,7 +131,10 @@ Report the real output of the checks you ran. If you could not run something, fo
 Details live in `docs/architecture.md`. These rules are not negotiable without an ADR.
 
 1. **Clean architecture and feature modules (ADR-0007):**
-   - Dependencies point inwards: platform presentation → shared feature (use cases and presentation models) → domain modules ← data modules. `:shared:core:*` is available to all.
+   - Dependencies point inwards: platform presentation → shared feature (use cases and presentation models) → domain modules ← data modules. `:shared:core:*` is available to all, except that domain modules may use only `:shared:core:common`.
+   - Production code never depends on `:shared:core:testing`, which may itself use core and domain modules for fakes and builders.
+   - Ktor belongs to `:shared:core:network` and SQLDelight to `:shared:core:database`; data modules and the `data` packages of features may also use them.
+   - `ModuleRules` in build-logic enforces these rules when a dependency is declared. `:tools:architecture-tests` enforces the package rules.
    - Domain modules never depend on Ktor, SQLDelight, data modules or platform APIs.
    - **Feature modules never depend on other feature modules**, on either platform. Cross-feature navigation goes through the app shell.
 2. **DTOs stop at the data layer.** Mappers in the data modules (`:shared:transit:data`, and planner's `data` package) turn DTOs into domain entities (spec §5.1) and fix every source quirk exactly once (spec §5.3 and §5.4, `docs/api_spec.md`).
@@ -258,7 +264,7 @@ A story is done when all of these hold (spec §10.6, plus the docs):
 
 ## 12. Git and pull request conventions
 
-- Use Conventional Commits with the story id, for example `feat(near-me): stop sheet arrivals [LB-205]`. Scopes: `lines`, `near-me`, `planner`, `shared`, `data`, `network`, `db`, `android`, `ios`, `design`, `docs`, `build`, `ci`.
+- Use Conventional Commits with the story id, for example `feat(near-me): stop sheet arrivals [LB-205]`. Scopes: `lines`, `near-me`, `planner`, `shared`, `data`, `network`, `db`, `android`, `ios`, `design`, `docs`, `backlog`, `build`, `build-logic`, `architecture`, `harness`, `ci`.
 - Branch names follow `feat/LB-205-stop-sheet` or `fix/LB-xxx-short-name`, one story per branch.
 - **README rule (mandatory):** every merged PR must leave `README.md` (English) and `README.es.md` (Spanish) up to date. The README changes therefore go inside the PR itself, before it is merged:
   - At minimum, add an entry under "Recent changes" / "Cambios recientes" and refresh "Project status" / "Estado del proyecto".
