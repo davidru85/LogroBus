@@ -8,7 +8,7 @@ LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logro�
 
 ## Funcionalidades (MVP)
 
-La app se organiza en tres secciones y siempre se abre en **Líneas**.
+La app se organiza en tres secciones y siempre se abre en **Líneas**. Funciona en móviles Android y en iPhone (sin iPad en el MVP).
 
 | Sección | Qué hace |
 | --- | --- |
@@ -18,34 +18,41 @@ La app se organiza en tres secciones y siempre se abre en **Líneas**.
 
 Además, la app incluye:
 - Llegadas en tiempo real que indican claramente lo recientes y fiables que son las predicciones.
-- La red se puede consultar sin conexión.
 - Español e inglés.
 
-Previsto para la v1.0: noticias y avisos de servicio, tarifas, puntos de recarga, un widget para la pantalla de inicio y notificaciones.
+Previsto para la v1.0: modo sin conexión, noticias y avisos de servicio, tarifas, puntos de recarga, un widget para la pantalla de inicio y notificaciones.
 
 ## Tecnología
 
 | Área | Tecnología |
 | --- | --- |
-| Núcleo compartido | Kotlin Multiplatform: dominio, datos, red (Ktor), persistencia (SQLDelight) y ViewModels compartidos |
+| Arquitectura | Arquitectura limpia, organizada en módulos por funcionalidad; la capa de presentación (ViewModels e interfaz) se escribe para cada plataforma y los modelos de presentación son compartidos |
+| Código compartido | Kotlin Multiplatform: dominio, datos, red (Ktor), persistencia (SQLDelight) y modelos de presentación |
 | Android | Kotlin, Jetpack Compose, Material 3 Expressive. Mínimo Android 8.0 (API 26) |
-| iOS | Swift, SwiftUI, Liquid Glass en iOS 26 o superior. Mínimo iOS 18 |
+| iOS | Swift, SwiftUI, Liquid Glass en iOS 26 o superior. Mínimo iOS 18, solo iPhone |
 | Mapas | MapLibre Native en ambas plataformas |
 
 ## Estructura del repositorio
 
 ```
-AGENTS.md, CLAUDE.md                  Instrucciones para agentes de IA y colaboradores
+AGENTS.md                             Normas para agentes de IA y colaboradores (referencia única)
+CLAUDE.md, GEMINI.md                  Punteros a AGENTS.md para agentes de IA concretos
 README.md, README.es.md               Este archivo (inglés, español)
-docs/                                 Arquitectura, contrato de la API, guía de diseño, backlog, decisiones
+docs/                                 Requisitos, arquitectura, contrato de la API, diseño, guías, backlog, decisiones
+docs/playbooks/                       Procedimientos paso a paso para personas y agentes de IA
+scripts/                              Arranque, comprobaciones de calidad y hooks de los agentes
+.githooks/                            Hooks de git (los instala scripts/bootstrap.sh)
+.claude/, .github/                    Configuración de Claude Code; plantillas de pull request y workflows de CI
 logrono-bus-app-functional-spec.md    Especificación funcional v0.1
 ```
 
-Los módulos `shared/`, `androidApp/` e `iosApp/` llegarán en el hito M0. Su estructura prevista se describe en [docs/architecture.md](docs/architecture.md).
+Los módulos `shared/`, `android/` e `iosApp/` llegarán en el hito M0. Su estructura prevista se describe en [docs/architecture.md](docs/architecture.md).
 
 ## Primeros pasos
 
-Todavía no hay código que compilar. Cuando se cree el proyecto (historia LB-001), esta sección explicará cómo compilar y ejecutar las dos apps. Necesitarás:
+Todavía no hay código de la app que compilar. Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: instala los hooks de git y avisa de las herramientas que falten. `scripts/checks/run-all.sh` ejecuta todas las comprobaciones de calidad.
+
+Cuando se cree el proyecto (historia LB-001), esta sección explicará cómo compilar y ejecutar las dos apps. Necesitarás:
 
 - JDK 21.
 - La última versión estable de Android Studio con el plugin de Kotlin Multiplatform.
@@ -59,6 +66,10 @@ La documentación técnica está en inglés.
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Normas de trabajo para agentes de IA y colaboradores |
 | [Especificación funcional](logrono-bus-app-functional-spec.md) | Alcance, fuentes de datos, requisitos |
+| [docs/requirements.md](docs/requirements.md) | Alcance del MVP y requisitos añadidos después de la especificación |
+| [docs/engineering_workflow.md](docs/engineering_workflow.md) | Ramas, commits, pull requests y revisión |
+| [docs/testing_strategy.md](docs/testing_strategy.md) | Pruebas y TDD |
+| [docs/ci_cd.md](docs/ci_cd.md) | Integración y entrega continuas |
 | [docs/architecture.md](docs/architecture.md) | Módulos, capas, flujo de datos, integración con cada plataforma |
 | [docs/api_spec.md](docs/api_spec.md) | Contrato de la API de autobuses y del geocodificador |
 | [docs/design_guidelines.md](docs/design_guidelines.md) | Las tres secciones, Material 3 Expressive y Liquid Glass |
@@ -73,8 +84,8 @@ La documentación técnica está en inglés.
 | M1 Líneas | Sección Líneas | Sin empezar |
 | M2 Cerca de mí | Sección Cerca de mí | Sin empezar |
 | M3 Cómo llegar | Planificador de viajes | Sin empezar |
-| M4 Consolidación del MVP | Modo sin conexión, ajustes, accesibilidad, traducciones | Sin empezar |
-| M5 v1.0 | Noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
+| M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, repositorio público, declaraciones de privacidad | Sin empezar |
+| M5 v1.0 | Modo sin conexión, noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
 
 ### Cambios recientes
 
@@ -82,10 +93,22 @@ La documentación técnica está en inglés.
   - Creada la documentación del proyecto.
   - Decidido: iOS 18 como mínimo, identificador `com.ruizurraca.logrobus`, Líneas como pestaña inicial y paradas guardadas en Cerca de mí.
   - Creado el repositorio privado en GitHub.
+  - Política de idiomas: el proyecto se escribe en inglés técnico, y las conversaciones con los agentes de IA, en español de España.
+  - Definido antes de crear el proyecto:
+    - Requisitos y criterios de aceptación del MVP.
+    - Guías de ingeniería: TDD, pull requests, CI/CD, publicación, seguridad y estilo de código.
+    - Un harness común para todos los agentes de IA: normas, procedimientos, comprobaciones de calidad y hooks de git.
+  - Decidido:
+    - El modo sin conexión pasa a la v1.0 y el MVP no tendrá iPad.
+    - TDD con un commit por fase (rojo, verde, refactorización).
+    - Arquitectura limpia con módulos por funcionalidad.
+    - Contratos de telemetría, con el proveedor aún por decidir.
+    - Diseños de Figma y declaraciones de privacidad al final del MVP.
+    - El repositorio será público, con `main` protegida, antes de completar el MVP.
 
 ## Cómo contribuir
 
-Lee [AGENTS.md](AGENTS.md) antes de empezar. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
+Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. Mientras el repositorio sea privado, la CI no se ejecuta: ejecuta `scripts/checks/run-all.sh` y pega su resumen en la pull request. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
 
 ## Datos y aviso legal
 

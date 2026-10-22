@@ -40,3 +40,6 @@ iosApp/Pods/
 # Secrets and local config
 *.env
 secrets.properties
+
+# Claude Code personal overrides
+.claude/settings.local.json

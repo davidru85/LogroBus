@@ -1,0 +1,89 @@
+# Policy checks: one atomic job per gate, each mirroring a local script
+# (docs/ci_cd.md §2–3).
+#
+# Owner rule: CI runs only while the repository is public. While it is
+# private, every job is skipped and the local gates (git hooks and
+# scripts/checks/run-all.sh) are authoritative (docs/ci_cd.md §1).
+name: Policy checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: policy-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: PR title
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+      - name: Conventional Commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: scripts/checks/check-conventional-title.sh "$PR_TITLE"
+
+  readme-parity:
+    name: README parity
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Both READMEs updated with matching structure
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: scripts/checks/check-readme-parity.sh "origin/$BASE_REF"
+
+  frozen-spec:
+    name: Frozen spec
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Spec changes come with an ADR
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: scripts/checks/check-spec-frozen.sh "origin/$BASE_REF"
+
+  doc-links:
+    name: Doc links
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+      - name: Relative Markdown links resolve
+        run: scripts/checks/check-doc-links.sh
+
+  secrets:
+    name: Secrets scan
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+      - name: No signing material or credentials
+        run: scripts/checks/check-secrets.sh --all
+
+  shellcheck:
+    name: Shell scripts
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v5
+      - name: shellcheck
+        run: shellcheck scripts/*.sh scripts/checks/*.sh scripts/agent/*.sh scripts/github/*.sh .githooks/*

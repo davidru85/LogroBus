@@ -34,7 +34,7 @@ The source API is undocumented, unversioned and owned by a third party. It sends
 | API-03 | `GET /api/vehicleMonitoring/all` | Near Me "Buses" layer | 10 s while visible | Memory | MVP (P1) |
 | API-04 | `GET /api/vehicleMonitoring/byLine/{lineId}` | Line detail map | 10 s while visible | Memory | MVP |
 | API-05 | `GET /api/estimatedTimetable/byLine/{lineId}?previewMinutes=30` | Line detail stop list | 20 s while visible | Memory | MVP |
-| API-06 | `GET /api/estimatedTimetable/byStop/{stopId}?lines={csv}&previewMinutes=60` | Stop sheet, saved stops, planner overlay | 20 s while visible | Memory + snapshot for saved stops | MVP |
+| API-06 | `GET /api/estimatedTimetable/byStop/{stopId}?lines={csv}&previewMinutes=60` | Stop sheet, saved stops, planner overlay | 20 s while visible | Memory (saved-stop snapshots are v1.0) | MVP |
 | API-07 | `POST /api/transit/route` | How to Get There | On demand | Memory | MVP |
 | API-08 | `POST /api/transit/walk-distances` | Near Me nearby list | When the location moves more than 50 m | Memory | MVP |
 | API-09 | `POST /otp/routers/default/index/graphql` | Optional walking previews | On demand | none | Optional |
@@ -344,7 +344,7 @@ The pipeline order is spec §5.4. Each rule has a home and a test prefix.
 
 | Condition | `AppError` | UI (spec §7.3) |
 | --- | --- | --- |
-| No connectivity, DNS failure, timeout | `Network` | Offline banner with cached content, or an offline empty state |
+| No connectivity, DNS failure, timeout | `Network` | Error state with reason "network" and Retry; previous data is kept if present. The offline banner is v1.0 (ADR-0008) |
 | Non-2xx | `Server(status)` | Error state, reason "server", Retry |
 | Non-JSON body, missing envelope, undecodable root | `Data` | Error state, reason "data", Retry; counted in the `DataQualityReport` |
 | Items dropped during decoding or validation | none (partial) | Content shown silently; counted in analytics |
