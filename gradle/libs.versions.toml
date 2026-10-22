@@ -13,6 +13,7 @@ konsist = "0.18.1"
 android-compileSdk = "37"
 android-minSdk = "26"
 jvm-toolchain = "21"
+android-jvmTarget = "17"
 
 [libraries]
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
