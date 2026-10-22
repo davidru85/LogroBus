@@ -97,6 +97,7 @@ La documentación técnica está en inglés.
     - Los 19 módulos compartidos.
     - Comprobación automática de las reglas de dependencias entre módulos y de la arquitectura.
     - Una revisión independiente encontró 16 problemas; todos están resueltos, con reglas más estrictas y tests para las propias reglas.
+  - CI: `actions/checkout` actualizado de la v5 a la v7 (Dependabot, PR #2).
   - Creada la documentación del proyecto.
   - Decidido: iOS 18 como mínimo, identificador `com.ruizurraca.logrobus`, Líneas como pestaña inicial y paradas guardadas en Cerca de mí.
   - Creado el repositorio privado en GitHub.
