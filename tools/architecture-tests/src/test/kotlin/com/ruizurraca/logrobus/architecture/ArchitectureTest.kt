@@ -62,7 +62,9 @@ class ArchitectureTest {
         val offenders = root.walkTopDown()
             .onEnter { it.name !in ignoredDirectories }
             .filter { it.isFile && (it.name.endsWith(".gradle.kts") || it.isBuildLogicSource()) }
-            .flatMap { file -> ArchitectureRules.versionLiterals(file.readText()).map { "${file.relativePath()}: $it" } }
+            .flatMap { file ->
+                ArchitectureRules.versionLiterals(file.readText()).map { "${file.relativePath()}: $it" }
+            }
             .toList()
         assertEquals(emptyList<String>(), offenders)
     }

@@ -17,7 +17,7 @@ tasks.test {
     useJUnitPlatform()
     // Konsist and the file-system checks read the whole repository, so declare it as input.
     inputs.files(
-        rootProject.fileTree(".") {
+        fileTree(isolated.rootProject.projectDirectory) {
             include("**/*.kt", "**/*.gradle.kts")
             exclude("**/build/**", ".gradle/**", ".kotlin/**", "build-logic/.gradle/**")
         },
