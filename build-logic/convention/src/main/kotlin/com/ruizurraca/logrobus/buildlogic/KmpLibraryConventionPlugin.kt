@@ -63,8 +63,13 @@ private fun Project.verifyModuleRules() {
                 !name.contains("Test")
         }
         .flatMap { it.dependencies }
-    val projectPaths = productionDependencies.filterIsInstance<ProjectDependency>().map { it.path }.filter { it != path }
-    val external = productionDependencies.filterIsInstance<ExternalModuleDependency>().map { "${it.group}:${it.name}" }
+    val projectPaths = productionDependencies
+        .filterIsInstance<ProjectDependency>()
+        .map { it.path }
+        .filter { it != path }
+    val external = productionDependencies
+        .filterIsInstance<ExternalModuleDependency>()
+        .map { "${it.group}:${it.name}" }
     val violations = ModuleRules.violations(path, projectPaths.distinct(), external.distinct())
     if (violations.isNotEmpty()) {
         throw GradleException("Module dependency rules violated:\n" + violations.joinToString("\n") { " - $it" })

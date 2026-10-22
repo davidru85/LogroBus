@@ -52,7 +52,11 @@ class ModuleRulesTest {
     fun lb001_domainMayNotUseKtorOrSqlDelight() {
         val found = violations(
             ":shared:transit:domain",
-            external = listOf("io.ktor:ktor-client-core", "app.cash.sqldelight:runtime", "org.jetbrains.kotlinx:kotlinx-datetime"),
+            external = listOf(
+                "io.ktor:ktor-client-core",
+                "app.cash.sqldelight:runtime",
+                "org.jetbrains.kotlinx:kotlinx-datetime",
+            ),
         )
         assertEquals(2, found.size)
     }
@@ -61,7 +65,12 @@ class ModuleRulesTest {
     fun lb001_dataMayDependOnItsOwnDomainAndCore() {
         assertEquals(
             emptyList<String>(),
-            violations(":shared:transit:data", ":shared:transit:domain", ":shared:core:network", ":shared:core:database"),
+            violations(
+                ":shared:transit:data",
+                ":shared:transit:domain",
+                ":shared:core:network",
+                ":shared:core:database",
+            ),
         )
     }
 
