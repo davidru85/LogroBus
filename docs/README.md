@@ -4,6 +4,7 @@ Living project documentation. Start with [`../AGENTS.md`](../AGENTS.md) for the 
 
 | Document | Purpose |
 | --- | --- |
+| [`../README.md`](../README.md), [`../README.es.md`](../README.es.md) | Project overview in English and Spanish, updated in every PR |
 | [`../logrono-bus-app-functional-spec.md`](../logrono-bus-app-functional-spec.md) | Baseline functional specification v0.1: scope, API capture, domain model, requirements. Frozen; deviations are recorded in ADRs |
 | [`architecture.md`](architecture.md) | KMP module layout, layers, data flow, polling and sync, Android and iOS integration |
 | [`api_spec.md`](api_spec.md) | Client contract for every remote call: source BFF endpoints, DTOs, normalisation, geocoder, remote config, fixtures |

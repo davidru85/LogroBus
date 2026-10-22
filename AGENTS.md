@@ -26,6 +26,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 | Document | Contains | Update it when |
 | --- | --- | --- |
+| `README.md`, `README.es.md` | Project overview for humans, in English and Spanish: features, stack, setup, status, recent changes | **In every PR, in both languages (mandatory, §12)** |
 | `logrono-bus-app-functional-spec.md` | Baseline requirements v0.1 with `FR-`, `NFR-`, `DD-`, `API-`, `OQ-` ids | Never edit silently; record deviations in an ADR |
 | `docs/README.md` | Index of all docs and id conventions | You add or rename a doc |
 | `docs/architecture.md` | Modules, layers, data flow, platform integration | Structure or a cross-cutting pattern changes |
@@ -45,6 +46,7 @@ When documents disagree, this order wins: the project owner's explicit instructi
 ```
 LogroBus/
 ├── AGENTS.md, CLAUDE.md
+├── README.md, README.es.md  # project overview, English and Spanish (kept in sync)
 ├── logrono-bus-app-functional-spec.md
 ├── docs/                    # living docs and ADRs
 ├── gradle/libs.versions.toml  # the only place versions are declared
@@ -177,7 +179,8 @@ Full guidance is in `docs/design_guidelines.md`.
 1. Run the relevant checks from §4 and report the actual results.
 2. Update the story status in `docs/backlog.md`.
 3. Add an entry to `docs/project_log.md` covering what changed, the decisions taken and the follow-ups.
-4. Update `api_spec.md`, `architecture.md`, `design_guidelines.md`, an ADR or this file if what you learned changes them.
+4. Update `README.md` and `README.es.md`. This is mandatory for every PR (§12).
+5. Update `api_spec.md`, `architecture.md`, `design_guidelines.md`, an ADR or this file if what you learned changes them.
 
 **Ask the project owner before:** changing scope or navigation, superseding an ADR, adding analytics or third-party SDKs, anything that touches legal matters (data reuse, tile licensing, attribution), or changing app identifiers.
 
@@ -201,9 +204,15 @@ A story is done when all of these hold (spec §10.6, plus the docs):
 - Analytics events are wired, consent-gated and verified in the debug view.
 - ktlint, detekt and SwiftLint report no new findings, and the tests are green.
 - The backlog status and project log are updated.
+- `README.md` and `README.es.md` are updated and say the same thing (§12).
 
-## 12. Git conventions
+## 12. Git and pull request conventions
 
 - Use Conventional Commits with the story id, for example `feat(near-me): stop sheet arrivals [LB-205]`. Scopes: `lines`, `near-me`, `planner`, `shared`, `data`, `network`, `db`, `android`, `ios`, `design`, `docs`, `build`, `ci`.
 - Branch names follow `feat/LB-205-stop-sheet` or `fix/LB-xxx-short-name`, one story per branch.
+- **README rule (mandatory):** every merged PR must leave `README.md` (English) and `README.es.md` (Spanish) up to date. The README changes therefore go inside the PR itself, before it is merged:
+  - At minimum, add an entry under "Recent changes" / "Cambios recientes" and refresh "Project status" / "Estado del proyecto".
+  - Also update every other section the PR affects (features, stack, structure, getting started).
+  - The two files must stay equivalent. Never update only one language.
+  - A PR without both updates is not ready to merge, even if it only touches docs.
 - Agents commit or push only when asked.
