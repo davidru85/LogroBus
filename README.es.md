@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** fase de planificación y documentación. Todavía no hay código de la app; el siguiente hito es M0, «Cimientos». Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle y los 19 módulos compartidos de Kotlin Multiplatform; después llegarán las apps de Android e iOS (LB-001). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -50,9 +50,11 @@ Los módulos `shared/`, `android/` e `iosApp/` llegarán en el hito M0. Su estru
 
 ## Primeros pasos
 
-Todavía no hay código de la app que compilar. Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: instala los hooks de git y avisa de las herramientas que falten. `scripts/checks/run-all.sh` ejecuta todas las comprobaciones de calidad.
+Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: instala los hooks de git y avisa de las herramientas que falten. `scripts/checks/run-all.sh` ejecuta todas las comprobaciones de calidad.
 
-Cuando se cree el proyecto (historia LB-001), esta sección explicará cómo compilar y ejecutar las dos apps. Necesitarás:
+Los módulos compartidos ya compilan: `./gradlew ciUnitTest` ejecuta los tests unitarios y las reglas de arquitectura. Si `ANDROID_HOME` no está definido, crea un archivo `local.properties` con `sdk.dir=<ruta a tu Android SDK>`; Git lo ignora.
+
+Cuando lleguen las apps de Android e iOS (el resto de la historia LB-001), esta sección explicará cómo ejecutarlas. Necesitarás:
 
 - JDK 21.
 - La última versión estable de Android Studio con el plugin de Kotlin Multiplatform.
@@ -80,7 +82,7 @@ La documentación técnica está en inglés.
 
 | Hito | Alcance | Estado |
 | --- | --- | --- |
-| M0 Cimientos | Esqueleto del proyecto, capa de datos, integración continua | Sin empezar |
+| M0 Cimientos | Esqueleto del proyecto, capa de datos, integración continua | En curso |
 | M1 Líneas | Sección Líneas | Sin empezar |
 | M2 Cerca de mí | Sección Cerca de mí | Sin empezar |
 | M3 Cómo llegar | Planificador de viajes | Sin empezar |
@@ -90,6 +92,10 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **22-10-2026:**
+  - Empezada LB-001, parte 1 de 3:
+    - Compilación con Gradle: Kotlin 2.4.20, Android Gradle Plugin 9.3.3, Gradle 9.7.1.
+    - Los 19 módulos compartidos.
+    - Comprobación automática de las reglas de dependencias entre módulos y de la arquitectura.
   - Creada la documentación del proyecto.
   - Decidido: iOS 18 como mínimo, identificador `com.ruizurraca.logrobus`, Líneas como pestaña inicial y paradas guardadas en Cerca de mí.
   - Creado el repositorio privado en GitHub.

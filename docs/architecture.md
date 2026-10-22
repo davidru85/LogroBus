@@ -126,11 +126,11 @@ flowchart TB
 | `:shared:transit:data`, `:shared:favourites:data` | Their own domain module and `:shared:core:*` | Feature modules |
 | `:shared:feature:<x>` | Domain modules, `:shared:core:*` (planner's own data package may use `:shared:core:network`) | **Other feature modules**, data modules (bound through DI) |
 | `:shared:umbrella` | Everything shared | Platform code |
-| `:android:feature:<x>` | `:shared:feature:<x>`, `:android:core:*` | Other Android feature modules |
+| `:android:feature:<x>` | `:shared:feature:<x>`, domain modules, `:shared:core:*`, `:android:core:*` | Other Android or shared feature modules, data modules |
 | `:android:app` | Everything Android, `:shared:umbrella` | none |
 | iOS `Feature<X>` | `Shared` (XCFramework), `DesignSystem`, `MapUI` | Other `Feature*` targets |
 
-Gradle module boundaries enforce the rules between modules. Konsist tests in `:tools:architecture-tests` enforce the package layering inside shared feature modules (`domain`, `data`, `presentation`) and forbid imports across features.
+`ModuleRules` (build-logic) enforces the rules between modules: every shared module fails configuration on a forbidden dependency. Konsist tests in `:tools:architecture-tests` enforce the package layering inside shared feature modules (`domain`, `data`, `presentation`) and forbid imports across features.
 
 ## 4. Shared layers
 

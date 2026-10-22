@@ -93,7 +93,7 @@ Identifiers (OQ-14): Android `applicationId` and iOS bundle id are `com.ruizurra
 
 ## 4. Toolchain and commands
 
-Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (ADR-0003). Kotlin, AGP, Compose and every library version live only in `gradle/libs.versions.toml`.
+Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatform plugin, Xcode 26 or later (the Liquid Glass APIs need the iOS 26 SDK), Android `minSdk` 26, iOS deployment target 18.0 (ADR-0003). Kotlin (2.4.20), AGP (9.3.3), Compose and every library version live only in `gradle/libs.versions.toml`; the Gradle version (9.7.1) lives in the wrapper. If `ANDROID_HOME` is not set, create a git-ignored `local.properties` with `sdk.dir=…`.
 
 These commands work today:
 
@@ -101,6 +101,9 @@ These commands work today:
 scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools
 scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell; Gradle and SwiftLint once they exist)
 scripts/agent/session-start.sh                    # session context, for agents without hooks
+./gradlew ciUnitTest                              # JVM unit tests: build-logic rules, shared modules, architecture rules
+./gradlew :tools:architecture-tests:test          # module layout and package boundaries (Konsist)
+./gradlew check                                   # every verification task (lint and coverage join in LB-002)
 ```
 
 The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
