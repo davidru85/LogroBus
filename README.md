@@ -88,6 +88,7 @@ Once the project is scaffolded (story LB-001), this section will explain how to 
 ### Recent changes
 
 - **2026-10-22:**
+  - CI: `actions/checkout` updated from v5 to v7 (Dependabot, PR #2).
   - Project documentation created.
   - Decided: iOS 18 minimum, identifier `com.ruizurraca.logrobus`, Lines as the launch tab, saved stops in Near Me.
   - Private GitHub repository created.
