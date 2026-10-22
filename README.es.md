@@ -86,11 +86,16 @@ La documentación técnica está en inglés.
 | M1 Líneas | Sección Líneas | Sin empezar |
 | M2 Cerca de mí | Sección Cerca de mí | Sin empezar |
 | M3 Cómo llegar | Planificador de viajes | Sin empezar |
-| M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, repositorio público, declaraciones de privacidad | Sin empezar |
+| M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | Sin empezar |
 | M5 v1.0 | Modo sin conexión, noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
 
 ### Cambios recientes
 
+- **23-10-2026:**
+  - El repositorio ya es público (LB-415):
+    - La CI ejecuta las comprobaciones de políticas en cada pull request, y `main` está protegida en GitHub.
+    - Activados el escaneo de secretos y la protección de push de GitHub.
+    - Decidida la licencia: no se concede ninguna, así que todos los derechos están reservados.
 - **22-10-2026:**
   - Empezada LB-001, parte 1 de 3:
     - Compilación con Gradle: Kotlin 2.4.20, Android Gradle Plugin 9.3.3, Gradle 9.7.1.
@@ -116,7 +121,7 @@ La documentación técnica está en inglés.
 
 ## Cómo contribuir
 
-Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. Mientras el repositorio sea privado, la CI no se ejecuta: ejecuta `scripts/checks/run-all.sh` y pega su resumen en la pull request. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
+Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: también cubre las comprobaciones de Gradle, que se incorporarán más adelante a la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
 
 ## Datos y aviso legal
 
@@ -130,4 +135,4 @@ Las condiciones de reutilización de los datos están pendientes de confirmar co
 
 ## Licencia
 
-Todavía no se ha elegido licencia, así que todos los derechos están reservados.
+El código fuente se puede leer públicamente, pero no se concede ninguna licencia: todos los derechos reservados. No puedes copiarlo, modificarlo ni redistribuirlo sin permiso del autor.

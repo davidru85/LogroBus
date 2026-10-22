@@ -21,7 +21,7 @@
 - [ ] TDD was followed (§7): the PR shows red, green and refactor commits per cycle; new behaviour has tests that are named after the story or DD rule and that cover each acceptance criterion. Bug fixes include a regression test.
 - [ ] Module boundaries hold (ADR-0007): no feature depends on another feature; domain modules are free of data, network, database and platform dependencies.
 - [ ] Telemetry goes only through the shared contracts (ADR-0009). No offline-mode work in the MVP (ADR-0008).
-- [ ] The PR description contains the real `scripts/checks/run-all.sh` summary, which is the required evidence while CI is inactive.
+- [ ] The PR description contains the real `scripts/checks/run-all.sh` summary, the evidence for every check that CI does not run yet, and the required CI checks are green.
 - [ ] The docs are updated: backlog, project log, **both READMEs with equivalent content**, and any affected doc or ADR.
 - [ ] No secrets, keystores or `local.properties` are included. No new dependency without a justification and an allowed licence.
 - [ ] The code follows [`code_style.md`](../code_style.md), with no new lint findings.

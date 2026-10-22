@@ -16,7 +16,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | M1 Lines | Lines section complete | E1 | Lines list, favourites carousel, search and line detail with live buses on both platforms |
 | M2 Near Me | Near Me section complete | E2 | Map, sheet, saved and nearby stops, stop detail with live arrivals; G1 met on test devices |
 | M3 How to Get There | Trip planner complete | E3 | Plan from a location or address to any point; itinerary detail |
-| M4 MVP hardening | Internal alpha, closed beta, MVP completion | E4 | Error handling, settings, accessibility, i18n and performance NFRs met; Maestro journeys green; Figma designs applied; repository public with `main` protected; privacy declarations ready, as the final MVP step |
+| M4 MVP hardening | Internal alpha, closed beta, MVP completion | E4 | Error handling, settings, accessibility, i18n and performance NFRs met; Maestro journeys green; Figma designs applied; repository public with `main` protected (done early, 2026-10-23); privacy declarations ready, as the final MVP step |
 | M5 v1.0 | Public release | E5, E6, E7 | Remaining P0/P1 modules (offline mode, news, fares, recharge points, widget, notifications); legal and store readiness |
 | v2 | Accounts and ticketing | none | Spec §10.5 v2 row; operator agreement (OQ-11, OQ-12) |
 
@@ -109,7 +109,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-412 | Maestro flows for the five critical journeys (`architecture.md` §8) | Spec §10.1 | P1 | todo |
 | LB-413 | Apply the Figma designs delivered near the end of the MVP: brand palette (light and dark), typography, app icon and screen refinements, replacing the neutral placeholder theme; re-record screenshots | OQ-18, NFR-MNT-04 | P1 | blocked (Figma delivery) |
 | LB-414 | Privacy labels and disclosures, as the final MVP step: privacy policy (es and en), Google Data safety, Apple privacy nutrition label, consent texts if telemetry is active | NFR-PRIV-01 to 05, `security_privacy.md` §5–6, OQ-22 | P0 | todo |
-| LB-415 | Make the repository public before the MVP is completed: run the pre-public checklist, then protect `main` (`scripts/github/protect-main.sh`) and let CI run | `ci_cd.md` §1, OQ-20, OQ-21 | P0 | todo |
+| LB-415 | Make the repository public before the MVP is completed: run the pre-public checklist, then protect `main` (`scripts/github/protect-main.sh`) and let CI run | `ci_cd.md` §1, OQ-20, OQ-21 | P0 | in-progress |
 
 ## E5 v1.0 content (M5)
 
