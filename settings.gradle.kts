@@ -28,3 +28,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "LogroBus"
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+include(":tools:architecture-tests")
