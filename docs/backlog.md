@@ -24,7 +24,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 
 | Id | Story | Refs | Priority | Status |
 | --- | --- | --- | --- | --- |
-| LB-001 | Scaffold the KMP project per ADR-0007: version catalog, `build-logic` convention plugins (with the `ciUnitTest` alias), the shared `core`, `transit`, `favourites`, `feature/*` and `umbrella` modules, the Android `app`, `core` and `feature` modules, the iPhone-only `iosApp` with the `LogroBusUI` Swift package (XCFramework binary target, or the documented fallback), and `tools/architecture-tests` (Konsist) | Spec §8.2; ADR-0001, 0004, 0007; NFR-PLAT-03 | P0 | todo |
+| LB-001 | Scaffold the KMP project per ADR-0007: version catalog, `build-logic` convention plugins (with the `ciUnitTest` alias), the shared `core`, `transit`, `favourites`, `feature/*` and `umbrella` modules, the Android `app`, `core` and `feature` modules, the iPhone-only `iosApp` with the `LogroBusUI` Swift package (XCFramework binary target, or the documented fallback), and `tools/architecture-tests` (Konsist) | Spec §8.2; ADR-0001, 0004, 0007; NFR-PLAT-03 | P0 | in-progress |
 | LB-002 | CI: Linux job (shared tests, Android build, ktlint, detekt, Kover), macOS job (framework, iOS build and tests, SwiftLint), dependency scanning | NFR-MNT-02, NFR-SEC-05 | P0 | todo |
 | LB-003 | `scripts/record-fixtures.sh` and the initial golden fixtures in `fixtures/`, plus the weekly re-record job | Spec §10.2 | P0 | todo |
 | LB-004 | `:shared:core:common`, `:shared:core:config`, `:shared:core:location`: `AppClock` with server offset, `Logger`, dispatchers, `AppResult` and `AppError`, `AppLifecycle`, geo utilities, `RemoteConfig` with compiled defaults, `LocationProvider` | Spec §8.6, §8.9, NFR-REL-05 | P0 | todo |

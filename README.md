@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** planning and documentation. There is no app code yet; the next milestone is M0 Foundations. See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build and the 19 shared Kotlin Multiplatform modules exist; the Android and iOS apps come next (LB-001). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -50,9 +50,11 @@ The `shared/`, `android/` and `iosApp/` modules will be added in milestone M0. T
 
 ## Getting started
 
-There is no app code to build yet. After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and reports any missing tools. `scripts/checks/run-all.sh` runs every quality gate.
+After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and reports any missing tools. `scripts/checks/run-all.sh` runs every quality gate.
 
-Once the project is scaffolded (story LB-001), this section will explain how to build and run both apps. You will need:
+The shared modules already build: `./gradlew ciUnitTest` runs the unit tests and the architecture rules. If `ANDROID_HOME` is not set, create a `local.properties` file with `sdk.dir=<path to your Android SDK>`; Git ignores it.
+
+When the Android and iOS apps arrive (the rest of story LB-001), this section will explain how to run them. You will need:
 
 - JDK 21.
 - The latest stable Android Studio with the Kotlin Multiplatform plugin.
@@ -78,7 +80,7 @@ Once the project is scaffolded (story LB-001), this section will explain how to 
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| M0 Foundations | Project skeleton, data layer, CI | Not started |
+| M0 Foundations | Project skeleton, data layer, CI | In progress |
 | M1 Lines | Lines section | Not started |
 | M2 Near Me | Near Me section | Not started |
 | M3 How to Get There | Trip planner | Not started |
@@ -88,6 +90,11 @@ Once the project is scaffolded (story LB-001), this section will explain how to 
 ### Recent changes
 
 - **2026-10-22:**
+  - Started LB-001, part 1 of 3:
+    - Gradle build: Kotlin 2.4.20, Android Gradle Plugin 9.3.3, Gradle 9.7.1.
+    - The 19 shared modules.
+    - Automatic checks of the module dependency rules and of the architecture.
+    - An independent review found 16 issues; all were addressed, with stricter rules and tests for the rules themselves.
   - CI: `actions/checkout` updated from v5 to v7 (Dependabot, PR #2).
   - Project documentation created.
   - Decided: iOS 18 minimum, identifier `com.ruizurraca.logrobus`, Lines as the launch tab, saved stops in Near Me.
