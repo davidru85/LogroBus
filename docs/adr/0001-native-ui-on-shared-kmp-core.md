@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Accepted |
+| Status | Accepted; the presentation-sharing clause is superseded by ADR-0007 (platform-specific ViewModels, shared presentation models) |
 | Date | 2026-10-22 |
 | Deciders | Project owner |
 | Related | OQ-01, spec §2.5, §8.1, §8.2 |

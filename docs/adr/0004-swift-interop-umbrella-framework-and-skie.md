@@ -2,22 +2,22 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed |
+| Status | Proposed, amended by ADR-0007 (no shared ViewModels and no ViewModel bridge) |
 | Date | 2026-10-22 |
 | Deciders | Tech lead |
 | Related | ADR-0001, spec §8.2, `architecture.md` §3.2 and §5.2 |
 
 ## Context
 
-The iOS app consumes shared ViewModels that expose `StateFlow<UiState>`, sealed state hierarchies and `suspend` functions. By default, Kotlin/Native's Objective-C export turns flows into opaque objects, sealed classes into plain class hierarchies, and suspend functions into completion handlers. That is awkward to use from SwiftUI and easy to misuse.
+The iOS app consumes shared use cases (`Flow`, `suspend` functions) and shared presentation models (sealed `UiState` hierarchies) from Swift ViewModels (ADR-0007). By default, Kotlin/Native's Objective-C export turns flows into opaque objects, sealed classes into plain class hierarchies, and suspend functions into completion handlers. That is awkward to use from SwiftUI and easy to misuse.
 
 The spec splits the shared code into several Gradle modules. Exporting each module as its own Apple framework would embed several Kotlin runtimes, and their types would not be interchangeable.
 
 ## Decision
 
-- **One umbrella module, `:shared:umbrella`,** produces a single static framework named `Shared`. It `export`s `presentation`, `domain` and `core`, and is the only Kotlin artefact Xcode links. Xcode integrates it directly through the `embedAndSignAppleFrameworkForXcode` build phase, without CocoaPods.
+- **One umbrella module, `:shared:umbrella`,** produces a single static framework named `Shared`. It `export`s the shared feature modules (use-case interfaces and presentation models), the domain modules and the core modules Swift needs, and it is the only Kotlin artefact Xcode links. It is also packaged as an XCFramework for the local Swift package (ADR-0007). Xcode integrates it directly through the `embedAndSignAppleFrameworkForXcode` build phase, without CocoaPods.
 - **SKIE** (Touchlab) is applied to the umbrella module. It maps `Flow` and `StateFlow` to `AsyncSequence`, sealed hierarchies to exhaustive Swift enums through `onEnum(of:)`, and `suspend` functions to `async`.
-- **SwiftUI views never touch Kotlin ViewModels directly.** Each screen has an `@MainActor @Observable` wrapper in `iosApp/Bridge/` that obtains its ViewModel from the Kotlin `ViewModels` factory object, mirrors `state` inside `.task {}`, forwards events, and clears the ViewModel when the wrapper is released.
+- **Swift ViewModels** (`@MainActor @Observable`, one per screen, in `Feature<X>` targets) obtain shared use cases from the Kotlin `SharedDependencies` factory object, collect them inside `.task {}`, and build state with the shared mappers (ADR-0007). There are no Kotlin ViewModels on iOS.
 - **UI models crossing into Swift use plain types**, not Kotlin value classes.
 
 ## Consequences

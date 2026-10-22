@@ -4,157 +4,183 @@
 | --- | --- |
 | Status | Draft, pre-scaffold |
 | Last updated | 2026-10-22 |
-| Based on | Spec §8; ADR-0001 to ADR-0005 |
+| Based on | Spec §8; ADR-0001 to ADR-0009 (notably ADR-0007 feature modules, ADR-0008 offline deferral, ADR-0009 telemetry) |
 
-LogroBus is a Kotlin Multiplatform core shared by a Jetpack Compose Android app and a SwiftUI iOS app. This document refines spec §8 with the decisions taken since then: native UI on both platforms, three-section navigation, and the Swift interop strategy. Where it departs from the spec, it cites the ADR that caused the change.
+LogroBus follows clean architecture and is split into feature modules. Business logic, data access and the **presentation models** are shared through Kotlin Multiplatform. The **presentation layer** (ViewModels and UI) is platform-specific: Jetpack Compose with Material 3 Expressive on Android, and SwiftUI with Liquid Glass on iOS (ADR-0007).
 
 ## 1. Principles
 
-1. **Rules are written once.** Data access, normalisation, ETA logic, freshness, polling and screen state are written in Kotlin and shared.
-2. **The UI is native.** Each platform renders the shared state with its own toolkit and design language: Compose with Material 3 Expressive, and SwiftUI with Liquid Glass (ADR-0001).
-3. **The domain is clean.** The source API is undocumented and quirky, so every quirk is fixed at the data boundary. Nothing above `data` sees a DTO.
-4. **Offline-first.** Static network data is local from the first launch. Live data degrades gracefully and always shows how fresh it is.
-5. **A polite client.** The app polls only what is visible, at the configured cadence, and identifies itself through `User-Agent`.
+1. **Clean architecture.** Dependencies point inwards (presentation → domain ← data). The domain knows nothing about frameworks, I/O or platforms.
+2. **Feature isolation.** Each user-facing feature is a module, and features never depend on each other. Shared business capabilities and technical concerns live in their own modules.
+3. **One source of truth for rules.** Data normalisation, ETA rules, freshness and the UI models are written once in Kotlin, so both platforms behave identically.
+4. **A native presentation layer.** Each platform writes its own ViewModels and UI, idiomatic to its toolkit and design language.
+5. **Cache-backed, not offline-first (MVP).** Static data is cached locally for speed and search. A guaranteed offline mode comes in v1.0 (ADR-0008).
+6. **A polite client.** Poll only what is visible, at the configured cadence, and identify the app through `User-Agent`.
 
 ## 2. System context
 
 ```mermaid
 flowchart LR
     subgraph Device
-        AND["Android app<br/>Compose + M3 Expressive"]
-        IOS["iOS app<br/>SwiftUI + Liquid Glass"]
-        SH["Shared KMP core<br/>(framework 'Shared' on iOS)"]
-        DB[(SQLDelight)]
+        AND["Android app<br/>Compose + M3 Expressive<br/>Android ViewModels"]
+        IOS["iOS app<br/>SwiftUI + Liquid Glass<br/>Swift ViewModels"]
+        SH["Shared KMP<br/>domain, data, presentation models<br/>(framework 'Shared' on iOS)"]
+        DB[(SQLDelight cache)]
         AND --> SH
         IOS --> SH
         SH --> DB
     end
     SH -->|HTTPS JSON| BFF["transporteurbano.logrono.es/api<br/>Express BFF: SIRI, OTP, CMS"]
     SH -->|HTTPS JSON| GEO["CartoCiudad geocoder"]
-    SH -->|flags, texts| RC["Remote config (OQ-16)"]
     AND & IOS -->|vector tiles| TILES["Tile provider (OQ-10)"]
-    SH -. "later, via api_base_url" .-> PROXY["Project proxy (spec §8.10)"]
+    AND & IOS -. "vendor TBD (OQ-16)" .-> TEL["Analytics / crash reporting"]
 ```
 
 ## 3. Modules
 
-### 3.1 Repository layout
+### 3.1 Layout
 
 ```
 LogroBus/
 ├── gradle/libs.versions.toml
-├── build-logic/convention/          # kmp-library, android-app, ktlint/detekt, kover plugins
+├── build-logic/convention/          # KMP library, Android feature, Android app, lint, Kover plugins
 ├── shared/
 │   ├── core/
-│   ├── domain/
-│   ├── network/
-│   ├── database/
-│   ├── data/
-│   ├── presentation/
-│   ├── testing/
-│   └── umbrella/
-├── androidApp/
-│   └── src/main/kotlin/com/ruizurraca/logrobus/android/
-│       ├── LogroBusApplication.kt
-│       ├── MainActivity.kt
-│       ├── navigation/              # tabs, per-tab back stacks, deep links
-│       ├── designsystem/            # theme, tokens, LineBadge, EtaText, expressive wrappers
-│       ├── map/                     # MapLibre composables, layers, markers
-│       ├── feature/lines/
-│       ├── feature/nearme/
-│       ├── feature/planner/
-│       ├── feature/settings/
-│       └── work/                    # WorkManager workers
+│   │   ├── common/                  # AppClock, Logger, AppDispatchers, AppResult/AppError, AppLifecycle, geo, polyline
+│   │   ├── config/                  # RemoteConfig interface + compiled defaults (backend deferred, OQ-16)
+│   │   ├── telemetry/               # AnalyticsTracker, CrashReporter, AnalyticsEvent, ConsentStore, no-op impls (ADR-0009)
+│   │   ├── network/                 # HttpClient factory, headers, 2xx rule, lenient Json, per-item decoding
+│   │   ├── database/                # SQLDelight database (single schema) and drivers
+│   │   ├── location/                # LocationProvider interface + Android / iOS implementations
+│   │   ├── polling/                 # PollingEngine, Timed<T>
+│   │   ├── presentation/            # shared presentation primitives: EtaDisplay, Freshness, ErrorReason, LineBadgeUi + mappers
+│   │   └── testing/                 # TestAppClock, fixture loader, mockSource DSL, fakes, builders
+│   ├── transit/
+│   │   ├── domain/                  # entities (spec §5.1), transit repository interfaces, shared use cases
+│   │   └── data/                    # DTOs (API-01 to 06), normaliser and mappers (DD rules), StaticSyncEngine, repositories
+│   ├── favourites/
+│   │   ├── domain/                  # Favourite, Place, RecentPlan; repository interfaces; use cases
+│   │   └── data/                    # SQLDelight-backed repositories
+│   ├── feature/
+│   │   ├── lines/                   # use cases + presentation models for Lines and Line detail
+│   │   ├── stops/                   # stop detail and stop search
+│   │   ├── nearme/                  # Near Me map layers, "My stops", "Near you"
+│   │   ├── planner/                 # planner domain, data (API-07, API-08, CartoCiudad), presentation models
+│   │   └── settings/                # preferences, About data
+│   └── umbrella/                    # Koin graph, iOS dependency factory, iOS framework "Shared"
+├── android/
+│   ├── app/                         # application, single activity, tab shell, navigation, DI start-up
+│   ├── core/
+│   │   ├── designsystem/            # MaterialExpressiveTheme, tokens, LineBadge, EtaText, expressive wrappers
+│   │   ├── map/                     # MapLibre composables, layers, markers
+│   │   └── navigation/              # NavKeys and entry-point contracts shared by features and the app
+│   └── feature/
+│       ├── lines/  stops/  nearme/  planner/  settings/   # Compose screens + Android ViewModels
 ├── iosApp/
-│   ├── iosApp.xcodeproj
-│   └── iosApp/
-│       ├── LogroBusApp.swift
-│       ├── Navigation/              # TabView, per-tab NavigationStack, deep links
-│       ├── DesignSystem/            # tokens, LineBadge, EtaText, adaptiveGlass helpers
-│       ├── Map/                     # MapLibre UIViewRepresentable, layers, annotations
-│       ├── Bridge/                  # @Observable wrappers around shared ViewModels
-│       ├── Features/Lines/
-│       ├── Features/NearMe/
-│       ├── Features/TripPlanner/
-│       ├── Features/Settings/
-│       └── Resources/               # Localizable.xcstrings, assets, seed files
+│   ├── iosApp.xcodeproj             # app target: composition root, TabView shell, navigation, deep links
+│   ├── iosApp/                      # app sources and resources (Localizable.xcstrings, assets)
+│   └── Packages/LogroBusUI/         # local Swift package
+│       └── Sources/
+│           ├── DesignSystem/        # tokens, LineBadge, EtaText, adaptiveGlass helpers
+│           ├── MapUI/               # MapLibre UIViewRepresentable, layers, annotations
+│           └── FeatureLines/ FeatureStops/ FeatureNearMe/ FeaturePlanner/ FeatureSettings/   # SwiftUI views + Swift ViewModels
+├── tools/architecture-tests/        # Konsist rules for module and package boundaries (JVM)
 ├── fixtures/
-├── seed/
 └── scripts/
 ```
 
-### 3.2 Responsibilities and allowed dependencies
+The Gradle module paths follow the folders, for example `:shared:feature:lines`, `:android:feature:lines` and `:android:app`.
 
-| Module | Responsibility | May depend on |
+### 3.2 Dependency rules
+
+```mermaid
+flowchart TB
+    subgraph Platform["Platform presentation (per platform)"]
+        AF[":android:feature:*<br/>Compose + Android ViewModels"]
+        IF["Feature* Swift targets<br/>SwiftUI + Swift ViewModels"]
+        APP[":android:app / iosApp<br/>shell, navigation, DI start-up"]
+    end
+    subgraph Shared["Shared KMP"]
+        SF[":shared:feature:*<br/>use cases + presentation models"]
+        TD[":shared:transit:domain"]
+        FD[":shared:favourites:domain"]
+        TDATA[":shared:transit:data"]
+        FDATA[":shared:favourites:data"]
+        CORE[":shared:core:*"]
+        UMB[":shared:umbrella"]
+    end
+    APP --> AF & IF
+    APP --> UMB
+    AF --> SF
+    IF --> UMB
+    SF --> TD & FD & CORE
+    TDATA --> TD & CORE
+    FDATA --> FD & CORE
+    UMB --> SF & TDATA & FDATA & CORE
+```
+
+| Module | May depend on | Must not depend on |
 | --- | --- | --- |
-| `:shared:core` | `AppClock` (server offset), `Logger`, `AppDispatchers`, `AppResult` and `AppError`, `RemoteConfig` with compiled defaults, `AppLifecycle`, `LocationProvider` interface, geo utilities (haversine, bounding box, polyline codec) | stdlib, coroutines, kotlinx-datetime |
-| `:shared:domain` | Entities (spec §5.1), repository interfaces, use cases | `core` |
-| `:shared:network` | `HttpClient` factory, API services per family, DTOs, lenient decoding helpers | `core`, Ktor, kotlinx.serialization |
-| `:shared:database` | SQLDelight schema, queries, driver factories (Android, Native) | `core`, SQLDelight |
-| `:shared:data` | Repository implementations, mappers, normaliser, `StaticSyncEngine`, `PollingEngine`, `SeedReader`, platform `LocationProvider` implementations | `core`, `domain`, `network`, `database` |
-| `:shared:presentation` | ViewModels, `UiState` types, display models (`EtaDisplay`, `Freshness`) | `core`, `domain`, lifecycle-viewmodel |
-| `:shared:testing` | Fakes for every repository, `TestAppClock`, fixture loader | `core`, `domain` (test scope only) |
-| `:shared:umbrella` | Assembles the Koin graph (`initKoin()`), exposes the `ViewModels` factory, and produces the iOS framework `Shared` (exports `presentation`, `domain`, `core`) | all shared modules |
-| `:androidApp` | Compose UI, navigation, design system, maps, WorkManager, Glance (later) | `:shared:umbrella` |
-| `iosApp` | SwiftUI UI, navigation, design system, maps, BGTasks, WidgetKit (later) | framework `Shared` |
+| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime, Ktor (network only), SQLDelight (database only) | Any domain, data or feature module |
+| `:shared:transit:domain`, `:shared:favourites:domain` | `:shared:core:common` | Data modules, network, database, platform APIs |
+| `:shared:transit:data`, `:shared:favourites:data` | Their own domain module and `:shared:core:*` | Feature modules |
+| `:shared:feature:<x>` | Domain modules, `:shared:core:*` (planner's own data package may use `:shared:core:network`) | **Other feature modules**, data modules (bound through DI) |
+| `:shared:umbrella` | Everything shared | Platform code |
+| `:android:feature:<x>` | `:shared:feature:<x>`, `:android:core:*` | Other Android feature modules |
+| `:android:app` | Everything Android, `:shared:umbrella` | none |
+| iOS `Feature<X>` | `Shared` (XCFramework), `DesignSystem`, `MapUI` | Other `Feature*` targets |
 
-Gradle module boundaries enforce these rules: `domain` simply cannot see Ktor or SQLDelight. iOS gets a single umbrella framework, because two separate Kotlin frameworks would each embed their own Kotlin runtime and could not share types (ADR-0004).
+Gradle module boundaries enforce the rules between modules. Konsist tests in `:tools:architecture-tests` enforce the package layering inside shared feature modules (`domain`, `data`, `presentation`) and forbid imports across features.
 
-## 4. Layers
+## 4. Shared layers
 
-### 4.1 Network (`:shared:network`)
+### 4.1 Core network (`:shared:core:network`)
 
-- One `HttpClient` per process. It uses the OkHttp engine on Android and Darwin on iOS, the timeouts and headers of spec §8.7, `ContentNegotiation` with the lenient `Json` from `api_spec.md` §3, and `expectSuccess = false`, so status codes are checked by hand (any 2xx succeeds).
+- One `HttpClient` per process. It uses the OkHttp engine on Android and Darwin on iOS, the timeouts and headers of spec §8.7, the lenient `Json` from `api_spec.md` §3, and `expectSuccess = false`, so any 2xx succeeds.
 - The `Date` header of every BFF response is fed into `AppClock` as a server-time sample.
-- Services group endpoints by family: `LinesApi` (API-01, 02), `RealtimeApi` (API-03 to 06), `TransitApi` (API-07, 08), `ContentApi` (API-10 to 12) and `GeocoderApi` (CartoCiudad).
-- Services return raw DTOs wrapped in `AppResult`. Collections are decoded item by item, so one malformed item never fails a whole response.
+- Collections are decoded item by item, so one bad item never fails a whole response.
 
-### 4.2 Data (`:shared:data`)
+### 4.2 Transit data (`:shared:transit:data`)
 
-**Mappers and normaliser.** Every DTO goes through the pipeline of spec §5.4: lenient decode, blank-to-null and trim, id parsing, instant parsing with the DD-05 correction, direction mapping, enrichment (line code and display name, kind, contrast colour, provisional stops, name overrides), bounding-box validation, and finally the domain objects plus a `DataQualityReport`. `api_spec.md` §6 maps each `DD-nn` to the class that handles it.
+- **DTOs and services:** `LinesApi` (API-01, 02), `RealtimeApi` (API-03 to 06).
+- **Normaliser:** the pipeline of spec §5.4, with the DD-rule map in `api_spec.md` §6. It emits domain entities and a `DataQualityReport`.
+- **Repositories:** `NetworkRepository` (lines, patterns, stops, search), `ArrivalsRepository`, `VehiclesRepository`.
 
-**Repositories** (spec §8.4): `NetworkRepository`, `ArrivalsRepository`, `VehiclesRepository`, `PlannerRepository`, `FavouritesRepository`, `PlacesRepository`, `SettingsRepository`, and later `FaresRepository`, `RechargePointsRepository` and `NewsRepository`.
+### 4.3 Persistence (`:shared:core:database`)
 
-### 4.3 Persistence (`:shared:database`)
-
-The schema is spec §8.8, plus these additions needed by the requirements:
+The schema is spec §8.8 minus the offline-only tables, plus these additions:
 
 | Addition | Purpose | Requirement |
 | --- | --- | --- |
-| `stop.normalized_name` column | Accent- and `ñ`-folded name for FTS matching | NFR-I18N-03, FR-STOP-01 |
-| `favourite.missing_syncs INTEGER NOT NULL DEFAULT 0` | Count of consecutive daily syncs in which a favourite stop was absent | FR-FAV-04 |
-| `plan_recent(id TEXT PK, origin TEXT, destination TEXT, created_at INTEGER)` | Last 10 planner searches (origin and destination as JSON place snapshots) | FR-PLAN-09 |
-| `arrival_snapshot(stop_id INTEGER PK, payload TEXT, fetched_at INTEGER)` | Last arrivals for saved stops, shown as "expired" when offline | Spec §8.5, FR-STOP acceptance |
+| `stop.normalized_name` | Accent- and `ñ`-folded name for FTS | NFR-I18N-03, FR-STOP-01 |
+| `favourite.missing_syncs INTEGER NOT NULL DEFAULT 0` | Consecutive syncs in which a favourite stop was absent | FR-FAV-04 |
+| `plan_recent(id TEXT PK, origin TEXT, destination TEXT, created_at INTEGER)` | Last 10 planner searches | FR-PLAN-09 |
 
-Favourites, places and recents live in a database file that is included in OS backups (FR-FAV-03). Static network data can live in the same file, because it is re-downloadable either way.
+Deferred to v1.0 with the offline mode (ADR-0008): the `arrival_snapshot` table and the seed import.
 
-### 4.4 Static sync
+### 4.4 Static data cache and sync
 
 ```mermaid
 sequenceDiagram
-    participant App as App start / daily job
+    participant Trigger as First use / app start / daily job
     participant Sync as StaticSyncEngine
     participant API as BFF
     participant DB as SQLDelight
-    App->>Sync: syncIfStale()
+    Trigger->>Sync: syncIfStale()
     Sync->>DB: read sync_state (TTL, content_hash)
-    alt first launch and DB empty
-        Sync->>DB: import seed/ through the same normaliser
-    end
     Sync->>API: GET API-01 and API-02
-    API-->>Sync: raw bodies
-    Sync->>Sync: SHA-256 of raw body equals stored hash? stop
+    API-->>Sync: raw bodies (or failure)
+    Sync->>Sync: unchanged hash? stop
     Sync->>Sync: normalise, validate (>= 5 lines, >= 100 stops)
     Sync->>DB: one transaction: replace lines, patterns, stops, stop_line, FTS
     Sync->>DB: update sync_state, bump favourite.missing_syncs
 ```
 
-- TTLs follow spec §8.5: 24 h for lines and stops, 7 d for fares and recharge points.
-- A failed or suspicious sync leaves the previous dataset intact (NFR-REL-03) and never surfaces an error (FR-ERR-04).
-- The seed files in `seed/` are produced by `scripts/update-seed.sh` from the live source and imported through the same mappers, so seed data and synced data follow one code path. Android ships them as assets and iOS as bundle resources; the expect/actual `SeedReader` reads them on each platform.
-- Background sync runs as a daily WorkManager job on Android and as a `BGAppRefreshTask` on iOS.
+- On first use, an empty cache plus a failed download means the screen shows the network error with Retry (FR-ERR-05). There is no bundled seed in the MVP.
+- A failed or suspicious refresh keeps the previous cache (NFR-REL-03) and is silent (FR-ERR-04).
+- Background refresh runs as a daily WorkManager job on Android and as a `BGAppRefreshTask` on iOS.
 
-### 4.5 Live data and `PollingEngine`
+### 4.5 Live data and `PollingEngine` (`:shared:core:polling`)
 
 ```kotlin
 interface PollingEngine {
@@ -164,26 +190,30 @@ interface PollingEngine {
 data class Timed<T>(val value: T?, val fetchedAt: Instant?, val lastError: AppError?)
 ```
 
-- Subscriptions with the same `PollKey` (for example `ArrivalsAtStop(38, lines = [1, 33])`) share one upstream loop through `shareIn(WhileSubscribed)`.
-- Intervals come from remote config: 10 s for vehicles, 20 s for arrivals and line ETAs, with a 10 s floor. A ±1 s jitter avoids synchronised bursts (spec §8.6).
-- When a fetch fails, the engine retries with backoff of 2, 4 and 8 s, capped at 30 s. The last good value stays visible (FR-ERR-03).
-- `AppLifecycle` pauses every loop when the app goes to the background and triggers an immediate fetch on return to the foreground. Android feeds it from `ProcessLifecycleOwner`; iOS feeds it from `scenePhase`.
-- Freshness is derived in presentation from `AppClock.now() - fetchedAt`: under 45 s is fresh, 45 to 120 s is stale, and over 120 s is expired (spec §5.7).
+- Subscriptions with the same key share one upstream loop (`shareIn(WhileSubscribed)`).
+- Intervals come from remote config: vehicles every 10 s, arrivals every 20 s, with a 10 s floor and ±1 s jitter.
+- When a fetch fails, the engine retries with backoff of 2, 4 and 8 s, capped at 30 s. The last good value stays available (FR-ERR-03).
+- The engine pauses in the background and fetches immediately on returning to the foreground. Platform ViewModels own the collection scope: Android's `viewModelScope`, iOS's `.task` cancellation.
 
-### 4.6 Domain and use cases per section
+### 4.6 Feature modules (`:shared:feature:<x>`)
 
-| Section | Shared ViewModels | Use cases | Endpoints |
+Each shared feature module contains three packages:
+
+| Package | Contents |
+| --- | --- |
+| `domain` | Feature use cases: verb-phrase classes or `fun interface`s. Use cases consumed from Swift are exposed as interfaces, so iOS tests can replace them |
+| `data` | Feature-only data sources. Only `planner` (API-07, API-08, CartoCiudad) and `settings` have one |
+| `presentation` | `XUiState`, UI models, `XEvent` / `XEffect` types and pure mappers from domain to UI model |
+
+| Feature | Use cases (examples) | Presentation models | Endpoints |
 | --- | --- | --- | --- |
-| Lines | `LinesViewModel`, `LineDetailViewModel` | `ObserveLines`, `SearchLines`, `ObserveFavouriteLines`, `ToggleFavourite`, `ReorderFavourites`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | API-01, API-04, API-05 |
-| Near Me | `NearMeViewModel`, `StopDetailViewModel`, `StopSearchViewModel` | `GetNearbyStops`, `ObserveSavedStopArrivals`, `ObserveStopArrivals`, `SearchStops`, `ObserveNetworkVehicles`, `SaveStop` | API-02, API-03, API-06, API-08 |
-| How to Get There | `TripPlannerViewModel`, `PlaceSearchViewModel`, `ItineraryDetailViewModel` | `SearchPlaces` (stops + saved places + geocoder), `PlanJourney`, `ObserveRecentPlans`, `ObserveStopArrivals` (real-time overlay) | API-07, API-06, CartoCiudad |
-| Secondary | `SettingsViewModel`, `AboutDataViewModel` | `ObserveSyncStatus`, `SyncStaticData`, `ClearCache`, `UpdatePreferences` | none |
+| `lines` | `ObserveLines`, `SearchLines`, `ObserveFavouriteLines`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | `LinesUiState`, `LineDetailUiState`, `LineRowUi`, `FavouriteLineCardUi` | API-01, 04, 05 |
+| `stops` | `ObserveStopArrivals`, `SearchStops`, `SaveStop` | `StopDetailUiState`, `ArrivalUi`, `StopSearchUiState` | API-02, 06 |
+| `nearme` | `GetNearbyStops`, `ObserveSavedStopArrivals`, `ObserveNetworkVehicles` | `NearMeUiState`, `SavedStopCardUi`, `NearbyStopRowUi`, map layer models | API-02, 03, 06, 08 |
+| `planner` | `SearchPlaces`, `PlanJourney`, `ObserveRecentPlans` | `PlannerUiState`, `ItineraryCardUi`, `ItineraryDetailUiState` | API-07, 08, 06, CartoCiudad |
+| `settings` | `ObserveSyncStatus`, `UpdatePreferences`, `ClearCache` | `SettingsUiState`, `AboutDataUiState` | none |
 
-The spec's `GetHomeDashboard` no longer exists, because the Home screen was dissolved by ADR-0002. Its parts became `ObserveSavedStopArrivals` and `GetNearbyStops`, which feed the Near Me sheet.
-
-### 4.7 Presentation (`:shared:presentation`)
-
-ViewModels extend the KMP `androidx.lifecycle.ViewModel`, expose `val state: StateFlow<XUiState>` and accept `fun onEvent(event: XEvent)`. One-off effects, such as navigating to the planner with a destination, are delivered through a `Channel`-backed `effects: Flow<XEffect>`.
+An example of shared presentation models:
 
 ```kotlin
 sealed interface StopDetailUiState {
@@ -193,7 +223,6 @@ sealed interface StopDetailUiState {
         val arrivals: List<ArrivalUi>,
         val freshness: Freshness,            // FRESH, STALE, EXPIRED
         val isRefreshing: Boolean,
-        val isOffline: Boolean,
         val lineFilter: Set<Int>,
         val groupByLine: Boolean,
     ) : StopDetailUiState
@@ -204,61 +233,78 @@ sealed interface StopDetailUiState {
 data class ArrivalUi(
     val lineId: Int, val lineCode: String, val lineColor: Long, val onLineColor: Long,
     val headsign: String?,                   // null when the direction is unknown (DD-04)
-    val eta: EtaDisplay,
+    val eta: EtaDisplay,                     // Now, Minutes(n), ClockTime(h, m), Cancelled; spec §5.7
+    val lowConfidence: Boolean, val scheduled: Boolean, val delayMinutes: Int?,
 )
 
-sealed interface EtaDisplay {                // spec §5.7; platforms localise these
-    data object Now : EtaDisplay
-    data class Minutes(val value: Int) : EtaDisplay
-    data class ClockTime(val hour: Int, val minute: Int) : EtaDisplay   // Europe/Madrid
-    data object Cancelled : EtaDisplay
-    // Shared modifiers are carried on ArrivalUi in the real model: lowConfidence, scheduled, delayMinutes.
+object StopDetailUiMapper {                  // pure: same output on both platforms
+    fun content(stop: Stop, arrivals: Timed<List<Arrival>>, now: Instant, filter: Set<Int>, group: Boolean): StopDetailUiState
 }
 ```
 
-- UI models use plain types (`Int`, `String`, `Long` ARGB colours), so they export cleanly to Swift. Domain value classes stay internal to Kotlin.
-- Every screen state must be able to express the UX states of spec §7.3.
+UI models use plain types (`Int`, `String`, `Long` ARGB colours), so they export cleanly to Swift. Each platform turns `EtaDisplay` into localised text and spoken labels with its own string resources.
 
-## 5. Platform integration
+### 4.7 Telemetry contracts (`:shared:core:telemetry`)
+
+These contracts are defined in ADR-0009:
+- `AnalyticsTracker` with a typed `AnalyticsEvent` catalogue (ids and enums only).
+- `CrashReporter` with `recordNonFatal` and enum-based breadcrumbs.
+- `ConsentStore`.
+
+Consent-gated wrappers live in shared code. In the MVP, release builds use no-op implementations and debug builds use logging ones. Vendor implementations (likely Firebase Analytics and Crashlytics) are native per platform and injected at start-up once OQ-16 is decided.
+
+## 5. Platform presentation layers
 
 ### 5.1 Android
 
-- `LogroBusApplication.onCreate()` calls `initKoin { androidContext(this) }`.
-- There is a single activity, drawn edge-to-edge. `NavigationSuiteScaffold` hosts the three tabs, and each tab owns a Navigation 3 back stack of `@Serializable` `NavKey`s. Re-selecting the current tab pops to its root (ADR-0005).
-- ViewModels are obtained with `koinViewModel()`, and state is collected with `collectAsStateWithLifecycle()`.
-- Maps use MapLibre Native through `maplibre-compose`, with the style URL taken from remote config (`map_style_url`, OQ-10).
-- Location uses the Fused Location Provider inside `:shared:data/androidMain`. Permission requests use the Activity Result API in the UI, just in time (FR-LOC-01).
-- WorkManager runs the daily static sync, and later the notice checks. A Glance widget comes later (FR-WID).
+- `:android:app`:
+  - `LogroBusApplication` calls `initKoin { androidContext(this) }` and registers the platform implementations (location, telemetry).
+  - A single activity draws edge-to-edge. `NavigationSuiteScaffold` holds the three tabs, and each tab keeps a Navigation 3 back stack of `@Serializable` `NavKey`s defined in `:android:core:navigation` (ADR-0005).
+- `:android:feature:<x>`:
+  - Each screen is an `XRoute` (wiring), a stateless `XScreen(UiState, onEvent)` and an `XViewModel : androidx.lifecycle.ViewModel`.
+  - The ViewModel injects shared use cases (`koinViewModel()`), collects their flows in `viewModelScope`, maps them with the shared mappers and exposes `StateFlow<XUiState>`.
+- Maps: MapLibre Native through `maplibre-compose` in `:android:core:map`.
+- Location uses the Fused Location Provider (implemented in `:shared:core:location`). Permission prompts use the Activity Result API in the UI.
+- WorkManager runs the daily static refresh.
 
 ### 5.2 iOS
 
-- The Xcode project integrates the framework directly: a Run Script build phase calls `./gradlew :shared:umbrella:embedAndSignAppleFrameworkForXcode`. There is no CocoaPods. Swift packages (MapLibre, snapshot testing) come through Swift Package Manager.
-- SKIE (ADR-0004) exposes `Flow` and `StateFlow` as `AsyncSequence`, sealed hierarchies as Swift enums through `onEnum(of:)`, and `suspend` functions as `async`.
-- Startup: `@main struct LogroBusApp: App { init() { KoinKt.doInitKoin() } }`.
-- **ViewModel bridge.** Each screen owns an `@Observable` wrapper from `Bridge/`. The wrapper obtains its ViewModel from the Kotlin `ViewModels` factory object, keeps it in a `ViewModelStore`, mirrors `state` into a Swift property, and clears the store when the wrapper is released. The sketch below shows the shape:
+- **Framework integration.**
+  - `:shared:umbrella` builds the `Shared` framework, with SKIE (ADR-0004): `Flow` becomes `AsyncSequence`, sealed types become Swift enums, and `suspend` functions become `async`.
+  - The app target links it through `embedAndSignAppleFrameworkForXcode`.
+  - The local Swift package's feature targets consume it as an XCFramework `binaryTarget`, produced by Gradle (`assembleSharedXCFramework`). This set-up is validated in LB-001; the fallback is feature folders inside the app target.
+- **Composition root.**
+  - `LogroBusApp.init` calls `KoinKt.doInitKoin(...)` and passes the Swift implementations of the platform contracts (telemetry once chosen).
+  - Swift obtains use cases from the Kotlin `SharedDependencies` factory object. Koin generics are not used from Swift.
+- **Swift ViewModels:** one `@MainActor @Observable final class XViewModel` per screen, in its `Feature<X>` target:
 
 ```swift
 @MainActor @Observable
-final class StopDetailModel {
+final class StopDetailViewModel {
     private(set) var state: StopDetailUiState = StopDetailUiStateLoading.shared
-    private let viewModel: StopDetailViewModel
+    private let observeArrivals: ObserveStopArrivals     // shared use case (Kotlin interface)
+    private let clock: AppClock
 
-    init(stopId: Int32) { viewModel = ViewModels.shared.stopDetail(stopId: stopId) }
-
-    /// Called from `.task { await model.observe() }`; cancelled automatically when the view goes away.
-    func observe() async {
-        for await next in viewModel.state { state = next }
+    init(stopId: Int32, deps: SharedDependencies = .shared) {
+        observeArrivals = deps.observeStopArrivals()
+        clock = deps.appClock()
+        self.stopId = stopId
     }
+    private let stopId: Int32
 
-    func send(_ event: StopDetailEvent) { viewModel.onEvent(event: event) }
+    /// Called from `.task { await viewModel.observe() }`; cancelled automatically when the view disappears.
+    func observe() async {
+        for await timed in observeArrivals.invoke(stopId: stopId) {
+            state = StopDetailUiMapper.shared.content(/* stop, timed, clock.now(), filter, group */)
+        }
+    }
 }
 ```
 
-- Views switch over the state with `switch onEnum(of: model.state) { … }`.
-- Maps use MapLibre Native iOS (Swift package `maplibre-gl-native-distribution`), wrapped in a `UIViewRepresentable` in `Map/`. Floating map controls are SwiftUI overlays that use the glass helpers.
-- Location uses `CLLocationManager` inside `:shared:data/iosMain`. A small Swift helper triggers `requestWhenInUseAuthorization()` just in time.
-- `BGAppRefreshTask` runs the static sync, and later the notice checks. WidgetKit comes later (FR-WID).
-- The deployment target is iOS 18. Liquid Glass applies on iOS 26 and later, and the `adaptiveGlass` helpers fall back to materials on iOS 18–25 (ADR-0003).
+- **Views** switch over the state with `switch onEnum(of: viewModel.state) { … }`.
+- **Previews and tests:** SwiftUI previews and Swift ViewModel tests use the fake dependencies exposed by `SharedDependencies.preview` (scripted repositories in Kotlin).
+- **Maps:** MapLibre Native iOS (Swift package) wrapped in `MapUI`. Floating controls use the `DesignSystem` glass helpers.
+- **Platform:** iPhone only in the MVP (NFR-PLAT-03), with an iOS 18 deployment target and Liquid Glass on iOS 26 or later (ADR-0003).
 
 ## 6. Navigation
 
@@ -287,55 +333,50 @@ flowchart TD
     T1 & T2 & T3 -. toolbar .-> MORE["More: Settings, About data<br/>(v1.0: News, Fares, Recharge points, Info)"]
 ```
 
-- Stop detail is a single shared screen. It appears as a sheet over the map in Near Me, and as a pushed screen from Lines and from itinerary detail.
-- Deep links (spec §6.15) are re-targeted: `stop/{id}` opens Near Me with that stop's sheet, `line/{id}` opens Lines → Line detail, `plan?from&to` opens How to Get There pre-filled, and `news/{documentId}` opens More → News (v1.0).
-- The app always opens on Lines (OQ-15). Deep links are the only exception: they open their target tab.
+- The app shell owns navigation on both platforms. Feature modules expose entry points but never navigate into another feature directly. They emit an effect, such as `NavigateToPlanner(destination)`, which the shell resolves.
+- Stop detail belongs to the `stops` feature, and appears both as the Near Me sheet and as a pushed screen (FR-NAV-07).
+- The app always opens on Lines (FR-NAV-02). Deep links (v1.0, LB-603) open their target tab.
 
 ## 7. Cross-cutting concerns
 
 | Concern | Approach |
 | --- | --- |
-| Configuration | The `RemoteConfig` interface in `core` has compiled defaults (spec §8.9 plus `api_spec.md` §8). The backend is still undecided (OQ-16) and is hidden behind the interface |
-| Settings | Multiplatform Settings (DataStore on Android, `NSUserDefaults` on iOS) for language, theme, ETA format and consents |
-| Logging | The `Logger` interface has a no-op release implementation and a console debug one. Never log coordinates or free text (NFR-PRIV-02) |
-| Analytics and crashes | Firebase Crashlytics and Analytics behind consent (NFR-PRIV-03), with only the events in NFR-OBS-03. The `DataQualityReport` counters are sent as aggregate numbers |
-| Images | Coil 3 with a 100 MB disk cache (CMS media sends `max-age=0`, spec §4.12). Needed only from v1.0 |
-| Localisation | Android: `values/strings.xml` holds es-ES as the default and `values-en/` holds English. iOS: `Localizable.xcstrings` with Spanish as the development language. Plurals come from platform resources (NFR-I18N-01) |
-| Security | HTTPS only, no certificate pinning (spec §8.7), the CMS HTML allow-list sanitiser in shared code (NFR-SEC-02), and no secrets in the binary |
+| Configuration | `RemoteConfig` in `:shared:core:config` with compiled defaults (NFR-REL-05). Backend deferred (OQ-16) |
+| Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
+| Settings | Multiplatform Settings (DataStore, `NSUserDefaults`) |
+| Logging | The `Logger` interface: no-op in release, console in debug. Never logs coordinates or free text |
+| Localisation | Android `values/` (es-ES, the default) and `values-en/`; iOS `Localizable.xcstrings` with Spanish as the development language |
+| Security | HTTPS only, no pinning (spec §8.7), no secrets (`security_privacy.md`) |
+| Visual design | `design_guidelines.md` and a neutral placeholder theme until the Figma designs arrive near the end of the MVP (LB-413) |
 
 ## 8. Testing architecture
 
 | Level | Where | Tooling |
 | --- | --- | --- |
-| Unit: mappers, DD rules, ETA rules, direction inference | `shared/*/src/commonTest` | kotlin.test, `TestAppClock` |
-| Contract: DTO decoding of golden payloads | `shared/network/src/commonTest` | `fixtures/` loaded through Okio from a path injected by Gradle |
-| Integration: repositories, sync atomicity, offline fallback | `shared/data/src/commonTest` | Ktor `MockEngine`, in-memory SQLDelight driver, Turbine |
-| ViewModels | `shared/presentation/src/commonTest` | Fakes from `:shared:testing`, Turbine, `runTest` |
-| Android UI | `androidApp/src/test`, `androidTest` | Compose UI tests, Roborazzi (light, dark, 200 % font) |
-| iOS UI | `iosApp/iosAppTests` | Swift Testing, swift-snapshot-testing |
-| End to end | `maestro/` | Maestro flows for the critical journeys, nightly and non-blocking |
-| Coverage | `data`, `domain` | Kover, with an 80 % line-coverage gate (NFR-MNT-01) |
+| Unit: mappers, DD rules, ETA rules, presentation mappers | `shared/**/src/commonTest` | kotlin.test, `TestAppClock` |
+| Contract: DTO decoding | `shared/transit/data`, `shared/feature/planner` commonTest | `fixtures/` |
+| Integration: repositories, sync, polling | `shared/transit/data`, `shared/favourites/data` commonTest | Ktor `MockEngine`, in-memory SQLDelight, Turbine |
+| Architecture rules | `tools/architecture-tests` | Konsist |
+| Android ViewModels | `android/feature/*/src/test` | JUnit, Turbine, fakes from `:shared:core:testing` |
+| Android UI | `android/feature/*/src/test`, `androidTest` | Compose UI test, Roborazzi |
+| iOS ViewModels and UI | `Packages/LogroBusUI/Tests`, `iosAppUITests` | Swift Testing, swift-snapshot-testing, XCUITest |
+| End to end | `maestro/` | Maestro |
 
-The critical end-to-end journeys are spec §10.1, adapted to the three tabs:
+The critical end-to-end journeys for the MVP (spec §10.1, adapted):
 
 1. Cold start, open Near Me, and see live ETAs for a saved stop.
 2. Search "Ayuntamiento" in Near Me, tell the two stops apart by headsign, and open arrivals.
 3. Open line 10 in Lines, switch direction, and tap a live bus.
 4. In How to Get There, plan a trip from the current location to an address and open the itinerary detail.
-5. Go offline, browse lines and stops, and see the offline banner.
+5. Lose connectivity on stop detail: see the network error state, restore the connection, tap Retry, and see the arrivals. The offline journey of spec §10.1 moves to v1.0.
 
 ## 9. Build and CI
 
-- Versions live only in `gradle/libs.versions.toml`. Shared build logic lives in convention plugins under `build-logic/`.
-- Static analysis: ktlint and detekt for Kotlin, SwiftLint for Swift (NFR-MNT-02), plus dependency scanning (NFR-SEC-05).
-- CI (proposed: GitHub Actions):
-  - A Linux job runs `./gradlew check :androidApp:assembleDebug`.
-  - A macOS job builds the framework, runs the Xcode build and tests, and runs SwiftLint.
-  - A weekly scheduled job re-records the fixtures and fails on schema diffs (spec §10.1).
-  - A nightly job runs the Maestro flows.
+- Versions live only in `gradle/libs.versions.toml`. Convention plugins under `build-logic/` configure KMP library, Android feature and Android app modules uniformly, and register the stable alias tasks used by CI (for example `ciUnitTest`).
+- CI runs on GitHub Actions as atomic, path-filtered jobs. It is inactive while the repository is private (`ci_cd.md`). The local gates are described in `agent_harness.md` and `testing_strategy.md`.
 
 ## 10. Evolution
 
-- **Proxy:** switching to a project-owned proxy is a remote-config change of `api_base_url`, with no release needed (spec §8.10).
-- **Compose Multiplatform for iOS** is not planned (ADR-0001). Shared ViewModels keep that door open.
-- **v2 features** (accounts, TSC cards, payments) would add a `:shared:auth` module and new repositories. Nothing in v1 may depend on them.
+- **Offline mode (v1.0, LB-607):** a seed bundle, the offline banner and arrival snapshots, added on top of the existing cache (ADR-0008).
+- **Proxy:** switching is a remote-config change of `api_base_url` (spec §8.10).
+- **v2 features** (accounts, TSC cards, payments) would add `:shared:account:*` capability modules and new feature modules.
