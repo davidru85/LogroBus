@@ -26,12 +26,15 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
         extensions.configure<KotlinMultiplatformExtension> {
+            jvmToolchain(libs.findVersion("jvm-toolchain").get().requiredVersion.toInt())
             (this as ExtensionAware).extensions.configure<KotlinMultiplatformAndroidLibraryTarget>("android") {
                 namespace = moduleNamespace(path)
                 compileSdk = libs.findVersion("android-compileSdk").get().requiredVersion.toInt()
                 minSdk = libs.findVersion("android-minSdk").get().requiredVersion.toInt()
                 withHostTest { }
-                compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.fromTarget(libs.findVersion("android-jvmTarget").get().requiredVersion))
+                }
             }
             iosArm64()
             iosSimulatorArm64()
