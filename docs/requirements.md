@@ -137,7 +137,7 @@ The MVP has no offline mode: without connectivity, screens show the network erro
 
 - **Visual design:** Figma designs for the MVP are delivered near the end of the MVP. Until then, screens follow `design_guidelines.md` with the neutral placeholder theme, and the Figma designs are applied in LB-413.
 - **Privacy declarations** are prepared last (LB-414), once the data flows and the telemetry vendor are final.
-- **The repository** stays private for now. It becomes public, with `main` protected, before the MVP is completed (LB-415).
+- **The repository** is public since 2026-10-23, with `main` protected (LB-415). It was due before the MVP is completed; the owner brought it forward.
 - **Architecture:** clean architecture with feature modules, a platform-specific presentation layer and shared presentation models (ADR-0007).
 
 ## 6. Change control

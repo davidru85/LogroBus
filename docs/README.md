@@ -13,7 +13,7 @@ Living project documentation. Start with [`../AGENTS.md`](../AGENTS.md) for the 
 | [`design_guidelines.md`](design_guidelines.md) | The three sections screen by screen, Material 3 Expressive and Liquid Glass rules, tokens, states, accessibility, copy |
 | [`testing_strategy.md`](testing_strategy.md) | Test levels, TDD, test harness, required tests per PR, device matrix |
 | [`engineering_workflow.md`](engineering_workflow.md) | Branching, commits, PRs and templates, review, merge, definition of ready, dependencies |
-| [`ci_cd.md`](ci_cd.md) | Atomic CI checks, workflows, path filters, the private-repository rule |
+| [`ci_cd.md`](ci_cd.md) | Atomic CI checks, workflows, path filters, the repository-visibility rule |
 | [`release_process.md`](release_process.md) | Versioning, build variants, signing, distribution, release checklist, hotfixes |
 | [`security_privacy.md`](security_privacy.md) | Data inventory, permissions, security controls, threats, draft store declarations |
 | [`code_style.md`](code_style.md) | Kotlin, Compose, Swift, shell and Markdown conventions, plus lint configuration |

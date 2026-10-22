@@ -52,7 +52,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 | `docs/acceptance_criteria.md` | Given/When/Then criteria for every MVP story | A story or requirement changes |
 | `docs/testing_strategy.md` | Test levels, TDD, test harness, what each PR must test | Test practice or tooling changes |
 | `docs/engineering_workflow.md` | Branching, commits, PRs and templates, review, merge, dependencies | The workflow changes |
-| `docs/ci_cd.md` | Atomic CI checks, workflows, the private-repository rule | A check or workflow changes |
+| `docs/ci_cd.md` | Atomic CI checks, workflows, the repository-visibility rule | A check or workflow changes |
 | `docs/release_process.md` | Versioning, variants, signing, distribution, release checklist | Release practice changes |
 | `docs/security_privacy.md` | Data inventory, permissions, controls, draft store declarations | A data flow, permission or SDK changes |
 | `docs/code_style.md` | Detailed style rules and lint configuration | A style rule changes |
@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-22):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is in review; the Android app (part 2) and the iOS app (part 3) follow. The repository stays private for now and becomes public before the MVP is completed; `main` is protected on GitHub from that point (`docs/ci_cd.md` §1). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-23):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is merged; the Android app (part 2) and the iOS app (part 3) follow. The repository is public: CI runs the policy checks on every pull request, `main` is protected on GitHub (LB-415, `docs/ci_cd.md` §1), and the Gradle checks join CI in LB-002. The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -272,5 +272,5 @@ A story is done when all of these hold (spec §10.6, plus the docs):
   - The two files must stay equivalent. Never update only one language.
   - A PR without both updates is not ready to merge, even if it only touches docs.
 - **Nobody pushes to `main`.** Every change goes through a branch and a pull request that uses a template (`docs/engineering_workflow.md` §3.1), and is merged by the owner with a **merge commit**. There is no squash and no rebase, so the TDD commits are preserved (`docs/engineering_workflow.md` §5).
-- **CI does not run while the repository is private** (owner rule, `docs/ci_cd.md` §1). The local gates are authoritative: the git hooks plus `scripts/checks/run-all.sh`, whose summary must be pasted into the PR.
+- **CI runs on every pull request** now that the repository is public (`docs/ci_cd.md` §1), and its required checks must pass before merging. CI would not run on a private repository (owner rule). The local gates still run first: the git hooks plus `scripts/checks/run-all.sh`, whose summary must be pasted into the PR, because it covers the checks CI does not run yet.
 - Agents commit or push only when asked.

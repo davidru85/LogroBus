@@ -2,34 +2,31 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Policy workflow written but inactive (private repository); code workflows designed, built in LB-002; the repository goes public before the MVP is completed (LB-415) |
-| Last updated | 2026-10-22 |
+| Status | Repository public since 2026-10-23 (LB-415): the policy workflow runs on every pull request and `main` is protected. Code workflows are designed and built in LB-002 |
+| Last updated | 2026-10-23 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
-## 1. Operating rule: no CI while the repository is private
+## 1. Operating rule: CI runs only while the repository is public
 
 **Owner rule (2026-10-22): CI/CD checks are not executed while the GitHub repository is private.**
 
-- Every workflow job has `if: ${{ !github.event.repository.private }}`. While the repository is private, jobs are skipped: they consume no minutes and report as skipped.
-- GitHub Actions could technically run on a private repository within the monthly minutes of the Free plan. Not running it is a project decision; only the owner can change it.
-- **Until the repository is public, local gates are authoritative:**
-  - The git hooks (`commit-msg`, `pre-commit`, `pre-push`), installed by `scripts/bootstrap.sh`.
-  - `scripts/checks/run-all.sh`, whose final summary is pasted into every pull request (`.github/pull_request_template.md`).
-  - The owner checks that summary before merging.
-- Every CI job runs exactly one local command (§3), so local and CI results are interchangeable. Nothing has to change on the day CI becomes active.
-- **Timeline (owner decision, 2026-10-22):** the repository stays private for now and **becomes public before the MVP is completed** (LB-415). From that moment:
-  - CI runs automatically, because the guard reads the repository's visibility;
+- **The repository has been public since 2026-10-23** (LB-415, owner decision), so CI runs on every pull request:
   - `main` is protected on GitHub with `scripts/github/protect-main.sh` (`engineering_workflow.md` §1.1);
-  - the jobs in §3 become the required status checks.
+  - the policy jobs in §3 are the required status checks. The code jobs join them in LB-002, through the `ci-gate` job (§4).
+- Every workflow job keeps `if: ${{ !github.event.repository.private }}`. If the repository ever becomes private again, the jobs are skipped and the local gates become authoritative again.
+- **The local gates still run before every pull request:**
+  - The git hooks (`commit-msg`, `pre-commit`, `pre-push`), installed by `scripts/bootstrap.sh`.
+  - `scripts/checks/run-all.sh`, whose final summary is pasted into every pull request (`.github/pull_request_template.md`). It is the only evidence for the checks that have no CI job yet: the Gradle checks, until LB-002.
+- Every CI job runs exactly one local command (§3), so local and CI results are interchangeable.
 
 ### 1.1 Before making the repository public
 
-The owner decides when to go public. Before doing so:
-- [ ] Review the spec for content that should not be published. It describes the source system and hosts found in its public bundle (spec §3.4).
-- [ ] Decide the project licence (OQ-21) and add `LICENSE`.
-- [ ] Confirm the data-reuse position (OQ-11).
-- [ ] Confirm that no secrets exist in the git history (`scripts/checks/check-secrets.sh --all` on every commit, or a history scan).
-- [ ] After going public: run `scripts/github/protect-main.sh`, then verify that a direct push to `main` is rejected and that the policy jobs run on a test PR.
+The owner decides when to go public. This checklist was run on 2026-10-23, before the repository was made public:
+- [x] Review the spec for content that should not be published. Spec §3.4 names non-production hosts and spec §3.3 names test payment pages left in production. Both come from the public web bundle and contain no credentials. **The owner decided to publish the spec unchanged.**
+- [x] Decide the project licence (OQ-21). **No licence is granted: all rights reserved.** There is no `LICENSE` file; both READMEs state it.
+- [ ] Confirm the data-reuse position (OQ-11). **Still open:** it gates the app release, and the repository holds no source data yet. Revisit it before LB-003 commits the golden fixtures to the public repository.
+- [x] Confirm that no secrets exist in the git history. Every blob reachable from any ref was scanned (34 commits, 174 blobs, no findings). GitHub secret scanning and push protection are enabled.
+- [x] After going public: confirm that the policy jobs run on a test PR (PR #4: all six ran and passed), then run `scripts/github/protect-main.sh` and check through the GitHub API that the protection is active.
 
 ## 2. Atomic checks: principles
 
@@ -44,12 +41,12 @@ The owner decides when to go public. Before doing so:
 
 | Check (job name) | Workflow | Local command | Runner | Budget | Status |
 | --- | --- | --- | --- | --- | --- |
-| PR title | `policy-checks.yml` | `scripts/checks/check-conventional-title.sh "<title>"` | Linux | < 1 min | Written, inactive while private |
-| README parity | `policy-checks.yml` | `scripts/checks/check-readme-parity.sh origin/main` | Linux | < 1 min | Written, inactive while private |
-| Frozen spec | `policy-checks.yml` | `scripts/checks/check-spec-frozen.sh origin/main` | Linux | < 1 min | Written, inactive while private |
-| Doc links | `policy-checks.yml` | `scripts/checks/check-doc-links.sh` | Linux | < 1 min | Written, inactive while private |
-| Secrets scan | `policy-checks.yml` | `scripts/checks/check-secrets.sh --all` | Linux | < 1 min | Written, inactive while private |
-| Shell scripts | `policy-checks.yml` | `shellcheck -x …` | Linux | < 1 min | Written, inactive while private |
+| PR title | `policy-checks.yml` | `scripts/checks/check-conventional-title.sh "<title>"` | Linux | < 1 min | Active, required |
+| README parity | `policy-checks.yml` | `scripts/checks/check-readme-parity.sh origin/main` | Linux | < 1 min | Active, required |
+| Frozen spec | `policy-checks.yml` | `scripts/checks/check-spec-frozen.sh origin/main` | Linux | < 1 min | Active, required |
+| Doc links | `policy-checks.yml` | `scripts/checks/check-doc-links.sh` | Linux | < 1 min | Active, required |
+| Secrets scan | `policy-checks.yml` | `scripts/checks/check-secrets.sh --all` | Linux | < 1 min | Active, required |
+| Shell scripts | `policy-checks.yml` | `shellcheck -x …` | Linux | < 1 min | Active, required |
 | ktlint | `kotlin-checks.yml` | `./gradlew ktlintCheck` | Linux | < 3 min | LB-002 |
 | detekt | `kotlin-checks.yml` | `./gradlew detekt` | Linux | < 4 min | LB-002 |
 | Shared unit tests: `<module>` (matrix over `core/*`, `transit/*`, `favourites/*`, `feature/*`) | `kotlin-checks.yml` | `./gradlew :shared:<module>:ciUnitTest` | Linux | < 5 min each | LB-002 |
@@ -68,7 +65,7 @@ The owner decides when to go public. Before doing so:
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
 
-**Scheduled workflows**, also inactive while the repository is private:
+**Scheduled workflows**, built in the stories listed:
 
 | Workflow | Schedule | Jobs (one per concern) | Story |
 | --- | --- | --- | --- |
@@ -84,7 +81,7 @@ The owner decides when to go public. Before doing so:
 | `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradle.properties`, `version.properties` |
 | `ios-checks.yml` | `shared/**`, `iosApp/**`, `.swiftlint.yml`, `version.properties` |
 
-When branch protection becomes available, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.
+Because `main` is protected, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.
 
 ## 5. Speed and caching
 
@@ -99,8 +96,8 @@ When branch protection becomes available, path-filtered workflows need a small a
 - Untrusted input, such as the PR title or branch names, reaches scripts only through `env:`. It is never interpolated into `run:`.
 - First-party actions (`actions/*`) are pinned by major version. Third-party actions are pinned by commit SHA.
 - No secrets in pull request workflows. Release secrets (`release_process.md` §3) exist only in `release.yml`.
-- Dependabot keeps the actions updated weekly. It runs independently of GitHub Actions, so it keeps working while CI is inactive. The `gradle` and `swift` ecosystems are added after LB-001.
+- Dependabot keeps the actions updated weekly. The `gradle` and `swift` ecosystems are added after LB-001.
 
 ## 7. CD
 
-Continuous delivery is defined in `release_process.md`. The same rule applies: release workflows do not run while the repository is private, so releases are manual until then (`release_process.md` §5).
+Continuous delivery is defined in `release_process.md`. Release workflows follow the same visibility rule. Until `release.yml` exists (M5), releases are manual (`release_process.md` §5).
