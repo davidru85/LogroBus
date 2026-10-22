@@ -90,6 +90,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **22-10-2026:**
+  - CI: `actions/checkout` actualizado de la v5 a la v7 (Dependabot, PR #2).
   - Creada la documentación del proyecto.
   - Decidido: iOS 18 como mínimo, identificador `com.ruizurraca.logrobus`, Líneas como pestaña inicial y paradas guardadas en Cerca de mí.
   - Creado el repositorio privado en GitHub.
