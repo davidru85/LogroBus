@@ -23,3 +23,9 @@ tasks.test {
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+tasks.register("ciUnitTest") {
+    group = "verification"
+    description = "Runs the architecture tests, as CI does."
+    dependsOn(tasks.test)
+}
