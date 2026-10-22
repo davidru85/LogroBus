@@ -1,0 +1,141 @@
+package com.ruizurraca.logrobus.buildlogic
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+/**
+ * Module dependency rules of ADR-0007 and docs/architecture.md §3.2.
+ * Only production (non-test) dependencies are passed to the rules.
+ */
+class ModuleRulesTest {
+
+    private fun violations(from: String, vararg to: String, external: List<String> = emptyList()) =
+        ModuleRules.violations(from, to.toList(), external)
+
+    @Test
+    fun lb001_featureMayDependOnDomainAndCoreModules() {
+        assertEquals(
+            emptyList<String>(),
+            violations(
+                ":shared:feature:lines",
+                ":shared:transit:domain",
+                ":shared:favourites:domain",
+                ":shared:core:common",
+                ":shared:core:presentation",
+            ),
+        )
+    }
+
+    @Test
+    fun lb001_featureMayNotDependOnAnotherFeature() {
+        assertEquals(1, violations(":shared:feature:lines", ":shared:feature:stops").size)
+    }
+
+    @Test
+    fun lb001_featureMayNotDependOnDataModules() {
+        assertEquals(1, violations(":shared:feature:nearme", ":shared:transit:data").size)
+    }
+
+    @Test
+    fun lb001_domainMayDependOnlyOnCoreCommon() {
+        assertEquals(emptyList<String>(), violations(":shared:transit:domain", ":shared:core:common"))
+        assertEquals(1, violations(":shared:transit:domain", ":shared:core:network").size)
+    }
+
+    @Test
+    fun lb001_domainMayNotDependOnDataModules() {
+        assertEquals(1, violations(":shared:favourites:domain", ":shared:favourites:data").size)
+    }
+
+    @Test
+    fun lb001_domainMayNotUseKtorOrSqlDelight() {
+        val found = violations(
+            ":shared:transit:domain",
+            external = listOf("io.ktor:ktor-client-core", "app.cash.sqldelight:runtime", "org.jetbrains.kotlinx:kotlinx-datetime"),
+        )
+        assertEquals(2, found.size)
+    }
+
+    @Test
+    fun lb001_dataMayDependOnItsOwnDomainAndCore() {
+        assertEquals(
+            emptyList<String>(),
+            violations(":shared:transit:data", ":shared:transit:domain", ":shared:core:network", ":shared:core:database"),
+        )
+    }
+
+    @Test
+    fun lb001_dataMayNotDependOnAnotherCapabilityOrFeature() {
+        assertEquals(1, violations(":shared:transit:data", ":shared:favourites:domain").size)
+        assertEquals(1, violations(":shared:transit:data", ":shared:feature:lines").size)
+    }
+
+    @Test
+    fun lb001_coreMayDependOnlyOnCore() {
+        assertEquals(emptyList<String>(), violations(":shared:core:network", ":shared:core:common"))
+        assertEquals(1, violations(":shared:core:network", ":shared:transit:domain").size)
+    }
+
+    @Test
+    fun lb001_umbrellaMayDependOnEverySharedModule() {
+        assertEquals(
+            emptyList<String>(),
+            violations(
+                ":shared:umbrella",
+                ":shared:core:common",
+                ":shared:transit:domain",
+                ":shared:transit:data",
+                ":shared:feature:planner",
+            ),
+        )
+    }
+
+    @Test
+    fun lb001_androidFeatureMayDependOnItsSharedFeatureDomainAndCores() {
+        assertEquals(
+            emptyList<String>(),
+            violations(
+                ":android:feature:lines",
+                ":shared:feature:lines",
+                ":shared:transit:domain",
+                ":shared:core:presentation",
+                ":android:core:designsystem",
+            ),
+        )
+    }
+
+    @Test
+    fun lb001_androidFeatureMayNotDependOnOtherFeaturesOrData() {
+        assertEquals(1, violations(":android:feature:lines", ":shared:feature:stops").size)
+        assertEquals(1, violations(":android:feature:lines", ":android:feature:stops").size)
+        assertEquals(1, violations(":android:feature:lines", ":shared:transit:data").size)
+    }
+
+    @Test
+    fun lb001_androidAppMayDependOnAnyAndroidOrSharedModule() {
+        assertEquals(
+            emptyList<String>(),
+            violations(":android:app", ":android:feature:lines", ":android:core:navigation", ":shared:umbrella"),
+        )
+    }
+
+    @Test
+    fun lb001_productionCodeMayNotDependOnTheTestingModule() {
+        assertEquals(1, violations(":shared:feature:lines", ":shared:core:testing").size)
+    }
+
+    @Test
+    fun lb001_unclassifiedModulesAreReported() {
+        assertEquals(1, violations(":shared:misc", ":shared:core:common").size)
+        assertEquals(1, violations(":shared:feature:lines", ":shared:misc").size)
+    }
+
+    @Test
+    fun lb001_violationMessageNamesBothModulesAndTheDecision() {
+        val message = violations(":shared:feature:lines", ":shared:feature:stops").single()
+        assertTrue(":shared:feature:lines" in message, message)
+        assertTrue(":shared:feature:stops" in message, message)
+        assertTrue("ADR-0007" in message, message)
+    }
+}
