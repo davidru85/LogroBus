@@ -7,6 +7,7 @@ package com.ruizurraca.logrobus.buildlogic
 object ModuleRules {
 
     private const val REFERENCE = "ADR-0007, docs/architecture.md §3.2"
+    private const val DOMAIN_LIBRARIES = "domain modules must not use networking or persistence libraries"
     private val forbiddenInDomain = setOf("io.ktor", "app.cash.sqldelight")
 
     /**
@@ -28,7 +29,7 @@ object ModuleRules {
         val externalViolations = if (source is ModuleKind.Domain) {
             externalDependencies
                 .filter { coordinate -> coordinate.substringBefore(':') in forbiddenInDomain }
-                .map { "$from -> $it is not allowed: domain modules must not use networking or persistence libraries ($REFERENCE)" }
+                .map { "$from -> $it is not allowed: $DOMAIN_LIBRARIES ($REFERENCE)" }
         } else {
             emptyList()
         }
@@ -45,16 +46,28 @@ object ModuleRules {
             is ModuleKind.Domain -> to == ModuleKind.Core("common")
             is ModuleKind.Data -> to is ModuleKind.Core || to == ModuleKind.Domain(from.capability)
             is ModuleKind.Feature -> to is ModuleKind.Core || to is ModuleKind.Domain
-            ModuleKind.Umbrella -> to is ModuleKind.Core || to is ModuleKind.Domain || to is ModuleKind.Data || to is ModuleKind.Feature
+            ModuleKind.Umbrella -> to.isShared
             is ModuleKind.AndroidCore -> to is ModuleKind.Core || to is ModuleKind.AndroidCore
-            is ModuleKind.AndroidFeature ->
-                to is ModuleKind.Core || to is ModuleKind.Domain || to is ModuleKind.AndroidCore || to == ModuleKind.Feature(from.name)
+            is ModuleKind.AndroidFeature -> to.isInwardFrom(from)
             ModuleKind.AndroidApp -> to !is ModuleKind.Tool
             is ModuleKind.Tool -> true
             ModuleKind.Unknown -> false
         }
         return if (allowed) null else "a ${from.label} module may not depend on a ${to.label} module"
     }
+
+    private val ModuleKind.isShared: Boolean
+        get() = this is ModuleKind.Core ||
+            this is ModuleKind.Domain ||
+            this is ModuleKind.Data ||
+            this is ModuleKind.Feature
+
+    /** An Android feature may use shared cores, domains, Android cores and only its own shared feature. */
+    private fun ModuleKind.isInwardFrom(feature: ModuleKind.AndroidFeature): Boolean =
+        this is ModuleKind.Core ||
+            this is ModuleKind.Domain ||
+            this is ModuleKind.AndroidCore ||
+            this == ModuleKind.Feature(feature.name)
 }
 
 /** Classification of a Gradle project path into an architectural role. */
@@ -77,18 +90,28 @@ internal sealed interface ModuleKind {
 
         fun of(path: String): ModuleKind {
             val segments = path.removePrefix(":").split(':')
-            return when {
-                segments.size == 3 && segments[0] == "shared" && segments[1] == "core" -> Core(segments[2])
-                segments.size == 3 && segments[0] == "shared" && segments[1] == "feature" -> Feature(segments[2])
-                segments.size == 3 && segments[0] == "shared" && segments[1] in capabilities && segments[2] == "domain" -> Domain(segments[1])
-                segments.size == 3 && segments[0] == "shared" && segments[1] in capabilities && segments[2] == "data" -> Data(segments[1])
-                segments == listOf("shared", "umbrella") -> Umbrella
-                segments == listOf("android", "app") -> AndroidApp
-                segments.size == 3 && segments[0] == "android" && segments[1] == "core" -> AndroidCore(segments[2])
-                segments.size == 3 && segments[0] == "android" && segments[1] == "feature" -> AndroidFeature(segments[2])
-                segments.size == 2 && segments[0] == "tools" -> Tool(segments[1])
+            return when (segments.size) {
+                2 -> ofTwo(segments[0], segments[1])
+                3 -> ofThree(segments[0], segments[1], segments[2])
                 else -> Unknown
             }
+        }
+
+        private fun ofTwo(root: String, name: String): ModuleKind = when {
+            root == "shared" && name == "umbrella" -> Umbrella
+            root == "android" && name == "app" -> AndroidApp
+            root == "tools" -> Tool(name)
+            else -> Unknown
+        }
+
+        private fun ofThree(root: String, group: String, name: String): ModuleKind = when {
+            root == "shared" && group == "core" -> Core(name)
+            root == "shared" && group == "feature" -> Feature(name)
+            root == "shared" && group in capabilities && name == "domain" -> Domain(group)
+            root == "shared" && group in capabilities && name == "data" -> Data(group)
+            root == "android" && group == "core" -> AndroidCore(name)
+            root == "android" && group == "feature" -> AndroidFeature(name)
+            else -> Unknown
         }
     }
 }
