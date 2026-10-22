@@ -7,6 +7,11 @@ import org.junit.jupiter.api.Test
 /** Unit tests for the pure rules behind ArchitectureTest, with known good and bad samples. */
 class ArchitectureRulesTest {
 
+    private val root = "com.ruizurraca.logrobus"
+
+    private fun crossFeature(packageName: String, vararg imports: String) =
+        ArchitectureRules.crossFeatureImports(packageName, imports.toList())
+
     @Test
     fun lb001_includesAreParsedFromMultiArgumentAndMultilineCalls() {
         val settings = """
@@ -47,24 +52,18 @@ class ArchitectureRulesTest {
 
     @Test
     fun lb001_featureMayImportItselfButNotAnotherFeature() {
-        val own = "com.ruizurraca.logrobus.feature.lines.presentation"
-        assertEquals(
-            emptyList<String>(),
-            ArchitectureRules.crossFeatureImports(own, listOf("com.ruizurraca.logrobus.feature.lines.domain.ObserveLines")),
-        )
-        assertEquals(
-            1,
-            ArchitectureRules.crossFeatureImports(own, listOf("com.ruizurraca.logrobus.feature.stops.domain.X")).size,
-        )
+        val own = "$root.feature.lines.presentation"
+        assertEquals(emptyList<String>(), crossFeature(own, "$root.feature.lines.domain.ObserveLines"))
+        assertEquals(1, crossFeature(own, "$root.feature.stops.domain.X").size)
     }
 
     @Test
     fun lb001_umbrellaMayImportFeaturesButCoreDomainAndDataMayNot() {
-        val featureImport = listOf("com.ruizurraca.logrobus.feature.lines.domain.ObserveLines")
-        assertEquals(emptyList<String>(), ArchitectureRules.crossFeatureImports("com.ruizurraca.logrobus.umbrella", featureImport))
-        assertEquals(1, ArchitectureRules.crossFeatureImports("com.ruizurraca.logrobus.core.common", featureImport).size)
-        assertEquals(1, ArchitectureRules.crossFeatureImports("com.ruizurraca.logrobus.transit.domain", featureImport).size)
-        assertEquals(1, ArchitectureRules.crossFeatureImports("com.ruizurraca.logrobus.transit.data", featureImport).size)
+        val featureImport = "$root.feature.lines.domain.ObserveLines"
+        assertEquals(emptyList<String>(), crossFeature("$root.umbrella", featureImport))
+        assertEquals(1, crossFeature("$root.core.common", featureImport).size)
+        assertEquals(1, crossFeature("$root.transit.domain", featureImport).size)
+        assertEquals(1, crossFeature("$root.transit.data", featureImport).size)
     }
 
     @Test
@@ -76,7 +75,7 @@ class ArchitectureRulesTest {
             "android.content.Context",
             "platform.Foundation.NSDate",
             "io.ktor.client.HttpClient",
-            "com.ruizurraca.logrobus.transit.data.LinesApi",
+            "$root.transit.data.LinesApi",
             "kotlin.time.Instant",
         )
         assertEquals(7, ArchitectureRules.forbiddenDomainImports(imports).size)
@@ -91,9 +90,9 @@ class ArchitectureRulesTest {
     @Test
     fun lb001_expectedNamespaceFollowsTheModulePath() {
         assertEquals(
-            "com.ruizurraca.logrobus.feature.lines",
+            "$root.feature.lines",
             ArchitectureRules.expectedNamespace("shared/feature/lines/src/commonMain/kotlin/com/x/A.kt"),
         )
-        assertEquals("com.ruizurraca.logrobus.umbrella", ArchitectureRules.expectedNamespace("shared/umbrella/src/iosMain/kotlin/A.kt"))
+        assertEquals("$root.umbrella", ArchitectureRules.expectedNamespace("shared/umbrella/src/iosMain/kotlin/A.kt"))
     }
 }

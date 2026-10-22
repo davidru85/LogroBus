@@ -16,7 +16,15 @@ object ArchitectureRules {
     private val featurePackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
-    private val platform = listOf("java.", "javax.", "dalvik.", "android.", "androidx.", "platform.", "kotlinx.cinterop.")
+    private val platform = listOf(
+        "java.",
+        "javax.",
+        "dalvik.",
+        "android.",
+        "androidx.",
+        "platform.",
+        "kotlinx.cinterop.",
+    )
 
     /** Every module path passed to `include(...)`, including multi-argument and multi-line calls. */
     fun includedModules(settings: String): Set<String> =
