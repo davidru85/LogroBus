@@ -19,6 +19,16 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-22: Dependabot PR #2: actions/checkout v5 to v7
+
+**Done**
+- Reviewed Dependabot's bump of `actions/checkout` from v5 to v7 in `policy-checks.yml`. v7.0.0 only blocks fork checkouts on `pull_request_target` and `workflow_run`, which this repository does not use.
+- Added the README, project-log and workflow commits to the Dependabot branch.
+- The first docs commit claimed a project-log entry that a failed script step had not written. This commit adds it; history is not rewritten.
+
+**Decisions**
+- Dependabot PRs get no exception from the README rule. The README update is added to their branch before merging (`engineering_workflow.md` §9).
+
 ## 2026-10-22: Merge strategy: merge commits, no squash
 
 **Decisions**
