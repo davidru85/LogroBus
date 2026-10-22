@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Git pre-push hook (docs/engineering_workflow.md §1.1):
+# - rejects pushes to main unless LOGROBUS_ALLOW_MAIN_PUSH=1 (owner emergencies only);
+# - runs the frozen-spec and doc-link gates (blocking);
+# - reports README parity as a warning only: TDD pushes after every cycle
+#   (docs/testing_strategy.md §7.1); run-all.sh enforces parity before the PR.
+# While the repository is private, CI does not run (docs/ci_cd.md §1), so these
+# local gates are authoritative.
+# Installed by scripts/bootstrap.sh (core.hooksPath=.githooks).
+set -uo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+checks="$root/scripts/checks"
+
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "${LOGROBUS_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
+    echo "pre-push: direct pushes to main are not allowed. Push a branch and open a pull request." >&2
+    echo "pre-push: owner emergency bypass: LOGROBUS_ALLOW_MAIN_PUSH=1 git push ... (log it in docs/project_log.md)." >&2
+    exit 1
+  fi
+done
+
+status=0
+"$checks/check-spec-frozen.sh" origin/main || status=1
+"$checks/check-doc-links.sh" || status=1
+if ! "$checks/check-readme-parity.sh" origin/main >/dev/null 2>&1; then
+  echo "WARN: README.md and README.es.md are not both updated on this branch yet; required before the PR (scripts/checks/run-all.sh)." >&2
+fi
+exit "$status"

@@ -1,0 +1,5 @@
+# ShellCheck configuration (docs/code_style.md §4).
+# Resolve `source` directives relative to each script's own directory, so
+# results do not depend on the directory shellcheck is run from.
+source-path=SCRIPTDIR
+external-sources=true
