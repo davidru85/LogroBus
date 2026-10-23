@@ -29,7 +29,6 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - TDD cycle:
   - `lb002_kotlinJobNamesReadWellWhenSkipped`, backed by the `jobNamesWithExpressions` rule and its unit test, forbids `${{ }}` in job names.
   - The matrix jobs are now "Shared unit tests" and "Android unit tests"; GitHub appends the module when they run.
-
 - **First strict SwiftLint run** (0.65.1, installed by the owner) on the Swift code from LB-001:
   - the only findings were the built-in `todo` rule rejecting the two `TODO(LB-010)` and `TODO(LB-012)` comments, which `code_style.md` §1 allows;
   - that rule is replaced by `todo_without_story`. Probe: it rejected `// TODO: …` and `// FIXME …`, and accepted `// TODO(LB-012): …`;
@@ -39,6 +38,28 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Keep the path filter.** Docs-only PRs skip the Kotlin jobs on purpose (`ci_cd.md` §2, principle 5), and the skipped checks now read well. The alternatives were rejected:
   - running every job on every PR;
   - jobs that run but do nothing, a misleading green.
+
+## 2026-10-23: ADR-0010 accepted; the Android module-rule probe
+
+**Decisions (owner)**
+- **ADR-0010 accepted.** The iOS project is generated with XcodeGen, `Shared` is linked once through the `LogroBusUI` package, and a script refreshes it.
+  - ADR-0004's status records the amendment.
+  - ADR-0007's "validate in LB-001" consequence is annotated as validated; its decision is unchanged.
+- **The negative Android probe from PR #6 is approved**, and was run.
+
+**Done**
+- Probe, on `main` after PR #7, reverted afterwards:
+  - added `implementation(projects.android.feature.stops)` to `android/feature/lines`, then ran `./gradlew :android:feature:lines:help`;
+  - the build failed at configuration with: `Module dependency rules violated in 'implementation': :android:feature:lines -> :android:feature:stops is not allowed: a Android feature (lines) module may not depend on a Android feature (stops) module (ADR-0007, docs/architecture.md §3.2)`;
+  - `ModuleRules` therefore blocks the dependency in a real Android build, which closes LB-001's "on either platform" criterion on Android too.
+- This PR is docs-only, so it is also the first docs-only PR since the Kotlin gate became required. Its CI run closes the check left open by LB-002 part 1:
+  - `Kotlin changes` passed, and the six other Kotlin jobs were skipped;
+  - `Kotlin gate` passed, logging `Kotlin job results: success skipped skipped skipped skipped skipped skipped`;
+  - the PR was `MERGEABLE` / `CLEAN` under branch protection.
+
+**Open / next**
+- The `ModuleRules` message says "a Android feature". Fix the article in build-logic, with a test (small, LB-002 or the next build-logic change).
+- LB-002: `ios-checks.yml` (macOS runner), ktlint, detekt, Kover.
 
 ## 2026-10-23: LB-001 part 3 of 3: the iOS app skeleton (LB-001 done)
 
