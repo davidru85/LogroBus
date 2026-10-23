@@ -102,6 +102,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **23-10-2026:**
+  - Aceptado el ADR-0010: cómo se genera el proyecto de iOS y cómo enlaza el código compartido.
   - LB-001, parte 3 de 3: el esqueleto de la app de iOS. Con esto se completa LB-001.
     - La app (`com.ruizurraca.logrobus`, solo iPhone, iOS 18 o posterior) se abre en una pantalla provisional de la pestaña Líneas, en español y en inglés.
     - Su pestaña inicial sale del código compartido, igual que en Android.

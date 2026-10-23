@@ -19,6 +19,25 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-23: ADR-0010 accepted; the Android module-rule probe
+
+**Decisions (owner)**
+- **ADR-0010 accepted.** The iOS project is generated with XcodeGen, `Shared` is linked once through the `LogroBusUI` package, and a script refreshes it.
+  - ADR-0004's status records the amendment.
+  - ADR-0007's "validate in LB-001" consequence is annotated as validated; its decision is unchanged.
+- **The negative Android probe from PR #6 is approved**, and was run.
+
+**Done**
+- Probe, on `main` after PR #7, reverted afterwards:
+  - added `implementation(projects.android.feature.stops)` to `android/feature/lines`, then ran `./gradlew :android:feature:lines:help`;
+  - the build failed at configuration with: `Module dependency rules violated in 'implementation': :android:feature:lines -> :android:feature:stops is not allowed: a Android feature (lines) module may not depend on a Android feature (stops) module (ADR-0007, docs/architecture.md §3.2)`;
+  - `ModuleRules` therefore blocks the dependency in a real Android build, which closes LB-001's "on either platform" criterion on Android too.
+- This PR is docs-only, so it is also the first docs-only PR since the Kotlin gate became required. Its CI run is the check left open by LB-002 part 1: `Kotlin changes` should report `false`, the Kotlin jobs should be skipped, and `Kotlin gate` should pass.
+
+**Open / next**
+- The `ModuleRules` message says "a Android feature". Fix the article in build-logic, with a test (small, LB-002 or the next build-logic change).
+- LB-002: `ios-checks.yml` (macOS runner), ktlint, detekt, Kover.
+
 ## 2026-10-23: LB-001 part 3 of 3: the iOS app skeleton (LB-001 done)
 
 **Done**
