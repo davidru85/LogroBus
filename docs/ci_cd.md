@@ -52,10 +52,10 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Build-logic tests | `kotlin-checks.yml` | `./gradlew :build-logic:convention:test` | Linux | < 3 min | Active, through the gate |
 | ktlint | `kotlin-checks.yml` | `./gradlew ktlintCheck` | Linux | < 3 min | LB-002 |
 | detekt | `kotlin-checks.yml` | `./gradlew detekt` | Linux | < 4 min | LB-002 |
-| Shared unit tests: `<module>` (matrix over every shared module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule`) | `kotlin-checks.yml` | `./gradlew :shared:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
+| Shared unit tests (`<module>`) (matrix over every shared module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule`) | `kotlin-checks.yml` | `./gradlew :shared:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
 | Coverage (data, domain) | `kotlin-checks.yml` | `./gradlew koverVerify` | Linux | < 5 min | LB-002 |
 | Architecture rules | `kotlin-checks.yml` | `./gradlew :tools:architecture-tests:test` | Linux | < 3 min | Active, through the gate |
-| Android unit tests: `<module>` (matrix over every Android module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule`): ViewModel tests and Robolectric UI tests | `kotlin-checks.yml` | `./gradlew :android:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
+| Android unit tests (`<module>`) (matrix over every Android module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule`): ViewModel tests and Robolectric UI tests | `kotlin-checks.yml` | `./gradlew :android:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
 | Android lint (every Android module) | `kotlin-checks.yml` | `./gradlew lintDebug` | Linux | < 5 min | Active, through the gate |
 | Android build | `kotlin-checks.yml` | `./gradlew :android:app:assembleDebug` | Linux | < 5 min | Active, through the gate |
 | Android screenshots: `<feature>` (matrix) | `kotlin-checks.yml` | `./gradlew :android:feature:<feature>:verifyRoborazziDebug` | Linux | < 5 min each | LB-002 |
@@ -91,6 +91,8 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - The other jobs run only when Kotlin paths changed.
 - `Kotlin gate` always runs. It fails if any job failed or was cancelled, and passes when every job passed or was skipped.
 - `ChangedAreasScriptTest` (in `:tools:architecture-tests`) runs the script in throwaway git repositories. A wrong `kotlin=false` would let untested Kotlin code merge, so the tests cover large diffs, moves out of Kotlin paths and fixture changes.
+- On a PR that touches no Kotlin path, such as a docs-only PR, the other Kotlin jobs show as skipped. That is expected: only the gate is required, and it passes. This was first seen on PR #8.
+- Job names are plain text, because GitHub shows a skipped job's name unexpanded. Matrix jobs get their values appended automatically, for example "Shared unit tests (:shared:core:common)". `lb002_kotlinJobNamesReadWellWhenSkipped` enforces this.
 - `ios-checks.yml` will get its own gate in the same way.
 
 ## 5. Speed and caching
