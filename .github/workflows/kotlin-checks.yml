@@ -67,7 +67,8 @@ jobs:
         run: ./gradlew :tools:architecture-tests:test
 
   shared-unit-tests:
-    name: "Shared unit tests: ${{ matrix.module }}"
+    # GitHub appends the matrix value: "Shared unit tests (:shared:core:common)".
+    name: Shared unit tests
     needs: changes
     if: ${{ needs.changes.outputs.kotlin == 'true' }}
     runs-on: ubuntu-latest
@@ -106,7 +107,8 @@ jobs:
         run: ./gradlew "$MODULE:ciUnitTest"
 
   android-unit-tests:
-    name: "Android unit tests: ${{ matrix.module }}"
+    # GitHub appends the matrix value: "Android unit tests (:android:app)".
+    name: Android unit tests
     needs: changes
     if: ${{ needs.changes.outputs.kotlin == 'true' }}
     runs-on: ubuntu-latest
