@@ -17,7 +17,7 @@
 - **The local gates still run before every pull request:**
   - The git hooks (`commit-msg`, `pre-commit`, `pre-push`), installed by `scripts/bootstrap.sh`.
   - `scripts/checks/run-all.sh`, whose final summary is pasted into every pull request (`.github/pull_request_template.md`). It runs the same checks before CI does, and it is the only evidence for a check that has no CI job yet.
-- Every CI job runs exactly one local command (§3), so local and CI results are interchangeable.
+- Every CI job runs exactly one local command (§3), so local and CI results are interchangeable. The only exceptions are the gate jobs (§4), which just read the other jobs' results.
 
 ### 1.1 Before making the repository public
 
@@ -33,7 +33,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 1. **One concern per job.** A job answers exactly one question, such as "is the PR title valid?" or "do `:shared:data` unit tests pass?". Its job name is the status-check name.
 2. **Short by design.** Target under 5 minutes per job, with a hard `timeout-minutes` of 10 at most. If a job's typical duration exceeds 5 minutes, split it: by module, by test type, by platform or by shard.
 3. **Parallel and independent.** Jobs do not depend on each other unless one consumes another's artefact, such as iOS tests needing the Kotlin framework.
-4. **Reproducible locally.** Each job runs a single script from `scripts/checks/` or a single Gradle task. The failure message tells you the command to run locally.
+4. **Reproducible locally.** Each job runs a single script from `scripts/checks/` or `scripts/ci/`, or a single Gradle task. The failure message tells you the command to run locally.
 5. **Relevant only.** Workflows are split by area with path filters, so a docs-only PR does not build iOS.
 6. **Fail fast and cheaply.** Cheap policy checks run on Linux. macOS runners are used only for jobs that need Xcode.
 
@@ -81,7 +81,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Workflow | Runs when these paths change |
 | --- | --- |
 | `policy-checks.yml` | Any change |
-| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
+| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
 | `ios-checks.yml` | `shared/**`, `iosApp/**`, `.swiftlint.yml`, `version.properties` |
 
 Because `main` is protected, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.
@@ -90,11 +90,14 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - The workflow runs on every pull request. Its first job, `Kotlin changes`, runs `scripts/ci/changed-areas.sh`, the single source of the path patterns above.
 - The other jobs run only when Kotlin paths changed.
 - `Kotlin gate` always runs. It fails if any job failed or was cancelled, and passes when every job passed or was skipped.
+- `ChangedAreasScriptTest` (in `:tools:architecture-tests`) runs the script in throwaway git repositories. A wrong `kotlin=false` would let untested Kotlin code merge, so the tests cover large diffs, moves out of Kotlin paths and fixture changes.
 - `ios-checks.yml` will get its own gate in the same way.
 
 ## 5. Speed and caching
 
-- **Gradle:** `gradle/actions/setup-gradle` with the build cache and the configuration cache enabled.
+- **Gradle:** `gradle/actions/setup-gradle` with the build cache and the configuration cache enabled, through the `.github/actions/gradle-setup` composite action.
+  - It uses `cache-provider: basic`, the MIT-licensed cache. The default "enhanced" provider is proprietary, under the Gradle Technologies Terms of Use; it is free for public repositories, but switching to it is the owner's decision.
+  - Caches are written only on `main`, and pull requests read them.
 - **Caches:** the Kotlin/Native toolchain (`~/.konan`), Swift Package Manager checkouts and Xcode DerivedData for the iOS jobs.
 - **Concurrency:** `concurrency` with `cancel-in-progress: true` per pull request, so a new push cancels the stale run.
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.
