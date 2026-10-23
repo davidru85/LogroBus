@@ -87,6 +87,13 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule() {
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml")
+        val modules = if (workflow.isFile) ArchitectureRules.workflowMatrixModules(workflow.readText()) else emptySet()
+        assertEquals(androidModules.toSortedSet(), modules.filter { it.startsWith(":android:") }.toSortedSet())
+    }
+
+    @Test
     fun lb001_buildScriptsAndBuildLogicDeclareNoVersionLiterals() {
         val offenders = root.walkTopDown()
             .onEnter { it.name !in ignoredDirectories }
