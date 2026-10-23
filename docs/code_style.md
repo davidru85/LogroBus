@@ -58,7 +58,9 @@
 
 ### 3.1 Tooling
 
-- **SwiftLint**, configured in `.swiftlint.yml`. Custom rules forbid calling `.glassEffect(` or the glass button styles outside `DesignSystem/` (ADR-0003).
+- **SwiftLint** (0.65 or later), configured in `.swiftlint.yml`. Custom rules:
+  - forbid calling `.glassEffect(` or the glass button styles outside `DesignSystem/` (ADR-0003);
+  - replace the built-in `todo` rule with `todo_without_story`, which rejects only a `TODO` or `FIXME` without a story id (§1).
 - Formatting follows Xcode's defaults: 4 spaces, with the 120-column guide enabled.
 
 ### 3.2 Conventions
