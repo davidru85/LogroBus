@@ -13,8 +13,7 @@ import java.io.File
  */
 class ArchitectureTest {
 
-    private val root: File = generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }
-        .first { File(it, "settings.gradle.kts").isFile && File(it, "gradlew").isFile }
+    private val root: File = repositoryRoot
 
     private val sharedModules = listOf(
         ":shared:core:common",
@@ -61,7 +60,8 @@ class ArchitectureTest {
     fun lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule() {
         val workflow = File(root, ".github/workflows/kotlin-checks.yml")
         val modules = if (workflow.isFile) ArchitectureRules.workflowMatrixModules(workflow.readText()) else emptySet()
-        assertEquals(sharedModules.toSortedSet(), modules.toSortedSet())
+        // Other matrices in the workflow, such as the Android feature tests, list their own modules.
+        assertEquals(sharedModules.toSortedSet(), modules.filter { it.startsWith(":shared:") }.toSortedSet())
     }
 
     @Test
