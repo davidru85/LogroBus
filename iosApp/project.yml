@@ -44,6 +44,20 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         SWIFT_EMIT_LOC_STRINGS: YES
+  iosAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: iosAppTests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus.tests
+        GENERATE_INFOPLIST_FILE: YES
+        # The app's product is LogroBus.app, not iosApp.app, so the test host is spelled out.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/LogroBus.app/LogroBus
+        BUNDLE_LOADER: $(TEST_HOST)
   iosAppUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -60,7 +74,9 @@ schemes:
     build:
       targets:
         iosApp: all
+        iosAppTests: [test]
         iosAppUITests: [test]
     test:
       targets:
+        - iosAppTests
         - iosAppUITests
