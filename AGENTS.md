@@ -110,7 +110,7 @@ scripts/agent/session-start.sh                    # session context, for agents 
 ./gradlew :android:app:installDebug               # install on a connected device or emulator
 ```
 
-If you have just created a new source directory, run Gradle once with `--no-configuration-cache`. A reused configuration-cache entry can miss the new directory and report the tests as `NO-SOURCE`, a false green. `scripts/checks/run-all.sh` always runs without the configuration cache, and CI always configures from scratch.
+If you have just created a new source directory, run Gradle once with `--no-configuration-cache --no-watch-fs`. Both a reused configuration-cache entry and the daemon's file-system watching (seen on macOS) can miss the new directory and report the tests as `NO-SOURCE`, a false green. `scripts/checks/run-all.sh` always runs with both turned off, and CI always configures from scratch.
 
 The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
 
