@@ -115,4 +115,13 @@ class ArchitectureRulesTest {
         )
         assertEquals("$root.umbrella", ArchitectureRules.expectedNamespace("shared/umbrella/src/iosMain/kotlin/A.kt"))
     }
+
+    @Test
+    fun lb001_androidNamespacesKeepThePlatformSegment() {
+        assertEquals("$root.android.app", ArchitectureRules.expectedNamespace("android/app/src/main/kotlin/A.kt"))
+        assertEquals(
+            "$root.android.feature.lines",
+            ArchitectureRules.expectedNamespace("android/feature/lines/src/test/kotlin/A.kt"),
+        )
+    }
 }

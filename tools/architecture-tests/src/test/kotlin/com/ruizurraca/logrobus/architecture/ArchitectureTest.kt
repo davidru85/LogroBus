@@ -145,8 +145,22 @@ class ArchitectureTest {
         assertEquals(emptyList<String>(), offenders)
     }
 
+    @Test
+    fun lb001_androidKotlinFilesLiveInTheirModuleNamespace() {
+        val offenders = androidFiles().mapNotNull { file ->
+            val expected = ArchitectureRules.expectedNamespace(file.relativePath())
+            val actual = file.packagee?.name.orEmpty()
+            val inNamespace = actual == expected || actual.startsWith("$expected.")
+            if (inNamespace) null else "${file.relativePath()}: $actual"
+        }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
+
+    private fun androidFiles(): List<KoFileDeclaration> =
+        Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("android/") }
 
     private fun KoFileDeclaration.importNames(): List<String> = imports.map { it.name }
 
