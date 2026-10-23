@@ -32,7 +32,10 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - added `implementation(projects.android.feature.stops)` to `android/feature/lines`, then ran `./gradlew :android:feature:lines:help`;
   - the build failed at configuration with: `Module dependency rules violated in 'implementation': :android:feature:lines -> :android:feature:stops is not allowed: a Android feature (lines) module may not depend on a Android feature (stops) module (ADR-0007, docs/architecture.md §3.2)`;
   - `ModuleRules` therefore blocks the dependency in a real Android build, which closes LB-001's "on either platform" criterion on Android too.
-- This PR is docs-only, so it is also the first docs-only PR since the Kotlin gate became required. Its CI run is the check left open by LB-002 part 1: `Kotlin changes` should report `false`, the Kotlin jobs should be skipped, and `Kotlin gate` should pass.
+- This PR is docs-only, so it is also the first docs-only PR since the Kotlin gate became required. Its CI run closes the check left open by LB-002 part 1:
+  - `Kotlin changes` passed, and the six other Kotlin jobs were skipped;
+  - `Kotlin gate` passed, logging `Kotlin job results: success skipped skipped skipped skipped skipped skipped`;
+  - the PR was `MERGEABLE` / `CLEAN` under branch protection.
 
 **Open / next**
 - The `ModuleRules` message says "a Android feature". Fix the article in build-logic, with a test (small, LB-002 or the next build-logic change).
