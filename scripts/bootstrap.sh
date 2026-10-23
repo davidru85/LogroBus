@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Usage: scripts/bootstrap.sh
 #
-# One-time (idempotent) local setup for humans and AI agents:
-# installs the repository git hooks, reports missing tools and, on macOS with
-# XcodeGen, generates the iOS project. It never installs software; outside the
-# git-ignored generated iOS files, it changes only this repository's git config.
+# One-time (idempotent) local setup for humans and AI agents: installs the
+# repository git hooks and reports missing tools. On macOS with Xcode and
+# XcodeGen it also generates the iOS project, which runs a Kotlin/Native build:
+# that takes minutes on a fresh clone and fills ~/.konan and ~/.gradle. Set
+# LOGROBUS_SKIP_IOS=1 to skip it. It never installs software.
 set -uo pipefail
 
 root="$(git rev-parse --show-toplevel)"
@@ -37,7 +38,9 @@ check shellcheck "shell script lint (brew install shellcheck)"
 check maestro "end-to-end flows (optional)"
 
 # The Xcode project is generated, never committed (LB-001).
-if [ "$(uname -s)" = "Darwin" ] && command -v xcodegen >/dev/null 2>&1 && command -v xcodebuild >/dev/null 2>&1; then
+if [ "${LOGROBUS_SKIP_IOS:-0}" = "1" ]; then
+  echo "iOS project: skipped (LOGROBUS_SKIP_IOS=1); run scripts/ios/generate-project.sh later"
+elif [ "$(uname -s)" = "Darwin" ] && command -v xcodegen >/dev/null 2>&1 && command -v xcodebuild >/dev/null 2>&1; then
   echo "iOS project:"
   scripts/ios/generate-project.sh || echo "  iOS project generation failed; rerun scripts/ios/generate-project.sh"
 else
