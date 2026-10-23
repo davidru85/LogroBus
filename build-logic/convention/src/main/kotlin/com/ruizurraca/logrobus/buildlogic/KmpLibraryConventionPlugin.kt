@@ -58,7 +58,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
  * Checks every production dependency against [ModuleRules] when it is declared, so dependencies
  * added late (for example in `afterEvaluate`) or in any source set or bucket are covered too.
  */
-private fun Project.verifyModuleRules() {
+internal fun Project.verifyModuleRules() {
     val modulePath = path
     configurations.matching { isProductionDependencyBucket(it.name) }.configureEach {
         val bucket = name
