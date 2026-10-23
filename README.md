@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android app skeleton exist; the iOS app comes next (LB-001). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001); the data layer comes next. See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -46,12 +46,13 @@ scripts/                              Bootstrap, quality gates, CI helpers and a
 logrono-bus-app-functional-spec.md    Functional specification v0.1
 shared/                               Kotlin Multiplatform modules: core, transit, favourites, features, umbrella
 android/                              Android app, core modules (design system, map, navigation) and feature modules
+iosApp/                               iOS app (XcodeGen spec) and the LogroBusUI Swift package
 build-logic/, gradle/                 Gradle convention plugins; the version catalog
 tools/architecture-tests/             Automated module and package rules
 version.properties                    The app version, shared by Android and iOS
 ```
 
-The `iosApp/` project arrives with the rest of milestone M0. The full layout is described in [docs/architecture.md](docs/architecture.md).
+The full layout is described in [docs/architecture.md](docs/architecture.md).
 
 ## Getting started
 
@@ -59,11 +60,15 @@ After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and re
 
 The shared modules already build: `./gradlew ciUnitTest` runs the unit tests and the architecture rules. If `ANDROID_HOME` is not set, create a `local.properties` file with `sdk.dir=<path to your Android SDK>`; Git ignores it.
 
-To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. For now it shows a placeholder for the Lines tab. When the iOS app arrives (the rest of story LB-001), this section will explain how to run it. You will need:
+To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. For now it shows a placeholder for the Lines tab.
+
+To run the iOS app on macOS, run `scripts/ios/generate-project.sh` (it is also run by `scripts/bootstrap.sh`, and must be rerun after Kotlin changes). The script builds the shared framework and generates `iosApp/iosApp.xcodeproj`; open that project in Xcode and run the `iosApp` scheme on an iPhone simulator.
+
+You will need:
 
 - JDK 21.
 - The latest stable Android Studio with the Kotlin Multiplatform plugin.
-- Xcode 26 or later, on macOS, for the iOS app.
+- Xcode 26 or later and XcodeGen (`brew install xcodegen`), on macOS, for the iOS app.
 
 ## Documentation
 
@@ -95,6 +100,11 @@ To run the Android app, start an emulator or connect a phone (Android 8.0 or lat
 ### Recent changes
 
 - **2026-10-23:**
+  - LB-001, part 3 of 3: the iOS app skeleton. This completes LB-001.
+    - The app (`com.ruizurraca.logrobus`, iPhone only, iOS 18 or later) opens on a placeholder for the Lines tab, in Spanish and English.
+    - Its start tab comes from the shared code, as on Android.
+    - The Xcode project is generated from a spec and is not stored in the repository.
+    - The LogroBusUI Swift package holds the iOS screens, still empty, and consumes the shared framework.
   - LB-001, part 2 of 3: the Android app skeleton.
     - The app (`com.ruizurraca.logrobus`, Android 8.0 or later) opens on a placeholder for the Lines tab, in Spanish and English.
     - Its start tab comes from shared code, the first value both apps will share.

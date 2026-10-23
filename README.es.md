@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y el esqueleto de la app de Android; después llegará la app de iOS (LB-001). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001); después llegará la capa de datos. Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -46,12 +46,13 @@ scripts/                              Arranque, comprobaciones de calidad, utili
 logrono-bus-app-functional-spec.md    Especificación funcional v0.1
 shared/                               Módulos de Kotlin Multiplatform: core, transit, favourites, funcionalidades, umbrella
 android/                              App de Android, módulos core (sistema de diseño, mapa, navegación) y módulos de funcionalidad
+iosApp/                               App de iOS (especificación de XcodeGen) y el paquete Swift LogroBusUI
 build-logic/, gradle/                 Plugins de convención de Gradle; el catálogo de versiones
 tools/architecture-tests/             Reglas automáticas de módulos y paquetes
 version.properties                    La versión de la app, común a Android e iOS
 ```
 
-El proyecto `iosApp/` llegará con el resto del hito M0. La estructura completa se describe en [docs/architecture.md](docs/architecture.md).
+La estructura completa se describe en [docs/architecture.md](docs/architecture.md).
 
 ## Primeros pasos
 
@@ -59,11 +60,15 @@ Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: insta
 
 Los módulos compartidos ya compilan: `./gradlew ciUnitTest` ejecuta los tests unitarios y las reglas de arquitectura. Si `ANDROID_HOME` no está definido, crea un archivo `local.properties` con `sdk.dir=<ruta a tu Android SDK>`; Git lo ignora.
 
-Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. De momento muestra una pantalla provisional de la pestaña Líneas. Cuando llegue la app de iOS (el resto de la historia LB-001), esta sección explicará cómo ejecutarla. Necesitarás:
+Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. De momento muestra una pantalla provisional de la pestaña Líneas.
+
+Para ejecutar la app de iOS en macOS, ejecuta `scripts/ios/generate-project.sh` (también lo ejecuta `scripts/bootstrap.sh`, y hay que repetirlo tras cambiar código Kotlin). El script compila el framework compartido y genera `iosApp/iosApp.xcodeproj`; abre ese proyecto en Xcode y ejecuta el esquema `iosApp` en un simulador de iPhone.
+
+Necesitarás:
 
 - JDK 21.
 - La última versión estable de Android Studio con el plugin de Kotlin Multiplatform.
-- Xcode 26 o posterior, en macOS, para la app de iOS.
+- Xcode 26 o posterior y XcodeGen (`brew install xcodegen`), en macOS, para la app de iOS.
 
 ## Documentación
 
@@ -97,6 +102,11 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **23-10-2026:**
+  - LB-001, parte 3 de 3: el esqueleto de la app de iOS. Con esto se completa LB-001.
+    - La app (`com.ruizurraca.logrobus`, solo iPhone, iOS 18 o posterior) se abre en una pantalla provisional de la pestaña Líneas, en español y en inglés.
+    - Su pestaña inicial sale del código compartido, igual que en Android.
+    - El proyecto de Xcode se genera a partir de una especificación y no se guarda en el repositorio.
+    - El paquete Swift LogroBusUI contiene las pantallas de iOS, todavía vacías, y usa el framework compartido.
   - LB-001, parte 2 de 3: el esqueleto de la app de Android.
     - La app (`com.ruizurraca.logrobus`, Android 8.0 o posterior) se abre en una pantalla provisional de la pestaña Líneas, en español y en inglés.
     - Su pestaña inicial sale del código compartido, el primer valor que compartirán las dos apps.
