@@ -12,6 +12,10 @@ excluded:
   - iosApp/Packages/LogroBusUI/.build
   - iosApp/Packages/LogroBusUI/Frameworks
 
+disabled_rules:
+  # TODOs are allowed when they name a story (docs/code_style.md §1); todo_without_story enforces that.
+  - todo
+
 opt_in_rules:
   - accessibility_label_for_image
   - accessibility_trait_for_button
@@ -49,6 +53,12 @@ identifier_name:
     - y
 
 custom_rules:
+  todo_without_story:
+    name: "TODO without a story"
+    regex: '\b(TODO|FIXME)\b(?!\(LB-\d+\))'
+    match_kinds: comment
+    message: "Name the story: // TODO(LB-205): … (docs/code_style.md §1)."
+    severity: error
   direct_glass_effect:
     name: "Direct Liquid Glass API"
     regex: '\.glassEffect\('

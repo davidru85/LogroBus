@@ -99,6 +99,8 @@ You will need:
 
 ### Recent changes
 
+- **2026-10-24:**
+  - CI: the Kotlin and Android test jobs have readable names even when they are skipped. They are skipped on purpose when a pull request does not touch code.
 - **2026-10-23:**
   - Accepted ADR-0010: how the iOS project is generated and how it links the shared code.
   - LB-001, part 3 of 3: the iOS app skeleton. This completes LB-001.
