@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-23):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is merged; the Android app (part 2) and the iOS app (part 3) follow. The repository is public: CI runs the policy checks on every pull request, `main` is protected on GitHub (LB-415, `docs/ci_cd.md` §1), and the Gradle checks join CI in LB-002. The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-23):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is merged; the Android app (part 2) and the iOS app (part 3) follow. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the first Kotlin jobs (build-logic, architecture and shared unit tests) on every pull request; LB-002 is in progress and adds the other code jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -86,7 +86,7 @@ LogroBus/
 ├── iosApp/                  # app target (shell) + Packages/LogroBusUI (DesignSystem, MapUI, Feature<X>: SwiftUI + Swift ViewModels)
 ├── tools/architecture-tests/  # Konsist module and package boundary rules
 ├── fixtures/                # golden API payloads for tests (spec §10.2)
-└── scripts/                 # bootstrap.sh, checks/ (quality gates), agent/ (agent hooks), github/ (repo admin), fixture tools
+└── scripts/                 # bootstrap.sh, checks/ (quality gates), ci/ (CI helpers), agent/ (agent hooks), github/ (repo admin), fixture tools
 ```
 
 Identifiers (OQ-14): Android `applicationId` and iOS bundle id are `com.ruizurraca.logrobus`, which is also the Kotlin package root. The display name is "LogroBus" and the URL scheme is `logronobus://`. Store identifiers cannot change after the first release.

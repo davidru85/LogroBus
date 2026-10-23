@@ -92,6 +92,9 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **23-10-2026:**
+  - Empezada LB-002, parte 1: la CI también ejecuta las comprobaciones de Kotlin en cada pull request que toque ficheros de Kotlin o de Gradle:
+    - los tests de build-logic, las reglas de arquitectura y los tests unitarios de cada uno de los 19 módulos compartidos, cada uno en su propio job;
+    - un único job, «Kotlin gate», los resume y es obligatorio para fusionar.
   - El repositorio ya es público (LB-415):
     - La CI ejecuta las comprobaciones de políticas en cada pull request, y `main` está protegida en GitHub.
     - Activados el escaneo de secretos y la protección de push de GitHub.
@@ -121,7 +124,7 @@ La documentación técnica está en inglés.
 
 ## Cómo contribuir
 
-Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: también cubre las comprobaciones de Gradle, que se incorporarán más adelante a la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
+Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas y las de Kotlin en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
 
 ## Datos y aviso legal
 
