@@ -40,7 +40,7 @@ CLAUDE.md, GEMINI.md                  Pointers to AGENTS.md for specific AI agen
 README.md, README.es.md               This file (English, Spanish)
 docs/                                 Requirements, architecture, API contract, design, guidelines, backlog, decisions
 docs/playbooks/                       Step-by-step workflows for humans and AI agents
-scripts/                              Bootstrap, quality gates and agent hooks
+scripts/                              Bootstrap, quality gates, CI helpers and agent hooks
 .githooks/                            Git hooks (installed by scripts/bootstrap.sh)
 .claude/, .github/                    Claude Code configuration; PR templates and CI workflows
 logrono-bus-app-functional-spec.md    Functional specification v0.1

@@ -32,13 +32,27 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - Verified locally against a docs-only commit (false), a code merge (true) and a push with no base (true).
 - The workflow also runs on pushes to `main`: it verifies each merge and writes the Gradle cache that pull requests read.
 - The JDK and Gradle setup lives in the `.github/actions/gradle-setup` composite action. `gradle/actions` v6.4.0 is pinned by commit SHA, because it is third-party. Dependabot now also watches `.github/actions/*`.
-- TDD cycle:
+- TDD cycle 1 (matrix guard):
   - Red: `lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule` requires the matrix to list exactly the shared modules in `settings.gradle.kts`.
   - Green: the workflow, plus the `workflowMatrixModules` pure rule with its own test. The architecture tests now take `.github/workflows/*.yml` as input; without it, a matrix-only edit would leave them up to date.
-  - A probe that dropped `:shared:feature:planner` from the matrix failed the test and was reverted. No refactor was needed.
-- `protect-main.sh` now also requires `Kotlin gate`. It is re-applied once the gate is green on this PR.
+  - A probe that dropped `:shared:feature:planner` from the matrix failed the test and was reverted.
+  - **Deviation from `testing_strategy.md` §7.1:** the green commit (`2e0a586`) is typed `ci(build)` instead of `feat`, and it has no `TDD: refactor not needed` line. History is not rewritten. The refactor of cycle 2 also tidies cycle 1's code.
+- First CI run: all 29 checks passed, each Kotlin job in 1.5 to 2.5 minutes.
+- **Code review (code-reviewer subagent): changes required, 10 findings.** All are addressed:
+  - TDD cycle 2: `ChangedAreasScriptTest` runs the real script in throwaway git repositories.
+    - Red, `73e908f`: three tests failed with `kotlin=false`. The first was a large diff with an early Kotlin path, where `grep -q` exits early, the writer gets SIGPIPE, and `pipefail` turns the match into a miss. The other two were a file moved out of `shared/` and a `fixtures/` change.
+    - The red commit was pushed on purpose. On GitHub, `Architecture rules` failed and `Kotlin gate` failed with it: the gate's failure path, seen in CI.
+    - Green, `6cec702`: a here-string instead of a pipe, `git diff --no-renames`, and `fixtures/` as a Kotlin path. The architecture tests now take `scripts/ci` as input.
+    - Refactor, `8f65a36`: a shared `repositoryRoot`, the matrix guard limited to `:shared:` modules, and a lost space restored.
+  - The push concurrency group is per commit, so back-to-back merges are each verified rather than cancelled.
+  - `ci_cd.md` §1, §2 and §4, and the structure rows of both READMEs, are updated.
+- The Gradle cache now uses `cache-provider: basic`, which is MIT-licensed. The default "enhanced" provider is proprietary, under the Gradle Technologies Terms of Use (free for public repositories). Opting in is the owner's decision.
+- `protect-main.sh` now also requires `Kotlin gate`.
 
 **Open / next**
+- **After this PR is merged:**
+  - Apply `protect-main.sh`. Applying it before the merge would make PRs based on the old `main` wait for a `Kotlin gate` that never reports.
+  - Confirm, on the first docs-only PR, that `Kotlin changes` reports `false`, the Kotlin jobs are skipped and `Kotlin gate` passes.
 - The rest of LB-002: ktlint, detekt, Kover, the Android jobs (with LB-001 part 2), `ios-checks.yml` (with part 3), dependency review and the nightly workflow.
 - The next story is LB-001 part 2 (Android).
 

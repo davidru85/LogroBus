@@ -40,7 +40,7 @@ CLAUDE.md, GEMINI.md                  Punteros a AGENTS.md para agentes de IA co
 README.md, README.es.md               Este archivo (inglés, español)
 docs/                                 Requisitos, arquitectura, contrato de la API, diseño, guías, backlog, decisiones
 docs/playbooks/                       Procedimientos paso a paso para personas y agentes de IA
-scripts/                              Arranque, comprobaciones de calidad y hooks de los agentes
+scripts/                              Arranque, comprobaciones de calidad, utilidades de CI y hooks de los agentes
 .githooks/                            Hooks de git (los instala scripts/bootstrap.sh)
 .claude/, .github/                    Configuración de Claude Code; plantillas de pull request y workflows de CI
 logrono-bus-app-functional-spec.md    Especificación funcional v0.1
