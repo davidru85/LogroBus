@@ -17,7 +17,7 @@ This document covers versioning, build variants, signing, distribution channels 
 - **Single source of truth:** `version.properties` at the repository root, created in LB-001:
   - It contains `VERSION_NAME=0.1.0`.
   - Gradle reads it.
-  - An Xcode build phase generates `iosApp/Configuration/Version.xcconfig` from it.
+  - `scripts/ios/generate-project.sh` generates `iosApp/Configuration/Version.xcconfig` from it (`VERSION_NAME`, read as `MARKETING_VERSION`). A build phase could not do it, because Xcode resolves build settings before any phase runs. Release builds and archives run `scripts/ios/generate-project.sh release`, so they link the optimised Kotlin framework (ADR-0010).
   - Version bumps change only this file.
 - **Tags:** each release is tagged `v<version>` on `main`, for example `v0.1.0`.
 

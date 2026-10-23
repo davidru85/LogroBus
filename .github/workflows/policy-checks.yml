@@ -86,4 +86,4 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: shellcheck
-        run: shellcheck scripts/*.sh scripts/checks/*.sh scripts/agent/*.sh scripts/github/*.sh scripts/ci/*.sh .githooks/*
+        run: shellcheck scripts/*.sh scripts/checks/*.sh scripts/agent/*.sh scripts/github/*.sh scripts/ci/*.sh scripts/ios/*.sh .githooks/*

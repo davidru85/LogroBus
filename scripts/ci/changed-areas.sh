@@ -8,8 +8,9 @@
 # triggers, for example: scripts/ci/changed-areas.sh origin/main
 set -euo pipefail
 
-# fixtures/ holds the payloads that the contract tests decode.
-kotlin='^(shared|android|tools|build-logic|gradle|fixtures)/|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/kotlin-checks\.yml|actions/gradle-setup/)|^scripts/ci/'
+# fixtures/ holds the payloads that the contract tests decode. The architecture tests also read the
+# XcodeGen spec, the Swift package manifests and .gitignore.
+kotlin='^(shared|android|tools|build-logic|gradle|fixtures)/|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/kotlin-checks\.yml|actions/gradle-setup/)|^scripts/ci/|^iosApp/project\.yml$|^iosApp/Packages/[^/]+/Package\.swift$|^\.gitignore$'
 
 if [ $# -eq 0 ]; then
   echo "kotlin=true"

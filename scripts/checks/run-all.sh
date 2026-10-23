@@ -31,9 +31,9 @@ fi
 
 echo "== Kotlin and Android =="
 if [ -x "$root/gradlew" ]; then
-  # No configuration cache: a reused entry can miss new source directories and report their tests as
-  # NO-SOURCE, a false green in the gate whose summary goes into every pull request.
-  if (cd "$root" && ./gradlew check --quiet --console=plain --no-configuration-cache); then
+  # No configuration cache and no file-system watching: either can miss newly created source directories
+  # and report their tests as NO-SOURCE, a false green in the gate whose summary goes into every PR.
+  if (cd "$root" && ./gradlew check --quiet --console=plain --no-configuration-cache --no-watch-fs); then
     echo "OK:   Gradle check: unit tests, architecture rules and build-logic tests passed"
   else
     status=1

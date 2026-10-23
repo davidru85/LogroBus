@@ -1,0 +1,60 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "tab.directions": {
+      "comment": "Tab label: How to Get There; the screen title is plan.title (design_guidelines.md §2.1).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Directions"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo llegar"
+          }
+        }
+      }
+    },
+    "tab.lines": {
+      "comment": "Tab label: Lines (design_guidelines.md §2.1).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas"
+          }
+        }
+      }
+    },
+    "tab.near_me": {
+      "comment": "Tab label: Near Me (design_guidelines.md §2.1).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Near me"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca de mí"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

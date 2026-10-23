@@ -1,0 +1,86 @@
+# XcodeGen spec for the iOS app (LB-001). scripts/ios/generate-project.sh generates
+# iosApp.xcodeproj from it; the generated project is never committed.
+name: iosApp
+options:
+  bundleIdPrefix: com.ruizurraca.logrobus
+  deploymentTarget:
+    # ADR-0003: iOS 18 minimum; Liquid Glass on iOS 26 and later.
+    iOS: "18.0"
+  developmentLanguage: es
+  createIntermediateGroups: true
+configFiles:
+  # Generated from version.properties (docs/release_process.md §1).
+  Debug: Configuration/Version.xcconfig
+  Release: Configuration/Version.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+packages:
+  LogroBusUI:
+    path: Packages/LogroBusUI
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    dependencies:
+      - package: LogroBusUI
+        product: LogroBusUI
+      - package: LogroBusUI
+        product: Shared
+    settings:
+      base:
+        PRODUCT_NAME: LogroBus
+        # NFR-PLAT-03: iPhone only in the MVP. Set on the target, because XcodeGen's application preset
+        # sets "1,2" there and would override a project-level value.
+        TARGETED_DEVICE_FAMILY: "1"
+        # OQ-14: the store identifier, shared with Android. It cannot change after the first release.
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus
+        MARKETING_VERSION: $(VERSION_NAME)
+        # Every build uses 1 until the release automation (M5) supplies the shared build number.
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: LogroBus
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        # NFR-A11Y-01 (WCAG 2.2 SC 1.3.4): never locked to one orientation. Upside down is left out, as on
+        # every iPhone app without a home button.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: >-
+          UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        SWIFT_EMIT_LOC_STRINGS: YES
+  iosAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: iosAppTests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus.tests
+        GENERATE_INFOPLIST_FILE: YES
+        # The app's product is LogroBus.app, not iosApp.app, so the test host is spelled out.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/LogroBus.app/LogroBus
+        BUNDLE_LOADER: $(TEST_HOST)
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iosAppUITests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  iosApp:
+    build:
+      targets:
+        iosApp: all
+        iosAppTests: [test]
+        iosAppUITests: [test]
+    test:
+      targets:
+        - iosAppTests
+        - iosAppUITests
