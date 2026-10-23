@@ -81,7 +81,8 @@ class ChangedAreasScriptTest {
     }
 
     private fun write(vararg paths: String) = paths.forEach { path ->
-        File(repo, path).apply { parentFile.mkdirs() }.writeText(path)
+        // A comment line: unique per path, and inert even in a .gitignore, which would otherwise ignore itself.
+        File(repo, path).apply { parentFile.mkdirs() }.writeText("# $path\n")
     }
 
     private fun areas(vararg base: String): String = run(listOf("bash", script.path) + base).trim()
