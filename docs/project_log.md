@@ -44,10 +44,12 @@ A dated record of what was done and decided, newest first. Add an entry at the e
     - The red commit was pushed on purpose. On GitHub, `Architecture rules` failed and `Kotlin gate` failed with it: the gate's failure path, seen in CI.
     - Green, `6cec702`: a here-string instead of a pipe, `git diff --no-renames`, and `fixtures/` as a Kotlin path. The architecture tests now take `scripts/ci` as input.
     - Refactor, `8f65a36`: a shared `repositoryRoot`, the matrix guard limited to `:shared:` modules, and a lost space restored.
+    - Test isolation, `d05ccf9`: on ubuntu-latest (git 2.55), the large-diff test passed its assertion, but JUnit could not delete its temporary repository. The likely cause is background git maintenance started by thousands of loose objects. The test repositories now set `gc.auto=0` and `maintenance.auto=false`, and the test passes on Linux.
   - The push concurrency group is per commit, so back-to-back merges are each verified rather than cancelled.
   - `ci_cd.md` §1, §2 and §4, and the structure rows of both READMEs, are updated.
 - The Gradle cache now uses `cache-provider: basic`, which is MIT-licensed. The default "enhanced" provider is proprietary, under the Gradle Technologies Terms of Use (free for public repositories). Opting in is the owner's decision.
 - `protect-main.sh` now also requires `Kotlin gate`.
+- **Runner hiccup:** one `Build-logic tests` run hung until its 10-minute timeout, and GitHub kept no log for it. A re-run of the failed jobs passed in 1m38s. If this repeats, add test-report artefacts and look again.
 
 **Open / next**
 - **After this PR is merged:**
