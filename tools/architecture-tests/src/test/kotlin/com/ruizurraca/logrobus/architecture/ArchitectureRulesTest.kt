@@ -128,6 +128,23 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb001_iosFeatureTargetsMayNotDependOnOtherFeatures() {
+        val manifest = """
+            targets: [
+                .binaryTarget(name: "Shared", path: "Frameworks/Shared.xcframework"),
+                .target(name: "DesignSystem"),
+                .target(name: "FeatureLines", dependencies: ["DesignSystem", "Shared", "FeatureStops"]),
+                .target(name: "FeatureStops", dependencies: ["DesignSystem", .target(name: "FeatureNearMe")]),
+                .target(name: "FeatureNearMe", dependencies: ["DesignSystem", "Shared"]),
+            ]
+        """.trimIndent()
+        assertEquals(
+            listOf("FeatureLines -> FeatureStops", "FeatureStops -> FeatureNearMe"),
+            ArchitectureRules.crossFeatureSwiftDependencies(manifest),
+        )
+    }
+
+    @Test
     fun lb001_expectedNamespaceFollowsTheModulePath() {
         assertEquals(
             "$root.feature.lines",

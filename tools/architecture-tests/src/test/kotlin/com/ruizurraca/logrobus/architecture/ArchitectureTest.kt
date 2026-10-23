@@ -111,6 +111,12 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb001_iosFeatureTargetsDoNotDependOnOtherFeatures() {
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.crossFeatureSwiftDependencies(manifest))
+    }
+
+    @Test
     fun lb001_generatedXcodeProjectIsNotCommitted() {
         val ignored = File(root, ".gitignore").readLines().map { it.trim() }
         assertEquals(true, "iosApp/iosApp.xcodeproj/" in ignored)
