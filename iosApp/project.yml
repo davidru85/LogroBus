@@ -44,3 +44,23 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         SWIFT_EMIT_LOC_STRINGS: YES
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iosAppUITests
+    dependencies:
+      - target: iosApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  iosApp:
+    build:
+      targets:
+        iosApp: all
+        iosAppUITests: [test]
+    test:
+      targets:
+        - iosAppUITests
