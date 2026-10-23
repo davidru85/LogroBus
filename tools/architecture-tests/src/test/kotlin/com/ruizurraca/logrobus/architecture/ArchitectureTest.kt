@@ -94,6 +94,12 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb002_kotlinGateWaitsForEveryKotlinJob() {
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.jobsMissingFromGate(workflow, gate = "ci-gate"))
+    }
+
+    @Test
     fun lb001_buildScriptsAndBuildLogicDeclareNoVersionLiterals() {
         val offenders = root.walkTopDown()
             .onEnter { it.name !in ignoredDirectories }
