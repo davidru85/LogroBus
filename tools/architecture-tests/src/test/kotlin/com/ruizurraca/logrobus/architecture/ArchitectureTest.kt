@@ -37,6 +37,18 @@ class ArchitectureTest {
         ":shared:umbrella",
     )
 
+    private val androidModules = listOf(
+        ":android:app",
+        ":android:core:designsystem",
+        ":android:core:map",
+        ":android:core:navigation",
+        ":android:feature:lines",
+        ":android:feature:stops",
+        ":android:feature:nearme",
+        ":android:feature:planner",
+        ":android:feature:settings",
+    )
+
     private val toolModules = listOf(":tools:architecture-tests")
 
     private val ignoredDirectories = setOf("build", ".gradle", ".git", ".kotlin", ".idea")
@@ -44,7 +56,7 @@ class ArchitectureTest {
     @Test
     fun lb001_settingsIncludeExactlyTheArchitectureModules() {
         val included = ArchitectureRules.includedModules(File(root, "settings.gradle.kts").readText())
-        assertEquals((sharedModules + toolModules).toSortedSet(), included.toSortedSet())
+        assertEquals((sharedModules + androidModules + toolModules).toSortedSet(), included.toSortedSet())
     }
 
     @Test
@@ -52,6 +64,16 @@ class ArchitectureTest {
         val missing = sharedModules.filterNot { path ->
             val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
             buildFile.isFile && "id(\"logrobus.kmp.library\")" in buildFile.readText()
+        }
+        assertEquals(emptyList<String>(), missing)
+    }
+
+    @Test
+    fun lb001_everyAndroidModuleAppliesItsConvention() {
+        val missing = androidModules.filterNot { path ->
+            val plugin = if (path == ":android:app") "logrobus.android.application" else "logrobus.android.library"
+            val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
+            buildFile.isFile && "id(\"$plugin\")" in buildFile.readText()
         }
         assertEquals(emptyList<String>(), missing)
     }
