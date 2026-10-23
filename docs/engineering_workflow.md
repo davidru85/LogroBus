@@ -22,7 +22,7 @@ The repository has been public since 2026-10-23 (LB-415, OQ-20). `main` is prote
 | Rule | How it is enforced |
 | --- | --- |
 | No direct pushes to `main` | GitHub branch protection, enforced for administrators too. Locally, the `.githooks/pre-push` hook rejects them and agents have deny rules |
-| Gates green before merging | The required CI checks must pass before GitHub allows the merge. `scripts/checks/run-all.sh` also runs locally, and its summary is pasted in the PR: it covers the Gradle checks until LB-002 adds them to CI |
+| Gates green before merging | The required CI checks must pass before GitHub allows the merge. `scripts/checks/run-all.sh` also runs locally, and its summary is pasted in the PR: it runs the same checks before CI, plus any check that has no CI job yet |
 | Conventional Commits | The `.githooks/commit-msg` hook. The PR title is checked in CI (`PR title`) and by the author with `scripts/checks/check-conventional-title.sh` |
 | Frozen spec, doc links | The `.githooks/pre-push` hook (blocking) |
 | README parity | `scripts/checks/run-all.sh` before opening or updating a PR (blocking; its output is pasted into the PR) and the Claude Code Stop hook. The pre-push hook only warns, because TDD pushes after every cycle (`testing_strategy.md` §7.1) |
@@ -32,7 +32,7 @@ Every developer and agent environment must run `scripts/bootstrap.sh` once, to i
 
 **`main` is protected on GitHub** (owner decision 2026-10-22, applied 2026-10-23 in LB-415) by `scripts/github/protect-main.sh`, which configures:
 - a pull request required for every change (0 required approvals, because the owner is the only maintainer and cannot approve their own PRs; the owner's merge is the approval);
-- the required status checks: the policy jobs, and later the `ci-gate` job (`ci_cd.md` §4), up to date with `main`;
+- the required status checks: the policy jobs and the `Kotlin gate` job (`ci_cd.md` §4), up to date with `main`;
 - the rules enforced for administrators too;
 - resolved conversations, and no force pushes or deletions. Linear history is **not** required, because PRs are merged with merge commits (§5).
 
@@ -92,7 +92,7 @@ A story can be started when:
 
 ## 7. Definition of done
 
-See `AGENTS.md` §11. The CI checks are authoritative for the gates they run. The pasted `run-all.sh` summary is the evidence for the rest: the Gradle checks, until LB-002.
+See `AGENTS.md` §11. The CI checks are authoritative for the gates they run. The pasted `run-all.sh` summary is the evidence for any check that has no CI job yet.
 
 ## 8. Story lifecycle
 

@@ -28,7 +28,7 @@ Title: a Conventional Commit, e.g. `feat(near-me): stop sheet arrivals [LB-205]`
 
 ## Local quality gates
 
-<!-- CI runs the policy checks; the Gradle checks join in LB-002 (docs/ci_cd.md §1). Paste the final summary of scripts/checks/run-all.sh. -->
+<!-- CI runs the policy and Kotlin checks (docs/ci_cd.md §1). Paste the final summary of scripts/checks/run-all.sh, which also covers any check without a CI job yet. -->
 
 ```text
 

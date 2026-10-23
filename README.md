@@ -40,7 +40,7 @@ CLAUDE.md, GEMINI.md                  Pointers to AGENTS.md for specific AI agen
 README.md, README.es.md               This file (English, Spanish)
 docs/                                 Requirements, architecture, API contract, design, guidelines, backlog, decisions
 docs/playbooks/                       Step-by-step workflows for humans and AI agents
-scripts/                              Bootstrap, quality gates and agent hooks
+scripts/                              Bootstrap, quality gates, CI helpers and agent hooks
 .githooks/                            Git hooks (installed by scripts/bootstrap.sh)
 .claude/, .github/                    Claude Code configuration; PR templates and CI workflows
 logrono-bus-app-functional-spec.md    Functional specification v0.1
@@ -90,6 +90,9 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
 ### Recent changes
 
 - **2026-10-23:**
+  - Started LB-002, part 1: CI now also runs the Kotlin checks on every pull request that touches Kotlin or Gradle files:
+    - the build-logic tests, the architecture rules, and the unit tests of each of the 19 shared modules, each in its own job;
+    - a single "Kotlin gate" job sums them up and is required before merging.
   - The repository is now public (LB-415):
     - CI runs the policy checks on every pull request, and `main` is protected on GitHub.
     - GitHub secret scanning and push protection are enabled.
@@ -119,7 +122,7 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) before you start. Code and documentation are written in technical English (see the language policy in AGENTS.md). Work on a branch and open a pull request using one of the templates; nobody pushes to `main`. CI runs the policy checks on every pull request, and they must pass before merging. Run `scripts/checks/run-all.sh` first and paste its summary into the pull request: it also covers the Gradle checks, which join CI later. Every pull request must update this README and its Spanish version, [README.es.md](README.es.md), before it is merged.
+Read [AGENTS.md](AGENTS.md) before you start. Code and documentation are written in technical English (see the language policy in AGENTS.md). Work on a branch and open a pull request using one of the templates; nobody pushes to `main`. CI runs the policy checks and the Kotlin checks on every pull request, and they must pass before merging. Run `scripts/checks/run-all.sh` first and paste its summary into the pull request: it runs the same checks locally, plus any check that has no CI job yet. Every pull request must update this README and its Spanish version, [README.es.md](README.es.md), before it is merged.
 
 ## Data and disclaimer
 

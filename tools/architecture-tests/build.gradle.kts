@@ -18,7 +18,7 @@ tasks.test {
     // Konsist and the file-system checks read the whole repository, so declare it as input.
     inputs.files(
         fileTree(isolated.rootProject.projectDirectory) {
-            include("**/*.kt", "**/*.gradle.kts")
+            include("**/*.kt", "**/*.gradle.kts", ".github/workflows/*.yml", "scripts/ci/*.sh")
             exclude("**/build/**", ".gradle/**", ".kotlin/**", "build-logic/.gradle/**")
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
