@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed |
+| Status | Accepted (2026-10-23) |
 | Date | 2026-10-23 |
-| Deciders | Project owner (pending) |
+| Deciders | Project owner |
 | Related | ADR-0004 (amends its integration bullet), ADR-0007, LB-001, NFR-PLAT-03, `architecture.md` §5.2 |
 
 ## Context
