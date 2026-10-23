@@ -19,6 +19,22 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-24: Skipped CI checks reviewed; readable matrix job names (LB-002)
+
+**Done**
+- **The owner asked to check and fix every skipped check on GitHub.**
+  - Nothing on `main` was skipped.
+  - On PR #8, a docs-only PR, the six Kotlin jobs were skipped by the path filter, as designed. The required `Kotlin gate` passed.
+  - The two matrix jobs showed as `${{ matrix.module }}`, because GitHub does not expand a skipped job's name.
+- TDD cycle:
+  - `lb002_kotlinJobNamesReadWellWhenSkipped`, backed by the `jobNamesWithExpressions` rule and its unit test, forbids `${{ }}` in job names.
+  - The matrix jobs are now "Shared unit tests" and "Android unit tests"; GitHub appends the module when they run.
+
+**Decisions (owner)**
+- **Keep the path filter.** Docs-only PRs skip the Kotlin jobs on purpose (`ci_cd.md` §2, principle 5), and the skipped checks now read well. The alternatives were rejected:
+  - running every job on every PR;
+  - jobs that run but do nothing, a misleading green.
+
 ## 2026-10-23: LB-001 part 3 of 3: the iOS app skeleton (LB-001 done)
 
 **Done**

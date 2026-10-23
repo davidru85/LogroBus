@@ -101,6 +101,8 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **24-10-2026:**
+  - CI: los jobs de tests de Kotlin y Android tienen nombres legibles aunque se salten. Se saltan a propósito cuando una pull request no toca código.
 - **23-10-2026:**
   - LB-001, parte 3 de 3: el esqueleto de la app de iOS. Con esto se completa LB-001.
     - La app (`com.ruizurraca.logrobus`, solo iPhone, iOS 18 o posterior) se abre en una pantalla provisional de la pestaña Líneas, en español y en inglés.
