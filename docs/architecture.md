@@ -273,8 +273,13 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 
 - **Framework integration.**
   - `:shared:umbrella` builds the `Shared` framework, with SKIE (ADR-0004): `Flow` becomes `AsyncSequence`, sealed types become Swift enums, and `suspend` functions become `async`.
-  - The app target links it through `embedAndSignAppleFrameworkForXcode`.
-  - The local Swift package's feature targets consume it as an XCFramework `binaryTarget`, produced by Gradle (`assembleSharedXCFramework`). This set-up is validated in LB-001; the fallback is feature folders inside the app target.
+  - **As built in LB-001:** Gradle produces the XCFramework (`assembleSharedDebugXCFramework`), and `scripts/ios/generate-project.sh` copies it into `iosApp/Packages/LogroBusUI/Frameworks/`.
+    - The package declares it as the `Shared` binary target. The feature targets depend on it, and a `Shared` library product lets the app target `import Shared`.
+    - The app links the framework once, through the package; it does not use `embedAndSignAppleFrameworkForXcode`, which would link a second copy.
+    - After a Kotlin change, rerun the script. Swift Package Manager resolves binary targets before any build phase runs, so a build phase cannot refresh the framework.
+    - The fallback, feature folders inside the app target, was not needed.
+  - The Xcode project is generated from `iosApp/project.yml` by XcodeGen and is never committed. The same script writes `Configuration/Version.xcconfig` from `version.properties`.
+  - `SharedDependencies` exists from LB-001. It exposes only the start destination until LB-010 adds the use cases and SKIE.
 - **Composition root.**
   - `LogroBusApp.init` calls `KoinKt.doInitKoin(...)` and passes the Swift implementations of the platform contracts (telemetry once chosen).
   - Swift obtains use cases from the Kotlin `SharedDependencies` factory object. Koin generics are not used from Swift.
