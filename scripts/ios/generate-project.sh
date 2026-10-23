@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
-# Usage: scripts/ios/generate-project.sh
+# Usage: scripts/ios/generate-project.sh [debug|release]
 #
 # Prepares the iOS project (LB-001, architecture.md §5.2). Run it after cloning and
 # whenever Kotlin code or iosApp/project.yml changes:
-#   1. builds the Shared XCFramework with Gradle and copies it into the LogroBusUI
-#      package, whose Shared binary target points at it;
+#   1. builds the Shared XCFramework with Gradle (debug by default; release for
+#      Release builds and archives) and copies it into the LogroBusUI package,
+#      whose Shared binary target points at it;
 #   2. writes iosApp/Configuration/Version.xcconfig from version.properties
 #      (docs/release_process.md §1);
 #   3. generates iosApp/iosApp.xcodeproj with XcodeGen.
 # None of the generated files are committed. macOS with Xcode and XcodeGen only.
 set -euo pipefail
+
+# XcodeGen's presets decide settings such as the device family, so behaviour is pinned to a tested minimum.
+minimum_xcodegen="2.46.0"
+configuration="${1:-debug}"
+case "$configuration" in
+  debug) gradle_task=assembleSharedDebugXCFramework ;;
+  release) gradle_task=assembleSharedReleaseXCFramework ;;
+  *) echo "Usage: $0 [debug|release]" >&2; exit 2 ;;
+esac
 
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
@@ -22,13 +32,19 @@ if ! command -v xcodegen >/dev/null 2>&1; then
   echo "FAIL: XcodeGen is missing (brew install xcodegen)" >&2
   exit 1
 fi
+xcodegen_version="$(xcodegen --version | sed -n 's/^Version: //p')"
+if [ "$(printf '%s\n%s\n' "$minimum_xcodegen" "$xcodegen_version" | sort -V | head -n 1)" != "$minimum_xcodegen" ]; then
+  echo "FAIL: XcodeGen $xcodegen_version is older than $minimum_xcodegen (brew upgrade xcodegen)" >&2
+  exit 1
+fi
 
-echo "== Shared XCFramework (Gradle) =="
-./gradlew :shared:umbrella:assembleSharedDebugXCFramework --quiet --console=plain
+echo "== Shared XCFramework ($configuration, Gradle) =="
+# Without the configuration cache and file-system watching, which can miss new source directories.
+./gradlew ":shared:umbrella:$gradle_task" --quiet --console=plain --no-configuration-cache --no-watch-fs
 framework_dir="iosApp/Packages/LogroBusUI/Frameworks"
 mkdir -p "$framework_dir"
 rm -rf "$framework_dir/Shared.xcframework"
-cp -R shared/umbrella/build/XCFrameworks/debug/Shared.xcframework "$framework_dir/"
+cp -R "shared/umbrella/build/XCFrameworks/$configuration/Shared.xcframework" "$framework_dir/"
 
 echo "== Version.xcconfig =="
 version_name="$(sed -n 's/^VERSION_NAME=//p' version.properties)"
@@ -44,4 +60,4 @@ EOF
 
 echo "== Xcode project (XcodeGen) =="
 xcodegen generate --spec iosApp/project.yml --quiet
-echo "OK:   iosApp/iosApp.xcodeproj generated (version $version_name)"
+echo "OK:   iosApp/iosApp.xcodeproj generated (version $version_name, $configuration Shared framework)"
