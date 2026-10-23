@@ -11,6 +11,19 @@ struct AppBundleTests {
     }
 
     @Test
+    func lb001_appSupportsPortraitAndLandscape() {
+        // NFR-A11Y-01 (WCAG 2.2 SC 1.3.4): content is not locked to one orientation, as on Android.
+        let orientations = Bundle.main.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String]
+        #expect(
+            Set(orientations ?? []) == [
+                "UIInterfaceOrientationPortrait",
+                "UIInterfaceOrientationLandscapeLeft",
+                "UIInterfaceOrientationLandscapeRight",
+            ]
+        )
+    }
+
+    @Test
     func lb001_appTargetsIos18() {
         // ADR-0003: iOS 18 minimum.
         #expect(Bundle.main.object(forInfoDictionaryKey: "MinimumOSVersion") as? String == "18.0")
