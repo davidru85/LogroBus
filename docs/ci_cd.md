@@ -12,7 +12,7 @@
 
 - **The repository has been public since 2026-10-23** (LB-415, owner decision), so CI runs on every pull request:
   - `main` is protected on GitHub with `scripts/github/protect-main.sh` (`engineering_workflow.md` §1.1);
-  - the required status checks are the policy jobs in §3 plus `Kotlin gate`, which stands for every Kotlin job (§4).
+  - the required status checks are the policy jobs in §3, plus `Kotlin gate` and `iOS gate`, which stand for every Kotlin and iOS job (§4).
 - Every workflow job keeps `if: ${{ !github.event.repository.private }}`. If the repository ever becomes private again, the jobs are skipped and the local gates become authoritative again.
 - **The local gates still run before every pull request:**
   - The git hooks (`commit-msg`, `pre-commit`, `pre-push`), installed by `scripts/bootstrap.sh`.
@@ -60,10 +60,11 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Android build | `kotlin-checks.yml` | `./gradlew :android:app:assembleDebug` | Linux | < 5 min | Active, through the gate |
 | Android screenshots: `<feature>` (matrix) | `kotlin-checks.yml` | `./gradlew :android:feature:<feature>:verifyRoborazziDebug` | Linux | < 5 min each | LB-002 |
 | Dependency review | `kotlin-checks.yml` | `actions/dependency-review-action` | Linux | < 1 min | LB-002 |
-| SwiftLint | `ios-checks.yml` | `swiftlint --strict` | Linux (SwiftLint container) | < 2 min | LB-002 |
-| Kotlin/Native framework | `ios-checks.yml` | `./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64` | macOS | < 8 min | LB-002 |
-| Shared iOS tests: `<module>` (matrix) | `ios-checks.yml` | `./gradlew :shared:<module>:iosSimulatorArm64Test` | macOS | < 5 min each | LB-002 |
-| iOS build | `ios-checks.yml` | `xcodebuild build …` | macOS | < 8 min | LB-002 |
+| iOS changes | `ios-checks.yml` | `scripts/ci/changed-areas.sh origin/main` (area `ios`) | Linux | < 1 min | Active (§4) |
+| iOS gate | `ios-checks.yml` | none: it reads the results of the other iOS jobs, all listed in its `needs` (`lb002_iosGateWaitsForEveryIosJob`) | Linux | < 1 min | Active, required after the merge (§4) |
+| SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
+| Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
+| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, then `xcodebuild test` on the iPhone 17e simulator (iOS 26.5), Xcode 26.6 | macOS | < 8 min | Active, through the gate |
 | iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | LB-002 |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
@@ -82,7 +83,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | --- | --- |
 | `policy-checks.yml` | Any change |
 | `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), `iosApp/project.yml`, `iosApp/Packages/*/Package.swift` and `.gitignore` (the architecture tests read them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
-| `ios-checks.yml` | `shared/**`, `iosApp/**`, `.swiftlint.yml`, `version.properties` |
+| `ios-checks.yml` | `iosApp/**`, `.swiftlint.yml`, `shared/**`, the Gradle build (`gradle/**`, `build-logic/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`), `version.properties`, `scripts/ios/**`, `scripts/ci/**`, the workflow itself, `.github/actions/gradle-setup/**`. Every push to `main` runs it in full |
 
 Because `main` is protected, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.
 
@@ -93,7 +94,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - `ChangedAreasScriptTest` (in `:tools:architecture-tests`) runs the script in throwaway git repositories. A wrong `kotlin=false` would let untested Kotlin code merge, so the tests cover large diffs, moves out of Kotlin paths and fixture changes.
 - On a PR that touches no Kotlin path, such as a docs-only PR, the other Kotlin jobs show as skipped. That is expected: only the gate is required, and it passes. This was first seen on PR #8.
 - Job names are plain text, because GitHub shows a skipped job's name unexpanded. Matrix jobs get their values appended automatically, for example "Shared unit tests (:shared:core:common)". `lb002_kotlinJobNamesReadWellWhenSkipped` enforces this.
-- `ios-checks.yml` will get its own gate in the same way.
+- `ios-checks.yml` has its own gate, `iOS gate`, built the same way on the `ios` area.
 
 ## 5. Speed and caching
 

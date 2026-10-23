@@ -19,6 +19,42 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-24: LB-002: the iOS workflow (SwiftLint, shared iOS tests, app build and tests)
+
+**Done**
+- **TDD cycle 1 (change detection):**
+  - A preparatory refactor first: the script tests read each area by name.
+  - Red then green: `changed-areas.sh` now also prints `ios=`. The area covers:
+    - `iosApp/`, `.swiftlint.yml` and `shared/`;
+    - the Gradle build (`gradle/`, `build-logic/`, `*.gradle.kts`, `gradlew*`, `gradle.properties`);
+    - `version.properties`, `scripts/ios/`, `scripts/ci/`, the iOS workflow and the Gradle setup action.
+  - Docs-only and Android-only changes skip the iOS jobs.
+- **TDD cycle 2 (workflow):**
+  - `lb002_iosGateWaitsForEveryIosJob` requires `ios-checks.yml`, with a gate that waits for every job.
+  - The job-name guard now covers every workflow.
+- **`ios-checks.yml`:**
+  - `iOS changes`;
+  - `SwiftLint` (Linux): `scripts/ci/install-swiftlint.sh` installs the pinned 0.65.1 binary after a SHA-256 check;
+  - `Shared iOS tests` (`macos-26`): `./gradlew iosSimulatorArm64Test`;
+  - `iOS build and tests` (`macos-26`, Xcode 26.6 pinned through `DEVELOPER_DIR`, XcodeGen from Homebrew): `scripts/ios/test.sh`, which generates the project and runs `xcodebuild test` on the iPhone 17e simulator with iOS 26.5;
+  - `iOS gate`.
+- **The first run on PR #10 passed:**
+  - SwiftLint: 15 s, 0 violations in 13 files.
+  - Shared iOS tests: 2 min 45 s. The `core:presentation` and `umbrella` simulator tests ran.
+  - iOS build and tests: 8 min 44 s. The cold framework build and project generation took about 3 min, and `xcodebuild test` about 5 min 45 s.
+  - The macOS jobs waited about 9 min for a runner.
+- `scripts/ios/test.sh` passes locally in 40 s.
+- Updated `ci_cd.md` (the catalogue and §4), `engineering_workflow.md`, `AGENTS.md`, both READMEs and the backlog. `protect-main.sh` now also requires `iOS gate`.
+
+**Decisions**
+- **One `Shared iOS tests` job, not a per-module matrix.** GitHub Free runs at most 5 macOS jobs at once, and a 19-job matrix would queue for a long time. Split it when its time grows.
+- **SwiftLint on Linux with a pinned, checksummed binary**, instead of a container image, whose tags cannot be pinned by digest from here.
+
+**Open / next**
+- **After this PR is merged:** apply `protect-main.sh`, so that `iOS gate` becomes required.
+- **The budget is exceeded:** `iOS build and tests` took 8 min 44 s, against 8 min. Next, cache `~/.konan` and the Xcode DerivedData, or split the build from the UI tests (`ci_cd.md` §5).
+- **The rest of LB-002:** ktlint, detekt, Kover, dependency review, the iOS snapshot and ViewModel tests, and the nightly workflow.
+
 ## 2026-10-24: Skipped CI checks reviewed; readable matrix job names (LB-002)
 
 **Done**
