@@ -77,8 +77,10 @@ LogroBus/
 │   └── feature/
 │       ├── lines/  stops/  nearme/  planner/  settings/   # Compose screens + Android ViewModels
 ├── iosApp/
-│   ├── iosApp.xcodeproj             # app target: composition root, TabView shell, navigation, deep links
+│   ├── project.yml                  # XcodeGen spec of the app target (composition root, TabView shell, navigation, deep links)
+│   │                                # and its test targets; iosApp.xcodeproj is generated from it, never committed (ADR-0010)
 │   ├── iosApp/                      # app sources and resources (Localizable.xcstrings, assets)
+│   ├── iosAppTests/  iosAppUITests/ # hosted checks of the built bundle; launch and journey UI tests
 │   └── Packages/LogroBusUI/         # local Swift package
 │       └── Sources/
 │           ├── DesignSystem/        # tokens, LineBadge, EtaText, adaptiveGlass helpers
@@ -273,8 +275,13 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 
 - **Framework integration.**
   - `:shared:umbrella` builds the `Shared` framework, with SKIE (ADR-0004): `Flow` becomes `AsyncSequence`, sealed types become Swift enums, and `suspend` functions become `async`.
-  - The app target links it through `embedAndSignAppleFrameworkForXcode`.
-  - The local Swift package's feature targets consume it as an XCFramework `binaryTarget`, produced by Gradle (`assembleSharedXCFramework`). This set-up is validated in LB-001; the fallback is feature folders inside the app target.
+  - **As built in LB-001 (ADR-0010, proposed):** Gradle produces the XCFramework, and `scripts/ios/generate-project.sh [debug|release]` copies it into `iosApp/Packages/LogroBusUI/Frameworks/`. Release builds and archives need the `release` argument.
+    - The package declares it as the `Shared` binary target. The feature targets depend on it, and a `Shared` library product lets the app target `import Shared`.
+    - The app links the framework once, through the package; it does not use `embedAndSignAppleFrameworkForXcode`, which would link a second copy.
+    - After a Kotlin change, rerun the script. Swift Package Manager resolves binary targets before any build phase runs, so a build phase cannot refresh the framework.
+    - The fallback, feature folders inside the app target, was not needed.
+  - The Xcode project is generated from `iosApp/project.yml` by XcodeGen and is never committed. The same script writes `Configuration/Version.xcconfig` from `version.properties`.
+  - `SharedDependencies` exists from LB-001. It exposes only the start destination until LB-010 adds the use cases and SKIE.
 - **Composition root.**
   - `LogroBusApp.init` calls `KoinKt.doInitKoin(...)` and passes the Swift implementations of the platform contracts (telemetry once chosen).
   - Swift obtains use cases from the Kotlin `SharedDependencies` factory object. Koin generics are not used from Swift.
@@ -361,7 +368,7 @@ flowchart TD
 | Architecture rules | `tools/architecture-tests` | Konsist |
 | Android ViewModels | `android/feature/*/src/test` | JUnit, Turbine, fakes from `:shared:core:testing` |
 | Android UI | `android/feature/*/src/test`, `androidTest` | Compose UI test, Roborazzi |
-| iOS ViewModels and UI | `Packages/LogroBusUI/Tests`, `iosAppUITests` | Swift Testing, swift-snapshot-testing, XCUITest |
+| iOS ViewModels and UI | `Packages/LogroBusUI/Tests`, `iosAppTests` (built-bundle checks), `iosAppUITests` | Swift Testing, swift-snapshot-testing, XCUITest |
 | End to end | `maestro/` | Maestro |
 
 The critical end-to-end journeys for the MVP (spec §10.1, adapted):

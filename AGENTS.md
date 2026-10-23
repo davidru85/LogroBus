@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-23):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is merged, part 2 (the Android app skeleton and modules) is in review, and the iOS app (part 3) follows. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the first Kotlin jobs (build-logic, architecture and shared unit tests) on every pull request; LB-002 is in progress and adds the other code jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-23):** LB-001 is done once PR #7 (part 3, the iOS app) is merged: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place. ADR-0010 (iOS project generation and framework linking) awaits the owner. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the Kotlin and Android jobs on every pull request; LB-002 adds ktlint, detekt, Kover and the iOS jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -98,8 +98,8 @@ Toolchain: JDK 21, the latest stable Android Studio with the Kotlin Multiplatfor
 These commands work today:
 
 ```bash
-scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools
-scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell, Gradle check; SwiftLint once iosApp exists)
+scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools, generate the iOS project
+scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell, Gradle check, SwiftLint)
 scripts/agent/session-start.sh                    # session context, for agents without hooks
 ./gradlew ciUnitTest                              # JVM unit tests: build-logic, shared modules (Android host), Android modules (Robolectric), architecture
 ./gradlew :tools:architecture-tests:test          # module layout and package boundaries (Konsist)
@@ -108,20 +108,21 @@ scripts/agent/session-start.sh                    # session context, for agents 
 ./gradlew allTests                                # shared tests on every target (Android host, iOS simulator on macOS)
 ./gradlew :android:app:assembleDebug              # Android debug APK
 ./gradlew :android:app:installDebug               # install on a connected device or emulator
+./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only
+
+scripts/ios/generate-project.sh [debug|release]   # macOS: Shared XCFramework + Version.xcconfig + iosApp.xcodeproj (XcodeGen ≥ 2.46); rerun after Kotlin changes
+xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
+  -destination 'platform=iOS Simulator,name=<iPhone simulator>' test   # iOS build + bundle tests + launch UI tests
+swiftlint --strict                                # Swift lint (config in .swiftlint.yml)
 ```
 
-If you have just created a new source directory, run Gradle once with `--no-configuration-cache`. A reused configuration-cache entry can miss the new directory and report the tests as `NO-SOURCE`, a false green. `scripts/checks/run-all.sh` always runs without the configuration cache, and CI always configures from scratch.
+If you have just created a new source directory, run Gradle once with `--no-configuration-cache --no-watch-fs`. Both a reused configuration-cache entry and the daemon's file-system watching (seen on macOS) can miss the new directory and report the tests as `NO-SOURCE`, a false green. `scripts/checks/run-all.sh` always runs with both turned off, and CI always configures from scratch.
 
-The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
+The commands below arrive with later stories (ktlint, detekt and Kover in LB-002; fixtures in LB-003).
 
 ```bash
 ./gradlew check                                   # tests + ktlint + detekt + Kover verification
 ./gradlew ktlintFormat                            # auto-format Kotlin
-./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only (NO-SOURCE until part 3)
-
-xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
-  -destination 'platform=iOS Simulator,name=<simulator>' test   # iOS build + tests
-swiftlint --strict                                # Swift lint (config in .swiftlint.yml)
 
 scripts/record-fixtures.sh                        # re-capture golden payloads from the live source
 ```
@@ -203,7 +204,7 @@ Full guidance is in `docs/design_guidelines.md`.
 - **Swift-facing API:** UI models use plain types (`Int`, `String`, `Long` ARGB colours) rather than domain value classes, so they export cleanly through SKIE.
 - **Swift:** Swift 6 toolchain, clean under SwiftLint, `@MainActor` for UI-facing types, small composable views. Feature targets mirror the shared feature modules: `FeatureLines`, `FeatureStops`, `FeatureNearMe`, `FeaturePlanner`, `FeatureSettings`.
 - **Comments** explain why, not what. When code implements a spec rule, cite its id, for example `// DD-05: VM next-stop times are local time labelled Z`.
-- **Tests:** name them `dd05_reinterpretsWallClockInMadrid_duringCest`, without backtick names containing spaces, because Kotlin/Native and older Android runtimes reject them.
+- **Tests:** name them `dd05_reinterpretsWallClockInMadrid_duringCest`, without backtick names containing spaces, because Kotlin/Native and older Android runtimes reject them. Swift follows the same scheme: `lb001_appIsIphoneOnly` with Swift Testing, and `test_lb001_…` with XCTest, which needs the `test` prefix.
 
 ## 9. Testing requirements
 
