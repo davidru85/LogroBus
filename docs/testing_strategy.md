@@ -92,13 +92,22 @@ This document covers what we test, at which level, with which tools, and what ev
   - 2026-10-25 01:00 UTC (CEST → CET).
 - Kotlin tests force `TimeZone.of("Europe/Madrid")` explicitly. They must not depend on the time zone of the machine running them.
 
-### 4.5 Screenshots
+### 4.5 Android host tests (Robolectric)
+
+Android unit tests run on the JVM with Robolectric, through each module's `ciUnitTest` alias (`testDebugUnitTest`). The `logrobus.android.*` conventions and the test classes set up four things that API 37 needs:
+
+- **Resources:** `isIncludeAndroidResources = true`, so Robolectric reads the merged resources and manifest. Qualifiers such as `@Config(qualifiers = "es")` select the language.
+- **JDK access:** `--add-opens=java.base/jdk.internal.access=ALL-UNNAMED`. Robolectric's Android 17 (API 37) sandbox needs it on JDK 21.
+- **Graphics:** test classes that assert on Compose UI use `@GraphicsMode(GraphicsMode.Mode.NATIVE)`. In the default LEGACY mode, text measures a few pixels wide and `assertIsDisplayed()` fails. Roborazzi needs NATIVE too.
+- **Espresso:** Compose UI Test brings Espresso 3.5.0, which calls `InputManager.getInstance()`, removed in API 37. Modules with Compose UI tests add `libs.androidx.test.espresso.core` (3.7.0).
+
+### 4.6 Screenshots
 
 - **Android:** Roborazzi on the JVM. Reference images live under `android/feature/<x>/src/test/screenshots/`. Verification runs on every PR; recording is an explicit task (`recordRoborazziDebug`).
 - **iOS:** swift-snapshot-testing on the pinned CI simulator, with references under `__Snapshots__/`. A reduced set also runs nightly on an iOS 18 simulator to cover the fallback appearance without Liquid Glass (NFR-PLAT-01).
 - Each screen needs these variants: light, dark, 200 % font, and every UX state.
 
-### 4.6 Maestro flows
+### 4.7 Maestro flows
 
 - One flow per critical journey, in `maestro/`, tagged `critical`.
 - Flows run nightly against the live source on an emulator and a simulator.

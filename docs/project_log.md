@@ -19,6 +19,68 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-23: LB-001 part 2 of 3: the Android app skeleton
+
+**Done**
+- After PR #5 was merged, `protect-main.sh` was applied. `Kotlin gate` is now a required check, alongside the six policy jobs; the GitHub API confirms it.
+- TDD cycle 1 (build-logic): Android namespaces keep their platform segment. Without it, `:android:feature:lines` and the Android target of `:shared:feature:lines` would share a namespace, and AGP rejects duplicates.
+- TDD cycle 2 (architecture): the 9 Android modules, each with its convention plugin.
+  - Conventions:
+    - `logrobus.android.application` and `logrobus.android.library` take the SDK levels and the JVM target from the catalog;
+    - they enable Compose with its BOM and Robolectric-ready unit tests;
+    - they add the `ciUnitTest` alias (`testDebugUnitTest`) and enforce `ModuleRules`.
+  - `:android:app`: `applicationId` `com.ruizurraca.logrobus`, minSdk 26, targetSdk 37, versionName 0.1.0 from the new `version.properties` (`release_process.md` §1), versionCode 1 locally.
+  - Refactor: the catalog helpers and `verifyModuleRules` moved to their own files.
+- TDD cycle 3 (shared): `TopLevelDestination` in `:shared:core:presentation`.
+  - It lists LINES, NEAR_ME and PLANNER, and starts on LINES (FR-NAV-01, FR-NAV-02, OQ-15). It is the first value shared by both apps.
+  - The tests are named `lb012_…`, after the app-shell story that owns the requirements. They pass on the Android host and on the iOS simulator.
+- TDD cycle 4 (Android): a Robolectric Compose test launches `MainActivity` and expects "Lines" in English and "Líneas" in Spanish.
+  - The app draws edge-to-edge and shows a placeholder with the start destination title. Android maps the shared destination to its own string resources.
+  - Manual check: on the API 36 emulator, a cold start of 881 ms, with no crash.
+- LB-002 work in this PR, as planned in the PR #5 log entry. Without it, the Kotlin gate would have passed Android changes without running a single Android test.
+  - A TDD cycle requires the workflow matrix to list every Android module.
+  - New jobs: `Android unit tests: <module>`, `Android build` and `Android lint`.
+- Clean-copy check (`git archive`): `./gradlew build allTests` succeeds. That covers the release APK, the iOS simulator tests and lint. `AGENTS.md` §4 now lists the verified commands.
+
+**Reviews (code-reviewer and android-ui-reviewer subagents): both "changes required", no blockers.** Addressed:
+- **Dark-mode system bars**, a TDD cycle. `enableEdgeToEdge()` picked light icons in dark mode on the always-light placeholder, so they were invisible. Both bars now use `SystemBarStyle.light` until the brand theme (LB-011).
+- **Tab copy**, a TDD cycle. The labels now follow `design_guidelines.md` §2.1 and §9:
+  - keys `tab_lines`, `tab_near_me` and `tab_directions`;
+  - en "Lines", "Near me", "Directions"; "How to get there" stays the screen title;
+  - the mapping lives in its own file, `TopLevelDestinationLabels.kt`.
+  The LB-012 criterion said "Near Me, How to Get There". It now points to the guidelines, and **the English copy is still a proposal for the owner**.
+- **Namespaces**, a TDD cycle. The architecture tests' `expectedNamespace` now keeps the `android` segment, as build-logic does, and the namespace rule covers `android/` sources.
+- **Gate needs**, a TDD cycle. `lb002_kotlinGateWaitsForEveryKotlinJob` fails if a Kotlin job is missing from the gate's `needs`. Probe: dropping `android-lint` was reported.
+- **Lint:**
+  - CI runs `lintDebug` in every Android module;
+  - `MissingApplicationIcon` is suppressed, with a pointer to LB-413;
+  - all 9 reports say "No issues found".
+- **Smaller fixes:**
+  - `run-all.sh` runs Gradle without the configuration cache;
+  - the `versionCode` comment no longer claims CI support that does not exist;
+  - a missing `VERSION_NAME` fails with a clear message.
+- **Not done, for the owner to decide:** a negative build of an Android feature-to-feature dependency, to show `ModuleRules` failing in a real Android build. The reviewer's attempt to run it was denied by its permissions. The rule itself is unit-tested, and the conventions call `verifyModuleRules`.
+- **Follow-ups:**
+  - `ModuleRules` lets `:android:app` depend on anything except tools, which is wider than `architecture.md` §3.2.
+  - Check how `TopLevelDestination.start`, a companion member, looks from Swift under SKIE (part 3).
+
+**Decisions**
+- **First shared value:** `TopLevelDestination` rather than a placeholder. It carries real behaviour (FR-NAV-01, FR-NAV-02) that LB-012 builds on, and shared code carries only the meaning.
+- **Placeholder screen without a theme:** there is no `MaterialTheme` in the app, and the platform theme is `Theme.Material.Light.NoActionBar`. Theming belongs to the design system (LB-011).
+- **Mixed story in one PR:** the Android CI jobs (LB-002) ship with the Android code (LB-001), so the code is never merged untested. The commits keep their own story ids.
+
+**Learned**
+- **API 37 under Robolectric 4.17 needs three adjustments** (`testing_strategy.md` §4.5):
+  - `--add-opens=java.base/jdk.internal.access=ALL-UNNAMED`;
+  - Espresso 3.7.0, because Compose UI Test brings 3.5.0, which calls the removed `InputManager.getInstance()`;
+  - NATIVE graphics, or text measures 5 px wide and `assertIsDisplayed()` fails.
+- **Configuration cache:** a reused entry missed newly created source directories, and reported the new tests as `NO-SOURCE`, a false green. Run once with `--no-configuration-cache` after creating a source directory (`AGENTS.md` §4). CI always configures from scratch.
+- **The iOS framework still links as `NO-SOURCE`:** the umbrella module has no sources of its own, even though it exports `TopLevelDestination`. Part 3 must give it one.
+
+**Open / next**
+- LB-001 part 3: the iOS app (XcodeGen, the `LogroBusUI` package, the `Shared` framework, a launch test).
+- On the first docs-only PR: confirm that the Kotlin jobs are skipped and the gate passes.
+
 ## 2026-10-23: LB-002 part 1: Kotlin checks in CI
 
 **Done**

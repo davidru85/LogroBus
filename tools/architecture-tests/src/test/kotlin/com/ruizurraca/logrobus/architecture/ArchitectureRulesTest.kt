@@ -108,11 +108,40 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb002_gateMustWaitForEveryOtherJob() {
+        val workflow = """
+            jobs:
+              changes:
+                runs-on: ubuntu-latest
+              tests:
+                needs: changes
+              build:
+                needs: changes
+              ci-gate:
+                needs: [changes, tests]
+                steps:
+                  - run: echo done
+        """.trimIndent()
+        assertEquals(listOf("build"), ArchitectureRules.jobsMissingFromGate(workflow, gate = "ci-gate"))
+        val complete = workflow.replace("needs: [changes, tests]", "needs: [changes, tests, build]")
+        assertEquals(emptyList<String>(), ArchitectureRules.jobsMissingFromGate(complete, gate = "ci-gate"))
+    }
+
+    @Test
     fun lb001_expectedNamespaceFollowsTheModulePath() {
         assertEquals(
             "$root.feature.lines",
             ArchitectureRules.expectedNamespace("shared/feature/lines/src/commonMain/kotlin/com/x/A.kt"),
         )
         assertEquals("$root.umbrella", ArchitectureRules.expectedNamespace("shared/umbrella/src/iosMain/kotlin/A.kt"))
+    }
+
+    @Test
+    fun lb001_androidNamespacesKeepThePlatformSegment() {
+        assertEquals("$root.android.app", ArchitectureRules.expectedNamespace("android/app/src/main/kotlin/A.kt"))
+        assertEquals(
+            "$root.android.feature.lines",
+            ArchitectureRules.expectedNamespace("android/feature/lines/src/test/kotlin/A.kt"),
+        )
     }
 }

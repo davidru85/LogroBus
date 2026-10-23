@@ -16,6 +16,14 @@ class ConventionSupportTest {
     }
 
     @Test
+    fun lb001_androidNamespacesKeepThePlatformSegment() {
+        // Otherwise :android:feature:lines would clash with the Android target of :shared:feature:lines.
+        assertEquals("com.ruizurraca.logrobus.android.feature.lines", moduleNamespace(":android:feature:lines"))
+        assertEquals("com.ruizurraca.logrobus.android.core.designsystem", moduleNamespace(":android:core:designsystem"))
+        assertEquals("com.ruizurraca.logrobus.android.app", moduleNamespace(":android:app"))
+    }
+
+    @Test
     fun lb001_productionBucketsIncludeEveryMainDeclarationKind() {
         listOf(
             "commonMainApi",

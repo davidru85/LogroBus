@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The brand name is the same in every language (OQ-14). -->
+    <string name="app_name" translatable="false">LogroBus</string>
+
+    <!-- Tab labels (design_guidelines.md §2.1, keys tab.* in §9). Spanish (es-ES) is the default language. -->
+    <string name="tab_lines">Líneas</string>
+    <string name="tab_near_me">Cerca de mí</string>
+    <string name="tab_directions">Cómo llegar</string>
+</resources>

@@ -14,6 +14,10 @@ object ArchitectureRules {
         Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
     )
     private val matrixModuleItem = Regex("""^\s*-\s*"?(:[\w-]+(?::[\w-]+)+)"?\s*$""", RegexOption.MULTILINE)
+    private val jobsHeader = Regex("""^jobs:\s*$""", RegexOption.MULTILINE)
+    private val topLevelKey = Regex("""^\S""", RegexOption.MULTILINE)
+    private val jobKey = Regex("""^ {2}([\w-]+):\s*$""", RegexOption.MULTILINE)
+    private val gateNeeds = Regex("""^ {4}needs:\s*\[?([^\]\n]*)]?\s*$""", RegexOption.MULTILINE)
     private val featurePackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
@@ -59,9 +63,34 @@ object ArchitectureRules {
     fun workflowMatrixModules(workflow: String): Set<String> =
         matrixModuleItem.findAll(workflow).map { it.groupValues[1] }.toSet()
 
-    /** `shared/feature/lines/src/...` must use the `com.ruizurraca.logrobus.feature.lines` namespace. */
+    /**
+     * Jobs of a GitHub Actions workflow that its [gate] job does not list in `needs`. The gate is the one required
+     * check (docs/ci_cd.md §4), so it could pass while one of these jobs fails.
+     */
+    fun jobsMissingFromGate(workflow: String, gate: String): List<String> {
+        val afterHeader = jobsHeader.find(workflow)?.let { workflow.substring(it.range.last + 1) }.orEmpty()
+        val jobs = topLevelKey.find(afterHeader)?.let { afterHeader.substring(0, it.range.first) } ?: afterHeader
+        val keys = jobKey.findAll(jobs).toList()
+        val gateIndex = keys.indexOfFirst { it.groupValues[1] == gate }
+        require(gateIndex >= 0) { "The workflow has no '$gate' job" }
+        val gateEnd = keys.getOrNull(gateIndex + 1)?.range?.first ?: jobs.length
+        val needs = gateNeeds.find(jobs.substring(keys[gateIndex].range.last + 1, gateEnd))?.groupValues?.get(1)
+            .orEmpty()
+            .split(',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+        return keys.map { it.groupValues[1] }.filter { it != gate && it !in needs }
+    }
+
+    /**
+     * `shared/feature/lines/src/...` must use `com.ruizurraca.logrobus.feature.lines`. Android modules keep their
+     * platform segment, as in build-logic: `android/feature/lines/src/...` uses
+     * `com.ruizurraca.logrobus.android.feature.lines`.
+     */
     fun expectedNamespace(relativePath: String): String {
-        val moduleSegments = relativePath.split('/').drop(1).takeWhile { it != "src" }
+        val pathSegments = relativePath.split('/').takeWhile { it != "src" }
+        val moduleSegments = if (pathSegments.first() == "shared") pathSegments.drop(1) else pathSegments
         return (listOf(ROOT_PACKAGE) + moduleSegments).joinToString(".")
     }
 
