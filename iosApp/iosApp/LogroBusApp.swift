@@ -4,7 +4,7 @@ import SwiftUI
 struct LogroBusApp: App {
     var body: some Scene {
         WindowGroup {
-            EmptyView()
+            StartDestinationPlaceholder()
         }
     }
 }
