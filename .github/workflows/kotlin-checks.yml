@@ -155,8 +155,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
-      - name: Lint (debug)
-        run: ./gradlew :android:app:lintDebug
+      # Every Android module: the app does not depend on the core and feature modules yet, so linting
+      # the app alone would skip them.
+      - name: Lint (debug, every Android module)
+        run: ./gradlew lintDebug
 
   ci-gate:
     name: Kotlin gate
