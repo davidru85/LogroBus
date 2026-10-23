@@ -23,5 +23,13 @@ gradlePlugin {
             id = "logrobus.kmp.library"
             implementationClass = "com.ruizurraca.logrobus.buildlogic.KmpLibraryConventionPlugin"
         }
+        register("androidApplication") {
+            id = "logrobus.android.application"
+            implementationClass = "com.ruizurraca.logrobus.buildlogic.AndroidApplicationConventionPlugin"
+        }
+        register("androidLibrary") {
+            id = "logrobus.android.library"
+            implementationClass = "com.ruizurraca.logrobus.buildlogic.AndroidLibraryConventionPlugin"
+        }
     }
 }

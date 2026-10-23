@@ -37,6 +37,18 @@ class ArchitectureTest {
         ":shared:umbrella",
     )
 
+    private val androidModules = listOf(
+        ":android:app",
+        ":android:core:designsystem",
+        ":android:core:map",
+        ":android:core:navigation",
+        ":android:feature:lines",
+        ":android:feature:stops",
+        ":android:feature:nearme",
+        ":android:feature:planner",
+        ":android:feature:settings",
+    )
+
     private val toolModules = listOf(":tools:architecture-tests")
 
     private val ignoredDirectories = setOf("build", ".gradle", ".git", ".kotlin", ".idea")
@@ -44,7 +56,7 @@ class ArchitectureTest {
     @Test
     fun lb001_settingsIncludeExactlyTheArchitectureModules() {
         val included = ArchitectureRules.includedModules(File(root, "settings.gradle.kts").readText())
-        assertEquals((sharedModules + toolModules).toSortedSet(), included.toSortedSet())
+        assertEquals((sharedModules + androidModules + toolModules).toSortedSet(), included.toSortedSet())
     }
 
     @Test
@@ -57,11 +69,34 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb001_everyAndroidModuleAppliesItsConvention() {
+        val missing = androidModules.filterNot { path ->
+            val plugin = if (path == ":android:app") "logrobus.android.application" else "logrobus.android.library"
+            val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
+            buildFile.isFile && "id(\"$plugin\")" in buildFile.readText()
+        }
+        assertEquals(emptyList<String>(), missing)
+    }
+
+    @Test
     fun lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule() {
         val workflow = File(root, ".github/workflows/kotlin-checks.yml")
         val modules = if (workflow.isFile) ArchitectureRules.workflowMatrixModules(workflow.readText()) else emptySet()
         // Other matrices in the workflow, such as the Android feature tests, list their own modules.
         assertEquals(sharedModules.toSortedSet(), modules.filter { it.startsWith(":shared:") }.toSortedSet())
+    }
+
+    @Test
+    fun lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule() {
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml")
+        val modules = if (workflow.isFile) ArchitectureRules.workflowMatrixModules(workflow.readText()) else emptySet()
+        assertEquals(androidModules.toSortedSet(), modules.filter { it.startsWith(":android:") }.toSortedSet())
+    }
+
+    @Test
+    fun lb002_kotlinGateWaitsForEveryKotlinJob() {
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.jobsMissingFromGate(workflow, gate = "ci-gate"))
     }
 
     @Test
@@ -116,8 +151,22 @@ class ArchitectureTest {
         assertEquals(emptyList<String>(), offenders)
     }
 
+    @Test
+    fun lb001_androidKotlinFilesLiveInTheirModuleNamespace() {
+        val offenders = androidFiles().mapNotNull { file ->
+            val expected = ArchitectureRules.expectedNamespace(file.relativePath())
+            val actual = file.packagee?.name.orEmpty()
+            val inNamespace = actual == expected || actual.startsWith("$expected.")
+            if (inNamespace) null else "${file.relativePath()}: $actual"
+        }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
+
+    private fun androidFiles(): List<KoFileDeclaration> =
+        Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("android/") }
 
     private fun KoFileDeclaration.importNames(): List<String> = imports.map { it.name }
 
