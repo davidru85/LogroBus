@@ -1,0 +1,46 @@
+# XcodeGen spec for the iOS app (LB-001). scripts/ios/generate-project.sh generates
+# iosApp.xcodeproj from it; the generated project is never committed.
+name: iosApp
+options:
+  bundleIdPrefix: com.ruizurraca.logrobus
+  deploymentTarget:
+    # ADR-0003: iOS 18 minimum; Liquid Glass on iOS 26 and later.
+    iOS: "18.0"
+  developmentLanguage: es
+  createIntermediateGroups: true
+configFiles:
+  # Generated from version.properties (docs/release_process.md §1).
+  Debug: Configuration/Version.xcconfig
+  Release: Configuration/Version.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # NFR-PLAT-03: iPhone only in the MVP.
+    TARGETED_DEVICE_FAMILY: "1"
+packages:
+  LogroBusUI:
+    path: Packages/LogroBusUI
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    dependencies:
+      - package: LogroBusUI
+        product: LogroBusUI
+      - package: LogroBusUI
+        product: Shared
+    settings:
+      base:
+        PRODUCT_NAME: LogroBus
+        # OQ-14: the store identifier, shared with Android. It cannot change after the first release.
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus
+        MARKETING_VERSION: $(VERSION_NAME)
+        # Every build uses 1 until the release automation (M5) supplies the shared build number.
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: LogroBus
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        SWIFT_EMIT_LOC_STRINGS: YES
