@@ -81,7 +81,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Workflow | Runs when these paths change |
 | --- | --- |
 | `policy-checks.yml` | Any change |
-| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
+| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), `iosApp/project.yml`, `iosApp/Packages/*/Package.swift` and `.gitignore` (the architecture tests read them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
 | `ios-checks.yml` | `shared/**`, `iosApp/**`, `.swiftlint.yml`, `version.properties` |
 
 Because `main` is protected, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.

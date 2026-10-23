@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-23):** LB-001 is in its last review: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place (part 3, the iOS app, is in review). The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the Kotlin and Android jobs on every pull request; LB-002 adds ktlint, detekt, Kover and the iOS jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-23):** LB-001 is done once PR #7 (part 3, the iOS app) is merged: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place. ADR-0010 (iOS project generation and framework linking) awaits the owner. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the Kotlin and Android jobs on every pull request; LB-002 adds ktlint, detekt, Kover and the iOS jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -99,7 +99,7 @@ These commands work today:
 
 ```bash
 scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools, generate the iOS project
-scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell, Gradle check; SwiftLint once iosApp exists)
+scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell, Gradle check, SwiftLint)
 scripts/agent/session-start.sh                    # session context, for agents without hooks
 ./gradlew ciUnitTest                              # JVM unit tests: build-logic, shared modules (Android host), Android modules (Robolectric), architecture
 ./gradlew :tools:architecture-tests:test          # module layout and package boundaries (Konsist)
@@ -110,7 +110,7 @@ scripts/agent/session-start.sh                    # session context, for agents 
 ./gradlew :android:app:installDebug               # install on a connected device or emulator
 ./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only
 
-scripts/ios/generate-project.sh                   # macOS: Shared XCFramework + Version.xcconfig + iosApp.xcodeproj (XcodeGen); rerun after Kotlin changes
+scripts/ios/generate-project.sh [debug|release]   # macOS: Shared XCFramework + Version.xcconfig + iosApp.xcodeproj (XcodeGen ≥ 2.46); rerun after Kotlin changes
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination 'platform=iOS Simulator,name=<iPhone simulator>' test   # iOS build + bundle tests + launch UI tests
 swiftlint --strict                                # Swift lint (config in .swiftlint.yml)

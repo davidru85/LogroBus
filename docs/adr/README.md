@@ -17,6 +17,7 @@ NFR-MNT-03 requires an ADR for every technology choice in spec §8.3. The choice
 | [0007](0007-clean-architecture-feature-modules.md) | Clean architecture with feature modules and platform-specific presentation | Accepted | 2026-10-22 |
 | [0008](0008-offline-mode-deferred.md) | Offline mode deferred to v1.0; cache-backed static data in the MVP | Accepted | 2026-10-22 |
 | [0009](0009-telemetry-contracts.md) | Telemetry contracts now, vendor later | Accepted | 2026-10-22 |
+| [0010](0010-ios-project-generation-and-framework-linking.md) | iOS project generation and framework linking | Proposed (amends ADR-0004's integration bullet) | 2026-10-23 |
 
 Status values: `Proposed`, `Accepted`, `Superseded by ADR-nnnn`, `Deprecated`.
 

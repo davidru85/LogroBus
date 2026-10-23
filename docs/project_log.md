@@ -41,6 +41,32 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - `AGENTS.md` §4 lists the iOS commands, and §8 the Swift test naming;
   - both READMEs say how to run the iOS app.
 
+**Reviews (code-reviewer and ios-ui-reviewer subagents): both "changes required".** Addressed:
+- **A false green in CI**, a TDD cycle. A PR touching only `iosApp/project.yml`, a `Package.swift` or `.gitignore` skipped the architecture tests that read them. `changed-areas.sh` now counts those paths as Kotlin paths.
+- **No iOS feature-to-feature check**, a TDD cycle. LB-001 requires one on both platforms. `crossFeatureSwiftDependencies` parses the package manifest. Probe: a `FeatureLines -> FeatureStops` dependency was reported.
+- **Portrait lock**, a TDD cycle. No doc decided it, Android does not do it, and it goes against WCAG 1.3.4 (NFR-A11Y-01). The app now supports portrait and both landscape orientations, checked on the built bundle.
+- **ADR conflict.** ADR-0004 says `embedAndSignAppleFrameworkForXcode`; the build links through the package. **ADR-0010 is proposed for the owner to accept.** It records XcodeGen, the single link through the package, the refresh script and the release argument.
+- **Weak spec test.** The iOS spec test now reads the app target's own settings. Probe: a project-level device family now fails.
+- **SwiftLint, prepared but not run:**
+  - trailing commas removed;
+  - `allowed_symbols` dropped, since SwiftLint 0.55 or later skips function names anyway;
+  - test names kept under 40 characters.
+- **`generate-project.sh`:**
+  - takes `debug|release`, so Release builds no longer link the debug Kotlin framework;
+  - runs Gradle without the configuration cache and file-system watching;
+  - requires XcodeGen 2.46.0 or later.
+- **`bootstrap.sh`:** the header now says it runs a Kotlin/Native build, and `LOGROBUS_SKIP_IOS=1` skips it.
+- **Docs:**
+  - the `architecture.md` tree and testing table;
+  - `testing_strategy.md`;
+  - the `ci_cd.md` paths;
+  - `AGENTS.md`;
+  - the umbrella build comment;
+  - `release_process.md`.
+- **Noted, not changed:**
+  - **TDD scope.** Some green commits carried code no red test required: the app stub and the script in `d436ce3`, and `bootstrap.sh` in `8fc6e7a`. Harness and lint changes belong in their own commits. History is not rewritten.
+  - **Commit scope.** `ci(policy)` is not in the `AGENTS.md` §12 scope list.
+
 **Decisions**
 - **The app links `Shared` once, through the `LogroBusUI` package's binary target.** It does not use `embedAndSignAppleFrameworkForXcode`, which would link a second copy next to the package's.
   - Swift Package Manager resolves binary targets before any build phase, so after a Kotlin change you rerun `scripts/ios/generate-project.sh`.
@@ -57,6 +83,8 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 **Open / next**
 - SwiftLint is not installed on this machine, so `run-all.sh` skips the Swift gate, and `.swiftlint.yml` has not been checked against the new Swift code yet.
+- The owner accepts or changes ADR-0010. On acceptance, ADR-0004's index status records the amendment, and ADR-0007's "validate in LB-001" consequence is resolved.
+- Check the empty `Shared.framework` stub that Xcode embeds at the first archive. Change the `.gitignore` pattern when the first remote Swift package needs a committed `Package.resolved` (LB-013).
 - LB-002: `ios-checks.yml` (macOS runner: framework, generation, `xcodebuild test`, SwiftLint), plus ktlint, detekt and Kover.
 - From PR #6: the negative Android build for a feature-to-feature dependency, pending the owner's go-ahead.
 

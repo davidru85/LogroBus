@@ -4,9 +4,9 @@ plugins {
     id("logrobus.kmp.library")
 }
 
-// The single Kotlin artefact consumed by iOS (ADR-0004, ADR-0007): a static framework
-// named "Shared" (app target) and the same frameworks packaged as an XCFramework
-// (local Swift package). Exported modules are visible to Swift.
+// The single Kotlin artefact consumed by iOS (ADR-0004, ADR-0007, ADR-0010): a static
+// framework named "Shared", packaged as an XCFramework for the local Swift package
+// LogroBusUI, through which the app links it once. Exported modules are visible to Swift.
 kotlin {
     val exported = listOf(
         projects.shared.core.common,
