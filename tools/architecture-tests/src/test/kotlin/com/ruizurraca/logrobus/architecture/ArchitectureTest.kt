@@ -92,15 +92,21 @@ class ArchitectureTest {
     @Test
     fun lb001_iosProjectIsIphoneOnlyWithIos18AndTheStoreBundleId() {
         val spec = File(root, "iosApp/project.yml").takeIf { it.isFile }?.readText().orEmpty()
-        val required = listOf(
+        // Settings of the app target itself: XcodeGen's application preset overrides project-level values.
+        val appTarget = Regex("""(?ms)^ {2}iosApp:\n(.*?)(?=^ {2}\S|\z)""")
+            .find(spec.substringAfter("\ntargets:\n"))?.groupValues?.get(1).orEmpty()
+        val required = mapOf(
             // OQ-14: the store identifier, shared with Android.
-            "PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus",
+            "PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus" to appTarget,
             // NFR-PLAT-03: iPhone only in the MVP.
-            "TARGETED_DEVICE_FAMILY: \"1\"",
+            "TARGETED_DEVICE_FAMILY: \"1\"" to appTarget,
             // ADR-0003: iOS 18 deployment target.
-            "iOS: \"18.0\"",
+            "iOS: \"18.0\"" to spec,
         )
-        assertEquals(emptyList<String>(), required.filterNot { it in spec })
+        val missing = required.filterNot { (setting, scope) ->
+            Regex("""(?m)^\s+${Regex.escape(setting)}\s*$""").containsMatchIn(scope)
+        }
+        assertEquals(emptyList<String>(), missing.keys.toList())
     }
 
     @Test
