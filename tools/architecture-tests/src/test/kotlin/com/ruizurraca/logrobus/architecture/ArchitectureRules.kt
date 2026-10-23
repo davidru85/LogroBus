@@ -59,9 +59,14 @@ object ArchitectureRules {
     fun workflowMatrixModules(workflow: String): Set<String> =
         matrixModuleItem.findAll(workflow).map { it.groupValues[1] }.toSet()
 
-    /** `shared/feature/lines/src/...` must use the `com.ruizurraca.logrobus.feature.lines` namespace. */
+    /**
+     * `shared/feature/lines/src/...` must use `com.ruizurraca.logrobus.feature.lines`. Android modules keep their
+     * platform segment, as in build-logic: `android/feature/lines/src/...` uses
+     * `com.ruizurraca.logrobus.android.feature.lines`.
+     */
     fun expectedNamespace(relativePath: String): String {
-        val moduleSegments = relativePath.split('/').drop(1).takeWhile { it != "src" }
+        val pathSegments = relativePath.split('/').takeWhile { it != "src" }
+        val moduleSegments = if (pathSegments.first() == "shared") pathSegments.drop(1) else pathSegments
         return (listOf(ROOT_PACKAGE) + moduleSegments).joinToString(".")
     }
 
