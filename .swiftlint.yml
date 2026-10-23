@@ -43,8 +43,6 @@ type_body_length:
   error: 500
 
 identifier_name:
-  # Test names carry the story or rule id, as in Kotlin: lb001_appIsIphoneOnly, test_lb001_… (AGENTS.md §8).
-  allowed_symbols: ["_"]
   excluded:
     - id
     - x

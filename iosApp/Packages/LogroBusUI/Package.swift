@@ -15,11 +15,11 @@ let package = Package(
                 "FeatureStops",
                 "FeatureNearMe",
                 "FeaturePlanner",
-                "FeatureSettings",
+                "FeatureSettings"
             ]
         ),
         // The Kotlin framework. The app links it once, through this package.
-        .library(name: "Shared", targets: ["Shared"]),
+        .library(name: "Shared", targets: ["Shared"])
     ],
     targets: [
         // Built by Gradle and copied here by scripts/ios/generate-project.sh; never committed.
@@ -30,6 +30,6 @@ let package = Package(
         .target(name: "FeatureStops", dependencies: ["DesignSystem", "MapUI", "Shared"]),
         .target(name: "FeatureNearMe", dependencies: ["DesignSystem", "MapUI", "Shared"]),
         .target(name: "FeaturePlanner", dependencies: ["DesignSystem", "MapUI", "Shared"]),
-        .target(name: "FeatureSettings", dependencies: ["DesignSystem", "MapUI", "Shared"]),
+        .target(name: "FeatureSettings", dependencies: ["DesignSystem", "MapUI", "Shared"])
     ]
 )
