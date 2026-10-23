@@ -45,7 +45,7 @@ ADR-0001 shared presentation *state machines* (ViewModels) in Kotlin Multiplatfo
   - mappers carry the formatting rules;
   - both platforms' ViewModels are tested against the same acceptance criteria.
 - More Gradle modules mean longer KMP configuration and builds. Splitting each shared feature into separate domain, data and presentation modules was rejected for this reason; package boundaries plus Konsist are used instead.
-- iOS feature targets consume the Kotlin framework as an XCFramework binary target of a local Swift package. This needs validating in LB-001; the fallback is feature folders inside the app target.
+- iOS feature targets consume the Kotlin framework as an XCFramework binary target of a local Swift package. This needs validating in LB-001; the fallback is feature folders inside the app target. *Validated in LB-001: the binary target works, and the fallback was not needed (ADR-0010).*
 - ADR-0001's clause "presentation state (ViewModels and `UiState`) is shared" is superseded. ADR-0004 keeps the umbrella framework and SKIE, but drops the ViewModel bridge.
 
 ## Alternatives considered
