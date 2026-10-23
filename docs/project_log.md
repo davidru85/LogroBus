@@ -42,6 +42,28 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - New jobs: `Android unit tests: <module>`, `Android build` and `Android lint`.
 - Clean-copy check (`git archive`): `./gradlew build allTests` succeeds. That covers the release APK, the iOS simulator tests and lint. `AGENTS.md` §4 now lists the verified commands.
 
+**Reviews (code-reviewer and android-ui-reviewer subagents): both "changes required", no blockers.** Addressed:
+- **Dark-mode system bars**, a TDD cycle. `enableEdgeToEdge()` picked light icons in dark mode on the always-light placeholder, so they were invisible. Both bars now use `SystemBarStyle.light` until the brand theme (LB-011).
+- **Tab copy**, a TDD cycle. The labels now follow `design_guidelines.md` §2.1 and §9:
+  - keys `tab_lines`, `tab_near_me` and `tab_directions`;
+  - en "Lines", "Near me", "Directions"; "How to get there" stays the screen title;
+  - the mapping lives in its own file, `TopLevelDestinationLabels.kt`.
+  The LB-012 criterion said "Near Me, How to Get There". It now points to the guidelines, and **the English copy is still a proposal for the owner**.
+- **Namespaces**, a TDD cycle. The architecture tests' `expectedNamespace` now keeps the `android` segment, as build-logic does, and the namespace rule covers `android/` sources.
+- **Gate needs**, a TDD cycle. `lb002_kotlinGateWaitsForEveryKotlinJob` fails if a Kotlin job is missing from the gate's `needs`. Probe: dropping `android-lint` was reported.
+- **Lint:**
+  - CI runs `lintDebug` in every Android module;
+  - `MissingApplicationIcon` is suppressed, with a pointer to LB-413;
+  - all 9 reports say "No issues found".
+- **Smaller fixes:**
+  - `run-all.sh` runs Gradle without the configuration cache;
+  - the `versionCode` comment no longer claims CI support that does not exist;
+  - a missing `VERSION_NAME` fails with a clear message.
+- **Not done, for the owner to decide:** a negative build of an Android feature-to-feature dependency, to show `ModuleRules` failing in a real Android build. The reviewer's attempt to run it was denied by its permissions. The rule itself is unit-tested, and the conventions call `verifyModuleRules`.
+- **Follow-ups:**
+  - `ModuleRules` lets `:android:app` depend on anything except tools, which is wider than `architecture.md` §3.2.
+  - Check how `TopLevelDestination.start`, a companion member, looks from Swift under SKIE (part 3).
+
 **Decisions**
 - **First shared value:** `TopLevelDestination` rather than a placeholder. It carries real behaviour (FR-NAV-01, FR-NAV-02) that LB-012 builds on, and shared code carries only the meaning.
 - **Placeholder screen without a theme:** there is no `MaterialTheme` in the app, and the platform theme is `Theme.Material.Light.NoActionBar`. Theming belongs to the design system (LB-011).
