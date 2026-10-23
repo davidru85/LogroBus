@@ -55,6 +55,17 @@ class ChangedAreasScriptTest {
         assertEquals("kotlin=true", areas("main"))
     }
 
+    @Test
+    fun lb002_iosFilesReadByTheArchitectureTestsRunTheKotlinJobs() {
+        // ArchitectureTest reads the XcodeGen spec, the package manifest and .gitignore.
+        listOf("iosApp/project.yml", "iosApp/Packages/LogroBusUI/Package.swift", ".gitignore").forEach { path ->
+            repo.listFiles()?.forEach { it.deleteRecursively() }
+            commitBase("README.md")
+            commitChange(path)
+            assertEquals("kotlin=true", areas("main"), path)
+        }
+    }
+
     private fun commitBase(vararg paths: String) {
         git("init", "-q", "-b", "main")
         write(*paths)
