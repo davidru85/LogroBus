@@ -4,12 +4,12 @@ import XCTest
 final class LaunchTests: XCTestCase {
 
     @MainActor
-    func test_lb001_appLaunchesOnTheLinesTab() {
+    func test_lb001_launchesOnLines() {
         assertLaunch(language: "en", region: "en_GB", showing: "Lines")
     }
 
     @MainActor
-    func test_lb001_appLaunchesOnTheLinesTab_inSpanish() {
+    func test_lb001_launchesOnLines_inSpanish() {
         assertLaunch(language: "es", region: "es_ES", showing: "Líneas")
     }
 
@@ -18,6 +18,7 @@ final class LaunchTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
         app.launch()
+        // TODO(LB-012): with the tab shell, assert app.tabBars.buttons[label].isSelected instead.
         XCTAssertTrue(app.staticTexts[label].waitForExistence(timeout: 10), "\"\(label)\" is shown")
     }
 }

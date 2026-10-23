@@ -18,7 +18,7 @@ struct AppBundleTests {
             Set(orientations ?? []) == [
                 "UIInterfaceOrientationPortrait",
                 "UIInterfaceOrientationLandscapeLeft",
-                "UIInterfaceOrientationLandscapeRight",
+                "UIInterfaceOrientationLandscapeRight"
             ]
         )
     }
