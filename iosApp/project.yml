@@ -15,8 +15,6 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    # NFR-PLAT-03: iPhone only in the MVP.
-    TARGETED_DEVICE_FAMILY: "1"
 packages:
   LogroBusUI:
     path: Packages/LogroBusUI
@@ -34,6 +32,9 @@ targets:
     settings:
       base:
         PRODUCT_NAME: LogroBus
+        # NFR-PLAT-03: iPhone only in the MVP. Set on the target, because XcodeGen's application preset
+        # sets "1,2" there and would override a project-level value.
+        TARGETED_DEVICE_FAMILY: "1"
         # OQ-14: the store identifier, shared with Android. It cannot change after the first release.
         PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus
         MARKETING_VERSION: $(VERSION_NAME)
