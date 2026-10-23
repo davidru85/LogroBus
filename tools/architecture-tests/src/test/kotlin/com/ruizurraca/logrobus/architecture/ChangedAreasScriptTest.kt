@@ -22,13 +22,13 @@ class ChangedAreasScriptTest {
     fun lb002_docsOnlyChangeSkipsTheKotlinJobs() {
         commitBase("README.md")
         commitChange("docs/guide.md")
-        assertEquals("kotlin=false", areas("main"))
+        assertEquals("false", area("kotlin", "main"))
     }
 
     @Test
     fun lb002_pushWithoutBaseRunsTheKotlinJobs() {
         commitBase("README.md")
-        assertEquals("kotlin=true", areas())
+        assertEquals("true", area("kotlin"))
     }
 
     @Test
@@ -36,7 +36,7 @@ class ChangedAreasScriptTest {
         commitBase("README.md")
         // ".github/" sorts first, and thousands of later paths overflow the pipe buffer.
         commitChange(".github/workflows/kotlin-checks.yml", *Array(LARGE_DIFF) { "docs/notes/note-$it.md" })
-        assertEquals("kotlin=true", areas("main"))
+        assertEquals("true", area("kotlin", "main"))
     }
 
     @Test
@@ -45,14 +45,14 @@ class ChangedAreasScriptTest {
         File(repo, "docs").mkdirs()
         git("mv","shared/core/common/src/commonMain/kotlin/Moved.kt", "docs/Moved.kt.txt")
         git("commit", "-q", "-m", "change")
-        assertEquals("kotlin=true", areas("main"))
+        assertEquals("true", area("kotlin", "main"))
     }
 
     @Test
     fun lb002_fixtureChangeRunsTheKotlinJobs() {
         commitBase("README.md")
         commitChange("fixtures/api-01-lines.json")
-        assertEquals("kotlin=true", areas("main"))
+        assertEquals("true", area("kotlin", "main"))
     }
 
     @Test
@@ -62,7 +62,7 @@ class ChangedAreasScriptTest {
             repo.listFiles()?.forEach { it.deleteRecursively() }
             commitBase("README.md")
             commitChange(path)
-            assertEquals("kotlin=true", areas("main"), path)
+            assertEquals("true", area("kotlin", "main"), path)
         }
     }
 
@@ -85,7 +85,9 @@ class ChangedAreasScriptTest {
         File(repo, path).apply { parentFile.mkdirs() }.writeText("# $path\n")
     }
 
-    private fun areas(vararg base: String): String = run(listOf("bash", script.path) + base).trim()
+    /** The value the script prints for [name] (`<name>=true|false`), or null if it prints no such line. */
+    private fun area(name: String, vararg base: String): String? =
+        run(listOf("bash", script.path) + base).lines().firstOrNull { it.startsWith("$name=") }?.substringAfter('=')
 
     private fun git(vararg args: String) {
         // No background gc or maintenance: thousands of loose objects can start it, and it would still be
