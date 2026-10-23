@@ -275,7 +275,7 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 
 - **Framework integration.**
   - `:shared:umbrella` builds the `Shared` framework, with SKIE (ADR-0004): `Flow` becomes `AsyncSequence`, sealed types become Swift enums, and `suspend` functions become `async`.
-  - **As built in LB-001 (ADR-0010, proposed):** Gradle produces the XCFramework, and `scripts/ios/generate-project.sh [debug|release]` copies it into `iosApp/Packages/LogroBusUI/Frameworks/`. Release builds and archives need the `release` argument.
+  - **As built in LB-001 (ADR-0010):** Gradle produces the XCFramework, and `scripts/ios/generate-project.sh [debug|release]` copies it into `iosApp/Packages/LogroBusUI/Frameworks/`. Release builds and archives need the `release` argument.
     - The package declares it as the `Shared` binary target. The feature targets depend on it, and a `Shared` library product lets the app target `import Shared`.
     - The app links the framework once, through the package; it does not use `embedAndSignAppleFrameworkForXcode`, which would link a second copy.
     - After a Kotlin change, rerun the script. Swift Package Manager resolves binary targets before any build phase runs, so a build phase cannot refresh the framework.

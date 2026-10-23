@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed, amended by ADR-0007 (no shared ViewModels and no ViewModel bridge) |
+| Status | Proposed, amended by ADR-0007 (no shared ViewModels and no ViewModel bridge) and ADR-0010 (the app links `Shared` through the Swift package, not `embedAndSignAppleFrameworkForXcode`) |
 | Date | 2026-10-22 |
 | Deciders | Tech lead |
 | Related | ADR-0001, spec §8.2, `architecture.md` §3.2 and §5.2 |
