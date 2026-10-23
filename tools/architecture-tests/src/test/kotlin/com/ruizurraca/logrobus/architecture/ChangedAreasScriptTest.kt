@@ -66,6 +66,47 @@ class ChangedAreasScriptTest {
         }
     }
 
+    @Test
+    fun lb002_docsOnlyChangeSkipsTheIosJobs() {
+        commitBase("README.md")
+        commitChange("docs/guide.md")
+        assertEquals("false", area("ios", "main"))
+    }
+
+    @Test
+    fun lb002_pushWithoutBaseRunsTheIosJobs() {
+        commitBase("README.md")
+        assertEquals("true", area("ios"))
+    }
+
+    @Test
+    fun lb002_iosRelevantChangesRunTheIosJobs() {
+        // The Swift code, its lint config, the shared Kotlin it links, the build that produces the framework,
+        // the version it reads and its own CI scripts.
+        val paths = listOf(
+            "iosApp/iosApp/LogroBusApp.swift",
+            ".swiftlint.yml",
+            "shared/core/common/src/commonMain/kotlin/A.kt",
+            "gradle/libs.versions.toml",
+            "version.properties",
+            "scripts/ios/test.sh",
+            ".github/workflows/ios-checks.yml",
+        )
+        paths.forEach { path ->
+            repo.listFiles()?.forEach { it.deleteRecursively() }
+            commitBase("README.md")
+            commitChange(path)
+            assertEquals("true", area("ios", "main"), path)
+        }
+    }
+
+    @Test
+    fun lb002_androidOnlyChangeSkipsTheIosJobs() {
+        commitBase("README.md")
+        commitChange("android/app/src/main/kotlin/A.kt")
+        assertEquals("false", area("ios", "main"))
+    }
+
     private fun commitBase(vararg paths: String) {
         git("init", "-q", "-b", "main")
         write(*paths)
