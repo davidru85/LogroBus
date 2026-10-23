@@ -19,8 +19,10 @@ on:
 permissions:
   contents: read
 
+# One group per pull request, so a new push cancels the stale run. One group per
+# commit on main, so back-to-back merges are each verified rather than cancelled.
 concurrency:
-  group: kotlin-checks-${{ github.event.pull_request.number || github.ref }}
+  group: kotlin-checks-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
