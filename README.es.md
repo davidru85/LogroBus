@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle y los 19 módulos compartidos de Kotlin Multiplatform; después llegarán las apps de Android e iOS (LB-001). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y el esqueleto de la app de Android; después llegará la app de iOS (LB-001). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -44,9 +44,14 @@ scripts/                              Arranque, comprobaciones de calidad, utili
 .githooks/                            Hooks de git (los instala scripts/bootstrap.sh)
 .claude/, .github/                    Configuración de Claude Code; plantillas de pull request y workflows de CI
 logrono-bus-app-functional-spec.md    Especificación funcional v0.1
+shared/                               Módulos de Kotlin Multiplatform: core, transit, favourites, funcionalidades, umbrella
+android/                              App de Android, módulos core (sistema de diseño, mapa, navegación) y módulos de funcionalidad
+build-logic/, gradle/                 Plugins de convención de Gradle; el catálogo de versiones
+tools/architecture-tests/             Reglas automáticas de módulos y paquetes
+version.properties                    La versión de la app, común a Android e iOS
 ```
 
-Los módulos `shared/`, `android/` e `iosApp/` llegarán en el hito M0. Su estructura prevista se describe en [docs/architecture.md](docs/architecture.md).
+El proyecto `iosApp/` llegará con el resto del hito M0. La estructura completa se describe en [docs/architecture.md](docs/architecture.md).
 
 ## Primeros pasos
 
@@ -54,7 +59,7 @@ Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: insta
 
 Los módulos compartidos ya compilan: `./gradlew ciUnitTest` ejecuta los tests unitarios y las reglas de arquitectura. Si `ANDROID_HOME` no está definido, crea un archivo `local.properties` con `sdk.dir=<ruta a tu Android SDK>`; Git lo ignora.
 
-Cuando lleguen las apps de Android e iOS (el resto de la historia LB-001), esta sección explicará cómo ejecutarlas. Necesitarás:
+Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. De momento muestra una pantalla provisional de la pestaña Líneas. Cuando llegue la app de iOS (el resto de la historia LB-001), esta sección explicará cómo ejecutarla. Necesitarás:
 
 - JDK 21.
 - La última versión estable de Android Studio con el plugin de Kotlin Multiplatform.
@@ -92,6 +97,11 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **23-10-2026:**
+  - LB-001, parte 2 de 3: el esqueleto de la app de Android.
+    - La app (`com.ruizurraca.logrobus`, Android 8.0 o posterior) se abre en una pantalla provisional de la pestaña Líneas, en español y en inglés.
+    - Su pestaña inicial sale del código compartido, el primer valor que compartirán las dos apps.
+    - Ya existen los módulos core y de funcionalidad de Android, todavía vacíos.
+    - La CI también ejecuta los tests unitarios de Android, la compilación y lint.
   - Empezada LB-002, parte 1: la CI también ejecuta las comprobaciones de Kotlin en cada pull request que toque ficheros de Kotlin o de Gradle:
     - los tests de build-logic, las reglas de arquitectura y los tests unitarios de cada uno de los 19 módulos compartidos, cada uno en su propio job;
     - un único job, «Kotlin gate», los resume y es obligatorio para fusionar.

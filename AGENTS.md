@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-23):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is merged; the Android app (part 2) and the iOS app (part 3) follow. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the first Kotlin jobs (build-logic, architecture and shared unit tests) on every pull request; LB-002 is in progress and adds the other code jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-23):** LB-001 in progress. Part 1 (Gradle build, the 19 shared modules, module and architecture rules) is merged, part 2 (the Android app skeleton and modules) is in review, and the iOS app (part 3) follows. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the first Kotlin jobs (build-logic, architecture and shared unit tests) on every pull request; LB-002 is in progress and adds the other code jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -101,21 +101,23 @@ These commands work today:
 scripts/bootstrap.sh                              # once per clone: install git hooks, report missing tools
 scripts/checks/run-all.sh                         # every quality gate (docs, secrets, shell, Gradle check; SwiftLint once iosApp exists)
 scripts/agent/session-start.sh                    # session context, for agents without hooks
-./gradlew ciUnitTest                              # JVM unit tests: build-logic rules, shared modules, architecture rules
+./gradlew ciUnitTest                              # JVM unit tests: build-logic, shared modules (Android host), Android modules (Robolectric), architecture
 ./gradlew :tools:architecture-tests:test          # module layout and package boundaries (Konsist)
-./gradlew check                                   # every verification task (lint and coverage join in LB-002)
+./gradlew check                                   # every verification task, including Android lint (ktlint, detekt and Kover join in LB-002)
+./gradlew build                                   # compile everything, including the release APK, and run all checks
+./gradlew allTests                                # shared tests on every target (Android host, iOS simulator on macOS)
+./gradlew :android:app:assembleDebug              # Android debug APK
+./gradlew :android:app:installDebug               # install on a connected device or emulator
 ```
+
+If you have just created a new source directory, run Gradle once with `--no-configuration-cache`. A reused configuration-cache entry can miss the new directory and report the tests as `NO-SOURCE`, a false green; CI always configures from scratch.
 
 The commands below describe the target setup. **Verify them, and correct this section, when LB-001 lands.**
 
 ```bash
-./gradlew build                                   # compile everything and run all checks
-./gradlew allTests                                # shared tests on every target
 ./gradlew check                                   # tests + ktlint + detekt + Kover verification
 ./gradlew ktlintFormat                            # auto-format Kotlin
-./gradlew :android:app:assembleDebug              # Android debug APK
-./gradlew :android:app:installDebug              # install on a connected device or emulator
-./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only
+./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only (NO-SOURCE until part 3)
 
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination 'platform=iOS Simulator,name=<simulator>' test   # iOS build + tests

@@ -43,7 +43,7 @@ flowchart LR
 ```
 LogroBus/
 ├── gradle/libs.versions.toml
-├── build-logic/convention/          # KMP library, Android feature, Android app, lint, Kover plugins
+├── build-logic/convention/          # logrobus.kmp.library, logrobus.android.library, logrobus.android.application (lint and Kover in LB-002)
 ├── shared/
 │   ├── core/
 │   │   ├── common/                  # AppClock, Logger, AppDispatchers, AppResult/AppError, AppLifecycle, geo, polyline
@@ -375,7 +375,7 @@ The critical end-to-end journeys for the MVP (spec §10.1, adapted):
 ## 9. Build and CI
 
 - Versions live only in `gradle/libs.versions.toml`. Convention plugins under `build-logic/` configure KMP library, Android feature and Android app modules uniformly, and register the stable alias tasks used by CI (for example `ciUnitTest`).
-- CI runs on GitHub Actions as atomic, path-filtered jobs on every pull request (`ci_cd.md`): the policy checks and the Kotlin unit and architecture tests today; lint, coverage, Android and iOS jobs join in LB-002. The local gates are described in `agent_harness.md` and `testing_strategy.md`.
+- CI runs on GitHub Actions as atomic, path-filtered jobs on every pull request (`ci_cd.md`): the policy checks, the Kotlin unit and architecture tests, and the Android unit tests, build and lint today; ktlint, detekt, coverage and the iOS jobs join in LB-002. The local gates are described in `agent_harness.md` and `testing_strategy.md`.
 
 ## 10. Evolution
 

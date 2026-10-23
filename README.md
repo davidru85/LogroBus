@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build and the 19 shared Kotlin Multiplatform modules exist; the Android and iOS apps come next (LB-001). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android app skeleton exist; the iOS app comes next (LB-001). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -44,9 +44,14 @@ scripts/                              Bootstrap, quality gates, CI helpers and a
 .githooks/                            Git hooks (installed by scripts/bootstrap.sh)
 .claude/, .github/                    Claude Code configuration; PR templates and CI workflows
 logrono-bus-app-functional-spec.md    Functional specification v0.1
+shared/                               Kotlin Multiplatform modules: core, transit, favourites, features, umbrella
+android/                              Android app, core modules (design system, map, navigation) and feature modules
+build-logic/, gradle/                 Gradle convention plugins; the version catalog
+tools/architecture-tests/             Automated module and package rules
+version.properties                    The app version, shared by Android and iOS
 ```
 
-The `shared/`, `android/` and `iosApp/` modules will be added in milestone M0. Their planned layout is described in [docs/architecture.md](docs/architecture.md).
+The `iosApp/` project arrives with the rest of milestone M0. The full layout is described in [docs/architecture.md](docs/architecture.md).
 
 ## Getting started
 
@@ -54,7 +59,7 @@ After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and re
 
 The shared modules already build: `./gradlew ciUnitTest` runs the unit tests and the architecture rules. If `ANDROID_HOME` is not set, create a `local.properties` file with `sdk.dir=<path to your Android SDK>`; Git ignores it.
 
-When the Android and iOS apps arrive (the rest of story LB-001), this section will explain how to run them. You will need:
+To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. For now it shows a placeholder for the Lines tab. When the iOS app arrives (the rest of story LB-001), this section will explain how to run it. You will need:
 
 - JDK 21.
 - The latest stable Android Studio with the Kotlin Multiplatform plugin.
@@ -90,6 +95,11 @@ When the Android and iOS apps arrive (the rest of story LB-001), this section wi
 ### Recent changes
 
 - **2026-10-23:**
+  - LB-001, part 2 of 3: the Android app skeleton.
+    - The app (`com.ruizurraca.logrobus`, Android 8.0 or later) opens on a placeholder for the Lines tab, in Spanish and English.
+    - Its start tab comes from shared code, the first value both apps will share.
+    - The Android core and feature modules exist, still empty.
+    - CI now also runs the Android unit tests, the build and lint.
   - Started LB-002, part 1: CI now also runs the Kotlin checks on every pull request that touches Kotlin or Gradle files:
     - the build-logic tests, the architecture rules, and the unit tests of each of the 19 shared modules, each in its own job;
     - a single "Kotlin gate" job sums them up and is required before merging.
