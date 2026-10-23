@@ -32,7 +32,7 @@ Every developer and agent environment must run `scripts/bootstrap.sh` once, to i
 
 **`main` is protected on GitHub** (owner decision 2026-10-22, applied 2026-10-23 in LB-415) by `scripts/github/protect-main.sh`, which configures:
 - a pull request required for every change (0 required approvals, because the owner is the only maintainer and cannot approve their own PRs; the owner's merge is the approval);
-- the required status checks: the policy jobs and the `Kotlin gate` job (`ci_cd.md` §4), up to date with `main`;
+- the required status checks: the policy jobs, the `Kotlin gate` job and the `iOS gate` job (`ci_cd.md` §4), up to date with `main`;
 - the rules enforced for administrators too;
 - resolved conversations, and no force pushes or deletions. Linear history is **not** required, because PRs are merged with merge commits (§5).
 
