@@ -88,6 +88,26 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb002_workflowMatrixModulesAreParsedFromQuotedAndPlainItems() {
+        val workflow = """
+            jobs:
+              shared-unit-tests:
+                strategy:
+                  matrix:
+                    module:
+                      - ":shared:core:common"
+                      - :shared:feature:lines
+                steps:
+                  - run: ./gradlew "${'$'}MODULE:ciUnitTest"
+                  - uses: actions/checkout@v7
+        """.trimIndent()
+        assertEquals(
+            setOf(":shared:core:common", ":shared:feature:lines"),
+            ArchitectureRules.workflowMatrixModules(workflow),
+        )
+    }
+
+    @Test
     fun lb001_expectedNamespaceFollowsTheModulePath() {
         assertEquals(
             "$root.feature.lines",

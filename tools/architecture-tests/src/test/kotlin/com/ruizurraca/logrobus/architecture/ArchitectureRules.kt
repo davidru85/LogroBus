@@ -13,6 +13,7 @@ object ArchitectureRules {
         Regex("""\bversion\s*[=(]?\s*""""),
         Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
     )
+    private val matrixModuleItem = Regex("""^\s*-\s*"?(:[\w-]+(?::[\w-]+)+)"?\s*$""", RegexOption.MULTILINE)
     private val featurePackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
@@ -53,6 +54,10 @@ object ArchitectureRules {
     /** Presentation code may not import networking, persistence or data packages. */
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
+
+    /** Gradle module paths listed as items of a workflow matrix, such as `- ":shared:core:common"`. */
+    fun workflowMatrixModules(workflow: String): Set<String> =
+        matrixModuleItem.findAll(workflow).map { it.groupValues[1] }.toSet()
 
     /** `shared/feature/lines/src/...` must use the `com.ruizurraca.logrobus.feature.lines` namespace. */
     fun expectedNamespace(relativePath: String): String {

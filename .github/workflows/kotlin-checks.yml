@@ -1,0 +1,126 @@
+# Kotlin checks: one atomic job per concern, each running a single Gradle
+# task (docs/ci_cd.md §2–4). ktlint, detekt, Kover and the Android jobs join
+# as LB-002 and LB-001 add their code.
+#
+# Owner rule: CI runs only while the repository is public (docs/ci_cd.md §1).
+# The jobs run only when a change touches Kotlin or Gradle paths
+# (scripts/ci/changed-areas.sh). The always-running "Kotlin gate" job is the
+# required status check, so docs-only pull requests are not blocked.
+name: Kotlin checks
+
+on:
+  pull_request:
+    branches: [main]
+  # Runs on main too, to verify the merge and to write the Gradle cache that
+  # pull requests read.
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One group per pull request, so a new push cancels the stale run. One group per
+# commit on main, so back-to-back merges are each verified rather than cancelled.
+concurrency:
+  group: kotlin-checks-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: Kotlin changes
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      kotlin: ${{ steps.areas.outputs.kotlin }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Detect the changed areas
+        id: areas
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: scripts/ci/changed-areas.sh ${BASE_REF:+"origin/$BASE_REF"} >> "$GITHUB_OUTPUT"
+
+  build-logic:
+    name: Build-logic tests
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Module rules and convention helpers
+        run: ./gradlew :build-logic:convention:test
+
+  architecture:
+    name: Architecture rules
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Module layout and package boundaries
+        run: ./gradlew :tools:architecture-tests:test
+
+  shared-unit-tests:
+    name: "Shared unit tests: ${{ matrix.module }}"
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      # Must list exactly the shared modules in settings.gradle.kts
+      # (lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule).
+      matrix:
+        module:
+          - ":shared:core:common"
+          - ":shared:core:config"
+          - ":shared:core:telemetry"
+          - ":shared:core:network"
+          - ":shared:core:database"
+          - ":shared:core:location"
+          - ":shared:core:polling"
+          - ":shared:core:presentation"
+          - ":shared:core:testing"
+          - ":shared:transit:domain"
+          - ":shared:transit:data"
+          - ":shared:favourites:domain"
+          - ":shared:favourites:data"
+          - ":shared:feature:lines"
+          - ":shared:feature:stops"
+          - ":shared:feature:nearme"
+          - ":shared:feature:planner"
+          - ":shared:feature:settings"
+          - ":shared:umbrella"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Unit tests
+        env:
+          MODULE: ${{ matrix.module }}
+        run: ./gradlew "$MODULE:ciUnitTest"
+
+  ci-gate:
+    name: Kotlin gate
+    needs: [changes, build-logic, architecture, shared-unit-tests]
+    if: ${{ always() && !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Every Kotlin job passed, or was skipped because no Kotlin path changed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::A Kotlin job ended with '$result'."; exit 1 ;;
+            esac
+          done
+          echo "Kotlin job results: $RESULTS"
