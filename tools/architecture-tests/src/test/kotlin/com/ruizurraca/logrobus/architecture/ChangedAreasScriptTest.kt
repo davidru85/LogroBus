@@ -76,7 +76,15 @@ class ChangedAreasScriptTest {
     private fun areas(vararg base: String): String = run(listOf("bash", script.path) + base).trim()
 
     private fun git(vararg args: String) {
-        run(listOf("git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid") + args)
+        // No background gc or maintenance: thousands of loose objects can start it, and it would still be
+        // writing to .git while JUnit deletes the temporary directory.
+        val config = listOf(
+            "user.name=Test",
+            "user.email=test@example.invalid",
+            "gc.auto=0",
+            "maintenance.auto=false",
+        )
+        run(listOf("git") + config.flatMap { listOf("-c", it) } + args)
     }
 
     private fun run(command: List<String>): String {
