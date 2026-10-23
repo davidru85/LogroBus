@@ -8,9 +8,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /** LB-001: the app launches without crashing, on the start tab of FR-NAV-02, in both shipped languages. */
 @RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class MainActivityTest {
 
     @get:Rule

@@ -2,4 +2,9 @@
 <resources>
     <!-- The brand name is the same in every language (OQ-14). -->
     <string name="app_name" translatable="false">LogroBus</string>
+
+    <!-- Top-level destinations (FR-NAV-01). Spanish (es-ES) is the default language. -->
+    <string name="destination_lines">Líneas</string>
+    <string name="destination_near_me">Cerca de mí</string>
+    <string name="destination_planner">Cómo llegar</string>
 </resources>
