@@ -148,7 +148,7 @@ Done when:
 ### LB-012 App shell
 Refs: FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005
 
-- **Given** a cold start without a deep link, **when** the app opens, **then** the Lines tab is selected and the tabs read Lines, Near Me, How to Get There, in that order.
+- **Given** a cold start without a deep link, **when** the app opens, **then** the Lines tab is selected and the tabs show the labels of `design_guidelines.md` §2.1, in this order: Líneas, Cerca de mí, Cómo llegar (es) and Lines, Near me, Directions (en).
 - **Given** the user is two screens deep in Lines, **when** they switch to Near Me and back, **then** Lines shows the same screen. **When** they re-select Lines, **then** it pops to its root, and re-selecting it at the root scrolls to the top.
 - **Given** any tab root, **when** the user taps the More action, **then** More opens and lists Settings and About data.
 - **Given** `[Android]` a window of medium width or wider, **when** the shell renders, **then** a navigation rail replaces the bottom bar.
