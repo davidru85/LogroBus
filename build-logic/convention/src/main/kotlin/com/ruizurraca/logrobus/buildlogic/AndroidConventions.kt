@@ -3,18 +3,10 @@ package com.ruizurraca.logrobus.buildlogic
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
-import org.gradle.api.artifacts.VersionCatalog
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
-
-internal val Project.libs: VersionCatalog
-    get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
-
-internal fun VersionCatalog.versionOf(alias: String): String = findVersion(alias).get().requiredVersion
 
 /**
  * Settings shared by the Android application and library conventions: SDK levels and JVM target from the
