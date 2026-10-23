@@ -8,15 +8,19 @@
 # triggers, for example: scripts/ci/changed-areas.sh origin/main
 set -euo pipefail
 
-kotlin='^(shared|android|tools|build-logic|gradle)/|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/kotlin-checks\.yml|actions/gradle-setup/)|^scripts/ci/'
+# fixtures/ holds the payloads that the contract tests decode.
+kotlin='^(shared|android|tools|build-logic|gradle|fixtures)/|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/kotlin-checks\.yml|actions/gradle-setup/)|^scripts/ci/'
 
 if [ $# -eq 0 ]; then
   echo "kotlin=true"
   exit 0
 fi
 
-changed="$(git diff --name-only "$1"...HEAD)"
-if printf '%s\n' "$changed" | grep -Eq "$kotlin"; then
+# --no-renames lists both sides of a move, so moving a file out of a Kotlin path counts.
+changed="$(git diff --no-renames --name-only "$1"...HEAD)"
+# A here-string, not a pipe: grep -q exits at the first match, and with pipefail the
+# writer's SIGPIPE on a large diff would turn that match into "kotlin=false".
+if grep -Eq "$kotlin" <<<"$changed"; then
   echo "kotlin=true"
 else
   echo "kotlin=false"
