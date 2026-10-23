@@ -14,7 +14,7 @@ object ArchitectureRules {
         Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
     )
     private val matrixModuleItem = Regex("""^\s*-\s*"?(:[\w-]+(?::[\w-]+)+)"?\s*$""", RegexOption.MULTILINE)
-    private val featurePackage =Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
+    private val featurePackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
     private val platform = listOf(

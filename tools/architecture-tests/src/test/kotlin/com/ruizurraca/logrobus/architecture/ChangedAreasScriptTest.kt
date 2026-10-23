@@ -16,9 +16,7 @@ class ChangedAreasScriptTest {
     @TempDir
     lateinit var repo: File
 
-    private val script: File = generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }
-        .first { File(it, "settings.gradle.kts").isFile && File(it, "gradlew").isFile }
-        .resolve("scripts/ci/changed-areas.sh")
+    private val script: File = repositoryRoot.resolve("scripts/ci/changed-areas.sh")
 
     @Test
     fun lb002_docsOnlyChangeSkipsTheKotlinJobs() {
