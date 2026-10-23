@@ -43,7 +43,10 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: LogroBus
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        # NFR-A11Y-01 (WCAG 2.2 SC 1.3.4): never locked to one orientation. Upside down is left out, as on
+        # every iPhone app without a home button.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: >-
+          UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         SWIFT_EMIT_LOC_STRINGS: YES
   iosAppTests:
     type: bundle.unit-test
