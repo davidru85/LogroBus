@@ -19,6 +19,26 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-24: Skipped CI checks reviewed; readable matrix job names (LB-002)
+
+**Done**
+- **The owner asked to check and fix every skipped check on GitHub.**
+  - Nothing on `main` was skipped.
+  - On PR #8, a docs-only PR, the six Kotlin jobs were skipped by the path filter, as designed. The required `Kotlin gate` passed.
+  - The two matrix jobs showed as `${{ matrix.module }}`, because GitHub does not expand a skipped job's name.
+- TDD cycle:
+  - `lb002_kotlinJobNamesReadWellWhenSkipped`, backed by the `jobNamesWithExpressions` rule and its unit test, forbids `${{ }}` in job names.
+  - The matrix jobs are now "Shared unit tests" and "Android unit tests"; GitHub appends the module when they run.
+- **First strict SwiftLint run** (0.65.1, installed by the owner) on the Swift code from LB-001:
+  - the only findings were the built-in `todo` rule rejecting the two `TODO(LB-010)` and `TODO(LB-012)` comments, which `code_style.md` §1 allows;
+  - that rule is replaced by `todo_without_story`. Probe: it rejected `// TODO: …` and `// FIXME …`, and accepted `// TODO(LB-012): …`;
+  - every other rule passes, including the trailing commas and test names prepared in PR #7.
+
+**Decisions (owner)**
+- **Keep the path filter.** Docs-only PRs skip the Kotlin jobs on purpose (`ci_cd.md` §2, principle 5), and the skipped checks now read well. The alternatives were rejected:
+  - running every job on every PR;
+  - jobs that run but do nothing, a misleading green.
+
 ## 2026-10-23: ADR-0010 accepted; the Android module-rule probe
 
 **Decisions (owner)**

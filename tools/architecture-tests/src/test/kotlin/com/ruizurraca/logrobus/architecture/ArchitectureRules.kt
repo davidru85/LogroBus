@@ -14,6 +14,7 @@ object ArchitectureRules {
         Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
     )
     private val swiftTarget = Regex("""\.target\(\s*name:\s*"(\w+)"(?:\s*,\s*dependencies:\s*\[([^\]]*)])?""")
+    private val jobName = Regex("""^ {4}name:\s*(.*\$\{\{.*)$""", RegexOption.MULTILINE)
     private val matrixModuleItem = Regex("""^\s*-\s*"?(:[\w-]+(?::[\w-]+)+)"?\s*$""", RegexOption.MULTILINE)
     private val jobsHeader = Regex("""^jobs:\s*$""", RegexOption.MULTILINE)
     private val topLevelKey = Regex("""^\S""", RegexOption.MULTILINE)
@@ -68,6 +69,10 @@ object ArchitectureRules {
                 .filter { name.isSwiftFeature() && it.isSwiftFeature() && it != name }
                 .map { "$name -> $it" }
         }.toList()
+
+    /** Job names (not step names) that use `${{ }}` expressions, which GitHub shows unexpanded on skipped jobs. */
+    fun jobNamesWithExpressions(workflow: String): List<String> =
+        jobName.findAll(workflow).map { it.groupValues[1].trim() }.toList()
 
     /** Gradle module paths listed as items of a workflow matrix, such as `- ":shared:core:common"`. */
     fun workflowMatrixModules(workflow: String): Set<String> =

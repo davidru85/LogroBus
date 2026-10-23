@@ -145,6 +145,23 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb002_jobNamesWithExpressionsAreFound() {
+        val workflow = """
+            jobs:
+              unit:
+                name: "Shared unit tests: ${'$'}{{ matrix.module }}"
+                steps:
+                  - name: Unit tests ${'$'}{{ matrix.module }}
+              lint:
+                name: Android lint
+        """.trimIndent()
+        assertEquals(
+            listOf("\"Shared unit tests: ${'$'}{{ matrix.module }}\""),
+            ArchitectureRules.jobNamesWithExpressions(workflow),
+        )
+    }
+
+    @Test
     fun lb001_expectedNamespaceFollowsTheModulePath() {
         assertEquals(
             "$root.feature.lines",

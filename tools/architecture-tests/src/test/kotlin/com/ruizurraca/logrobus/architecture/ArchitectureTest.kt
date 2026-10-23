@@ -150,6 +150,13 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb002_kotlinJobNamesReadWellWhenSkipped() {
+        // A skipped job shows its name unexpanded; GitHub appends the matrix values to a plain name by itself.
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.jobNamesWithExpressions(workflow))
+    }
+
+    @Test
     fun lb001_buildScriptsAndBuildLogicDeclareNoVersionLiterals() {
         val offenders = root.walkTopDown()
             .onEnter { it.name !in ignoredDirectories }
