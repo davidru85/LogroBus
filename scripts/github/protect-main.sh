@@ -7,7 +7,8 @@
 # GitHub Free rejects it for private repositories (HTTP 403).
 #
 # - pull request required, 0 approvals (single maintainer merges own PRs)
-# - required status checks (strict): the policy-checks jobs
+# - required status checks (strict): the policy-checks jobs and the Kotlin gate,
+#   which stands for every kotlin-checks job (docs/ci_cd.md §4)
 # - enforced for admins, conversations resolved
 # - linear history NOT required: PRs are merged with merge commits (no squash)
 # - no force pushes, no deletions
@@ -29,7 +30,8 @@ gh api --method PUT "repos/$repo/branches/main/protection" --input - <<'JSON'
       "Frozen spec",
       "Doc links",
       "Secrets scan",
-      "Shell scripts"
+      "Shell scripts",
+      "Kotlin gate"
     ]
   },
   "enforce_admins": true,

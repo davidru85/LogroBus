@@ -375,7 +375,7 @@ The critical end-to-end journeys for the MVP (spec §10.1, adapted):
 ## 9. Build and CI
 
 - Versions live only in `gradle/libs.versions.toml`. Convention plugins under `build-logic/` configure KMP library, Android feature and Android app modules uniformly, and register the stable alias tasks used by CI (for example `ciUnitTest`).
-- CI runs on GitHub Actions as atomic, path-filtered jobs on every pull request (`ci_cd.md`): the policy checks today, the code checks from LB-002. The local gates are described in `agent_harness.md` and `testing_strategy.md`.
+- CI runs on GitHub Actions as atomic, path-filtered jobs on every pull request (`ci_cd.md`): the policy checks and the Kotlin unit and architecture tests today; lint, coverage, Android and iOS jobs join in LB-002. The local gates are described in `agent_harness.md` and `testing_strategy.md`.
 
 ## 10. Evolution
 

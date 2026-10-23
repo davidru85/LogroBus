@@ -19,6 +19,29 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-23: LB-002 part 1: Kotlin checks in CI
+
+**Done**
+- `kotlin-checks.yml`, with one atomic job per concern:
+  - `Build-logic tests` (`:build-logic:convention:test`);
+  - `Architecture rules` (`:tools:architecture-tests:test`);
+  - `Shared unit tests: <module>`, a matrix over the 19 shared modules (`ciUnitTest`).
+- Path filtering with a gate:
+  - `Kotlin changes` runs `scripts/ci/changed-areas.sh`. It reports `kotlin=false` for a docs-only change, so the Kotlin jobs are skipped.
+  - `Kotlin gate` always runs. It passes when every job passed or was skipped, and it is the one Kotlin check made required, so docs-only PRs are not blocked.
+  - Verified locally against a docs-only commit (false), a code merge (true) and a push with no base (true).
+- The workflow also runs on pushes to `main`: it verifies each merge and writes the Gradle cache that pull requests read.
+- The JDK and Gradle setup lives in the `.github/actions/gradle-setup` composite action. `gradle/actions` v6.4.0 is pinned by commit SHA, because it is third-party. Dependabot now also watches `.github/actions/*`.
+- TDD cycle:
+  - Red: `lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule` requires the matrix to list exactly the shared modules in `settings.gradle.kts`.
+  - Green: the workflow, plus the `workflowMatrixModules` pure rule with its own test. The architecture tests now take `.github/workflows/*.yml` as input; without it, a matrix-only edit would leave them up to date.
+  - A probe that dropped `:shared:feature:planner` from the matrix failed the test and was reverted. No refactor was needed.
+- `protect-main.sh` now also requires `Kotlin gate`. It is re-applied once the gate is green on this PR.
+
+**Open / next**
+- The rest of LB-002: ktlint, detekt, Kover, the Android jobs (with LB-001 part 2), `ios-checks.yml` (with part 3), dependency review and the nightly workflow.
+- The next story is LB-001 part 2 (Android).
+
 ## 2026-10-23: LB-415: repository public, `main` protected
 
 **Done**
