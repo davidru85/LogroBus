@@ -1,6 +1,5 @@
 package com.ruizurraca.logrobus.android.app
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -11,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
-/** Shows the title of the shared start destination (FR-NAV-02). LB-012 replaces it with the tab shell. */
+/** Shows the label of the shared start destination (FR-NAV-02). LB-012 replaces it with the tab shell. */
 @Composable
 internal fun StartDestinationPlaceholder(modifier: Modifier = Modifier) {
     Box(
@@ -20,15 +19,6 @@ internal fun StartDestinationPlaceholder(modifier: Modifier = Modifier) {
             .safeDrawingPadding(),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = stringResource(TopLevelDestination.start.titleRes))
+        Text(text = stringResource(TopLevelDestination.start.labelRes))
     }
 }
-
-/** Shared code carries the destination; Android supplies the localised words (AGENTS.md §5, rule 4). */
-@get:StringRes
-internal val TopLevelDestination.titleRes: Int
-    get() = when (this) {
-        TopLevelDestination.LINES -> R.string.destination_lines
-        TopLevelDestination.NEAR_ME -> R.string.destination_near_me
-        TopLevelDestination.PLANNER -> R.string.destination_planner
-    }

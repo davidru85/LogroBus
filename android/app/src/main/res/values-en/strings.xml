@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Top-level destinations (FR-NAV-01). -->
-    <string name="destination_lines">Lines</string>
-    <string name="destination_near_me">Near Me</string>
-    <string name="destination_planner">How to Get There</string>
+    <!-- Tab labels (design_guidelines.md §2.1, keys tab.* in §9). "How to get there" is the screen title. -->
+    <string name="tab_lines">Lines</string>
+    <string name="tab_near_me">Near me</string>
+    <string name="tab_directions">Directions</string>
 </resources>
