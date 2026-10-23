@@ -51,6 +51,17 @@ class ArchitectureTest {
 
     private val toolModules = listOf(":tools:architecture-tests")
 
+    // architecture.md §3.1: the targets of the local Swift package iosApp/Packages/LogroBusUI.
+    private val iosPackageTargets = listOf(
+        "DesignSystem",
+        "MapUI",
+        "FeatureLines",
+        "FeatureStops",
+        "FeatureNearMe",
+        "FeaturePlanner",
+        "FeatureSettings",
+    )
+
     private val ignoredDirectories = setOf("build", ".gradle", ".git", ".kotlin", ".idea")
 
     @Test
@@ -76,6 +87,33 @@ class ArchitectureTest {
             buildFile.isFile && "id(\"$plugin\")" in buildFile.readText()
         }
         assertEquals(emptyList<String>(), missing)
+    }
+
+    @Test
+    fun lb001_iosProjectIsIphoneOnlyWithIos18AndTheStoreBundleId() {
+        val spec = File(root, "iosApp/project.yml").takeIf { it.isFile }?.readText().orEmpty()
+        val required = listOf(
+            // OQ-14: the store identifier, shared with Android.
+            "PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus",
+            // NFR-PLAT-03: iPhone only in the MVP.
+            "TARGETED_DEVICE_FAMILY: \"1\"",
+            // ADR-0003: iOS 18 deployment target.
+            "iOS: \"18.0\"",
+        )
+        assertEquals(emptyList<String>(), required.filterNot { it in spec })
+    }
+
+    @Test
+    fun lb001_logroBusUiPackageHasTheArchitectureTargets() {
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").takeIf { it.isFile }?.readText().orEmpty()
+        val targets = iosPackageTargets.map { ".target(name: \"$it\"" } + ".binaryTarget(name: \"Shared\""
+        assertEquals(emptyList<String>(), targets.filterNot { it in manifest })
+    }
+
+    @Test
+    fun lb001_generatedXcodeProjectIsNotCommitted() {
+        val ignored = File(root, ".gitignore").readLines().map { it.trim() }
+        assertEquals(true, "iosApp/iosApp.xcodeproj/" in ignored)
     }
 
     @Test
