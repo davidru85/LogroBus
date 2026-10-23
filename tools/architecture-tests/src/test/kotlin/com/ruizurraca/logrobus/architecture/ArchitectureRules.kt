@@ -13,6 +13,7 @@ object ArchitectureRules {
         Regex("""\bversion\s*[=(]?\s*""""),
         Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
     )
+    private val swiftTarget = Regex("""\.target\(\s*name:\s*"(\w+)"(?:\s*,\s*dependencies:\s*\[([^\]]*)])?""")
     private val matrixModuleItem = Regex("""^\s*-\s*"?(:[\w-]+(?::[\w-]+)+)"?\s*$""", RegexOption.MULTILINE)
     private val jobsHeader = Regex("""^jobs:\s*$""", RegexOption.MULTILINE)
     private val topLevelKey = Regex("""^\S""", RegexOption.MULTILINE)
@@ -59,6 +60,15 @@ object ArchitectureRules {
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
+    /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
+    fun crossFeatureSwiftDependencies(manifest: String): List<String> =
+        swiftTarget.findAll(manifest).flatMap { target ->
+            val name = target.groupValues[1]
+            quoted.findAll(target.groupValues[2]).map { it.groupValues[1] }
+                .filter { name.isSwiftFeature() && it.isSwiftFeature() && it != name }
+                .map { "$name -> $it" }
+        }.toList()
+
     /** Gradle module paths listed as items of a workflow matrix, such as `- ":shared:core:common"`. */
     fun workflowMatrixModules(workflow: String): Set<String> =
         matrixModuleItem.findAll(workflow).map { it.groupValues[1] }.toSet()
@@ -93,6 +103,8 @@ object ArchitectureRules {
         val moduleSegments = if (pathSegments.first() == "shared") pathSegments.drop(1) else pathSegments
         return (listOf(ROOT_PACKAGE) + moduleSegments).joinToString(".")
     }
+
+    private fun String.isSwiftFeature(): Boolean = startsWith("Feature")
 
     private fun featureOf(name: String): String? = featurePackage.find(name)?.groupValues?.get(1)
 }
