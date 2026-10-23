@@ -1,6 +1,5 @@
 # Kotlin checks: one atomic job per concern, each running a single Gradle
-# task (docs/ci_cd.md §2–4). ktlint, detekt, Kover and the Android jobs join
-# as LB-002 and LB-001 add their code.
+# task (docs/ci_cd.md §2–4). ktlint, detekt and Kover join in LB-002.
 #
 # Owner rule: CI runs only while the repository is public (docs/ci_cd.md §1).
 # The jobs run only when a change touches Kotlin or Gradle paths
@@ -106,9 +105,62 @@ jobs:
           MODULE: ${{ matrix.module }}
         run: ./gradlew "$MODULE:ciUnitTest"
 
+  android-unit-tests:
+    name: "Android unit tests: ${{ matrix.module }}"
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      # Must list exactly the Android modules in settings.gradle.kts
+      # (lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule).
+      matrix:
+        module:
+          - ":android:app"
+          - ":android:core:designsystem"
+          - ":android:core:map"
+          - ":android:core:navigation"
+          - ":android:feature:lines"
+          - ":android:feature:stops"
+          - ":android:feature:nearme"
+          - ":android:feature:planner"
+          - ":android:feature:settings"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Unit tests (Robolectric)
+        env:
+          MODULE: ${{ matrix.module }}
+        run: ./gradlew "$MODULE:ciUnitTest"
+
+  android-build:
+    name: Android build
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Debug APK
+        run: ./gradlew :android:app:assembleDebug
+
+  android-lint:
+    name: Android lint
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Lint (debug)
+        run: ./gradlew :android:app:lintDebug
+
   ci-gate:
     name: Kotlin gate
-    needs: [changes, build-logic, architecture, shared-unit-tests]
+    needs: [changes, build-logic, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint]
     if: ${{ always() && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
