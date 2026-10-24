@@ -53,6 +53,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                     "detektIosTestSourceSet",
                 ),
             )
+            configureKover()
             verifyModuleRules()
         }
 }
