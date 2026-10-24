@@ -44,14 +44,11 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 dependsOn("testAndroidHostTest")
             }
 
-            // Type resolution through the Android compilations; the iOS source sets are analysed without it.
+            // Common and Android code with type resolution, through the Android compilations; the iOS, Apple and
+            // native source sets without it, because detekt has no classpath for them.
             configureDetekt(
-                listOf(
-                    "detektMainAndroid",
-                    "detektHostTestAndroid",
-                    "detektIosMainSourceSet",
-                    "detektIosTestSourceSet",
-                ),
+                analysisTasks = listOf("detektMainAndroid", "detektHostTestAndroid"),
+                alsoRun = ::isUntypedKmpSourceSetTask,
             )
             configureKover()
             verifyModuleRules()
