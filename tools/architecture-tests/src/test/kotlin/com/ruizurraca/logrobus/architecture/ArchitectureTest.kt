@@ -161,6 +161,14 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb002_dependencyReviewWaitsForTheGradleDependencyGraph() {
+        // GitHub sees Gradle dependencies only once the graph job submits them. A review running alongside that job
+        // would compare without them and pass (docs/ci_cd.md §3).
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml").readText()
+        assertTrue("dependency-graph" in ArchitectureRules.jobNeeds(workflow, job = "dependency-review"))
+    }
+
+    @Test
     fun lb002_jobNamesReadWellWhenSkipped() {
         // A skipped job shows its name unexpanded; GitHub appends the matrix values to a plain name by itself.
         val offenders =
