@@ -102,6 +102,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **24-10-2026:**
+  - Herramientas de calidad del código: cada cambio en Kotlin se revisa en estilo (ktlint), en reglas del proyecto como «nada de llamadas directas al reloj» (detekt) y en cobertura de tests: al menos el 80 % del código compartido de dominio y de datos (Kover). La CI ejecuta las tres.
   - La CI también comprueba iOS en las máquinas macOS de GitHub: SwiftLint, los tests del código compartido en el simulador de iOS y la compilación y los tests de la app.
   - CI: los jobs de tests de Kotlin y Android tienen nombres legibles aunque se salten. Se saltan a propósito cuando una pull request no toca código.
 - **23-10-2026:**
