@@ -54,7 +54,7 @@ This document covers what we test, at which level, with which tools, and what ev
 | --- | --- | --- |
 | Shared domain and data modules (`transit`, `favourites`, and the `domain`/`data` packages of `feature/*`) | At least 80 % (NFR-MNT-01) | Blocks the PR |
 | Shared presentation mappers | At least 80 % | Blocks the PR |
-| Android ViewModels | Target 70 % | Reported only |
+| Android ViewModels | Target 70 % | Reported only, once the first ViewModels exist (Android modules are not instrumented yet) |
 
 ## 4. Test harness
 

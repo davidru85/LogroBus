@@ -50,10 +50,10 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Kotlin changes | `kotlin-checks.yml` | `scripts/ci/changed-areas.sh origin/main` | Linux | < 1 min | Active (§4) |
 | Kotlin gate | `kotlin-checks.yml` | none: it reads the results of the other Kotlin jobs, all listed in its `needs` (`lb002_kotlinGateWaitsForEveryKotlinJob`) | Linux | < 1 min | Active, required (§4) |
 | Build-logic tests | `kotlin-checks.yml` | `./gradlew :build-logic:convention:test` | Linux | < 3 min | Active, through the gate |
-| ktlint | `kotlin-checks.yml` | `./gradlew ktlintCheck` | Linux | < 3 min | LB-002 |
-| detekt | `kotlin-checks.yml` | `./gradlew detekt` | Linux | < 4 min | LB-002 |
+| ktlint | `kotlin-checks.yml` | `./gradlew ktlintCheck` (ktlint 1.8.0 CLI, ADR-0011) | Linux | < 3 min | Active, through the gate |
+| detekt | `kotlin-checks.yml` | `./gradlew ciDetekt` (detekt 2.0.0-alpha.6 with type resolution, ADR-0011) | Linux | < 4 min | Active, through the gate |
 | Shared unit tests (`<module>`) (matrix over every shared module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule`) | `kotlin-checks.yml` | `./gradlew :shared:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
-| Coverage (data, domain) | `kotlin-checks.yml` | `./gradlew koverVerify` | Linux | < 5 min | LB-002 |
+| Coverage (data, domain, feature packages) | `kotlin-checks.yml` | `./gradlew koverVerify` (Kover 0.9.11, 80 % lines, ADR-0011) | Linux | < 5 min | Active, through the gate |
 | Architecture rules | `kotlin-checks.yml` | `./gradlew :tools:architecture-tests:test` | Linux | < 3 min | Active, through the gate |
 | Android unit tests (`<module>`) (matrix over every Android module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule`): ViewModel tests and Robolectric UI tests | `kotlin-checks.yml` | `./gradlew :android:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
 | Android lint (every Android module) | `kotlin-checks.yml` | `./gradlew lintDebug` | Linux | < 5 min | Active, through the gate |
