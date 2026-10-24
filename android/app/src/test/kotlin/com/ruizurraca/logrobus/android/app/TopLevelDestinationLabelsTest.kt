@@ -12,7 +12,6 @@ import org.robolectric.annotation.Config
 /** The tab labels of design_guidelines.md §2.1 and §9: short labels; "How to get there" is the screen title. */
 @RunWith(AndroidJUnit4::class)
 class TopLevelDestinationLabelsTest {
-
     @Test
     @Config(qualifiers = "en")
     fun lb012_tabLabelsFollowTheDesignGuidelines() {

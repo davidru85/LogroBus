@@ -14,13 +14,20 @@ internal fun Project.verifyModuleRules() {
     configurations.matching { isProductionDependencyBucket(it.name) }.configureEach {
         val bucket = name
         dependencies.configureEach {
-            val violations = when (this) {
-                is ProjectDependency ->
-                    if (path == modulePath) emptyList() else ModuleRules.violations(modulePath, listOf(path))
-                is ExternalModuleDependency ->
-                    ModuleRules.violations(modulePath, emptyList(), listOf("$group:$name"))
-                else -> emptyList()
-            }
+            val violations =
+                when (this) {
+                    is ProjectDependency -> {
+                        if (path == modulePath) emptyList() else ModuleRules.violations(modulePath, listOf(path))
+                    }
+
+                    is ExternalModuleDependency -> {
+                        ModuleRules.violations(modulePath, emptyList(), listOf("$group:$name"))
+                    }
+
+                    else -> {
+                        emptyList()
+                    }
+                }
             if (violations.isNotEmpty()) {
                 throw GradleException(
                     "Module dependency rules violated in '$bucket':\n" + violations.joinToString("\n") { " - $it" },

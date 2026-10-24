@@ -9,9 +9,11 @@ import org.junit.jupiter.api.Test
  * Only production (non-test) dependencies are passed to the rules.
  */
 class ModuleRulesTest {
-
-    private fun violations(from: String, vararg to: String, external: List<String> = emptyList()) =
-        ModuleRules.violations(from, to.toList(), external)
+    private fun violations(
+        from: String,
+        vararg to: String,
+        external: List<String> = emptyList(),
+    ) = ModuleRules.violations(from, to.toList(), external)
 
     @Test
     fun lb001_featureMayDependOnDomainAndCoreModules() {
@@ -50,14 +52,16 @@ class ModuleRulesTest {
 
     @Test
     fun lb001_domainMayNotUseKtorOrSqlDelight() {
-        val found = violations(
-            ":shared:transit:domain",
-            external = listOf(
-                "io.ktor:ktor-client-core",
-                "app.cash.sqldelight:runtime",
-                "org.jetbrains.kotlinx:kotlinx-datetime",
-            ),
-        )
+        val found =
+            violations(
+                ":shared:transit:domain",
+                external =
+                    listOf(
+                        "io.ktor:ktor-client-core",
+                        "app.cash.sqldelight:runtime",
+                        "org.jetbrains.kotlinx:kotlinx-datetime",
+                    ),
+            )
         assertEquals(2, found.size)
     }
 
@@ -136,14 +140,16 @@ class ModuleRulesTest {
 
     @Test
     fun lb001_domainMayNotUseAndroidPlatformLibraries() {
-        val found = violations(
-            ":shared:transit:domain",
-            external = listOf(
-                "androidx.annotation:annotation",
-                "com.google.android.gms:play-services-location",
-                "com.android.support:appcompat-v7",
-            ),
-        )
+        val found =
+            violations(
+                ":shared:transit:domain",
+                external =
+                    listOf(
+                        "androidx.annotation:annotation",
+                        "com.google.android.gms:play-services-location",
+                        "com.android.support:appcompat-v7",
+                    ),
+            )
         assertEquals(3, found.size)
     }
 
