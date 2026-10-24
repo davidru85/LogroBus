@@ -6,15 +6,17 @@ import org.junit.jupiter.api.Test
 
 /** Unit tests for the pure rules behind ArchitectureTest, with known good and bad samples. */
 class ArchitectureRulesTest {
-
     private val root = "com.ruizurraca.logrobus"
 
-    private fun crossFeature(packageName: String, vararg imports: String) =
-        ArchitectureRules.crossFeatureImports(packageName, imports.toList())
+    private fun crossFeature(
+        packageName: String,
+        vararg imports: String,
+    ) = ArchitectureRules.crossFeatureImports(packageName, imports.toList())
 
     @Test
     fun lb001_includesAreParsedFromMultiArgumentAndMultilineCalls() {
-        val settings = """
+        val settings =
+            """
             include(":a")
             include(":b", ":c")
             include(
@@ -22,31 +24,33 @@ class ArchitectureRulesTest {
                 ":e",
             )
             include ( ":f" )
-        """.trimIndent()
+            """.trimIndent()
         assertEquals(setOf(":a", ":b", ":c", ":d", ":e", ":f"), ArchitectureRules.includedModules(settings))
     }
 
     @Test
     fun lb001_versionLiteralsAreDetectedInEveryForm() {
-        val samples = listOf(
-            """implementation("io.ktor:ktor-client-core:3.3.1")""",
-            """implementation("g:n:+")""",
-            """implementation(group = "g", name = "n", version = "1.0")""",
-            """implementation("g:n") { version { strictly("1.0") } }""",
-            """id("x") version "1.0"""",
-            "val v = \"1.0\"\nimplementation(\"io.ktor:ktor-client-core:\$v\")",
-        )
+        val samples =
+            listOf(
+                """implementation("io.ktor:ktor-client-core:3.3.1")""",
+                """implementation("g:n:+")""",
+                """implementation(group = "g", name = "n", version = "1.0")""",
+                """implementation("g:n") { version { strictly("1.0") } }""",
+                """id("x") version "1.0"""",
+                "val v = \"1.0\"\nimplementation(\"io.ktor:ktor-client-core:\$v\")",
+            )
         samples.forEach { assertTrue(ArchitectureRules.versionLiterals(it).isNotEmpty(), it) }
     }
 
     @Test
     fun lb001_versionLiteralsIgnoreCatalogAndProjectReferences() {
-        val clean = """
+        val clean =
+            """
             implementation(libs.konsist)
             api(projects.shared.core.common)
             jvmToolchain(libs.versions.jvm.toolchain.get().toInt())
             implementation(kotlin("test"))
-        """.trimIndent()
+            """.trimIndent()
         assertEquals(emptyList<String>(), ArchitectureRules.versionLiterals(clean))
     }
 
@@ -68,16 +72,17 @@ class ArchitectureRulesTest {
 
     @Test
     fun lb001_domainMayNotImportJvmPlatformInfrastructureOrData() {
-        val imports = listOf(
-            "java.io.File",
-            "javax.inject.Inject",
-            "dalvik.system.DexFile",
-            "android.content.Context",
-            "platform.Foundation.NSDate",
-            "io.ktor.client.HttpClient",
-            "$root.transit.data.LinesApi",
-            "kotlin.time.Instant",
-        )
+        val imports =
+            listOf(
+                "java.io.File",
+                "javax.inject.Inject",
+                "dalvik.system.DexFile",
+                "android.content.Context",
+                "platform.Foundation.NSDate",
+                "io.ktor.client.HttpClient",
+                "$root.transit.data.LinesApi",
+                "kotlin.time.Instant",
+            )
         assertEquals(7, ArchitectureRules.forbiddenDomainImports(imports).size)
     }
 
@@ -89,7 +94,8 @@ class ArchitectureRulesTest {
 
     @Test
     fun lb002_workflowMatrixModulesAreParsedFromQuotedAndPlainItems() {
-        val workflow = """
+        val workflow =
+            """
             jobs:
               shared-unit-tests:
                 strategy:
@@ -100,7 +106,7 @@ class ArchitectureRulesTest {
                 steps:
                   - run: ./gradlew "${'$'}MODULE:ciUnitTest"
                   - uses: actions/checkout@v7
-        """.trimIndent()
+            """.trimIndent()
         assertEquals(
             setOf(":shared:core:common", ":shared:feature:lines"),
             ArchitectureRules.workflowMatrixModules(workflow),
@@ -109,7 +115,8 @@ class ArchitectureRulesTest {
 
     @Test
     fun lb002_gateMustWaitForEveryOtherJob() {
-        val workflow = """
+        val workflow =
+            """
             jobs:
               changes:
                 runs-on: ubuntu-latest
@@ -121,7 +128,7 @@ class ArchitectureRulesTest {
                 needs: [changes, tests]
                 steps:
                   - run: echo done
-        """.trimIndent()
+            """.trimIndent()
         assertEquals(listOf("build"), ArchitectureRules.jobsMissingFromGate(workflow, gate = "ci-gate"))
         val complete = workflow.replace("needs: [changes, tests]", "needs: [changes, tests, build]")
         assertEquals(emptyList<String>(), ArchitectureRules.jobsMissingFromGate(complete, gate = "ci-gate"))
@@ -129,7 +136,8 @@ class ArchitectureRulesTest {
 
     @Test
     fun lb001_iosFeatureTargetsMayNotDependOnOtherFeatures() {
-        val manifest = """
+        val manifest =
+            """
             targets: [
                 .binaryTarget(name: "Shared", path: "Frameworks/Shared.xcframework"),
                 .target(name: "DesignSystem"),
@@ -137,7 +145,7 @@ class ArchitectureRulesTest {
                 .target(name: "FeatureStops", dependencies: ["DesignSystem", .target(name: "FeatureNearMe")]),
                 .target(name: "FeatureNearMe", dependencies: ["DesignSystem", "Shared"]),
             ]
-        """.trimIndent()
+            """.trimIndent()
         assertEquals(
             listOf("FeatureLines -> FeatureStops", "FeatureStops -> FeatureNearMe"),
             ArchitectureRules.crossFeatureSwiftDependencies(manifest),
@@ -146,7 +154,8 @@ class ArchitectureRulesTest {
 
     @Test
     fun lb002_jobNamesWithExpressionsAreFound() {
-        val workflow = """
+        val workflow =
+            """
             jobs:
               unit:
                 name: "Shared unit tests: ${'$'}{{ matrix.module }}"
@@ -154,7 +163,7 @@ class ArchitectureRulesTest {
                   - name: Unit tests ${'$'}{{ matrix.module }}
               lint:
                 name: Android lint
-        """.trimIndent()
+            """.trimIndent()
         assertEquals(
             listOf("\"Shared unit tests: ${'$'}{{ matrix.module }}\""),
             ArchitectureRules.jobNamesWithExpressions(workflow),

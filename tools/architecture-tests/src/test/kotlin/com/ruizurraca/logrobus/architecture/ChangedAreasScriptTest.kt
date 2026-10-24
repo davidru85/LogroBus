@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit
  * Each test builds a throwaway git repository and runs the real script in it.
  */
 class ChangedAreasScriptTest {
-
     @TempDir
     lateinit var repo: File
 
@@ -43,7 +42,7 @@ class ChangedAreasScriptTest {
     fun lb002_movingAFileOutOfAKotlinPathRunsTheKotlinJobs() {
         commitBase("shared/core/common/src/commonMain/kotlin/Moved.kt")
         File(repo, "docs").mkdirs()
-        git("mv","shared/core/common/src/commonMain/kotlin/Moved.kt", "docs/Moved.kt.txt")
+        git("mv", "shared/core/common/src/commonMain/kotlin/Moved.kt", "docs/Moved.kt.txt")
         git("commit", "-q", "-m", "change")
         assertEquals("true", area("kotlin", "main"))
     }
@@ -83,15 +82,16 @@ class ChangedAreasScriptTest {
     fun lb002_iosRelevantChangesRunTheIosJobs() {
         // The Swift code, its lint config, the shared Kotlin it links, the build that produces the framework,
         // the version it reads and its own CI scripts.
-        val paths = listOf(
-            "iosApp/iosApp/LogroBusApp.swift",
-            ".swiftlint.yml",
-            "shared/core/common/src/commonMain/kotlin/A.kt",
-            "gradle/libs.versions.toml",
-            "version.properties",
-            "scripts/ios/test.sh",
-            ".github/workflows/ios-checks.yml",
-        )
+        val paths =
+            listOf(
+                "iosApp/iosApp/LogroBusApp.swift",
+                ".swiftlint.yml",
+                "shared/core/common/src/commonMain/kotlin/A.kt",
+                "gradle/libs.versions.toml",
+                "version.properties",
+                "scripts/ios/test.sh",
+                ".github/workflows/ios-checks.yml",
+            )
         paths.forEach { path ->
             repo.listFiles()?.forEach { it.deleteRecursively() }
             commitBase("README.md")
@@ -121,37 +121,42 @@ class ChangedAreasScriptTest {
         git("commit", "-q", "-m", "change")
     }
 
-    private fun write(vararg paths: String) = paths.forEach { path ->
-        // A comment line: unique per path, and inert even in a .gitignore, which would otherwise ignore itself.
-        File(repo, path).apply { parentFile.mkdirs() }.writeText("# $path\n")
-    }
+    private fun write(vararg paths: String) =
+        paths.forEach { path ->
+            // A comment line: unique per path, and inert even in a .gitignore, which would otherwise ignore itself.
+            File(repo, path).apply { parentFile.mkdirs() }.writeText("# $path\n")
+        }
 
     /** The value the script prints for [name] (`<name>=true|false`), or null if it prints no such line. */
-    private fun area(name: String, vararg base: String): String? =
+    private fun area(
+        name: String,
+        vararg base: String,
+    ): String? =
         run(listOf("bash", script.path) + base).lines().firstOrNull { it.startsWith("$name=") }?.substringAfter('=')
 
     private fun git(vararg args: String) {
         // No background gc or maintenance: thousands of loose objects can start it, and it would still be
         // writing to .git while JUnit deletes the temporary directory.
-        val config = listOf(
-            "user.name=Test",
-            "user.email=test@example.invalid",
-            "gc.auto=0",
-            "maintenance.auto=false",
-        )
+        val config =
+            listOf(
+                "user.name=Test",
+                "user.email=test@example.invalid",
+                "gc.auto=0",
+                "maintenance.auto=false",
+            )
         run(listOf("git") + config.flatMap { listOf("-c", it) } + args)
     }
 
     private fun run(command: List<String>): String {
-        val process = ProcessBuilder(command)
-            .directory(repo)
-            .redirectErrorStream(true)
-            .apply {
-                // Isolate the throwaway repository from the developer's git configuration.
-                environment()["GIT_CONFIG_GLOBAL"] = "/dev/null"
-                environment()["GIT_CONFIG_NOSYSTEM"] = "1"
-            }
-            .start()
+        val process =
+            ProcessBuilder(command)
+                .directory(repo)
+                .redirectErrorStream(true)
+                .apply {
+                    // Isolate the throwaway repository from the developer's git configuration.
+                    environment()["GIT_CONFIG_GLOBAL"] = "/dev/null"
+                    environment()["GIT_CONFIG_NOSYSTEM"] = "1"
+                }.start()
         val output = process.inputStream.bufferedReader().readText()
         check(process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS) && process.exitValue() == 0) {
             "${command.joinToString(" ")} failed: $output"
