@@ -9,8 +9,8 @@
 set -euo pipefail
 
 # fixtures/ holds the payloads that the contract tests decode. The architecture tests also read the
-# XcodeGen spec, the Swift package manifests and .gitignore.
-kotlin='^(shared|android|tools|build-logic|gradle|fixtures)/|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/kotlin-checks\.yml|actions/gradle-setup/)|^scripts/ci/|^iosApp/project\.yml$|^iosApp/Packages/[^/]+/Package\.swift$|^\.gitignore$'
+# XcodeGen spec, the Swift package manifests and .gitignore; detekt reads config/ and ktlint .editorconfig.
+kotlin='^(shared|android|tools|build-logic|gradle|fixtures)/|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/kotlin-checks\.yml|actions/gradle-setup/)|^scripts/ci/|^iosApp/project\.yml$|^iosApp/Packages/[^/]+/Package\.swift$|^\.gitignore$|^config/|^\.editorconfig$'
 # Everything that can change the iOS app: Swift code and lint, the shared Kotlin it links, the Gradle build that
 # produces the framework, the version, and the iOS scripts and workflow.
 ios='^(iosApp|shared|gradle|build-logic|scripts/ios|scripts/ci)/|^\.swiftlint\.yml$|\.gradle\.kts$|^gradlew|^gradle\.properties$|^version\.properties$|^\.github/(workflows/ios-checks\.yml|actions/gradle-setup/)'
