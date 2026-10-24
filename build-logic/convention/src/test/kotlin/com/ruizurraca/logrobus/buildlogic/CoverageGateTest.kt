@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 
 /** Which shared modules the Kover gate covers (docs/testing_strategy.md §3, NFR-MNT-01). */
 class CoverageGateTest {
-
     @Test
     fun lb002_domainAndDataModulesAreGatedWhole() {
         assertEquals(CoverageGate.WholeModule, coverageGate(":shared:transit:domain"))
