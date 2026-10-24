@@ -1,0 +1,51 @@
+# detekt 2.0 configuration: only the differences from detekt's defaults, which the build
+# uses as the base (buildUponDefaultConfig). Rules and reasons: docs/code_style.md §2.1.
+# An `excludes` list replaces the default one, so the defaults are repeated before each addition.
+
+complexity:
+  CyclomaticComplexMethod:
+    allowedComplexity: 15
+
+coroutines:
+  GlobalCoroutineUsage:
+    # Structured concurrency: inject a scope (AGENTS.md §8). Catches fully qualified uses too.
+    active: true
+
+naming:
+  FunctionNaming:
+    # Composable functions are named like types (PascalCase), the Compose convention.
+    ignoreAnnotated: ['Composable']
+    # The defaults, plus the Android host tests (KMP withHostTest), which use ddNN_/lbNNN_ test names.
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/androidHostTest/**']
+
+style:
+  MagicNumber:
+    # The defaults, plus the Android host tests (KMP withHostTest).
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/androidHostTest/**']
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - value: 'kotlin.io.print'
+        reason: 'Use Logger.'
+      - value: 'kotlin.io.println'
+        reason: 'Use Logger.'
+      - value: 'kotlin.time.Clock.System.now'
+        reason: 'Business time goes through AppClock (AGENTS.md §5, rule 5); AppClock itself suppresses this rule.'
+      - value: 'kotlinx.datetime.Clock.System.now'
+        reason: 'Business time goes through AppClock (AGENTS.md §5, rule 5); AppClock itself suppresses this rule.'
+      - value: 'java.lang.System.currentTimeMillis'
+        reason: 'Business time goes through AppClock (AGENTS.md §5, rule 5); AppClock itself suppresses this rule.'
+      # detekt's own defaults, kept because a custom list replaces them.
+      - value: 'java.math.BigDecimal.<init>(kotlin.Double)'
+        reason: 'BigDecimal(Double) is imprecise; use BigDecimal.valueOf(Double) or String.toBigDecimalOrNull().'
+      - value: 'java.math.BigDecimal.<init>(kotlin.String)'
+        reason: 'BigDecimal(String) can throw NumberFormatException; use String.toBigDecimalOrNull().'
+      - value: 'kotlin.system.measureTimeMillis'
+        reason: 'Obsolete; use kotlin.time.measureTime.'
+  ForbiddenImport:
+    active: true
+    forbiddenImports:
+      - value: 'kotlinx.coroutines.GlobalScope'
+        reason: 'Structured concurrency: inject a scope.'
+      - value: 'com.google.firebase.*'
+        reason: 'Telemetry goes through AnalyticsTracker and CrashReporter (ADR-0009). The platform implementation classes (LB-409) suppress this rule.'

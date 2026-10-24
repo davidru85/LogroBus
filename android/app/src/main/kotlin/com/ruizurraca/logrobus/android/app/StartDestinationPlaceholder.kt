@@ -14,9 +14,10 @@ import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 @Composable
 internal fun StartDestinationPlaceholder(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .safeDrawingPadding(),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
         contentAlignment = Alignment.Center,
     ) {
         Text(text = stringResource(TopLevelDestination.start.labelRes))

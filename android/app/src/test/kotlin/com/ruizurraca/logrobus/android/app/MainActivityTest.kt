@@ -16,7 +16,6 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class MainActivityTest {
-
     @get:Rule
     val compose = createAndroidComposeRule<MainActivity>()
 

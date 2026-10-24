@@ -13,55 +13,57 @@ import java.io.File
  * build-logic (ModuleRules).
  */
 class ArchitectureTest {
-
     private val root: File = repositoryRoot
 
-    private val sharedModules = listOf(
-        ":shared:core:common",
-        ":shared:core:config",
-        ":shared:core:telemetry",
-        ":shared:core:network",
-        ":shared:core:database",
-        ":shared:core:location",
-        ":shared:core:polling",
-        ":shared:core:presentation",
-        ":shared:core:testing",
-        ":shared:transit:domain",
-        ":shared:transit:data",
-        ":shared:favourites:domain",
-        ":shared:favourites:data",
-        ":shared:feature:lines",
-        ":shared:feature:stops",
-        ":shared:feature:nearme",
-        ":shared:feature:planner",
-        ":shared:feature:settings",
-        ":shared:umbrella",
-    )
+    private val sharedModules =
+        listOf(
+            ":shared:core:common",
+            ":shared:core:config",
+            ":shared:core:telemetry",
+            ":shared:core:network",
+            ":shared:core:database",
+            ":shared:core:location",
+            ":shared:core:polling",
+            ":shared:core:presentation",
+            ":shared:core:testing",
+            ":shared:transit:domain",
+            ":shared:transit:data",
+            ":shared:favourites:domain",
+            ":shared:favourites:data",
+            ":shared:feature:lines",
+            ":shared:feature:stops",
+            ":shared:feature:nearme",
+            ":shared:feature:planner",
+            ":shared:feature:settings",
+            ":shared:umbrella",
+        )
 
-    private val androidModules = listOf(
-        ":android:app",
-        ":android:core:designsystem",
-        ":android:core:map",
-        ":android:core:navigation",
-        ":android:feature:lines",
-        ":android:feature:stops",
-        ":android:feature:nearme",
-        ":android:feature:planner",
-        ":android:feature:settings",
-    )
+    private val androidModules =
+        listOf(
+            ":android:app",
+            ":android:core:designsystem",
+            ":android:core:map",
+            ":android:core:navigation",
+            ":android:feature:lines",
+            ":android:feature:stops",
+            ":android:feature:nearme",
+            ":android:feature:planner",
+            ":android:feature:settings",
+        )
 
     private val toolModules = listOf(":tools:architecture-tests")
 
     // architecture.md §3.1: the targets of the local Swift package iosApp/Packages/LogroBusUI.
-    private val iosPackageTargets = listOf(
-        "DesignSystem",
-        "MapUI",
-        "FeatureLines",
-        "FeatureStops",
-        "FeatureNearMe",
-        "FeaturePlanner",
-        "FeatureSettings",
-    )
+    private val iosPackageTargets =
+        listOf(
+            "DesignSystem",
+            "MapUI",
+            "FeatureLines",
+            "FeatureStops",
+            "FeatureNearMe",
+            "FeaturePlanner",
+            "FeatureSettings",
+        )
 
     private val ignoredDirectories = setOf("build", ".gradle", ".git", ".kotlin", ".idea")
 
@@ -73,20 +75,22 @@ class ArchitectureTest {
 
     @Test
     fun lb001_everySharedModuleAppliesTheKmpConvention() {
-        val missing = sharedModules.filterNot { path ->
-            val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
-            buildFile.isFile && "id(\"logrobus.kmp.library\")" in buildFile.readText()
-        }
+        val missing =
+            sharedModules.filterNot { path ->
+                val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
+                buildFile.isFile && "id(\"logrobus.kmp.library\")" in buildFile.readText()
+            }
         assertEquals(emptyList<String>(), missing)
     }
 
     @Test
     fun lb001_everyAndroidModuleAppliesItsConvention() {
-        val missing = androidModules.filterNot { path ->
-            val plugin = if (path == ":android:app") "logrobus.android.application" else "logrobus.android.library"
-            val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
-            buildFile.isFile && "id(\"$plugin\")" in buildFile.readText()
-        }
+        val missing =
+            androidModules.filterNot { path ->
+                val plugin = if (path == ":android:app") "logrobus.android.application" else "logrobus.android.library"
+                val buildFile = File(root, path.removePrefix(":").replace(':', '/') + "/build.gradle.kts")
+                buildFile.isFile && "id(\"$plugin\")" in buildFile.readText()
+            }
         assertEquals(emptyList<String>(), missing)
     }
 
@@ -94,19 +98,25 @@ class ArchitectureTest {
     fun lb001_iosProjectIsIphoneOnlyWithIos18AndTheStoreBundleId() {
         val spec = File(root, "iosApp/project.yml").takeIf { it.isFile }?.readText().orEmpty()
         // Settings of the app target itself: XcodeGen's application preset overrides project-level values.
-        val appTarget = Regex("""(?ms)^ {2}iosApp:\n(.*?)(?=^ {2}\S|\z)""")
-            .find(spec.substringAfter("\ntargets:\n"))?.groupValues?.get(1).orEmpty()
-        val required = mapOf(
-            // OQ-14: the store identifier, shared with Android.
-            "PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus" to appTarget,
-            // NFR-PLAT-03: iPhone only in the MVP.
-            "TARGETED_DEVICE_FAMILY: \"1\"" to appTarget,
-            // ADR-0003: iOS 18 deployment target.
-            "iOS: \"18.0\"" to spec,
-        )
-        val missing = required.filterNot { (setting, scope) ->
-            Regex("""(?m)^\s+${Regex.escape(setting)}\s*$""").containsMatchIn(scope)
-        }
+        val appTarget =
+            Regex("""(?ms)^ {2}iosApp:\n(.*?)(?=^ {2}\S|\z)""")
+                .find(spec.substringAfter("\ntargets:\n"))
+                ?.groupValues
+                ?.get(1)
+                .orEmpty()
+        val required =
+            mapOf(
+                // OQ-14: the store identifier, shared with Android.
+                "PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus" to appTarget,
+                // NFR-PLAT-03: iPhone only in the MVP.
+                "TARGETED_DEVICE_FAMILY: \"1\"" to appTarget,
+                // ADR-0003: iOS 18 deployment target.
+                "iOS: \"18.0\"" to spec,
+            )
+        val missing =
+            required.filterNot { (setting, scope) ->
+                Regex("""(?m)^\s+${Regex.escape(setting)}\s*$""").containsMatchIn(scope)
+            }
         assertEquals(emptyList<String>(), missing.keys.toList())
     }
 
@@ -153,8 +163,13 @@ class ArchitectureTest {
     @Test
     fun lb002_jobNamesReadWellWhenSkipped() {
         // A skipped job shows its name unexpanded; GitHub appends the matrix values to a plain name by itself.
-        val offenders = File(root, ".github/workflows").listFiles { file -> file.extension == "yml" }.orEmpty()
-            .flatMap { file -> ArchitectureRules.jobNamesWithExpressions(file.readText()).map { "${file.name}: $it" } }
+        val offenders =
+            File(root, ".github/workflows")
+                .listFiles { file -> file.extension == "yml" }
+                .orEmpty()
+                .flatMap { file ->
+                    ArchitectureRules.jobNamesWithExpressions(file.readText()).map { "${file.name}: $it" }
+                }
         assertEquals(emptyList<String>(), offenders)
     }
 
@@ -167,64 +182,74 @@ class ArchitectureTest {
 
     @Test
     fun lb001_buildScriptsAndBuildLogicDeclareNoVersionLiterals() {
-        val offenders = root.walkTopDown()
-            .onEnter { it.name !in ignoredDirectories }
-            .filter { it.isFile && (it.name.endsWith(".gradle.kts") || it.isBuildLogicSource()) }
-            .flatMap { file ->
-                ArchitectureRules.versionLiterals(file.readText()).map { "${file.relativePath()}: $it" }
-            }
-            .toList()
+        val offenders =
+            root
+                .walkTopDown()
+                .onEnter { it.name !in ignoredDirectories }
+                .filter { it.isFile && (it.name.endsWith(".gradle.kts") || it.isBuildLogicSource()) }
+                .flatMap { file ->
+                    ArchitectureRules.versionLiterals(file.readText()).map { "${file.relativePath()}: $it" }
+                }.toList()
         assertEquals(emptyList<String>(), offenders)
     }
 
     @Test
     fun lb001_sharedCodeDoesNotImportAnotherFeature() {
-        val offenders = sharedFiles().flatMap { file ->
-            ArchitectureRules.crossFeatureImports(file.packagee?.name, file.importNames())
-                .map { "${file.relativePath()}: $it" }
-        }
+        val offenders =
+            sharedFiles().flatMap { file ->
+                ArchitectureRules
+                    .crossFeatureImports(file.packagee?.name, file.importNames())
+                    .map { "${file.relativePath()}: $it" }
+            }
         assertEquals(emptyList<String>(), offenders)
     }
 
     @Test
     fun lb001_domainCodeDoesNotImportFrameworksPlatformApisOrData() {
-        val offenders = sharedFiles()
-            .filter { file -> file.packagee?.name?.let { ".domain" in it } == true }
-            .flatMap { file ->
-                ArchitectureRules.forbiddenDomainImports(file.importNames()).map { "${file.relativePath()}: $it" }
-            }
+        val offenders =
+            sharedFiles()
+                .filter { file -> file.packagee?.name?.let { ".domain" in it } == true }
+                .flatMap { file ->
+                    ArchitectureRules.forbiddenDomainImports(file.importNames()).map { "${file.relativePath()}: $it" }
+                }
         assertEquals(emptyList<String>(), offenders)
     }
 
     @Test
     fun lb001_presentationCodeDoesNotImportInfrastructureOrData() {
-        val offenders = sharedFiles()
-            .filter { file -> file.packagee?.name?.let { ".presentation" in it } == true }
-            .flatMap { file ->
-                ArchitectureRules.forbiddenPresentationImports(file.importNames()).map { "${file.relativePath()}: $it" }
-            }
+        val offenders =
+            sharedFiles()
+                .filter { file -> file.packagee?.name?.let { ".presentation" in it } == true }
+                .flatMap { file ->
+                    ArchitectureRules
+                        .forbiddenPresentationImports(
+                            file.importNames(),
+                        ).map { "${file.relativePath()}: $it" }
+                }
         assertEquals(emptyList<String>(), offenders)
     }
 
     @Test
     fun lb001_sharedKotlinFilesLiveInTheirModuleNamespace() {
-        val offenders = sharedFiles().mapNotNull { file ->
-            val expected = ArchitectureRules.expectedNamespace(file.relativePath())
-            val actual = file.packagee?.name.orEmpty()
-            val inNamespace = actual == expected || actual.startsWith("$expected.")
-            if (inNamespace) null else "${file.relativePath()}: $actual"
-        }
+        val offenders =
+            sharedFiles().mapNotNull { file ->
+                val expected = ArchitectureRules.expectedNamespace(file.relativePath())
+                val actual = file.packagee?.name.orEmpty()
+                val inNamespace = actual == expected || actual.startsWith("$expected.")
+                if (inNamespace) null else "${file.relativePath()}: $actual"
+            }
         assertEquals(emptyList<String>(), offenders)
     }
 
     @Test
     fun lb001_androidKotlinFilesLiveInTheirModuleNamespace() {
-        val offenders = androidFiles().mapNotNull { file ->
-            val expected = ArchitectureRules.expectedNamespace(file.relativePath())
-            val actual = file.packagee?.name.orEmpty()
-            val inNamespace = actual == expected || actual.startsWith("$expected.")
-            if (inNamespace) null else "${file.relativePath()}: $actual"
-        }
+        val offenders =
+            androidFiles().mapNotNull { file ->
+                val expected = ArchitectureRules.expectedNamespace(file.relativePath())
+                val actual = file.packagee?.name.orEmpty()
+                val inNamespace = actual == expected || actual.startsWith("$expected.")
+                if (inNamespace) null else "${file.relativePath()}: $actual"
+            }
         assertEquals(emptyList<String>(), offenders)
     }
 

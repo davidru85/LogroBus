@@ -8,18 +8,19 @@ plugins {
 // framework named "Shared", packaged as an XCFramework for the local Swift package
 // LogroBusUI, through which the app links it once. Exported modules are visible to Swift.
 kotlin {
-    val exported = listOf(
-        projects.shared.core.common,
-        projects.shared.core.presentation,
-        projects.shared.core.telemetry,
-        projects.shared.transit.domain,
-        projects.shared.favourites.domain,
-        projects.shared.feature.lines,
-        projects.shared.feature.stops,
-        projects.shared.feature.nearme,
-        projects.shared.feature.planner,
-        projects.shared.feature.settings,
-    )
+    val exported =
+        listOf(
+            projects.shared.core.common,
+            projects.shared.core.presentation,
+            projects.shared.core.telemetry,
+            projects.shared.transit.domain,
+            projects.shared.favourites.domain,
+            projects.shared.feature.lines,
+            projects.shared.feature.stops,
+            projects.shared.feature.nearme,
+            projects.shared.feature.planner,
+            projects.shared.feature.settings,
+        )
     val xcFramework = XCFramework("Shared")
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {

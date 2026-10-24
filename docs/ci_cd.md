@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy workflow and the Kotlin jobs run on every pull request: build-logic, architecture, shared unit tests, and Android unit tests, build and lint. ktlint, detekt, Kover, dependency review and the iOS jobs are built in LB-002 |
-| Last updated | 2026-10-23 |
+| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover) and iOS workflows run on every pull request, behind the required gates. Dependency review, iOS snapshot and ViewModel tests and the nightly workflow follow in LB-002 |
+| Last updated | 2026-10-24 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
 ## 1. Operating rule: CI runs only while the repository is public
@@ -50,10 +50,10 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Kotlin changes | `kotlin-checks.yml` | `scripts/ci/changed-areas.sh origin/main` | Linux | < 1 min | Active (§4) |
 | Kotlin gate | `kotlin-checks.yml` | none: it reads the results of the other Kotlin jobs, all listed in its `needs` (`lb002_kotlinGateWaitsForEveryKotlinJob`) | Linux | < 1 min | Active, required (§4) |
 | Build-logic tests | `kotlin-checks.yml` | `./gradlew :build-logic:convention:test` | Linux | < 3 min | Active, through the gate |
-| ktlint | `kotlin-checks.yml` | `./gradlew ktlintCheck` | Linux | < 3 min | LB-002 |
-| detekt | `kotlin-checks.yml` | `./gradlew detekt` | Linux | < 4 min | LB-002 |
+| ktlint | `kotlin-checks.yml` | `./gradlew ktlintCheck` (ktlint 1.8.0 CLI, ADR-0011) | Linux | < 3 min | Active, through the gate |
+| detekt | `kotlin-checks.yml` | `./gradlew ciDetekt` (detekt 2.0.0-alpha.6 with type resolution, ADR-0011) | Linux | < 4 min | Active, through the gate |
 | Shared unit tests (`<module>`) (matrix over every shared module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEverySharedModule`) | `kotlin-checks.yml` | `./gradlew :shared:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
-| Coverage (data, domain) | `kotlin-checks.yml` | `./gradlew koverVerify` | Linux | < 5 min | LB-002 |
+| Coverage (data, domain, feature packages) | `kotlin-checks.yml` | `./gradlew koverVerify` (Kover 0.9.11, 80 % lines, ADR-0011) | Linux | < 5 min | Active, through the gate |
 | Architecture rules | `kotlin-checks.yml` | `./gradlew :tools:architecture-tests:test` | Linux | < 3 min | Active, through the gate |
 | Android unit tests (`<module>`) (matrix over every Android module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule`): ViewModel tests and Robolectric UI tests | `kotlin-checks.yml` | `./gradlew :android:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
 | Android lint (every Android module) | `kotlin-checks.yml` | `./gradlew lintDebug` | Linux | < 5 min | Active, through the gate |
@@ -82,7 +82,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Workflow | Runs when these paths change |
 | --- | --- |
 | `policy-checks.yml` | Any change |
-| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), `iosApp/project.yml`, `iosApp/Packages/*/Package.swift` and `.gitignore` (the architecture tests read them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
+| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), `config/**` (detekt) and `.editorconfig` (ktlint), `iosApp/project.yml`, `iosApp/Packages/*/Package.swift` and `.gitignore` (the architecture tests read them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
 | `ios-checks.yml` | `iosApp/**`, `.swiftlint.yml`, `shared/**`, the Gradle build (`gradle/**`, `build-logic/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`), `version.properties`, `scripts/ios/**`, `scripts/ci/**`, the workflow itself, `.github/actions/gradle-setup/**`. Every push to `main` runs it in full |
 
 Because `main` is protected, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.
