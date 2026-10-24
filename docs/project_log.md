@@ -23,9 +23,9 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 **Decisions (owner)**
 - **detekt 2.0.0-alpha.6, pinned.** The stable 1.23.8 is built against Kotlin 2.0, and its type-resolved rules do not support Kotlin 2.4. ADR-0011 records the decision.
-- **The owner was away for some hours, so the three tools went into one PR** rather than three. This avoids stacking PRs that would conflict in the READMEs and this log.
 
 **Done**
+- The owner was away for some hours, so the three tools went into one PR rather than three. This avoids stacking PRs that would conflict in the READMEs and this log. This was the agent's choice, not an owner decision.
 - **ktlint 1.8.0 (CLI):**
   - the root tasks `ktlintCheck` and `ktlintFormat` use the shadowed artefact on the JDK 21 toolchain, over every Kotlin source and build script;
   - `.editorconfig` exempts `@Composable` functions from function naming;
@@ -43,9 +43,30 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - Docs: ADR-0011, `code_style.md`, `ci_cd.md`, `testing_strategy.md`, `AGENTS.md` (status and commands), the backlog and both READMEs.
 - The owner asked for an AFK run without permission prompts. Auto mode was already on. The classifier blocked my attempt to add local allow rules, as self-modification, so permissions are unchanged.
 
+**Review (code-reviewer subagent): changes required, 1 major and 13 others.** Addressed:
+- **CI false green**, a TDD cycle. A PR touching only `config/detekt/detekt.yml` or `.editorconfig` skipped ktlint and detekt. Both paths now count as Kotlin paths.
+- **Coverage scope**, a TDD cycle. `coverageGate(path)` is now a tested rule, and it gates `:shared:core:presentation` too (shared presentation mappers, `testing_strategy.md` §3).
+- **detekt:**
+  - `ciDetekt` also runs every iOS, Apple and native source set (untyped);
+  - `androidHostTest` is excluded from `FunctionNaming` and `MagicNumber`;
+  - detekt's default `ForbiddenMethodCall` entries are kept;
+  - `GlobalCoroutineUsage` is on;
+  - the Firebase, token and fixture exemptions are suppressed at the call site, as documented.
+- **ADR-0011 is now Proposed.** The owner decided only the detekt version, so the ktlint CLI and the Kover scope await confirmation. Its claims are narrowed: type-resolved rules cover common and Android code, and `build-logic` and `tools` get ktlint only.
+- **Smaller fixes:**
+  - the post-edit hook formats only with the pinned ktlint 1.8.0;
+  - `run-all.sh` names every tool that `check` runs;
+  - `config/` is listed in the READMEs and `AGENTS.md` §3;
+  - stale lines are fixed in `ci_cd.md`, `architecture.md` and `testing_strategy.md`.
+- **Verified by the reviewer:**
+  - the `style:` commit changes no behaviour;
+  - the new tasks are safe under the configuration cache and Isolated Projects;
+  - each CI job runs one command.
+
 **Open / next**
 - The rest of LB-002: dependency review, the iOS snapshot and ViewModel tests, the nightly workflow, and the `iOS build and tests` budget (caches).
 - Move detekt to 2.0 stable when it ships.
+- The owner confirms ADR-0011 (the ktlint CLI and the Kover scope), or asks for changes.
 
 ## 2026-10-24: LB-002: the iOS workflow (SwiftLint, shared iOS tests, app build and tests)
 

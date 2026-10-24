@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft, pre-scaffold |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-10-24 |
 | Based on | Spec §10.1–10.2, NFR-MNT-01, `architecture.md` §8 |
 
 This document covers what we test, at which level, with which tools, and what every pull request must include. The test harness described in §4 is built during M0, in stories LB-003 to LB-010.
@@ -53,7 +53,7 @@ This document covers what we test, at which level, with which tools, and what ev
 | Modules | Line coverage | Enforcement |
 | --- | --- | --- |
 | Shared domain and data modules (`transit`, `favourites`, and the `domain`/`data` packages of `feature/*`) | At least 80 % (NFR-MNT-01) | Blocks the PR |
-| Shared presentation mappers | At least 80 % | Blocks the PR |
+| Shared presentation mappers (`:shared:core:presentation`, and the `presentation` packages of `feature/*`) | At least 80 % | Blocks the PR |
 | Android ViewModels | Target 70 % | Reported only, once the first ViewModels exist (Android modules are not instrumented yet) |
 
 ## 4. Test harness

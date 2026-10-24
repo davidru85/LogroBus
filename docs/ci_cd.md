@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy workflow and the Kotlin jobs run on every pull request: build-logic, architecture, shared unit tests, and Android unit tests, build and lint. ktlint, detekt, Kover, dependency review and the iOS jobs are built in LB-002 |
-| Last updated | 2026-10-23 |
+| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover) and iOS workflows run on every pull request, behind the required gates. Dependency review, iOS snapshot and ViewModel tests and the nightly workflow follow in LB-002 |
+| Last updated | 2026-10-24 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
 ## 1. Operating rule: CI runs only while the repository is public
@@ -82,7 +82,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Workflow | Runs when these paths change |
 | --- | --- |
 | `policy-checks.yml` | Any change |
-| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), `iosApp/project.yml`, `iosApp/Packages/*/Package.swift` and `.gitignore` (the architecture tests read them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
+| `kotlin-checks.yml` | `shared/**`, `android/**`, `tools/**`, `build-logic/**`, `gradle/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`, `version.properties`, `fixtures/**` (the contract tests decode them), `config/**` (detekt) and `.editorconfig` (ktlint), `iosApp/project.yml`, `iosApp/Packages/*/Package.swift` and `.gitignore` (the architecture tests read them), the workflow itself, `.github/actions/gradle-setup/**`, `scripts/ci/**`. Every push to `main` runs it in full |
 | `ios-checks.yml` | `iosApp/**`, `.swiftlint.yml`, `shared/**`, the Gradle build (`gradle/**`, `build-logic/**`, `*.gradle.kts`, `gradlew*`, `gradle.properties`), `version.properties`, `scripts/ios/**`, `scripts/ci/**`, the workflow itself, `.github/actions/gradle-setup/**`. Every push to `main` runs it in full |
 
 Because `main` is protected, path-filtered workflows need a small always-running `ci-gate` job that succeeds when the filtered jobs either passed or were legitimately skipped. Only that gate job is marked as required.

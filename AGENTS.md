@@ -85,6 +85,7 @@ LogroBus/
 ├── android/                 # app/ (shell), core/ (designsystem, map, navigation), feature/<x>/ (Compose + Android ViewModels)
 ├── iosApp/                  # app target (shell) + Packages/LogroBusUI (DesignSystem, MapUI, Feature<X>: SwiftUI + Swift ViewModels)
 ├── tools/architecture-tests/  # Konsist module and package boundary rules
+├── config/                  # tool configuration: detekt (ADR-0011)
 ├── fixtures/                # golden API payloads for tests (spec §10.2)
 └── scripts/                 # bootstrap.sh, checks/ (quality gates), ci/ (CI helpers), agent/ (agent hooks), github/ (repo admin), fixture tools
 ```
