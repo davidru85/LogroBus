@@ -1,0 +1,107 @@
+# iOS checks: one atomic job per concern, each running a single local script or
+# Gradle task (docs/ci_cd.md §2–4). Snapshot and ViewModel tests join as the
+# LogroBusUI targets get code.
+#
+# Owner rule: CI runs only while the repository is public (docs/ci_cd.md §1).
+# The jobs run only when a change can affect the iOS app (scripts/ci/changed-areas.sh,
+# area "ios"). The always-running "iOS gate" job is the required status check, so
+# PRs that cannot affect iOS are not blocked.
+name: iOS checks
+
+on:
+  pull_request:
+    branches: [main]
+  # Runs on main too, to verify each merge.
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# One group per pull request, so a new push cancels the stale run. One group per
+# commit on main, so back-to-back merges are each verified rather than cancelled.
+concurrency:
+  group: ios-checks-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: iOS changes
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      ios: ${{ steps.areas.outputs.ios }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Detect the changed areas
+        id: areas
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: scripts/ci/changed-areas.sh ${BASE_REF:+"origin/$BASE_REF"} >> "$GITHUB_OUTPUT"
+
+  swiftlint:
+    name: SwiftLint
+    needs: changes
+    if: ${{ needs.changes.outputs.ios == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the pinned SwiftLint
+        run: scripts/ci/install-swiftlint.sh "$RUNNER_TEMP/swiftlint"
+      - name: Lint (strict)
+        run: '"$RUNNER_TEMP/swiftlint/swiftlint" --strict'
+
+  shared-ios-tests:
+    name: Shared iOS tests
+    needs: changes
+    if: ${{ needs.changes.outputs.ios == 'true' }}
+    runs-on: macos-26
+    timeout-minutes: 20
+    env:
+      # Xcode 26 or later (AGENTS.md §4), pinned so an image update cannot change it silently.
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Shared tests on the iOS simulator
+        run: ./gradlew iosSimulatorArm64Test
+
+  ios-app:
+    name: iOS build and tests
+    needs: changes
+    if: ${{ needs.changes.outputs.ios == 'true' }}
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: XcodeGen
+        run: brew install xcodegen
+      - name: Generate the project and run the iOS tests
+        run: scripts/ios/test.sh
+
+  ci-gate:
+    name: iOS gate
+    needs: [changes, swiftlint, shared-ios-tests, ios-app]
+    if: ${{ always() && !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Every iOS job passed, or was skipped because no iOS path changed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            case "$result" in
+              success|skipped) ;;
+              *) echo "::error::An iOS job ended with '$result'."; exit 1 ;;
+            esac
+          done
+          echo "iOS job results: $RESULTS"

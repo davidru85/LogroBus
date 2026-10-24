@@ -102,6 +102,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **24-10-2026:**
+  - La CI también comprueba iOS en las máquinas macOS de GitHub: SwiftLint, los tests del código compartido en el simulador de iOS y la compilación y los tests de la app.
   - CI: los jobs de tests de Kotlin y Android tienen nombres legibles aunque se salten. Se saltan a propósito cuando una pull request no toca código.
 - **23-10-2026:**
   - Aceptado el ADR-0010: cómo se genera el proyecto de iOS y cómo enlaza el código compartido.
@@ -147,7 +148,7 @@ La documentación técnica está en inglés.
 
 ## Cómo contribuir
 
-Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas y las de Kotlin en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
+Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas, de Kotlin y de iOS en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
 
 ## Datos y aviso legal
 
