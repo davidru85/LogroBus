@@ -1,0 +1,33 @@
+# detekt 2.0 configuration: only the differences from detekt's defaults, which the build
+# uses as the base (buildUponDefaultConfig). Rules and reasons: docs/code_style.md §2.1.
+
+complexity:
+  CyclomaticComplexMethod:
+    allowedComplexity: 15
+
+naming:
+  FunctionNaming:
+    # Composable functions are named like types (PascalCase), the Compose convention.
+    ignoreAnnotated: ['Composable']
+
+style:
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - value: 'kotlin.io.print'
+        reason: 'Use Logger.'
+      - value: 'kotlin.io.println'
+        reason: 'Use Logger.'
+      - value: 'kotlin.time.Clock.System.now'
+        reason: 'Business time goes through AppClock (AGENTS.md §5, rule 5); AppClock itself suppresses this rule.'
+      - value: 'kotlinx.datetime.Clock.System.now'
+        reason: 'Business time goes through AppClock (AGENTS.md §5, rule 5); AppClock itself suppresses this rule.'
+      - value: 'java.lang.System.currentTimeMillis'
+        reason: 'Business time goes through AppClock (AGENTS.md §5, rule 5); AppClock itself suppresses this rule.'
+  ForbiddenImport:
+    active: true
+    forbiddenImports:
+      - value: 'kotlinx.coroutines.GlobalScope'
+        reason: 'Structured concurrency: inject a scope.'
+      - value: 'com.google.firebase.*'
+        reason: 'Telemetry goes through AnalyticsTracker and CrashReporter (ADR-0009); only the platform implementation classes may import a vendor SDK.'

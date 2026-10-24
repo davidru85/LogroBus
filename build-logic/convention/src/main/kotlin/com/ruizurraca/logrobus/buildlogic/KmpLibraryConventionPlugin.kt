@@ -44,6 +44,15 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 dependsOn("testAndroidHostTest")
             }
 
+            // Type resolution through the Android compilations; the iOS source sets are analysed without it.
+            configureDetekt(
+                listOf(
+                    "detektMainAndroid",
+                    "detektHostTestAndroid",
+                    "detektIosMainSourceSet",
+                    "detektIosTestSourceSet",
+                ),
+            )
             verifyModuleRules()
         }
 }
