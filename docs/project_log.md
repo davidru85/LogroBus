@@ -19,6 +19,37 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-24: LB-002: dependency graph and dependency review
+
+**Decisions (owner)**
+- **ADR-0011 accepted** after PR #11 merged: the ktlint CLI and the Kover scope, on top of the detekt version the owner had already chosen.
+- **Dependabot alerts enabled**, which also enables the dependency graph that the dependency review needs. Before this, the repository's dependency graph was off: its SBOM endpoint returned 404. The agent enabled it through the API (`PUT /repos/…/vulnerability-alerts`) with the owner's approval. Dependabot security update PRs stay off.
+
+**Done**
+- TDD:
+  - **red:** `lb002_dependencyReviewWaitsForTheGradleDependencyGraph`;
+  - **green:** `ArchitectureRules.jobNeeds`, then the two jobs.
+- GitHub cannot read Gradle build files. A new `Dependency graph` job therefore runs `gradle/actions/dependency-submission`:
+  - it is pinned by SHA (v6.4.0), uses the basic cache and validates the wrapper;
+  - it resolves every configuration and submits the graph;
+  - it runs on Kotlin-area pull requests and on every push to `main`;
+  - it is the only job with `contents: write`.
+- `Dependency review` (`actions/dependency-review-action@v5`):
+  - it needs the graph job, and waits for GitHub to process the snapshot;
+  - it fails on a known critical vulnerability in any scope.
+  - The Kotlin gate needs both jobs.
+- **Without the ordering, the review gives a false green.** If it ran alongside the graph job, it would compare a pull request without its Gradle dependencies and pass. The new guard test prevents that.
+- Docs updated: `ci_cd.md` (catalogue, §6 permissions and scanning), `security_privacy.md`, `architecture.md`, `AGENTS.md`, ADR-0011 and its index, the backlog and both READMEs.
+
+**Open / next**
+- **Scope of the review:** it covers the Kotlin area, which holds every Gradle dependency. Actions changed only in `ios-checks.yml` or `policy-checks.yml` are covered by Dependabot alerts after the merge.
+- **First run:** `main` has no submitted Gradle graph yet, so this PR's review compares against an empty base. It waits up to 3 minutes for the base snapshot, then reviews every Gradle dependency as added.
+- **Rest of LB-002:**
+  - the nightly workflow, with OWASP Dependency-Check;
+  - the iOS snapshot and ViewModel tests, which have no code to test before E1;
+  - the throwaway-branch check that a failing test, a lint violation and a coverage drop each fail CI;
+  - speeding up the iOS app job with caches.
+
 ## 2026-10-24: LB-002: ktlint, detekt and Kover (ADR-0011)
 
 **Decisions (owner)**
