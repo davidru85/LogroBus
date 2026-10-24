@@ -1,5 +1,5 @@
 # Kotlin checks: one atomic job per concern, each running a single Gradle
-# task (docs/ci_cd.md §2–4). ktlint, detekt and Kover join in LB-002.
+# task (docs/ci_cd.md §2–4).
 #
 # Owner rule: CI runs only while the repository is public (docs/ci_cd.md §1).
 # The jobs run only when a change touches Kotlin or Gradle paths
@@ -53,6 +53,42 @@ jobs:
       - uses: ./.github/actions/gradle-setup
       - name: Module rules and convention helpers
         run: ./gradlew :build-logic:convention:test
+
+  ktlint:
+    name: ktlint
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Kotlin style (ktlint_official)
+        run: ./gradlew ktlintCheck
+
+  detekt:
+    name: detekt
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Static analysis with type resolution
+        run: ./gradlew ciDetekt
+
+  coverage:
+    name: Coverage
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Line coverage of shared domain, data and feature code (NFR-MNT-01)
+        run: ./gradlew koverVerify
 
   architecture:
     name: Architecture rules
@@ -164,7 +200,7 @@ jobs:
 
   ci-gate:
     name: Kotlin gate
-    needs: [changes, build-logic, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint]
+    needs: [changes, build-logic, ktlint, detekt, coverage, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint]
     if: ${{ always() && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 3

@@ -46,5 +46,6 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         dependsOn("testDebugUnitTest")
     }
 
+    configureDetekt(listOf("detektMain", "detektTest"))
     verifyModuleRules()
 }

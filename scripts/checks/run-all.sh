@@ -34,7 +34,7 @@ if [ -x "$root/gradlew" ]; then
   # No configuration cache and no file-system watching: either can miss newly created source directories
   # and report their tests as NO-SOURCE, a false green in the gate whose summary goes into every PR.
   if (cd "$root" && ./gradlew check --quiet --console=plain --no-configuration-cache --no-watch-fs); then
-    echo "OK:   Gradle check: unit tests, architecture rules and build-logic tests passed"
+    echo "OK:   Gradle check: unit tests, architecture rules, build-logic tests, Android lint, ktlint, detekt and Kover passed"
   else
     status=1
   fi

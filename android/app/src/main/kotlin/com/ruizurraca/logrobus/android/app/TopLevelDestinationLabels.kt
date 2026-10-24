@@ -9,8 +9,9 @@ import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
  */
 @get:StringRes
 internal val TopLevelDestination.labelRes: Int
-    get() = when (this) {
-        TopLevelDestination.LINES -> R.string.tab_lines
-        TopLevelDestination.NEAR_ME -> R.string.tab_near_me
-        TopLevelDestination.PLANNER -> R.string.tab_directions
-    }
+    get() =
+        when (this) {
+            TopLevelDestination.LINES -> R.string.tab_lines
+            TopLevelDestination.NEAR_ME -> R.string.tab_near_me
+            TopLevelDestination.PLANNER -> R.string.tab_directions
+        }

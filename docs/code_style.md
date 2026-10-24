@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Active; ktlint, detekt and Kover are wired in LB-002 |
-| Last updated | 2026-10-22 |
+| Status | Active; ktlint, detekt and Kover are wired (LB-002, ADR-0011) |
+| Last updated | 2026-10-24 |
 | Config files | `.editorconfig`, `.swiftlint.yml`, `config/detekt/detekt.yml` (LB-002) |
 
 `AGENTS.md` §8 summarises the conventions. This document holds the detailed rules and the tool configuration. Formatting is automated wherever possible: a style rule that a tool can enforce must be enforced by the tool.
@@ -20,18 +20,18 @@
 
 ### 2.1 Tooling
 
-- **ktlint**, with the `ktlint_official` code style configured in `.editorconfig`. Run `./gradlew ktlintFormat` before committing; the Claude Code post-edit hook also formats edited files when ktlint is installed.
-- **detekt**, with `config/detekt/detekt.yml` (created in LB-002) on top of the default rules. Project-specific rules:
+- **ktlint** 1.8.0 (CLI), with the `ktlint_official` code style configured in `.editorconfig`. `@Composable` functions are exempt from function naming. Run `./gradlew ktlintFormat` before committing, and `./gradlew ktlintCheck` to check; CI runs the check. The Claude Code post-edit hook also formats edited files, but only when the installed ktlint is the pinned version.
+- **detekt** 2.0.0-alpha.6 (ADR-0011), with `config/detekt/detekt.yml` on top of the default rules. `./gradlew ciDetekt` analyses common and Android code with type resolution, which `ForbiddenMethodCall` needs, and the iOS, Apple and native source sets without it: there, type-resolved rules such as `ForbiddenMethodCall` cannot fire, and review covers them. The app and shared modules are analysed; `build-logic` and `tools/architecture-tests` are covered by ktlint only. A module's local `check` also runs detekt's plain `detekt` task, a superset of CI's analysis. Project-specific rules:
 
 | Rule | Configuration | Why |
 | --- | --- | --- |
-| `ForbiddenMethodCall` | `kotlin.time.Clock.System.now`, `kotlinx.datetime.Clock.System.now`, `java.lang.System.currentTimeMillis` outside `:shared:core` | Time goes through `AppClock` (`AGENTS.md` §5 rule 5) |
-| `ForbiddenImport` | `io.ktor.*` and `app.cash.sqldelight.*` inside domain modules and the `domain` and `presentation` packages of shared feature modules | Clean architecture (rule 1, ADR-0007) |
-| `ForbiddenImport` | `com.google.firebase.*` and any other telemetry vendor SDK outside the platform telemetry implementation classes | Telemetry contracts (rule 13, ADR-0009) |
+| `ForbiddenMethodCall` | `kotlin.time.Clock.System.now`, `kotlinx.datetime.Clock.System.now`, `java.lang.System.currentTimeMillis`, everywhere; `AppClock`'s single call site suppresses it with a comment | Time goes through `AppClock` (`AGENTS.md` §5 rule 5) |
+| Clean architecture imports | Not a detekt rule: `ModuleRules` (build-logic) and the Konsist tests in `:tools:architecture-tests` already block Ktor, SQLDelight, data and platform imports in domain code | Clean architecture (rule 1, ADR-0007) |
+| `ForbiddenImport` | `com.google.firebase.*` everywhere; the platform telemetry implementation classes (LB-409) suppress it at the import, with a comment | Telemetry contracts (rule 13, ADR-0009) |
 | `ForbiddenMethodCall` | `kotlin.io.println` | Use `Logger` |
 | `ForbiddenImport` | `kotlinx.coroutines.GlobalScope` | Structured concurrency |
 | Complexity | `LongMethod` 60, `CyclomaticComplexMethod` 15, `LargeClass` 600 | Keep units small |
-| `MagicNumber` | Enabled except in tests, tokens and fixture builders | Thresholds come from named constants or remote config |
+| `MagicNumber` | Enabled except in tests (including `androidHostTest`); design tokens and fixture builders suppress it at the declaration, with a comment | Thresholds come from named constants or remote config |
 
 ### 2.2 Conventions
 

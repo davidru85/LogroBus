@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-24):** LB-001 is done: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place, and iOS is built as ADR-0010 describes. LB-002 is in progress: CI runs the policy, Kotlin, Android and iOS jobs on every pull request, behind the required `Kotlin gate` and `iOS gate`; ktlint, detekt and Kover follow. The repository is public and `main` is protected (LB-415). Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-24):** LB-001 is done: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place, and iOS is built as ADR-0010 describes. LB-002 is in progress: CI runs the policy, Kotlin, Android and iOS jobs on every pull request, behind the required `Kotlin gate` and `iOS gate`, including ktlint, detekt and Kover (ADR-0011). The repository is public and `main` is protected (LB-415). Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -85,6 +85,7 @@ LogroBus/
 ├── android/                 # app/ (shell), core/ (designsystem, map, navigation), feature/<x>/ (Compose + Android ViewModels)
 ├── iosApp/                  # app target (shell) + Packages/LogroBusUI (DesignSystem, MapUI, Feature<X>: SwiftUI + Swift ViewModels)
 ├── tools/architecture-tests/  # Konsist module and package boundary rules
+├── config/                  # tool configuration: detekt (ADR-0011)
 ├── fixtures/                # golden API payloads for tests (spec §10.2)
 └── scripts/                 # bootstrap.sh, checks/ (quality gates), ci/ (CI helpers), agent/ (agent hooks), github/ (repo admin), fixture tools
 ```
@@ -103,7 +104,10 @@ scripts/checks/run-all.sh                         # every quality gate (docs, se
 scripts/agent/session-start.sh                    # session context, for agents without hooks
 ./gradlew ciUnitTest                              # JVM unit tests: build-logic, shared modules (Android host), Android modules (Robolectric), architecture
 ./gradlew :tools:architecture-tests:test          # module layout and package boundaries (Konsist)
-./gradlew check                                   # every verification task, including Android lint (ktlint, detekt and Kover join in LB-002)
+./gradlew check                                   # every verification task: tests, Android lint, ktlint, detekt, Kover
+./gradlew ktlintFormat                            # auto-format Kotlin (ktlintCheck checks)
+./gradlew ciDetekt                                # detekt with type resolution, as CI
+./gradlew koverVerify                             # coverage gates: shared domain, data and feature packages at 80 %
 ./gradlew build                                   # compile everything, including the release APK, and run all checks
 ./gradlew allTests                                # shared tests on every target (Android host, iOS simulator on macOS)
 ./gradlew :android:app:assembleDebug              # Android debug APK
@@ -119,12 +123,9 @@ swiftlint --strict                                # Swift lint (config in .swift
 
 If you have just created a new source directory, run Gradle once with `--no-configuration-cache --no-watch-fs`. Both a reused configuration-cache entry and the daemon's file-system watching (seen on macOS) can miss the new directory and report the tests as `NO-SOURCE`, a false green. `scripts/checks/run-all.sh` always runs with both turned off, and CI always configures from scratch.
 
-The commands below arrive with later stories (ktlint, detekt and Kover in LB-002; fixtures in LB-003).
+The command below arrives with LB-003.
 
 ```bash
-./gradlew check                                   # tests + ktlint + detekt + Kover verification
-./gradlew ktlintFormat                            # auto-format Kotlin
-
 scripts/record-fixtures.sh                        # re-capture golden payloads from the live source
 ```
 

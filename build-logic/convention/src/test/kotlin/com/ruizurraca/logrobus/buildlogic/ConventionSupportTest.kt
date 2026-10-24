@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 
 /** Pure helpers used by the KMP convention plugin (namespaces, dependency buckets checked by ModuleRules). */
 class ConventionSupportTest {
-
     @Test
     fun lb001_namespaceIsDerivedFromModulePath() {
         assertEquals("com.ruizurraca.logrobus.core.common", moduleNamespace(":shared:core:common"))
