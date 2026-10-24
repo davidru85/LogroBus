@@ -49,6 +49,7 @@ android/                              Android app, core modules (design system, 
 iosApp/                               iOS app (XcodeGen spec) and the LogroBusUI Swift package
 build-logic/, gradle/                 Gradle convention plugins; the version catalog
 tools/architecture-tests/             Automated module and package rules
+config/                               Tool configuration (detekt)
 version.properties                    The app version, shared by Android and iOS
 ```
 

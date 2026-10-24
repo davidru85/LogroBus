@@ -49,6 +49,7 @@ android/                              App de Android, módulos core (sistema de 
 iosApp/                               App de iOS (especificación de XcodeGen) y el paquete Swift LogroBusUI
 build-logic/, gradle/                 Plugins de convención de Gradle; el catálogo de versiones
 tools/architecture-tests/             Reglas automáticas de módulos y paquetes
+config/                               Configuración de herramientas (detekt)
 version.properties                    La versión de la app, común a Android e iOS
 ```
 

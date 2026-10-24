@@ -18,7 +18,7 @@ NFR-MNT-03 requires an ADR for every technology choice in spec §8.3. The choice
 | [0008](0008-offline-mode-deferred.md) | Offline mode deferred to v1.0; cache-backed static data in the MVP | Accepted | 2026-10-22 |
 | [0009](0009-telemetry-contracts.md) | Telemetry contracts now, vendor later | Accepted | 2026-10-22 |
 | [0010](0010-ios-project-generation-and-framework-linking.md) | iOS project generation and framework linking | Accepted (amends ADR-0004's integration bullet) | 2026-10-23 |
-| [0011](0011-static-analysis-tooling.md) | Static analysis tooling: ktlint CLI, detekt 2.0 alpha and Kover | Accepted | 2026-10-24 |
+| [0011](0011-static-analysis-tooling.md) | Static analysis tooling: ktlint CLI, detekt 2.0 alpha and Kover | Proposed (the detekt version is the owner's decision) | 2026-10-24 |
 
 Status values: `Proposed`, `Accepted`, `Superseded by ADR-nnnn`, `Deprecated`.
 

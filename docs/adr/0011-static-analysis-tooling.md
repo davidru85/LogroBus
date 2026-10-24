@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Accepted |
+| Status | Proposed |
 | Date | 2026-10-24 |
-| Deciders | Project owner (the detekt version); the build and the CI wiring follow `code_style.md` and `testing_strategy.md` |
+| Deciders | Project owner. The owner chose detekt 2.0.0-alpha.6 (2026-10-24); the ktlint CLI and the Kover scope await the owner's confirmation |
 | Related | LB-002, NFR-MNT-01, NFR-MNT-02, `code_style.md` §2.1, `testing_strategy.md` §3, `ci_cd.md` §3 |
 
 ## Context
@@ -19,17 +19,19 @@
 
 - **ktlint 1.8.0 runs as a CLI.** It runs through the root tasks `ktlintCheck` and `ktlintFormat` (`JavaExec`, the shadowed artefact from the catalog, the JDK 21 toolchain), over every `src/**/*.kt` and `*.gradle.kts`, build-logic included.
 - **detekt 2.0.0-alpha.6, pinned in the catalog.** This is the owner's decision.
-  - The conventions apply it to every module, with `config/detekt/detekt.yml` on top of the defaults.
-  - Each module has a `ciDetekt` alias that runs the type-resolved tasks: `detektMainAndroid` and `detektHostTestAndroid` in KMP modules, `detektMain` and `detektTest` in Android modules. The iOS source sets are analysed without type resolution.
+  - The conventions apply it to every app and shared module (`build-logic` and `tools/architecture-tests` get ktlint only), with `config/detekt/detekt.yml` on top of the defaults.
+  - Each module has a `ciDetekt` alias that runs the type-resolved tasks: `detektMainAndroid` and `detektHostTestAndroid` in KMP modules, `detektMain` and `detektTest` in Android modules. In KMP modules it also runs every iOS, Apple and native source-set task, which detekt can only analyse without types.
   - Move to 2.0 stable when it ships, and record the move in the project log.
 - **Kover 0.9.11 on every shared module.**
-  - Domain and data modules are gated at 80 % line coverage, and feature modules on their `domain`, `data` and `presentation` packages.
+  - Domain and data modules and `:shared:core:presentation` are gated at 80 % line coverage, and feature modules on their `domain`, `data` and `presentation` packages. A tested rule, `coverageGate(path)`, decides this.
   - Android ViewModels are reported, not gated, once they exist.
 - Each tool has its own CI job (`ktlint`, `detekt`, `Coverage`) behind the `Kotlin gate`, and the root `check` runs all three.
 
 ## Consequences
 
-- Every project rule works, including the type-resolved ones. Probes confirmed that `println` and `Clock.System.now()` in shared common code are reported.
+- Every project rule works on common and Android code, including the type-resolved ones. Probes confirmed that `println` and `Clock.System.now()` in shared common code are reported.
+- In iOS-only source sets, type-resolved rules such as `ForbiddenMethodCall` cannot fire, because detekt has no classpath there. Review covers them, and they hold no code yet.
+- A module's local `check` also runs detekt's plain `detekt` task. It finds a superset of CI's findings, so it never gives a false green.
 - An alpha build tool can change its configuration format between releases. The configuration is kept small (only the differences from the defaults) to limit that churn. detekt does not ship in the apps.
 - Formatting is one command (`./gradlew ktlintFormat`), and CI rejects unformatted code.
 
