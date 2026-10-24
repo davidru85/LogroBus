@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-23):** LB-001 is done: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place, and iOS is built as ADR-0010 describes. The repository is public and `main` is protected on GitHub (LB-415). CI runs the policy checks and the Kotlin and Android jobs on every pull request; LB-002 adds ktlint, detekt, Kover and the iOS jobs (`docs/ci_cd.md` §3). The first work item is epic E0 in `docs/backlog.md`. Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-24):** LB-001 is done: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place, and iOS is built as ADR-0010 describes. LB-002 is in progress: CI runs the policy, Kotlin, Android and iOS jobs on every pull request, behind the required `Kotlin gate` and `iOS gate`; ktlint, detekt and Kover follow. The repository is public and `main` is protected (LB-415). Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -111,6 +111,7 @@ scripts/agent/session-start.sh                    # session context, for agents 
 ./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only
 
 scripts/ios/generate-project.sh [debug|release]   # macOS: Shared XCFramework + Version.xcconfig + iosApp.xcodeproj (XcodeGen ≥ 2.46); rerun after Kotlin changes
+scripts/ios/test.sh                               # macOS: generate the project, then every iOS test on the iPhone 17e simulator (as CI)
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination 'platform=iOS Simulator,name=<iPhone simulator>' test   # iOS build + bundle tests + launch UI tests
 swiftlint --strict                                # Swift lint (config in .swiftlint.yml)

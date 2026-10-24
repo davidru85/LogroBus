@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.architecture
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -150,10 +151,18 @@ class ArchitectureTest {
     }
 
     @Test
-    fun lb002_kotlinJobNamesReadWellWhenSkipped() {
+    fun lb002_jobNamesReadWellWhenSkipped() {
         // A skipped job shows its name unexpanded; GitHub appends the matrix values to a plain name by itself.
-        val workflow = File(root, ".github/workflows/kotlin-checks.yml").readText()
-        assertEquals(emptyList<String>(), ArchitectureRules.jobNamesWithExpressions(workflow))
+        val offenders = File(root, ".github/workflows").listFiles { file -> file.extension == "yml" }.orEmpty()
+            .flatMap { file -> ArchitectureRules.jobNamesWithExpressions(file.readText()).map { "${file.name}: $it" } }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
+    @Test
+    fun lb002_iosGateWaitsForEveryIosJob() {
+        val workflow = File(root, ".github/workflows/ios-checks.yml")
+        assertTrue(workflow.isFile, "ios-checks.yml exists")
+        assertEquals(emptyList<String>(), ArchitectureRules.jobsMissingFromGate(workflow.readText(), gate = "ci-gate"))
     }
 
     @Test
