@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover) and iOS workflows run on every pull request, behind the required gates. Dependency review, iOS snapshot and ViewModel tests and the nightly workflow follow in LB-002 |
+| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. iOS snapshot and ViewModel tests and the nightly workflow follow in LB-002 |
 | Last updated | 2026-10-24 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
@@ -59,7 +59,8 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Android lint (every Android module) | `kotlin-checks.yml` | `./gradlew lintDebug` | Linux | < 5 min | Active, through the gate |
 | Android build | `kotlin-checks.yml` | `./gradlew :android:app:assembleDebug` | Linux | < 5 min | Active, through the gate |
 | Android screenshots: `<feature>` (matrix) | `kotlin-checks.yml` | `./gradlew :android:feature:<feature>:verifyRoborazziDebug` | Linux | < 5 min each | LB-002 |
-| Dependency review | `kotlin-checks.yml` | `actions/dependency-review-action` | Linux | < 1 min | LB-002 |
+| Dependency graph | `kotlin-checks.yml` | `gradle/actions/dependency-submission`: resolves every Gradle configuration and submits it to GitHub's dependency graph, which cannot read Gradle build files (§6) | Linux | < 5 min | Active, through the gate |
+| Dependency review | `kotlin-checks.yml` | `actions/dependency-review-action`, after the dependency graph job (`lb002_dependencyReviewWaitsForTheGradleDependencyGraph`): fails on a known critical vulnerability in an added or changed dependency, in any scope (NFR-SEC-05). It needs GitHub, so locally `./gradlew dependencies` only lists what it checks | Linux | < 4 min | Active, through the gate (pull requests only) |
 | iOS changes | `ios-checks.yml` | `scripts/ci/changed-areas.sh origin/main` (area `ios`) | Linux | < 1 min | Active (§4) |
 | iOS gate | `ios-checks.yml` | none: it reads the results of the other iOS jobs, all listed in its `needs` (`lb002_iosGateWaitsForEveryIosJob`) | Linux | < 1 min | Active, required after the merge (§4) |
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
@@ -111,6 +112,12 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - Untrusted input, such as the PR title or branch names, reaches scripts only through `env:`. It is never interpolated into `run:`.
 - First-party actions (`actions/*`) are pinned by major version. Third-party actions are pinned by commit SHA.
 - No secrets in pull request workflows. Release secrets (`release_process.md` §3) exist only in `release.yml`.
+- **One write permission in pull request workflows:** the `Dependency graph` job has `contents: write`, which submitting to the dependency graph needs. It runs only the Gradle build, as every Kotlin job does. Pull requests from forks get a read-only token, so for them the job fails and the gate blocks the merge.
+- **Dependency scanning (NFR-SEC-05):**
+  - The dependency graph and Dependabot alerts are enabled (2026-10-24, owner decision). Dependabot security update PRs are not.
+  - Pushes to `main` submit the Gradle graph that pull requests are compared against. GitHub reads the actions in the workflows by itself.
+  - The dependency review runs on pull requests that touch the Kotlin area, which holds every Gradle dependency. A pull request that only changes the actions of `ios-checks.yml` or `policy-checks.yml` is not reviewed: Dependabot alerts cover those actions once they reach `main`.
+  - The iOS package has no external Swift dependencies yet. When it gets one, commit `Package.resolved` so that GitHub can read it (LB-013).
 - Dependabot keeps the actions updated weekly. The `gradle` and `swift` ecosystems are added after LB-001.
 
 ## 7. CD

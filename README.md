@@ -101,6 +101,8 @@ You will need:
 ### Recent changes
 
 - **2026-10-24:**
+  - CI checks dependencies for known security vulnerabilities: a pull request that adds a library with a known critical vulnerability cannot be merged.
+  - Accepted ADR-0011, which chose the code quality tools: ktlint, detekt and Kover.
   - Code quality tools: every Kotlin change is checked for style (ktlint), for project rules such as "no direct clock calls" (detekt), and for test coverage: at least 80 % of shared domain and data code (Kover). CI runs all three.
   - CI now also checks iOS on GitHub's macOS machines: SwiftLint, the shared code's tests on the iOS simulator, and the app's build and tests.
   - CI: the Kotlin and Android test jobs have readable names even when they are skipped. They are skipped on purpose when a pull request does not touch code.
