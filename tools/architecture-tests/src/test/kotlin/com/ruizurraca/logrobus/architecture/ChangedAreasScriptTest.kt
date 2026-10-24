@@ -66,6 +66,17 @@ class ChangedAreasScriptTest {
     }
 
     @Test
+    fun lb002_lintConfigurationChangesRunTheKotlinJobs() {
+        // ktlint reads .editorconfig and detekt reads config/; a config-only PR must still run both.
+        listOf("config/detekt/detekt.yml", ".editorconfig").forEach { path ->
+            repo.listFiles()?.forEach { it.deleteRecursively() }
+            commitBase("README.md")
+            commitChange(path)
+            assertEquals("true", area("kotlin", "main"), path)
+        }
+    }
+
+    @Test
     fun lb002_docsOnlyChangeSkipsTheIosJobs() {
         commitBase("README.md")
         commitChange("docs/guide.md")
