@@ -19,7 +19,7 @@ object ArchitectureRules {
     private val jobsHeader = Regex("""^jobs:\s*$""", RegexOption.MULTILINE)
     private val topLevelKey = Regex("""^\S""", RegexOption.MULTILINE)
     private val jobKey = Regex("""^ {2}([\w-]+):\s*$""", RegexOption.MULTILINE)
-    private val gateNeeds = Regex("""^ {4}needs:\s*\[?([^\]\n]*)]?\s*$""", RegexOption.MULTILINE)
+    private val jobNeedsLine = Regex("""^ {4}needs:\s*\[?([^\]\n]*)]?\s*$""", RegexOption.MULTILINE)
     private val featurePackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
@@ -95,23 +95,38 @@ object ArchitectureRules {
         workflow: String,
         gate: String,
     ): List<String> {
+        val needs = jobNeeds(workflow, gate)
+        return jobBodies(workflow).keys.filter { it != gate && it !in needs }
+    }
+
+    /** The jobs that [job] lists in `needs`, written either as `needs: a` or as `needs: [a, b]`. */
+    fun jobNeeds(
+        workflow: String,
+        job: String,
+    ): Set<String> {
+        val body = jobBodies(workflow)[job]
+        require(body != null) { "The workflow has no '$job' job" }
+        return jobNeedsLine
+            .find(body)
+            ?.groupValues
+            ?.get(1)
+            .orEmpty()
+            .split(',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+    }
+
+    /** Each job of a workflow, by key, mapped to the text of its definition. */
+    private fun jobBodies(workflow: String): Map<String, String> {
         val afterHeader = jobsHeader.find(workflow)?.let { workflow.substring(it.range.last + 1) }.orEmpty()
         val jobs = topLevelKey.find(afterHeader)?.let { afterHeader.substring(0, it.range.first) } ?: afterHeader
         val keys = jobKey.findAll(jobs).toList()
-        val gateIndex = keys.indexOfFirst { it.groupValues[1] == gate }
-        require(gateIndex >= 0) { "The workflow has no '$gate' job" }
-        val gateEnd = keys.getOrNull(gateIndex + 1)?.range?.first ?: jobs.length
-        val needs =
-            gateNeeds
-                .find(jobs.substring(keys[gateIndex].range.last + 1, gateEnd))
-                ?.groupValues
-                ?.get(1)
-                .orEmpty()
-                .split(',')
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .toSet()
-        return keys.map { it.groupValues[1] }.filter { it != gate && it !in needs }
+        return keys
+            .mapIndexed { index, key ->
+                val end = keys.getOrNull(index + 1)?.range?.first ?: jobs.length
+                key.groupValues[1] to jobs.substring(key.range.last + 1, end)
+            }.toMap()
     }
 
     /**
