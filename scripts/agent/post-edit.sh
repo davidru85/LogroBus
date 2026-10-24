@@ -19,7 +19,9 @@ fi
 
 case "$file" in
   *.kt|*.kts)
-    if command -v ktlint >/dev/null 2>&1; then
+    # Only the ktlint pinned in the catalog: another version can format code that ktlintCheck then rejects.
+    pinned="$(sed -n 's/^ktlint = "\(.*\)"$/\1/p' "$root/gradle/libs.versions.toml" 2>/dev/null)"
+    if command -v ktlint >/dev/null 2>&1 && [ -n "$pinned" ] && ktlint --version 2>/dev/null | grep -q -F "$pinned"; then
       if ! out="$(ktlint --format "$file" 2>&1)"; then
         printf 'ktlint could not fix every issue in %s:\n%s\n' "$file" "$out" >&2
         exit 2
