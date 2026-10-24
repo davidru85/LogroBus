@@ -78,6 +78,18 @@ jobs:
       - name: Static analysis with type resolution
         run: ./gradlew ciDetekt
 
+  coverage:
+    name: Coverage
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Line coverage of shared domain, data and feature code (NFR-MNT-01)
+        run: ./gradlew koverVerify
+
   architecture:
     name: Architecture rules
     needs: changes
@@ -188,7 +200,7 @@ jobs:
 
   ci-gate:
     name: Kotlin gate
-    needs: [changes, build-logic, ktlint, detekt, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint]
+    needs: [changes, build-logic, ktlint, detekt, coverage, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint]
     if: ${{ always() && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
