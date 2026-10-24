@@ -135,6 +135,25 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb002_jobNeedsAreParsedFromSingleAndListForms() {
+        val workflow =
+            """
+            jobs:
+              changes:
+                runs-on: ubuntu-latest
+              graph:
+                needs: changes
+              review:
+                needs: [changes, graph]
+                steps:
+                  - run: echo done
+            """.trimIndent()
+        assertEquals(emptySet<String>(), ArchitectureRules.jobNeeds(workflow, job = "changes"))
+        assertEquals(setOf("changes"), ArchitectureRules.jobNeeds(workflow, job = "graph"))
+        assertEquals(setOf("changes", "graph"), ArchitectureRules.jobNeeds(workflow, job = "review"))
+    }
+
+    @Test
     fun lb001_iosFeatureTargetsMayNotDependOnOtherFeatures() {
         val manifest =
             """
