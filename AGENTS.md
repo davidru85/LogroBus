@@ -243,6 +243,16 @@ Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, 
 4. Update `README.md` and `README.es.md`. This is mandatory for every PR (§12).
 5. Update `api_spec.md`, `architecture.md`, `design_guidelines.md`, an ADR or this file if what you learned changes them.
 
+**After opening the pull request (owner rule, 2026-10-25):**
+- The owner approves and merges without saying so in the conversation.
+- The agent that opened the pull request watches it until it is merged or closed. For example, it polls `gh pr view <number> --json state,reviewDecision` in the background, a few minutes apart. An agent that starts a session while its pull request is open does the same.
+- **Merged:**
+  - sync `main` (`git checkout main && git pull --ff-only`);
+  - tell the owner in one line that the merge was detected;
+  - continue with the next task: the one named in the hand-over, or else the next open item of the story in `docs/backlog.md`.
+- **Closed without merging, changes requested, or new review comments:** stop and report to the owner instead of moving on.
+- The other rules still apply, including pushing, opening pull requests and the "ask the owner before" list below. Details: `docs/playbooks/finish-story.md` step 9.
+
 **Ask the project owner before:** changing scope or navigation, superseding an ADR, adding analytics or third-party SDKs, anything that touches legal matters (data reuse, tile licensing, attribution), or changing app identifiers.
 
 **Never:**

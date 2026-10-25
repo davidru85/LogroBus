@@ -100,6 +100,8 @@ You will need:
 
 ### Recent changes
 
+- **2026-10-25:**
+  - Workflow: the owner no longer announces merges in the conversation. The AI agent watches its pull request and starts the next task once it is merged.
 - **2026-10-24:**
   - CI checks dependencies for known security vulnerabilities: a pull request that adds a library with a known critical vulnerability cannot be merged. The first check found one in a networking library (Netty) that Android's test tooling uses, which is not part of the app. The build now uses the fixed version.
   - Accepted ADR-0011, which chose the code quality tools: ktlint, detekt and Kover.
