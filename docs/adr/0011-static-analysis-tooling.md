@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed |
+| Status | Accepted (2026-10-24) |
 | Date | 2026-10-24 |
-| Deciders | Project owner. The owner chose detekt 2.0.0-alpha.6 (2026-10-24); the ktlint CLI and the Kover scope await the owner's confirmation |
+| Deciders | Project owner: chose detekt 2.0.0-alpha.6, then accepted the ktlint CLI and the Kover scope after PR #11 merged (2026-10-24) |
 | Related | LB-002, NFR-MNT-01, NFR-MNT-02, `code_style.md` §2.1, `testing_strategy.md` §3, `ci_cd.md` §3 |
 
 ## Context

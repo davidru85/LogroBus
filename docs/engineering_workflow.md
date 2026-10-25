@@ -81,6 +81,7 @@ GitHub pre-fills the default template. To pick the other one, run `gh pr create 
 - Do not rewrite the history of a branch under review. Keep the TDD commit sequence intact (no interactive rebase or fixup squashing).
 - Merge only when the required checks are green, the PR is approved and the definition of done holds.
 - After merging, the next story branches from the updated `main`.
+- **The owner does not announce merges** (owner decision, 2026-10-25). The agent that opened the pull request watches it, detects the merge, syncs `main` and goes on with the next task. It stops and reports instead if the pull request is closed without merging, or gets changes requested or new comments (`AGENTS.md` §10, `playbooks/finish-story.md` step 9).
 
 ## 6. Definition of ready
 

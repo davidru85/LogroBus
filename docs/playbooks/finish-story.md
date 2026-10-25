@@ -28,4 +28,18 @@
    ```
 
    Use `--draft` if anything is still pending.
-8. **Hand over.** Tell the owner, in Peninsular Spanish, the PR link, what to look at, and any follow-up. **Do not merge** unless the owner explicitly asks. When asked, and only once the checks are green, run `gh pr merge --merge --delete-branch`.
+8. **Hand over.** Tell the owner, in Peninsular Spanish:
+   - the PR link, what to look at, and any follow-up;
+   - the task you will start once the PR is merged.
+
+   **Do not merge** unless the owner explicitly asks. When asked, and only once the checks are green, run `gh pr merge --merge --delete-branch`.
+9. **Watch the pull request until it is merged** (owner rule, 2026-10-25). The owner approves and merges without saying so in the conversation.
+   - Poll its state in the background, a few minutes apart, not in a tight loop:
+
+     ```bash
+     gh pr view <number> --json state,reviewDecision
+     ```
+
+   - **`MERGED`:** run `git checkout main && git pull --ff-only`, tell the owner in one line that the merge was detected, and start the task named in the hand-over. If none was named, start the next open item of the story in `backlog.md`, through `start-story.md` when it is a new story.
+   - **`CLOSED` without a merge, `CHANGES_REQUESTED`, or new review comments:** stop and report to the owner; do not move on.
+   - If the session ends while the PR is open, the next session resumes the watch.

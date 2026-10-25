@@ -1,3 +1,15 @@
+// Security floors for libraries that AGP 9.3 brings onto the plugin classpath with critical advisories
+// (docs/ci_cd.md §6): Bouncy Castle and FreeMarker. As constraints, they never lower a newer version.
+// The floors of AGP's tool configurations live in build-logic (AgpToolSecurityFloors.kt).
+buildscript {
+    dependencies {
+        classpath(platform(libs.bouncycastle.bom))
+        constraints {
+            classpath(libs.freemarker)
+        }
+    }
+}
+
 plugins {
     base
     `jvm-toolchains`

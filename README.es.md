@@ -102,7 +102,11 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **25-10-2026:**
+  - Flujo de trabajo: el propietario ya no anuncia las fusiones en la conversación. El agente de IA vigila su pull request y empieza la siguiente tarea cuando se fusiona.
 - **24-10-2026:**
+  - La CI revisa las dependencias en busca de vulnerabilidades de seguridad conocidas: no se puede fusionar una pull request que añada una biblioteca con una vulnerabilidad crítica conocida. Las primeras revisiones encontraron tres, en bibliotecas que usan las herramientas de compilación y de test de Android (Netty, Bouncy Castle y FreeMarker), no la app. La compilación ya usa las versiones corregidas.
+  - Aceptado el ADR-0011, que eligió las herramientas de calidad del código: ktlint, detekt y Kover.
   - Herramientas de calidad del código: cada cambio en Kotlin se revisa en estilo (ktlint), en reglas del proyecto como «nada de llamadas directas al reloj» (detekt) y en cobertura de tests: al menos el 80 % del código compartido de dominio y de datos (Kover). La CI ejecuta las tres.
   - La CI también comprueba iOS en las máquinas macOS de GitHub: SwiftLint, los tests del código compartido en el simulador de iOS y la compilación y los tests de la app.
   - CI: los jobs de tests de Kotlin y Android tienen nombres legibles aunque se salten. Se saltan a propósito cuando una pull request no toca código.
