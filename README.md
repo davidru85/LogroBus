@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001); the data layer comes next. See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the data layer comes next. See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -101,6 +101,7 @@ You will need:
 ### Recent changes
 
 - **2026-10-25:**
+  - LB-002 is done: CI is complete. Three throwaway pull requests confirmed that a broken test, a style violation and a drop in test coverage each block a merge.
   - CI: the iOS job starts the iPhone simulator while the app is still building, instead of afterwards, so it finishes sooner.
   - Workflow: the owner no longer announces merges in the conversation. The AI agent watches its pull request and starts the next task once it is merged.
 - **2026-10-24:**
