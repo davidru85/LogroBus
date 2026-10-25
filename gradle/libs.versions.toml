@@ -25,6 +25,9 @@ ktlint = "1.8.0"
 # Alpha on purpose: the only detekt line built against Kotlin 2.4 and AGP 9.3 (ADR-0011).
 detekt = "2.0.0-alpha.6"
 kover = "0.9.11"
+# Not a project dependency: the floor for the Netty that AGP's Unified Test Platform resolves
+# (GHSA-c4c3-7fpv-j4q5, docs/ci_cd.md §6). Drop it once AGP brings 4.1.137 or later itself.
+netty = "4.1.139.Final"
 
 [libraries]
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -46,6 +49,7 @@ androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core",
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint" }
+netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
