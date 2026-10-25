@@ -3,7 +3,10 @@ package com.ruizurraca.logrobus.core.common
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** AGENTS.md §5.11: repositories return `AppResult` with a typed `AppError`, which shared mappers turn into UX states. */
+/**
+ * AGENTS.md §5.11: repositories return `AppResult` with a typed `AppError`, which shared mappers turn into the
+ * standard UX states.
+ */
 class AppResultTest {
     // No `else` branches: these only compile while the matches are exhaustive.
     private fun describe(error: AppError): String =
