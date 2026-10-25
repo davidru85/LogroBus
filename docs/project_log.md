@@ -19,6 +19,38 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-25: LB-002 done: CI failure probes
+
+**Decisions (owner)**
+- **LB-002 is closed.** Its planned work without code yet moves to the stories that will have that code:
+  - the Android screenshot and iOS snapshot jobs, to LB-011;
+  - the iOS ViewModel test job, to LB-101;
+  - the nightly workflow, to LB-412, unless an instrumented test needs it first.
+  - Their acceptance criteria now say so.
+
+**Done**
+- PR #13 merged, and the merge was detected by the watcher. The probes were the task named in its hand-over.
+- **The method:** three throwaway draft PRs from `main`, with one deliberate fault each.
+  - Each fault was first seen failing locally.
+  - Each PR's result was posted as a PR comment, the PR was closed unmerged and its branch deleted.
+  - The `pre-push` hook runs no tests, so no hook was bypassed.
+- **#14, a regression** (`TopLevelDestination.start = NEAR_ME`) failed every test layer:
+  - the shared tests on the Android host (`lb012_theAppOpensOnLines`, `lb001_swiftEntryPointExposesTheStartDestination`);
+  - `Shared iOS tests`, on the simulator;
+  - Robolectric (`lb001_appLaunchesOnTheLinesTab`, plus the Spanish variant);
+  - XCUITest (`test_lb001_launchesOnLines`, plus the Spanish variant).
+  - `Coverage` failed too, because `koverVerify` runs the tests first.
+  - Both gates failed.
+- **#15, a ktlint violation** (2-space indentation): `ktlint` failed with "Unexpected indentation", and so did the Kotlin gate.
+- **#16, a coverage drop** (an untested object in `:shared:core:presentation`): `Coverage` failed with 45.45 % against the 80 % rule, and so did the Kotlin gate.
+- `README parity` failed in all three, as expected, because a probe does not update the docs.
+- **Every LB-002 acceptance criterion is now met.** `acceptance_criteria.md` records the evidence.
+
+**Open / next**
+- E0 continues with the data layer:
+  - LB-003, the golden fixtures, which needs OQ-11 (data reuse) settled before fixtures are committed to the public repository (`ci_cd.md` §1.1);
+  - LB-004, the core common, config and location modules.
+
 ## 2026-10-25: LB-002: faster iOS app job
 
 **Decisions (owner)**
