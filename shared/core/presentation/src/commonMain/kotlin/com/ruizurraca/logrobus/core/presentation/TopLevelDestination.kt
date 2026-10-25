@@ -12,6 +12,6 @@ enum class TopLevelDestination {
 
     companion object {
         /** FR-NAV-02: the app always opens on Lines (OQ-15). */
-        val start: TopLevelDestination = LINES
+        val start: TopLevelDestination = NEAR_ME
     }
 }
