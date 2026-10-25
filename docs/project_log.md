@@ -19,6 +19,46 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-25: LB-002: faster iOS app job
+
+**Decisions (owner)**
+- **`iOS build and tests` gets a 10-minute budget,** as a measured exception to the 5-minute rule (`ci_cd.md` §2). The launch UI tests stay on every pull request.
+- **OWASP Dependency-Check is dropped.** The dependency review on pull requests and Dependabot alerts on `main` are the NFR-SEC-05 equivalent. The nightly workflow will be created when its first job exists: Android instrumented tests, iOS 18 fallback snapshots or Maestro.
+- **Throwaway draft PRs approved** for the last LB-002 criterion: a failing test, a lint violation and a coverage drop each fail CI. They are the next task after this PR.
+
+**Done**
+- First task started under the new rule: the agent detected PR #12's merge on its own and went on with the task named in the hand-over.
+- **Measured before changing anything.** The last 8 successful runs of `iOS build and tests` took 5 to 12 minutes, against an 8-minute budget.
+  - Gradle and the XCFramework took about 3 minutes.
+  - XcodeGen took 16 s.
+  - `xcodebuild test` took 169–496 s, and almost all of it went before "Testing started" completed: the simulator's first boot on a fresh runner.
+- **Gradle cache.**
+  - **Restores:** none of those runs restored it. The basic provider keys it on a hash of the Gradle files, with no fallback key, and every recent LB-002 PR changed them.
+  - **Saves:** on `main`, the parallel jobs race for one key. One saves it, which `gh cache list` confirms, and the others log "save failed".
+  - **So** pull requests that leave the Gradle files alone get the cache.
+- **`scripts/ios/test.sh`** now:
+  - looks up the simulator's UDID (`IOS_SIMULATOR` and `IOS_SIMULATOR_OS` replace `IOS_DESTINATION`);
+  - generates the project, then starts `simctl bootstatus -b` in the background;
+  - runs `build-for-testing`, waits for the boot, then runs `test-without-building`, printing each phase's time.
+  - Locally, from a shut-down simulator, it passed in 38 s, and an unknown simulator fails with a hint.
+- **Two variants, measured on CI** (table in `ci_cd.md` §5):
+  - **Boot in parallel with Gradle:** 516 s and 458 s. The boot was fully hidden, but it slowed Gradle to 225–257 s.
+  - **Boot in parallel with the app build (kept):** 319, 526 and 648 s. Gradle took 42–56 s, the build absorbed the boot, and the tests never waited.
+  - **Before,** the median was about 550 s.
+  - **Result:** neither variant is reliably faster, and the gain over the old median is small and uncertain. On the 3-core runner, the simulator's first boot costs minutes wherever it runs.
+  - **Correction:** after two runs, the agent wrote that the kept variant had the better mean. A third run (648 s) disproved it, and the docs were corrected.
+  - **What the PR does deliver:** the per-phase `TIME:` lines, a clear failure for a missing simulator, and a short Gradle phase.
+- **Not cached, on purpose:**
+  - `~/.konan`: 1.2 GB per Kotlin version, about as slow to restore as to download, and it would crowd the 10 GB cache quota;
+  - DerivedData: the app builds in seconds.
+  - `ci_cd.md` §5 records both decisions.
+
+**Open / next**
+- **Budget:** decided above (10 minutes). Revisit it if the `TIME:` lines show the median drifting past it.
+- Rest of LB-002:
+  - next: the throwaway draft PRs (approved);
+  - then: the nightly workflow, once it has a job, and the iOS snapshot and ViewModel tests, which have no code to test before E1.
+
 ## 2026-10-24: LB-002: dependency graph and dependency review
 
 **Decisions (owner)**
