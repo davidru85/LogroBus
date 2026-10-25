@@ -117,6 +117,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - The dependency graph and Dependabot alerts are enabled (2026-10-24, owner decision). Dependabot security update PRs are not.
   - Pushes to `main` submit the Gradle graph that pull requests are compared against. GitHub reads the actions in the workflows by itself.
   - The dependency review runs on pull requests that touch the Kotlin area, which holds every Gradle dependency. A pull request that only changes the actions of `ios-checks.yml` or `policy-checks.yml` is not reviewed: Dependabot alerts cover those actions once they reach `main`.
+  - **Patched transitive dependency:** AGP 9.3's Unified Test Platform, the runner for instrumented tests, brings Netty 4.1.93 and 4.1.110. Both have GHSA-c4c3-7fpv-j4q5 (critical), which the first review found. The Android convention adds the Netty BOM (catalog: `netty`) to its `unified-test-platform-*` configurations (`UnifiedTestPlatform.kt`). Netty never reaches the app. Drop the BOM once AGP brings 4.1.137 or later itself.
   - The iOS package has no external Swift dependencies yet. When it gets one, commit `Package.resolved` so that GitHub can read it (LB-013).
 - Dependabot keeps the actions updated weekly. The `gradle` and `swift` ecosystems are added after LB-001.
 
