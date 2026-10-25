@@ -65,7 +65,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | iOS gate | `ios-checks.yml` | none: it reads the results of the other iOS jobs, all listed in its `needs` (`lb002_iosGateWaitsForEveryIosJob`) | Linux | < 1 min | Active, required after the merge (§4) |
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
 | Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
-| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, then `xcodebuild test` on the iPhone 17e simulator (iOS 26.5), Xcode 26.6 | macOS | < 8 min | Active, through the gate |
+| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: starts booting the iPhone 17e simulator (iOS 26.5), generates the project, then runs `xcodebuild build-for-testing` and `test-without-building` (Xcode 26.6), printing each phase's time (§5) | macOS | < 8 min | Active, through the gate |
 | iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | LB-002 |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
@@ -102,7 +102,16 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - **Gradle:** `gradle/actions/setup-gradle` with the build cache and the configuration cache enabled, through the `.github/actions/gradle-setup` composite action.
   - It uses `cache-provider: basic`, the MIT-licensed cache. The default "enhanced" provider is proprietary, under the Gradle Technologies Terms of Use; it is free for public repositories, but switching to it is the owner's decision.
   - Caches are written only on `main`, and pull requests read them.
-- **Caches:** the Kotlin/Native toolchain (`~/.konan`), Swift Package Manager checkouts and Xcode DerivedData for the iOS jobs.
+- **Caches** (measured on 2026-10-25, LB-002):
+  - **Gradle User Home.** The basic provider keys it on a hash of the Gradle files (`setup-java-<os>-gradle-<hash>`), with no fallback key.
+    - A pull request that changes a build script, the catalog or `version.properties` therefore starts cold.
+    - On `main`, the parallel jobs race to save the same key. One saves, and the others log "save failed", which is harmless.
+  - **Kotlin/Native (`~/.konan`): not cached.** It takes 1.2 GB per Kotlin version once extracted, and restoring it would take about as long as downloading it. It would also crowd the 10 GB cache quota, where each Gradle cache already takes 0.5–0.8 GB.
+  - **Xcode DerivedData and Swift packages: not cached.** The app and its tests build in seconds, and there are no remote packages yet. Revisit this with the first remote package (LB-013).
+- **Simulator boot:**
+  - **The problem:** on a fresh macOS runner, the simulator's first boot took most of the 3–8 minutes that `xcodebuild test` used. The iOS app job overran its 8-minute budget.
+  - **The fix:** `scripts/ios/test.sh` starts the boot in the background before the Gradle build, builds the app and tests, and only then waits for the boot.
+  - **Timing:** it prints each phase's time (`TIME:` lines), so a split can be decided on data.
 - **Concurrency:** `concurrency` with `cancel-in-progress: true` per pull request, so a new push cancels the stale run.
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.
 

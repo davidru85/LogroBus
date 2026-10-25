@@ -103,6 +103,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **25-10-2026:**
+  - CI: el job de iOS arranca el simulador del iPhone mientras aún se compila el código compartido, en lugar de después, así que termina antes.
   - Flujo de trabajo: el propietario ya no anuncia las fusiones en la conversación. El agente de IA vigila su pull request y empieza la siguiente tarea cuando se fusiona.
 - **24-10-2026:**
   - La CI revisa las dependencias en busca de vulnerabilidades de seguridad conocidas: no se puede fusionar una pull request que añada una biblioteca con una vulnerabilidad crítica conocida. Las primeras revisiones encontraron tres, en bibliotecas que usan las herramientas de compilación y de test de Android (Netty, Bouncy Castle y FreeMarker), no la app. La compilación ya usa las versiones corregidas.
