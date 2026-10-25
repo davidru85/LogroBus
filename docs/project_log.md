@@ -33,16 +33,20 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **So** pull requests that leave the Gradle files alone get the cache.
 - **`scripts/ios/test.sh`** now:
   - looks up the simulator's UDID (`IOS_SIMULATOR` and `IOS_SIMULATOR_OS` replace `IOS_DESTINATION`);
-  - starts `simctl bootstatus -b` in the background before the Gradle build;
+  - generates the project, then starts `simctl bootstatus -b` in the background;
   - runs `build-for-testing`, waits for the boot, then runs `test-without-building`, printing each phase's time.
   - Locally, from a shut-down simulator, it passed in 38 s, and an unknown simulator fails with a hint.
+- **Two variants, measured on CI with two runs each** (table in `ci_cd.md` §5):
+  - **Boot in parallel with Gradle:** 516 s and 458 s. The boot was fully hidden, but it slowed Gradle to 225–257 s.
+  - **Boot in parallel with the app build (kept):** 319 s and 526 s. Gradle took 42–56 s, the build absorbed the boot, and the tests never waited.
+  - **Before,** the median was about 550 s. **Result:** the job is faster on average, but its variance on the 3-core runner stays high.
 - **Not cached, on purpose:**
   - `~/.konan`: 1.2 GB per Kotlin version, about as slow to restore as to download, and it would crowd the 10 GB cache quota;
   - DerivedData: the app builds in seconds.
   - `ci_cd.md` §5 records both decisions.
 
 **Open / next**
-- Compare the CI phase times (`TIME:` lines) with the runs above. If the job still overruns its budget, split it on that data.
+- **Watch the `TIME:` lines** of the next runs. If the job's median stays above its 8-minute budget, revisit the tests' first launches on the new simulator, which take 91–154 s. Splitting the job would not help (`ci_cd.md` §5).
 - Rest of LB-002:
   - the nightly workflow, with OWASP Dependency-Check;
   - the iOS snapshot and ViewModel tests;
