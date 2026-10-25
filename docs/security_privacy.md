@@ -47,7 +47,7 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 | CMS HTML (v1.0) | Allow-list sanitiser in shared code; no WebView with JavaScript; only `https` links are opened | NFR-SEC-02, 03 |
 | Deep links | Ids must be numeric and positive, coordinates within range and inside the service area plus 5 km, and unknown parameters are ignored. Invalid links open the parent screen | Spec §6.15 |
 | Secrets | None in the binary or the repository. `scripts/checks/check-secrets.sh` runs in the pre-commit hook. Signing material lives outside the repository (`release_process.md` §3) | NFR-SEC-04 |
-| Dependencies | Dependabot alerts (enabled 2026-10-24) and update PRs. The `Dependency review` CI job fails a pull request that adds a dependency with a known critical vulnerability (`ci_cd.md` §6). OWASP Dependency-Check runs in the nightly workflow (LB-002, planned). Licence allow-list (`engineering_workflow.md` §9) | NFR-SEC-05 |
+| Dependencies | Dependabot alerts (enabled 2026-10-24) and update PRs. The `Dependency review` CI job fails a pull request that adds a dependency with a known critical vulnerability (`ci_cd.md` §6). Together, the review and the alerts are the NFR-SEC-05 equivalent of OWASP Dependency-Check, which is not used (owner decision, 2026-10-25). Licence allow-list (`engineering_workflow.md` §9) | NFR-SEC-05 |
 | Logging | No coordinates, no search text and no personal data in logs. Release builds log only errors | NFR-PRIV-02 |
 | AI agents | Agents run with project permission rules that deny reading signing material and secrets (`agent_harness.md` §4). No production credentials exist in developer environments | none |
 

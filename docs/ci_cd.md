@@ -32,6 +32,8 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 
 1. **One concern per job.** A job answers exactly one question, such as "is the PR title valid?" or "do `:shared:data` unit tests pass?". Its job name is the status-check name.
 2. **Short by design.** Target under 5 minutes per job, with a hard `timeout-minutes` of 10 at most. If a job's typical duration exceeds 5 minutes, split it: by module, by test type, by platform or by shard.
+   - **Exception: the macOS jobs.** The Kotlin/Native toolchain and the simulator's first boot dominate them, and splitting does not shorten them (§5). Their budgets are in §3 and their timeouts in `ios-checks.yml`.
+   - **`iOS build and tests` has a 10-minute budget** (owner decision, 2026-10-25), measured at 5–11 min.
 3. **Parallel and independent.** Jobs do not depend on each other unless one consumes another's artefact, such as iOS tests needing the Kotlin framework.
 4. **Reproducible locally.** Each job runs a single script from `scripts/checks/` or `scripts/ci/`, or a single Gradle task. The failure message tells you the command to run locally.
 5. **Relevant only.** Workflows are split by area with path filters, so a docs-only PR does not build iOS.
@@ -65,7 +67,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | iOS gate | `ios-checks.yml` | none: it reads the results of the other iOS jobs, all listed in its `needs` (`lb002_iosGateWaitsForEveryIosJob`) | Linux | < 1 min | Active, required after the merge (§4) |
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
 | Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
-| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, then `xcodebuild test` on the iPhone 17e simulator (iOS 26.5), Xcode 26.6 | macOS | < 8 min | Active, through the gate |
+| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, boots the iPhone 17e simulator (iOS 26.5) while `xcodebuild build-for-testing` runs, then runs `test-without-building` (Xcode 26.6), printing each phase's time (§5) | macOS | < 10 min (measured exception, §5) | Active, through the gate |
 | iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | LB-002 |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
@@ -74,7 +76,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 
 | Workflow | Schedule | Jobs (one per concern) | Story |
 | --- | --- | --- | --- |
-| `nightly.yml` | Daily | Android instrumented tests; iOS 18 fallback snapshots; Maestro critical journeys (non-blocking); OWASP Dependency-Check | LB-002, LB-412 |
+| `nightly.yml` | Daily | Android instrumented tests; iOS 18 fallback snapshots; Maestro critical journeys (non-blocking). Created when the first of them exists. No OWASP Dependency-Check: the dependency review and Dependabot alerts are the NFR-SEC-05 equivalent (§6, owner decision 2026-10-25) | LB-002, LB-412 |
 | `weekly-fixtures.yml` | Weekly | Re-record fixtures and detect contract drift; opens an issue on drift | LB-003 |
 | `release.yml` | On a `v*` tag | Android upload; iOS upload | M5 (`release_process.md` §7) |
 
@@ -102,7 +104,26 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - **Gradle:** `gradle/actions/setup-gradle` with the build cache and the configuration cache enabled, through the `.github/actions/gradle-setup` composite action.
   - It uses `cache-provider: basic`, the MIT-licensed cache. The default "enhanced" provider is proprietary, under the Gradle Technologies Terms of Use; it is free for public repositories, but switching to it is the owner's decision.
   - Caches are written only on `main`, and pull requests read them.
-- **Caches:** the Kotlin/Native toolchain (`~/.konan`), Swift Package Manager checkouts and Xcode DerivedData for the iOS jobs.
+- **Caches** (measured on 2026-10-25, LB-002):
+  - **Gradle User Home.** The basic provider keys it on a hash of the Gradle files (`setup-java-<os>-gradle-<hash>`), with no fallback key.
+    - A pull request that changes a build script, the catalog or `version.properties` therefore starts cold.
+    - On `main`, the parallel jobs race to save the same key. One saves, and the others log "save failed", which is harmless.
+  - **Kotlin/Native (`~/.konan`): not cached.** It takes 1.2 GB per Kotlin version once extracted, and restoring it would take about as long as downloading it. It would also crowd the 10 GB cache quota, where each Gradle cache already takes 0.5–0.8 GB.
+  - **Xcode DerivedData and Swift packages: not cached.** The app and its tests build in seconds, and there are no remote packages yet. Revisit this with the first remote package (LB-013).
+- **Simulator boot.** On a fresh macOS runner, the simulator's first boot took most of the 3–8 minutes that `xcodebuild test` used. `scripts/ios/test.sh` prints each phase's time (`TIME:` lines). Two variants were measured on CI (2026-10-25):
+
+  | Variant | Job total | Gradle | App and tests build | Tests |
+  | --- | --- | --- | --- | --- |
+  | Before: `xcodebuild test` builds, boots and tests (8 runs) | median about 550 s (301–716) | 103–193 s, with no cache | 169–496 s for build, boot and tests together | |
+  | Boot in parallel with Gradle (2 runs) | 458–516 s, mean 487 s | 225–257 s | 46–75 s | 91–135 s |
+  | **Boot in parallel with the app build (kept, 3 runs)** | 319–648 s, mean 498 s | **42–56 s** | 105–359 s | 121–154 s |
+
+  - **Why the boot cannot be hidden for free:** on the 3-core runner, the boot slows whichever phase it overlaps.
+  - **Neither variant is reliably faster:** the runner's spread, from 319 to 648 s, is larger than the difference between them. Against the median of about 550 s from before, the gain is small and uncertain.
+  - **Why boot during the app build:** Gradle, the phase that reports Kotlin errors, stays under a minute with its cache, instead of being slowed by the boot.
+  - **In both variants the tests never waited for the boot.** Besides the boot's contention, the rest of the time goes to the tests' first launches on the newly booted simulator.
+  - **Splitting the job would not shorten it:** each part would need its own macOS runner, Gradle build and boot, and GitHub Free allows only 5 macOS jobs at once.
+  - **Its budget is therefore 10 minutes** (owner decision, 2026-10-25, §2). The launch UI tests stay on every pull request.
 - **Concurrency:** `concurrency` with `cancel-in-progress: true` per pull request, so a new push cancels the stale run.
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.
 
@@ -115,6 +136,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - **One write permission in pull request workflows:** the `Dependency graph` job has `contents: write`, which submitting to the dependency graph needs. It runs only the Gradle build, as every Kotlin job does. Pull requests from forks get a read-only token, so for them the job fails and the gate blocks the merge.
 - **Dependency scanning (NFR-SEC-05):**
   - The dependency graph and Dependabot alerts are enabled (2026-10-24, owner decision). Dependabot security update PRs are not.
+  - **The equivalent that NFR-SEC-05 allows:** the dependency review on pull requests, plus Dependabot alerts on `main`, stand in for OWASP Dependency-Check, which was dropped from the plan (owner decision, 2026-10-25). Without an NVD API key it is slow, and with one it needs a repository secret.
   - Pushes to `main` submit the Gradle graph that pull requests are compared against. GitHub reads the actions in the workflows by itself.
   - The dependency review runs on pull requests that touch the Kotlin area, which holds every Gradle dependency. A pull request that only changes the actions of `ios-checks.yml` or `policy-checks.yml` is not reviewed: Dependabot alerts cover those actions once they reach `main`.
   - **Security floors for AGP's tools.** The first reviews found three libraries with critical advisories in AGP 9.3's tools. None of them reaches the app.
