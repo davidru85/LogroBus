@@ -117,7 +117,20 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - The dependency graph and Dependabot alerts are enabled (2026-10-24, owner decision). Dependabot security update PRs are not.
   - Pushes to `main` submit the Gradle graph that pull requests are compared against. GitHub reads the actions in the workflows by itself.
   - The dependency review runs on pull requests that touch the Kotlin area, which holds every Gradle dependency. A pull request that only changes the actions of `ios-checks.yml` or `policy-checks.yml` is not reviewed: Dependabot alerts cover those actions once they reach `main`.
-  - **Patched transitive dependency:** AGP 9.3's Unified Test Platform, the runner for instrumented tests, brings Netty 4.1.93 and 4.1.110. Both have GHSA-c4c3-7fpv-j4q5 (critical), which the first review found. The Android convention adds the Netty BOM (catalog: `netty`) to its `unified-test-platform-*` configurations (`UnifiedTestPlatform.kt`). Netty never reaches the app. Drop the BOM once AGP brings 4.1.137 or later itself.
+  - **Security floors for AGP's tools.** The first reviews found three libraries with critical advisories in AGP 9.3's tools. None of them reaches the app.
+    | Library | Found | Fixed in | Where AGP brings it |
+    | --- | --- | --- | --- |
+    | Netty | 4.1.93 and 4.1.110 (GHSA-c4c3-7fpv-j4q5) | 4.1.139.Final | the instrumented test runner (`unified-test-platform-*`) |
+    | Bouncy Castle | 1.79 (GHSA-574f-3g2m-x479, GHSA-9pwp-9qqc-pr26) | 1.85 | Android lint (`androidLintTool`), the test runner and AGP's plugin classpath |
+    | FreeMarker | 2.3.32 (GHSA-27j2-h3m2-8237) | 2.3.35 | AGP's plugin classpath |
+
+    The fixed versions are catalog entries (`netty`, `bouncycastle`, `freemarker`):
+    - in each module, the Android and KMP conventions add the Netty and Bouncy Castle BOMs to AGP's tool configurations (`AgpToolSecurityFloors.kt`);
+    - the root `build.gradle.kts` raises Bouncy Castle and FreeMarker on the plugin classpath.
+
+    The floors are constraints, so a newer version from AGP always wins. **On every AGP upgrade:**
+    - drop the floors that AGP has caught up with;
+    - query the advisories for every resolved coordinate, as the PR #12 log entry describes.
   - The iOS package has no external Swift dependencies yet. When it gets one, commit `Package.resolved` so that GitHub can read it (LB-013).
 - Dependabot keeps the actions updated weekly. The `gradle` and `swift` ecosystems are added after LB-001.
 

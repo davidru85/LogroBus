@@ -103,7 +103,7 @@ You will need:
 - **2026-10-25:**
   - Workflow: the owner no longer announces merges in the conversation. The AI agent watches its pull request and starts the next task once it is merged.
 - **2026-10-24:**
-  - CI checks dependencies for known security vulnerabilities: a pull request that adds a library with a known critical vulnerability cannot be merged. The first check found one in a networking library (Netty) that Android's test tooling uses, which is not part of the app. The build now uses the fixed version.
+  - CI checks dependencies for known security vulnerabilities: a pull request that adds a library with a known critical vulnerability cannot be merged. The first checks found three, in libraries that Android's build and test tools use (Netty, Bouncy Castle and FreeMarker), none of them part of the app. The build now uses the fixed versions.
   - Accepted ADR-0011, which chose the code quality tools: ktlint, detekt and Kover.
   - Code quality tools: every Kotlin change is checked for style (ktlint), for project rules such as "no direct clock calls" (detekt), and for test coverage: at least 80 % of shared domain and data code (Kover). CI runs all three.
   - CI now also checks iOS on GitHub's macOS machines: SwiftLint, the shared code's tests on the iOS simulator, and the app's build and tests.
