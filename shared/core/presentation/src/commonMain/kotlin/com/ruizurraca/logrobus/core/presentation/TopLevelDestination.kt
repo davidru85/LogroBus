@@ -5,9 +5,9 @@ package com.ruizurraca.logrobus.core.presentation
  * icons and back stacks (ADR-0002, ADR-0005); shared code carries only the meaning.
  */
 enum class TopLevelDestination {
-    LINES,
-    NEAR_ME,
-    PLANNER,
+  LINES,
+  NEAR_ME,
+  PLANNER,
     ;
 
     companion object {
