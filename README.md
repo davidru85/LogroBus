@@ -101,6 +101,7 @@ You will need:
 ### Recent changes
 
 - **2026-10-25:**
+  - CI: the iOS job starts the iPhone simulator while the shared code is still building, instead of afterwards, so it finishes sooner.
   - Workflow: the owner no longer announces merges in the conversation. The AI agent watches its pull request and starts the next task once it is merged.
 - **2026-10-24:**
   - CI checks dependencies for known security vulnerabilities: a pull request that adds a library with a known critical vulnerability cannot be merged. The first checks found three, in libraries that Android's build and test tools use (Netty, Bouncy Castle and FreeMarker), none of them part of the app. The build now uses the fixed versions.

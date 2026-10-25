@@ -19,6 +19,35 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-25: LB-002: faster iOS app job
+
+**Done**
+- First task started under the new rule: the agent detected PR #12's merge on its own and went on with the task named in the hand-over.
+- **Measured before changing anything.** The last 8 successful runs of `iOS build and tests` took 5 to 12 minutes, against an 8-minute budget.
+  - Gradle and the XCFramework took about 3 minutes.
+  - XcodeGen took 16 s.
+  - `xcodebuild test` took 169–496 s, and almost all of it went before "Testing started" completed: the simulator's first boot on a fresh runner.
+- **Gradle cache.**
+  - **Restores:** none of those runs restored it. The basic provider keys it on a hash of the Gradle files, with no fallback key, and every recent LB-002 PR changed them.
+  - **Saves:** on `main`, the parallel jobs race for one key. One saves it, which `gh cache list` confirms, and the others log "save failed".
+  - **So** pull requests that leave the Gradle files alone get the cache.
+- **`scripts/ios/test.sh`** now:
+  - looks up the simulator's UDID (`IOS_SIMULATOR` and `IOS_SIMULATOR_OS` replace `IOS_DESTINATION`);
+  - starts `simctl bootstatus -b` in the background before the Gradle build;
+  - runs `build-for-testing`, waits for the boot, then runs `test-without-building`, printing each phase's time.
+  - Locally, from a shut-down simulator, it passed in 38 s, and an unknown simulator fails with a hint.
+- **Not cached, on purpose:**
+  - `~/.konan`: 1.2 GB per Kotlin version, about as slow to restore as to download, and it would crowd the 10 GB cache quota;
+  - DerivedData: the app builds in seconds.
+  - `ci_cd.md` §5 records both decisions.
+
+**Open / next**
+- Compare the CI phase times (`TIME:` lines) with the runs above. If the job still overruns its budget, split it on that data.
+- Rest of LB-002:
+  - the nightly workflow, with OWASP Dependency-Check;
+  - the iOS snapshot and ViewModel tests;
+  - the throwaway-branch check that failures fail CI.
+
 ## 2026-10-24: LB-002: dependency graph and dependency review
 
 **Decisions (owner)**

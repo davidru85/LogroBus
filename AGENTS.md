@@ -115,7 +115,7 @@ scripts/agent/session-start.sh                    # session context, for agents 
 ./gradlew :shared:umbrella:linkDebugFrameworkIosSimulatorArm64   # build the iOS framework only
 
 scripts/ios/generate-project.sh [debug|release]   # macOS: Shared XCFramework + Version.xcconfig + iosApp.xcodeproj (XcodeGen ≥ 2.46); rerun after Kotlin changes
-scripts/ios/test.sh                               # macOS: generate the project, then every iOS test on the iPhone 17e simulator (as CI)
+scripts/ios/test.sh                               # macOS: generate the project, then every iOS test on the iPhone 17e simulator, booted in the background (as CI; IOS_SIMULATOR, IOS_SIMULATOR_OS)
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
   -destination 'platform=iOS Simulator,name=<iPhone simulator>' test   # iOS build + bundle tests + launch UI tests
 swiftlint --strict                                # Swift lint (config in .swiftlint.yml)
