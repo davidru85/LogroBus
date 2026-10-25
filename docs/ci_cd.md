@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. iOS snapshot and ViewModel tests and the nightly workflow follow in LB-002 |
+| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. LB-002 is done (2026-10-25). The screenshot jobs follow in LB-011, the iOS ViewModel tests in LB-101 and the nightly workflow in LB-412 |
 | Last updated | 2026-10-24 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
@@ -60,7 +60,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Android unit tests (`<module>`) (matrix over every Android module, checked by `lb002_kotlinWorkflowRunsUnitTestsForEveryAndroidModule`): ViewModel tests and Robolectric UI tests | `kotlin-checks.yml` | `./gradlew :android:<module>:ciUnitTest` | Linux | < 5 min each | Active, through the gate |
 | Android lint (every Android module) | `kotlin-checks.yml` | `./gradlew lintDebug` | Linux | < 5 min | Active, through the gate |
 | Android build | `kotlin-checks.yml` | `./gradlew :android:app:assembleDebug` | Linux | < 5 min | Active, through the gate |
-| Android screenshots: `<feature>` (matrix) | `kotlin-checks.yml` | `./gradlew :android:feature:<feature>:verifyRoborazziDebug` | Linux | < 5 min each | LB-002 |
+| Android screenshots: `<feature>` (matrix) | `kotlin-checks.yml` | `./gradlew :android:feature:<feature>:verifyRoborazziDebug` | Linux | < 5 min each | LB-011 |
 | Dependency graph | `kotlin-checks.yml` | `gradle/actions/dependency-submission`: resolves every Gradle configuration and submits it to GitHub's dependency graph, which cannot read Gradle build files (§6) | Linux | < 5 min | Active, through the gate |
 | Dependency review | `kotlin-checks.yml` | `actions/dependency-review-action`, after the dependency graph job (`lb002_dependencyReviewWaitsForTheGradleDependencyGraph`): fails on a known critical vulnerability in an added or changed dependency, in any scope (NFR-SEC-05). It needs GitHub, so locally `./gradlew dependencies` only lists what it checks | Linux | < 4 min | Active, through the gate (pull requests only) |
 | iOS changes | `ios-checks.yml` | `scripts/ci/changed-areas.sh origin/main` (area `ios`) | Linux | < 1 min | Active (§4) |
@@ -68,7 +68,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
 | Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
 | iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, boots the iPhone 17e simulator (iOS 26.5) while `xcodebuild build-for-testing` runs, then runs `test-without-building` (Xcode 26.6), printing each phase's time (§5) | macOS | < 10 min (measured exception, §5) | Active, through the gate |
-| iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | LB-002 |
+| iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | LB-011 (snapshots), LB-101 (ViewModel tests) |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
 
@@ -76,7 +76,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 
 | Workflow | Schedule | Jobs (one per concern) | Story |
 | --- | --- | --- | --- |
-| `nightly.yml` | Daily | Android instrumented tests; iOS 18 fallback snapshots; Maestro critical journeys (non-blocking). Created when the first of them exists. No OWASP Dependency-Check: the dependency review and Dependabot alerts are the NFR-SEC-05 equivalent (§6, owner decision 2026-10-25) | LB-002, LB-412 |
+| `nightly.yml` | Daily | Android instrumented tests; iOS 18 fallback snapshots; Maestro critical journeys (non-blocking). Created when the first of them exists. No OWASP Dependency-Check: the dependency review and Dependabot alerts are the NFR-SEC-05 equivalent (§6, owner decision 2026-10-25) | LB-412, or the first instrumented test |
 | `weekly-fixtures.yml` | Weekly | Re-record fixtures and detect contract drift; opens an issue on drift | LB-003 |
 | `release.yml` | On a `v*` tag | Android upload; iOS upload | M5 (`release_process.md` §7) |
 

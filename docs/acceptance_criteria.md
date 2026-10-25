@@ -47,6 +47,18 @@ Done when:
 - Every CI step calls a script or a Gradle task that also runs locally (NFR-MNT-05).
 - No secret, keystore or `local.properties` is committed; a secret-pattern scan runs in CI.
 
+Verified on 2026-10-25, and the story is done:
+- **Probes:** PRs #14–#16 were closed unmerged.
+  - A regression failed the shared, Android and iOS tests.
+  - An indentation fault failed `ktlint`.
+  - An untested object failed `Coverage` (45.5 % against 80 %).
+  - Each one failed its gate.
+- **Dependency scan:** it runs on every pull request that touches the Kotlin area, which holds every Gradle dependency, and Dependabot alerts cover `main` (`ci_cd.md` §6).
+- **Moved to other stories (owner decision, 2026-10-25):**
+  - the screenshot jobs, to LB-011;
+  - the iOS ViewModel test job, to LB-101;
+  - the nightly workflow, to LB-412.
+
 ### LB-003 Golden fixtures and recorder
 Refs: spec §10.2, `api_spec.md` §9, NFR-PRIV-02
 
@@ -144,6 +156,7 @@ Done when:
 - `[Android]` `@OptIn(ExperimentalMaterial3ExpressiveApi::class)` appears only in the `designsystem` package (static check).
 - `[iOS]` `adaptiveGlass` and the glass button styles render Liquid Glass on iOS 26 and the material fallback on iOS 18 (snapshots on both).
 - Every component has light, dark and 200 % font snapshots.
+- CI runs the Android screenshot tests (`verifyRoborazziDebug`, a matrix per module) and the iOS snapshot tests in their own jobs, behind the Kotlin and iOS gates (moved from LB-002).
 
 ### LB-012 App shell
 Refs: FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005
@@ -213,6 +226,7 @@ Refs: FR-LINE-01, FR-LINE-02, DD-08, NFR-A11Y-02
 - **Given** lines 4 and B1, which share a colour, **when** both rows render, **then** each badge shows its own code and the screen reader says "Line 4" and "Line B1", never a colour.
 - **Given** 200 % font, **when** the list renders, **then** no line code is truncated, and display names wrap rather than clip.
 - **Given** a first launch with no network, **when** Lines opens, **then** the error state shows the network reason and Retry, and Retry loads the list once connectivity returns (ADR-0008).
+- **Given** the first Swift ViewModel, `LinesViewModel`, **when** a pull request changes it, **then** CI runs its tests in the `iOS ViewModel and snapshot tests` job, behind the iOS gate (moved from LB-002).
 
 ### LB-102 Lines search
 Refs: FR-LINE-03, FR-LINE-16, NFR-I18N-03
@@ -592,6 +606,7 @@ Done when:
   - losing and restoring connectivity on stop detail (network error, then Retry).
 - The flows run nightly on both platforms against the live source, and report results without blocking merges.
 - The flows locate elements by stable accessibility identifiers, never by screen coordinates.
+- `nightly.yml` runs the flows. It is created here, unless an Android instrumented test needed it first (moved from LB-002).
 
 
 ### LB-413 Apply the Figma designs
