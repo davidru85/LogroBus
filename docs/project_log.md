@@ -46,13 +46,28 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **TDD:** red `UnifiedTestPlatformTest`, then green.
   - **How:** the Android convention adds the Netty BOM to those configurations, through the DependencyHandler. Added straight to the configuration, the BOM lost its platform attribute and changed nothing.
   - **Probe:** in all 18 configurations, every Netty module now resolves to 4.1.139.Final.
+- **The second review found two more libraries.** Once Netty was patched, it failed on Bouncy Castle 1.79 (two critical advisories) in Android lint, the test runner and AGP's own plugin classpath, and the first run had not shown them.
+  - **A full query to stop finding issues one at a time:** an init script listed the 511 coordinates resolved across every configuration, settings and buildscript classpaths included. GitHub's advisory API was then queried for them in batches (`GET /advisories?ecosystem=maven&severity=critical&affects=…`). It found exactly three critical issues:
+    - Netty, already patched;
+    - Bouncy Castle;
+    - FreeMarker 2.3.32 (GHSA-27j2-h3m2-8237), on AGP's plugin classpath.
+  - **The fix (owner decision):** patch them as Netty was patched.
+    - TDD: red `AgpToolConfigurationTest`, then green.
+    - `AgpToolSecurityFloors.kt` adds the Netty and Bouncy Castle BOMs to every AGP tool configuration (`unified-test-platform-*`, `androidLintTool`), from both the Android and the KMP conventions.
+    - The root build script raises Bouncy Castle (its BOM, 1.85, the version Robolectric already uses) and FreeMarker (2.3.35) on the plugin classpath.
+  - **Verified:**
+    - the query again found no critical advisory;
+    - AGP generated a new debug keystore with Bouncy Castle 1.85 (empty `ANDROID_USER_HOME`);
+    - `apksigner` verified the debug APK;
+    - Android lint and `run-all.sh` pass.
 - **Without the ordering, the review gives a false green.** If it ran alongside the graph job, it would compare a pull request without its Gradle dependencies and pass. The new guard test prevents that.
 - Docs updated: `ci_cd.md` (catalogue, §6 permissions and scanning), `security_privacy.md`, `architecture.md`, `AGENTS.md`, ADR-0011 and its index, the backlog and both READMEs.
 
 **Open / next**
 - **Scope of the review:** it covers the Kotlin area, which holds every Gradle dependency. Actions changed only in `ios-checks.yml` or `policy-checks.yml` are covered by Dependabot alerts after the merge.
 - **First run:** `main` had no submitted Gradle graph, so this PR's review compared against an empty base. It waited the full 3 minutes for the base snapshot, then reviewed every Gradle dependency as added; that is how it found the Netty issue. After the merge, `main` has a graph and reviews compare against it.
-- **Drop the Netty BOM** once AGP brings Netty 4.1.137 or later itself. The nightly workflow will be the first to run instrumented tests on the patched Netty.
+- **Drop each security floor** once AGP brings a fixed version itself (`ci_cd.md` §6). The nightly workflow will be the first to run instrumented tests with the patched Netty and Bouncy Castle.
+- **Two high advisories remain**, which do not block: jdom2 2.0.6 (GHSA-2363-cqg2-863c, XXE) and jose4j 0.9.5 (GHSA-3677-xxcr-wjqv, DoS), both on AGP's plugin classpath. Revisit them with the next AGP upgrade.
 - **Rest of LB-002:**
   - the nightly workflow, with OWASP Dependency-Check;
   - the iOS snapshot and ViewModel tests, which have no code to test before E1;
