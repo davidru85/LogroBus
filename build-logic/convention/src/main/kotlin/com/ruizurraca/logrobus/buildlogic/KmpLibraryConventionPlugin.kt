@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 /**
  * `logrobus.kmp.library`: every shared Kotlin Multiplatform module (ADR-0007).
  * Targets Android (host tests enabled), iOS device and iOS simulator on Apple silicon;
- * derives the namespace from the module path; enforces [ModuleRules]; registers `ciUnitTest`.
+ * derives the namespace from the module path; raises the security floors of AGP's tools; enforces [ModuleRules];
+ * registers `ciUnitTest`.
  */
 class KmpLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) =
@@ -51,6 +52,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                 alsoRun = ::isUntypedKmpSourceSetTask,
             )
             configureKover()
+            raiseAgpToolSecurityFloors()
             verifyModuleRules()
         }
 }
