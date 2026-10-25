@@ -21,6 +21,11 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ## 2026-10-25: LB-002: faster iOS app job
 
+**Decisions (owner)**
+- **`iOS build and tests` gets a 10-minute budget,** as a measured exception to the 5-minute rule (`ci_cd.md` §2). The launch UI tests stay on every pull request.
+- **OWASP Dependency-Check is dropped.** The dependency review on pull requests and Dependabot alerts on `main` are the NFR-SEC-05 equivalent. The nightly workflow will be created when its first job exists: Android instrumented tests, iOS 18 fallback snapshots or Maestro.
+- **Throwaway draft PRs approved** for the last LB-002 criterion: a failing test, a lint violation and a coverage drop each fail CI. They are the next task after this PR.
+
 **Done**
 - First task started under the new rule: the agent detected PR #12's merge on its own and went on with the task named in the hand-over.
 - **Measured before changing anything.** The last 8 successful runs of `iOS build and tests` took 5 to 12 minutes, against an 8-minute budget.
@@ -49,11 +54,10 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - `ci_cd.md` §5 records both decisions.
 
 **Open / next**
-- **Budget, the owner's decision:** the job runs 5–11 min on this runner, against an 8-minute budget. Splitting it would not help (`ci_cd.md` §5). Either raise its budget to match, or move the launch UI tests to the nightly workflow. The UI tests are the ones that need the slow first launches.
+- **Budget:** decided above (10 minutes). Revisit it if the `TIME:` lines show the median drifting past it.
 - Rest of LB-002:
-  - the nightly workflow, with OWASP Dependency-Check;
-  - the iOS snapshot and ViewModel tests;
-  - the throwaway-branch check that failures fail CI.
+  - next: the throwaway draft PRs (approved);
+  - then: the nightly workflow, once it has a job, and the iOS snapshot and ViewModel tests, which have no code to test before E1.
 
 ## 2026-10-24: LB-002: dependency graph and dependency review
 
