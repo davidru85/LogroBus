@@ -60,7 +60,7 @@ The app always opens on **Lines** (OQ-15). Saved stops with live arrivals live i
 
 When documents disagree, this order wins: the project owner's explicit instruction in the current task, then accepted ADRs, then this file, then the other `docs/`, then the functional spec. Fix the lower-ranked document in the same change, or raise an open question if the conflict is not yours to settle.
 
-**Current status (2026-10-24):** LB-001 is done: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place, and iOS is built as ADR-0010 describes. LB-002 is in progress: CI runs the policy, Kotlin, Android and iOS jobs on every pull request, behind the required `Kotlin gate` and `iOS gate`, including ktlint, detekt and Kover (ADR-0011). The repository is public and `main` is protected (LB-415). Check `docs/project_log.md` for the latest state.
+**Current status (2026-10-24):** LB-001 is done: the Gradle build, the shared modules, and the Android and iOS app skeletons are in place, and iOS is built as ADR-0010 describes. LB-002 is in progress: CI runs the policy, Kotlin, Android and iOS jobs on every pull request, behind the required `Kotlin gate` and `iOS gate`, including ktlint, detekt and Kover (ADR-0011) and a dependency review that fails on known critical vulnerabilities. The repository is public and `main` is protected (LB-415). Check `docs/project_log.md` for the latest state.
 
 ## 3. Repository layout (target)
 
@@ -242,6 +242,16 @@ Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, 
 3. Add an entry to `docs/project_log.md` covering what changed, the decisions taken and the follow-ups.
 4. Update `README.md` and `README.es.md`. This is mandatory for every PR (§12).
 5. Update `api_spec.md`, `architecture.md`, `design_guidelines.md`, an ADR or this file if what you learned changes them.
+
+**After opening the pull request (owner rule, 2026-10-25):**
+- The owner approves and merges without saying so in the conversation.
+- The agent that opened the pull request watches it until it is merged or closed. For example, it polls `gh pr view <number> --json state,reviewDecision` in the background, a few minutes apart. An agent that starts a session while its pull request is open does the same.
+- **Merged:**
+  - sync `main` (`git checkout main && git pull --ff-only`);
+  - tell the owner in one line that the merge was detected;
+  - continue with the next task: the one named in the hand-over, or else the next open item of the story in `docs/backlog.md`.
+- **Closed without merging, changes requested, or new review comments:** stop and report to the owner instead of moving on.
+- The other rules still apply, including pushing, opening pull requests and the "ask the owner before" list below. Details: `docs/playbooks/finish-story.md` step 9.
 
 **Ask the project owner before:** changing scope or navigation, superseding an ADR, adding analytics or third-party SDKs, anything that touches legal matters (data reuse, tile licensing, attribution), or changing app identifiers.
 

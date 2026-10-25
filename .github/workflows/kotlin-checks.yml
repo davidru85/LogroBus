@@ -198,9 +198,56 @@ jobs:
       - name: Lint (debug, every Android module)
         run: ./gradlew lintDebug
 
+  dependency-graph:
+    name: Dependency graph
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Submitting to GitHub's dependency graph needs write access. Only this job has it, and it runs
+    # nothing from the pull request but the Gradle build. Pull requests from forks get a read-only
+    # token, so this job fails for them (docs/ci_cd.md §6).
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          # Matches jvm-toolchain in gradle/libs.versions.toml, as in .github/actions/gradle-setup.
+          java-version: "21"
+      # GitHub cannot read Gradle dependencies from the build files: this resolves every
+      # configuration and submits the result for the commit. Pushes to main submit the base
+      # that pull requests are compared against.
+      - name: Submit the resolved Gradle dependencies
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          # The MIT-licensed cache, as in .github/actions/gradle-setup (docs/ci_cd.md §5).
+          cache-provider: basic
+          validate-wrappers: true
+          dependency-graph: generate-and-submit
+
+  dependency-review:
+    name: Dependency review
+    # Must wait for the submitted graph (lb002_dependencyReviewWaitsForTheGradleDependencyGraph).
+    needs: [changes, dependency-graph]
+    if: ${{ github.event_name == 'pull_request' && needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Known critical vulnerabilities in added or changed dependencies (NFR-SEC-05)
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: critical
+          # Build plugins and test libraries run on CI and developer machines too.
+          fail-on-scopes: runtime, development, unknown
+          # GitHub processes a submitted graph asynchronously; wait for it rather than compare without it.
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 180
+
   ci-gate:
     name: Kotlin gate
-    needs: [changes, build-logic, ktlint, detekt, coverage, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint]
+    needs: [changes, build-logic, ktlint, detekt, coverage, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint, dependency-graph, dependency-review]
     if: ${{ always() && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
