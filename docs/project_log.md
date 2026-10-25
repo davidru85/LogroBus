@@ -23,6 +23,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 **Decisions (owner)**
 - **ADR-0011 accepted** after PR #11 merged: the ktlint CLI and the Kover scope, on top of the detekt version the owner had already chosen.
+- **Merges are no longer announced** (2026-10-25). The agent watches the pull request it opened. Once it is merged, the agent syncs `main` and goes on with the next task. On a close without merge, requested changes or new comments, it stops and reports. Recorded in `AGENTS.md` §10, `engineering_workflow.md` §5 and `playbooks/finish-story.md` step 9.
 - **Dependabot alerts enabled**, which also enables the dependency graph that the dependency review needs. Before this, the repository's dependency graph was off: its SBOM endpoint returned 404. The agent enabled it through the API (`PUT /repos/…/vulnerability-alerts`) with the owner's approval. Dependabot security update PRs stay off.
 
 **Done**
