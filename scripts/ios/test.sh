@@ -6,8 +6,8 @@
 # (iosAppUITests). The "iOS build and tests" CI job runs exactly this.
 #
 # A simulator's first boot on a fresh CI machine takes minutes. The script therefore starts the
-# boot before the Gradle build and waits for it only once the tests are built, and it prints
-# the time of each phase (docs/ci_cd.md §5).
+# boot before building the app and tests and waits for it only once they are built, and it
+# prints the time of each phase (docs/ci_cd.md §5).
 #
 # IOS_SIMULATOR and IOS_SIMULATOR_OS choose the simulator. The default exists in Xcode 26 or
 # later and on the CI image.
@@ -34,14 +34,15 @@ if [ -z "$udid" ]; then
   exit 1
 fi
 
-# Boots the simulator, or returns at once if it is already booted, in the background.
-boot_log="$(mktemp)"
-xcrun simctl bootstatus "$udid" -b > "$boot_log" 2>&1 &
-boot_pid=$!
-
 phase_start=$SECONDS
 scripts/ios/generate-project.sh
 echo "TIME: project generated in $((SECONDS - phase_start)) s"
+
+# Boots the simulator, or returns at once if it is already booted, in the background. Started after
+# Gradle, because on a 3-core CI runner a boot alongside the Gradle build slowed it by minutes.
+boot_log="$(mktemp)"
+xcrun simctl bootstatus "$udid" -b > "$boot_log" 2>&1 &
+boot_pid=$!
 
 destination="platform=iOS Simulator,id=$udid"
 phase_start=$SECONDS
