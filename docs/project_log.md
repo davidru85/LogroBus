@@ -38,12 +38,20 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - it needs the graph job, and waits for GitHub to process the snapshot;
   - it fails on a known critical vulnerability in any scope.
   - The Kotlin gate needs both jobs.
+- **The first review found a real issue.**
+  - **The finding:** GHSA-c4c3-7fpv-j4q5 (critical) in Netty 4.1.93. A probe of every configuration traced it, and 4.1.110, to gRPC in AGP's Unified Test Platform (`unified-test-platform-*`), the runner for instrumented tests. Netty never reaches the app.
+  - **Exposure:** the flaw is an SNI-routing bypass in TLS servers, and here Netty only talks to a local emulator, so practical exposure is low.
+  - **The fix (owner decision):** patch it rather than allow-list it or hide those configurations. The owner chose 4.1.139.Final, the latest 4.1.x, which has no known advisories.
+  - **TDD:** red `UnifiedTestPlatformTest`, then green.
+  - **How:** the Android convention adds the Netty BOM to those configurations, through the DependencyHandler. Added straight to the configuration, the BOM lost its platform attribute and changed nothing.
+  - **Probe:** in all 18 configurations, every Netty module now resolves to 4.1.139.Final.
 - **Without the ordering, the review gives a false green.** If it ran alongside the graph job, it would compare a pull request without its Gradle dependencies and pass. The new guard test prevents that.
 - Docs updated: `ci_cd.md` (catalogue, §6 permissions and scanning), `security_privacy.md`, `architecture.md`, `AGENTS.md`, ADR-0011 and its index, the backlog and both READMEs.
 
 **Open / next**
 - **Scope of the review:** it covers the Kotlin area, which holds every Gradle dependency. Actions changed only in `ios-checks.yml` or `policy-checks.yml` are covered by Dependabot alerts after the merge.
-- **First run:** `main` has no submitted Gradle graph yet, so this PR's review compares against an empty base. It waits up to 3 minutes for the base snapshot, then reviews every Gradle dependency as added.
+- **First run:** `main` had no submitted Gradle graph, so this PR's review compared against an empty base. It waited the full 3 minutes for the base snapshot, then reviewed every Gradle dependency as added; that is how it found the Netty issue. After the merge, `main` has a graph and reviews compare against it.
+- **Drop the Netty BOM** once AGP brings Netty 4.1.137 or later itself. The nightly workflow will be the first to run instrumented tests on the patched Netty.
 - **Rest of LB-002:**
   - the nightly workflow, with OWASP Dependency-Check;
   - the iOS snapshot and ViewModel tests, which have no code to test before E1;
