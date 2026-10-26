@@ -22,7 +22,10 @@ class BoundingBoxTest {
     private fun assertAbout(
         expectedMeters: Double,
         actualMeters: Double,
-    ) = assertTrue(abs(actualMeters - expectedMeters) / expectedMeters < 0.005, "$actualMeters m, not $expectedMeters m")
+    ) = assertTrue(
+        abs(actualMeters - expectedMeters) / expectedMeters < 0.005,
+        "$actualMeters m, not $expectedMeters m",
+    )
 
     @Test
     fun lb004_aBoxAroundAPointReaches2KilometresInEveryDirection() {
@@ -38,11 +41,23 @@ class BoundingBoxTest {
     fun lb004_expandingBy5KilometresMovesEveryEdgeOutwards() {
         val expanded = logrono.expandedBy(5_000.0)
 
-        assertAbout(5_000.0, GeoPoint(logrono.north, logrono.west).distanceMetersTo(GeoPoint(expanded.north, logrono.west)))
-        assertAbout(5_000.0, GeoPoint(logrono.south, logrono.west).distanceMetersTo(GeoPoint(expanded.south, logrono.west)))
+        assertAbout(
+            5_000.0,
+            GeoPoint(logrono.north, logrono.west).distanceMetersTo(GeoPoint(expanded.north, logrono.west)),
+        )
+        assertAbout(
+            5_000.0,
+            GeoPoint(logrono.south, logrono.west).distanceMetersTo(GeoPoint(expanded.south, logrono.west)),
+        )
         // Longitude degrees shrink away from the equator: along the northern edge, the margin is exactly 5 km.
-        assertAbout(5_000.0, GeoPoint(expanded.north, logrono.east).distanceMetersTo(GeoPoint(expanded.north, expanded.east)))
-        assertAbout(5_000.0, GeoPoint(expanded.north, logrono.west).distanceMetersTo(GeoPoint(expanded.north, expanded.west)))
+        assertAbout(
+            5_000.0,
+            GeoPoint(expanded.north, logrono.east).distanceMetersTo(GeoPoint(expanded.north, expanded.east)),
+        )
+        assertAbout(
+            5_000.0,
+            GeoPoint(expanded.north, logrono.west).distanceMetersTo(GeoPoint(expanded.north, expanded.west)),
+        )
     }
 
     @Test
