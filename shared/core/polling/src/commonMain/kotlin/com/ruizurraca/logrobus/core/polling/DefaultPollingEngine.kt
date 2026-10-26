@@ -27,6 +27,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
 import kotlin.random.Random
+import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -95,16 +96,39 @@ class DefaultPollingEngine internal constructor(
     ) {
         val latest = MutableStateFlow<Timed<T>?>(null)
 
+        // The schedule outlives each activation. Only this key's coroutine touches it, one activation at a time.
+        private var failures = 0
+        private var lastAttempt: ComparableTimeMark? = null
+        private var plannedWait = Duration.ZERO
+        private var wasInBackground = false
+
         init {
             keysScope.launch {
                 combine(latest.subscriptionCount, appLifecycle.isInForeground) { collectors, inForeground ->
-                    collectors > 0 && inForeground
-                }.distinctUntilChanged().collectLatest { active -> if (active) loop() }
+                    (collectors > 0) to inForeground
+                }.distinctUntilChanged().collectLatest { (collected, inForeground) ->
+                    if (!inForeground) wasInBackground = true
+                    if (collected && inForeground) {
+                        val resumed = wasInBackground
+                        wasInBackground = false
+                        delay(firstWait(resumed))
+                        loop()
+                    }
+                }
             }
         }
 
+        /**
+         * What is left of the wait planned after the last attempt. On return to the foreground, spec §8.6 asks for a
+         * fetch at once, so the wait shrinks to the floor: a value fetched under 10 s ago is still fresh.
+         */
+        private fun firstWait(resumed: Boolean): Duration {
+            val last = lastAttempt ?: return Duration.ZERO
+            val wait = if (resumed) minOf(plannedWait, MIN_POLL_INTERVAL) else plannedWait
+            return wait - last.elapsedNow()
+        }
+
         private suspend fun loop() {
-            var failures = 0
             while (true) {
                 when (val result = attempt()) {
                     is AppResult.Success -> {
@@ -118,7 +142,9 @@ class DefaultPollingEngine internal constructor(
                             ?: Timed(value = null, fetchedAt = null, lastError = result.error)
                     }
                 }
-                delay(if (failures == 0) nextPoll() else backoff(failures))
+                plannedWait = if (failures == 0) nextPoll() else backoff(failures)
+                lastAttempt = timeSource.markNow()
+                delay(plannedWait)
             }
         }
 
