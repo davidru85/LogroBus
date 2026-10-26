@@ -62,6 +62,17 @@ class CoreLocationSourceTest {
     }
 
     @Test
+    fun lb004_iosPermissionManagerIsCreatedWithTheSource() {
+        // A manager must be created on a thread with a run loop. The source is created on the main thread, in the
+        // composition root, while permission() may be called from any thread.
+        var created = 0
+
+        CoreLocationSource(newManager = { RecordingManager().also { created++ } })
+
+        assertEquals(1, created)
+    }
+
+    @Test
     fun lb004_iosUpdatesComeFromCoreLocationAndStopOnClose() {
         val manager = RecordingManager()
         val fixes = mutableListOf<LocationFix>()
