@@ -262,7 +262,8 @@ class PollingEngineTest {
             assertEquals(Timed(3, START + 22.seconds, lastError = null), seen[2])
             assertEquals(3, vehicleFetches)
             // The key is an id, and the console logger prints the throwable's type only (NFR-PRIV-02).
-            assertEquals(listOf<List<Any?>>(listOf(LogLevel.Error, "PollingEngine", "Fetch threw for arrivals:152", bug)), logged)
+            val entry = listOf<Any?>(LogLevel.Error, "PollingEngine", "Fetch threw for arrivals:152", bug)
+            assertEquals(listOf(entry), logged)
         }
 
     @Test

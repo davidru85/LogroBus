@@ -1,12 +1,19 @@
 package com.ruizurraca.logrobus.core.polling
 
 import com.ruizurraca.logrobus.core.common.AppClock
+import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
+import com.ruizurraca.logrobus.core.common.error
 import com.ruizurraca.logrobus.core.config.MIN_POLL_INTERVAL
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -27,6 +34,8 @@ import kotlin.time.Duration.Companion.seconds
 /** Spec §8.6: each wait is the interval plus or minus up to this much. */
 internal val POLL_JITTER = 1.seconds
 
+private const val TAG = "PollingEngine"
+
 private val FIRST_RETRY = 2.seconds
 private val MAX_RETRY = 30.seconds
 
@@ -39,7 +48,7 @@ private const val MAX_DOUBLINGS = 4
  * server-corrected time that freshness is measured against.
  */
 class DefaultPollingEngine internal constructor(
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val appLifecycle: AppLifecycle,
     private val clock: AppClock,
     private val logger: Logger,
@@ -53,6 +62,8 @@ class DefaultPollingEngine internal constructor(
         logger: Logger,
     ) : this(scope, appLifecycle, clock, logger, Random.Default, POLL_JITTER)
 
+    // A child supervisor: a failure in one key's coroutine never cancels the others, nor the caller's scope.
+    private val keysScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
     private val mutex = Mutex()
     private val polls = mutableMapOf<PollKey, Poll<*>>()
 
@@ -66,7 +77,7 @@ class DefaultPollingEngine internal constructor(
                 mutex.withLock {
                     // A key identifies one request, so its values always have the same type.
                     @Suppress("UNCHECKED_CAST")
-                    (polls.getOrPut(key) { Poll(interval, fetch) } as Poll<T>).also {
+                    (polls.getOrPut(key) { Poll(key, interval, fetch) } as Poll<T>).also {
                         it.interval = interval
                         it.fetch = fetch
                     }
@@ -76,13 +87,14 @@ class DefaultPollingEngine internal constructor(
 
     /** One shared loop per key, which runs while [latest] has collectors and the app is in the foreground. */
     private inner class Poll<T>(
+        private val key: PollKey,
         @Volatile var interval: Duration,
         @Volatile var fetch: suspend () -> AppResult<T>,
     ) {
         val latest = MutableStateFlow<Timed<T>?>(null)
 
         init {
-            scope.launch {
+            keysScope.launch {
                 combine(latest.subscriptionCount, appLifecycle.isInForeground) { collectors, inForeground ->
                     collectors > 0 && inForeground
                 }.distinctUntilChanged().collectLatest { active -> if (active) loop() }
@@ -92,7 +104,7 @@ class DefaultPollingEngine internal constructor(
         private suspend fun loop() {
             var failures = 0
             while (true) {
-                when (val result = fetch()) {
+                when (val result = attempt()) {
                     is AppResult.Success -> {
                         failures = 0
                         latest.value = Timed(result.value, clock.now(), lastError = null)
@@ -107,6 +119,20 @@ class DefaultPollingEngine internal constructor(
                 delay(if (failures == 0) nextPoll() else backoff(failures))
             }
         }
+
+        /** Calls [fetch], turning anything it throws into a failure of this key alone (NFR-REL-02). */
+        @Suppress("TooGenericExceptionCaught", "SwallowedException") // On purpose: see above.
+        private suspend fun attempt(): AppResult<T> =
+            try {
+                fetch()
+            } catch (e: CancellationException) {
+                // The engine's own cancellation propagates; a timeout inside fetch is a network failure.
+                currentCoroutineContext().ensureActive()
+                AppResult.Failure(AppError.Network)
+            } catch (e: Exception) {
+                logger.error(TAG, "Fetch threw for ${key.value}", e)
+                AppResult.Failure(AppError.Data)
+            }
 
         /** The interval with jitter, raised to the floor afterwards, so that 10 s never becomes 9 s. */
         private fun nextPoll(): Duration = (interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL)
