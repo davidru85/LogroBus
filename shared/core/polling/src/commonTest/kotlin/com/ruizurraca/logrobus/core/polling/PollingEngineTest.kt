@@ -127,13 +127,14 @@ class PollingEngineTest {
             val gaps = fetchTimes.gaps()
             assertTrue(gaps.size >= 20, "gaps: $gaps")
             assertTrue(gaps.all { it in 19.seconds..21.seconds }, "gaps: $gaps")
-            assertTrue(gaps.distinct().size > 1, "no jitter: $gaps")
+            assertTrue(gaps.any { it < 20.seconds } && gaps.any { it > 20.seconds }, "one-sided jitter: $gaps")
         }
 
     @Test
     fun lb009_jitterNeverTakesAWaitBelowTheTenSecondFloor() =
         runTest {
-            // LB-004 review: MIN_POLL_INTERVAL applies again after the jitter, so 10 s never becomes 9 s.
+            // LB-004 review: MIN_POLL_INTERVAL applies again after the jitter, so 10 s never becomes 9 s. Both reviews of
+            // LB-009: the jitter stays spread at the floor, so that clients at the floor do not poll in step.
             val engine = engine(maxJitter = POLL_JITTER)
             val tooFast = mutableListOf<Duration>()
 
@@ -147,10 +148,10 @@ class PollingEngineTest {
             }
             advanceTimeBy(10.minutes)
 
-            val gaps = fetchTimes.gaps()
-            assertTrue(gaps.all { it in 10.seconds..11.seconds }, "gaps: $gaps")
-            assertEquals(10.seconds, gaps.min())
-            assertTrue(tooFast.gaps().all { it >= 10.seconds }, "gaps: ${tooFast.gaps()}")
+            listOf(fetchTimes.gaps(), tooFast.gaps()).forEach { gaps ->
+                assertTrue(gaps.all { it in 10.seconds..11.seconds }, "gaps: $gaps")
+                assertTrue(gaps.count { it == 10.seconds } <= gaps.size / 10, "clamped at the floor: $gaps")
+            }
         }
 
     @Test
