@@ -80,7 +80,8 @@ class PollingEngineTest {
             backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect { first += it.value } }
             advanceTimeBy(30.seconds)
             // A late collector gets the latest value at once, without a request of its own.
-            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect { second += it.value } }
+            val late = engine.poll(ARRIVALS, 20.seconds, recordingFetch())
+            backgroundScope.launch { late.collect { second += it.value } }
             // Another key polls on its own.
             backgroundScope.launch {
                 engine.poll(VEHICLES, 10.seconds) { AppResult.Success(++vehicleFetches) }.collect {}
@@ -117,10 +118,11 @@ class PollingEngineTest {
 
             backgroundScope.launch { engine.poll(VEHICLES, 10.seconds, recordingFetch()).collect {} }
             backgroundScope.launch {
-                engine.poll(PollKey("too-fast"), 5.seconds) {
-                    tooFast += currentTime.milliseconds
-                    AppResult.Success(0)
-                }.collect {}
+                engine
+                    .poll(PollKey("too-fast"), 5.seconds) {
+                        tooFast += currentTime.milliseconds
+                        AppResult.Success(0)
+                    }.collect {}
             }
             advanceTimeBy(10.minutes)
 
@@ -136,7 +138,10 @@ class PollingEngineTest {
             // FR-ERR-03. Fetch 1 succeeds, fetches 2 to 7 fail and fetch 8 succeeds. The retries are exact, without
             // jitter, and the last good value stays available with the error.
             val engine = engine(maxJitter = POLL_JITTER)
-            val failing = recordingFetch { n -> if (n in 2..7) AppResult.Failure(AppError.Network) else AppResult.Success(n) }
+            val failing =
+                recordingFetch { n ->
+                    if (n in 2..7) AppResult.Failure(AppError.Network) else AppResult.Success(n)
+                }
             val seen = mutableListOf<Timed<Int>>()
 
             backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, failing).collect { seen += it } }

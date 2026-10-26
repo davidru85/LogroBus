@@ -64,11 +64,11 @@ class DefaultPollingEngine internal constructor(
                 latest.subscriptionCount
                     .map { it > 0 }
                     .distinctUntilChanged()
-                    .collectLatest { collected -> if (collected) run() }
+                    .collectLatest { collected -> if (collected) loop() }
             }
         }
 
-        private suspend fun run() {
+        private suspend fun loop() {
             var failures = 0
             while (true) {
                 when (val result = fetch()) {
@@ -83,9 +83,12 @@ class DefaultPollingEngine internal constructor(
                             ?: Timed(value = null, fetchedAt = null, lastError = result.error)
                     }
                 }
-                delay(if (failures == 0) (interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL) else backoff(failures))
+                delay(if (failures == 0) nextPoll() else backoff(failures))
             }
         }
+
+        /** The interval with jitter, raised to the floor afterwards, so that 10 s never becomes 9 s. */
+        private fun nextPoll(): Duration = (interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL)
     }
 
     /** FR-ERR-03: 2, 4, 8 and 16 s, then 30 s. */
