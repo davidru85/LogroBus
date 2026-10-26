@@ -123,7 +123,7 @@ flowchart TB
 
 | Module | May depend on | Must not depend on |
 | --- | --- | --- |
-| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime (ADR-0015), Ktor (network only, ADR-0012), SQLDelight (database only, ADR-0013) | Any domain, data or feature module; `:shared:core:testing` |
+| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime (ADR-0015), Ktor (network only, ADR-0012), SQLDelight (database only, ADR-0013). Platform libraries in platform source sets: AndroidX lifecycle-process and UIKit (common, for `AppLifecycle`), Google Play services Location and Core Location (location only) | Any domain, data or feature module; `:shared:core:testing` |
 | `:shared:core:testing` | Core and domain modules (fakes, builders) | Data and feature modules. No production module may depend on it (test scopes only) |
 | `:shared:transit:domain`, `:shared:favourites:domain` | `:shared:core:common` | Data modules, network, database, platform APIs |
 | `:shared:transit:data`, `:shared:favourites:data` | Their own domain module, `:shared:core:*`, Ktor and SQLDelight | Other capabilities' domains, feature modules |
@@ -268,7 +268,8 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
   - Each screen is an `XRoute` (wiring), a stateless `XScreen(UiState, onEvent)` and an `XViewModel : androidx.lifecycle.ViewModel`.
   - The ViewModel injects shared use cases (`koinViewModel()`), collects their flows in `viewModelScope`, maps them with the shared mappers and exposes `StateFlow<XUiState>`.
 - Maps: MapLibre Native through `maplibre-compose` in `:android:core:map`.
-- Location uses the Fused Location Provider (implemented in `:shared:core:location`). Permission prompts use the Activity Result API in the UI.
+- Location uses the Fused Location Provider of Google Play services (`fusedLocationProvider`, in `:shared:core:location`; owner approval, 2026-10-26). Permission prompts use the Activity Result API in the UI.
+- `AppLifecycle` follows `ProcessLifecycleOwner` (`ProcessAppLifecycle`, in `:shared:core:common`).
 - WorkManager runs the daily static refresh.
 
 ### 5.2 iOS
@@ -314,6 +315,7 @@ final class StopDetailViewModel {
 - **Previews and tests:** SwiftUI previews and Swift ViewModel tests use the fake dependencies exposed by `SharedDependencies.preview` (scripted repositories in Kotlin).
 - **Maps:** MapLibre Native iOS (Swift package) wrapped in `MapUI`. Floating controls use the `DesignSystem` glass helpers.
 - **Platform:** iPhone only in the MVP (NFR-PLAT-03), with an iOS 18 deployment target and Liquid Glass on iOS 26 or later (ADR-0003).
+- **Location and lifecycle:** Core Location (`coreLocationProvider`, in `:shared:core:location`), on the main thread. `AppLifecycle` follows the `UIApplication` enter-background and enter-foreground notifications (`NotificationAppLifecycle`).
 
 ## 6. Navigation
 
@@ -353,7 +355,7 @@ flowchart TD
 | Configuration | `RemoteConfig` in `:shared:core:config` with compiled defaults (NFR-REL-05). Backend deferred (OQ-16) |
 | Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
 | Settings | Multiplatform Settings (DataStore, `NSUserDefaults`), ADR-0018 |
-| Logging | The `Logger` interface: no-op in release, console in debug. Never logs coordinates or free text |
+| Logging | The `Logger` interface (`:shared:core:common`): `ConsoleLogger` from the debug level in debug builds; errors only in release (`security_privacy.md` §4), or `NoOpLogger`. Never logs coordinates or free text |
 | Localisation | Android `values/` (es-ES, the default) and `values-en/`; iOS `Localizable.xcstrings` with Spanish as the development language |
 | Security | HTTPS only, no pinning (spec §8.7), no secrets (`security_privacy.md`) |
 | Visual design | `design_guidelines.md` and a neutral placeholder theme until the Figma designs arrive near the end of the MVP (LB-413) |
