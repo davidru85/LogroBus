@@ -31,6 +31,11 @@ private val MAX_RETRY = 30.seconds
 /** Enough doublings to pass [MAX_RETRY], few enough that the shift never overflows. */
 private const val MAX_DOUBLINGS = 4
 
+/**
+ * The app's one [PollingEngine]. Each key's loop runs in [scope], an application-wide scope, while the key has
+ * collectors and [appLifecycle] says the app is in the foreground. Values are stamped with [clock], the
+ * server-corrected time that freshness is measured against.
+ */
 class DefaultPollingEngine internal constructor(
     private val scope: CoroutineScope,
     private val appLifecycle: AppLifecycle,
@@ -38,6 +43,12 @@ class DefaultPollingEngine internal constructor(
     private val random: Random,
     private val maxJitter: Duration,
 ) : PollingEngine {
+    constructor(
+        scope: CoroutineScope,
+        appLifecycle: AppLifecycle,
+        clock: AppClock,
+    ) : this(scope, appLifecycle, clock, Random.Default, POLL_JITTER)
+
     private val mutex = Mutex()
     private val polls = mutableMapOf<PollKey, Poll<*>>()
 
@@ -63,8 +74,7 @@ class DefaultPollingEngine internal constructor(
             scope.launch {
                 combine(latest.subscriptionCount, appLifecycle.isInForeground) { collectors, inForeground ->
                     collectors > 0 && inForeground
-                }.distinctUntilChanged()
-                    .collectLatest { active -> if (active) loop() }
+                }.distinctUntilChanged().collectLatest { active -> if (active) loop() }
             }
         }
 
