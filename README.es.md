@@ -103,7 +103,8 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **26-10-2026:**
-  - LB-014: siete registros de decisiones de arquitectura (ADR-0012 a ADR-0018) para las bibliotecas que eligió la especificación: red, base de datos, inyección de dependencias, fechas y horas, imágenes, mapas y ajustes. Están pendientes de que el propietario los acepte.
+  - El propietario aceptó los siete ADR de LB-014, así que cada biblioteca puede entrar en la compilación con la primera historia que la necesite.
+  - LB-014: siete registros de decisiones de arquitectura (ADR-0012 a ADR-0018) para las bibliotecas que eligió la especificación: red, base de datos, inyección de dependencias, fechas y horas, imágenes, mapas y ajustes.
   - LB-004, parte 1: el núcleo compartido tiene sus primeras piezas:
     - un reloj que corrige la hora del móvil con la del servidor, para que los tiempos de llegada sean correctos aunque el reloj del móvil vaya mal;
     - los valores de configuración por defecto con los que funciona la app;

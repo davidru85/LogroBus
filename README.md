@@ -101,7 +101,8 @@ You will need:
 ### Recent changes
 
 - **2026-10-26:**
-  - LB-014: seven architecture decision records (ADR-0012 to ADR-0018) for the libraries the spec chose: networking, database, dependency injection, dates and times, images, maps and settings. They await the owner's acceptance.
+  - The owner accepted the seven ADRs of LB-014, so each library can join the build with the first story that needs it.
+  - LB-014: seven architecture decision records (ADR-0012 to ADR-0018) for the libraries the spec chose: networking, database, dependency injection, dates and times, images, maps and settings.
   - LB-004, part 1: the shared core has its first building blocks:
     - a clock that corrects the phone's time with the server's, so arrival times are right even when the phone's clock is wrong;
     - the configuration defaults the app runs on;
