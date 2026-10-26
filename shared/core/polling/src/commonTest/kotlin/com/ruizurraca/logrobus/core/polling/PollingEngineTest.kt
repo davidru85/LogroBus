@@ -60,6 +60,7 @@ class PollingEngineTest {
         scope = backgroundScope,
         appLifecycle = appLifecycle,
         clock = { START + currentTime.milliseconds },
+        timeSource = testScheduler.timeSource,
         logger = logger,
         random = random,
         maxJitter = maxJitter,
@@ -226,18 +227,18 @@ class PollingEngineTest {
     @Test
     fun lb009_theNewestCallerOfAKeySetsItsIntervalAndFetch() =
         runTest {
-            // Remote config can change an interval during a session (spec §8.9): the next screen's interval applies.
+            // Remote config can change an interval during a session (spec §8.9): the next screen's interval applies,
+            // from the next wait of the loop that is already running.
             val engine = engine()
             val seen = mutableListOf<Int?>()
-            val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
             advanceTimeBy(30.seconds)
-            first.cancel()
 
             val newer = engine.poll(ARRIVALS, 30.seconds, recordingFetch { AppResult.Success(100 + it) })
             backgroundScope.launch { newer.collect { seen += it.value } }
-            advanceTimeBy(65.seconds)
+            advanceTimeBy(71.seconds)
 
-            assertEquals(listOf(0, 20, 30, 60, 90).map { it.seconds }, fetchTimes)
+            assertEquals(listOf(0, 20, 40, 70, 100).map { it.seconds }, fetchTimes)
             assertEquals(listOf<Int?>(2, 103, 104, 105), seen)
         }
 
@@ -303,6 +304,60 @@ class PollingEngineTest {
             engine.poll(ARRIVALS, 20.seconds, slow).test {
                 assertEquals(Timed(2, START + 7.seconds, lastError = null), awaitItem())
             }
+        }
+
+    @Test
+    fun lb009_aReturningCollectorWaitsForTheNextScheduledFetch() =
+        runTest {
+            // AGENTS.md §10: leaving and re-entering a screen never polls faster than the interval.
+            val engine = engine()
+            val seen = mutableListOf<Int?>()
+            val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(5.seconds)
+            first.cancel()
+            advanceTimeBy(5.seconds)
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect { seen += it.value } }
+            advanceTimeBy(15.seconds)
+
+            assertEquals(listOf(0.seconds, 20.seconds), fetchTimes)
+            assertEquals(listOf<Int?>(1, 2), seen)
+        }
+
+    @Test
+    fun lb009_theBackoffSurvivesResubscription() =
+        runTest {
+            // During an outage, re-entering the screen waits for the next retry instead of starting the ladder again.
+            val engine = engine()
+            val failing = recordingFetch { AppResult.Failure(AppError.Server(503)) }
+            val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, failing).collect {} }
+            advanceTimeBy(7.seconds)
+            first.cancel()
+            advanceTimeBy(1.seconds)
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, failing).collect {} }
+            advanceTimeBy(12.seconds)
+
+            assertEquals(listOf(0.seconds, 2.seconds, 6.seconds, 14.seconds), fetchTimes)
+        }
+
+    @Test
+    fun lb009_foregroundFlappingNeverPollsFasterThanTheFloor() =
+        runTest {
+            // Spec §8.6 asks for a fetch at once on return to the foreground, unless the last one is under 10 s old.
+            val engine = engine()
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(1.seconds)
+            appLifecycle.isInForeground.value = false
+            advanceTimeBy(1.seconds)
+            appLifecycle.isInForeground.value = true
+            advanceTimeBy(29.seconds)
+            appLifecycle.isInForeground.value = false
+            advanceTimeBy(14.seconds)
+            appLifecycle.isInForeground.value = true
+            runCurrent()
+
+            assertEquals(listOf(0.seconds, 10.seconds, 30.seconds, 45.seconds), fetchTimes)
         }
 
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
