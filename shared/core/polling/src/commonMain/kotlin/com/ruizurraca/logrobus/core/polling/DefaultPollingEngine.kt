@@ -9,11 +9,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -52,7 +52,7 @@ class DefaultPollingEngine internal constructor(
             emitAll(poll.latest.filterNotNull())
         }
 
-    /** One shared loop per key, which runs while [latest] has collectors. */
+    /** One shared loop per key, which runs while [latest] has collectors and the app is in the foreground. */
     private inner class Poll<T>(
         private val interval: Duration,
         private val fetch: suspend () -> AppResult<T>,
@@ -61,10 +61,10 @@ class DefaultPollingEngine internal constructor(
 
         init {
             scope.launch {
-                latest.subscriptionCount
-                    .map { it > 0 }
-                    .distinctUntilChanged()
-                    .collectLatest { collected -> if (collected) loop() }
+                combine(latest.subscriptionCount, appLifecycle.isInForeground) { collectors, inForeground ->
+                    collectors > 0 && inForeground
+                }.distinctUntilChanged()
+                    .collectLatest { active -> if (active) loop() }
             }
         }
 
