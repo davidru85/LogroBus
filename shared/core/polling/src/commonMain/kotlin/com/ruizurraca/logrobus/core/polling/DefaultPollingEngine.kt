@@ -18,6 +18,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+/** Spec §8.6: each wait is the interval plus or minus up to this much. */
+internal val POLL_JITTER = 1.seconds
 
 class DefaultPollingEngine internal constructor(
     private val scope: CoroutineScope,
