@@ -4,6 +4,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -58,6 +59,12 @@ class BoundingBoxTest {
             5_000.0,
             GeoPoint(expanded.north, logrono.west).distanceMetersTo(GeoPoint(expanded.north, expanded.west)),
         )
+    }
+
+    @Test
+    fun lb004_aBoxCannotBeExpandedByANegativeDistance() {
+        assertFailsWith<IllegalArgumentException> { logrono.expandedBy(-1.0) }
+        assertFailsWith<IllegalArgumentException> { BoundingBox.around(center, radiusMeters = -1.0) }
     }
 
     @Test
