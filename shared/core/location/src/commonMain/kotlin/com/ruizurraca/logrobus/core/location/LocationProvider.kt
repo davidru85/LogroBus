@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlin.time.Duration.Companion.seconds
 
 /** The foreground location permission (FR-LOC-01). The user may grant approximate location only. */
 enum class LocationPermission {
@@ -38,6 +39,12 @@ interface LocationProvider {
      */
     fun locations(): Flow<LocationFix>
 }
+
+/** How often a collected [LocationProvider] asks for a new fix, at most, where the platform supports it (Android). */
+internal val LOCATION_UPDATE_INTERVAL = 5.seconds
+
+/** The distance, in metres, the device must move before a new fix is delivered. */
+internal const val LOCATION_UPDATE_DISTANCE_METERS = 10.0
 
 /** What each platform provides behind [LocationProvider]: the Fused Location Provider, or Core Location. */
 internal interface LocationSource {
