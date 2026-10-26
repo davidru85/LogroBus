@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed |
+| Status | Accepted (2026-10-26) |
 | Date | 2026-10-26 |
-| Deciders | Project owner, to confirm: this refines spec §8.3. Written up by the agent for LB-014 |
+| Deciders | Project owner: accepted on 2026-10-26, after PR #19 merged, including this refinement of spec §8.3. Written up by the agent for LB-014 |
 | Related | NFR-MNT-03, spec §8.3, ADR-0001, ADR-0005 |
 
 ## Context
