@@ -62,8 +62,7 @@ class PollingEngineTest {
         clock = { START + currentTime.milliseconds },
         timeSource = testScheduler.timeSource,
         logger = logger,
-        random = random,
-        maxJitter = maxJitter,
+        jitter = randomJitter(random, maxJitter),
     )
 
     /** A fetch that records its time and returns [result] for the n-th call, counting from 1. */

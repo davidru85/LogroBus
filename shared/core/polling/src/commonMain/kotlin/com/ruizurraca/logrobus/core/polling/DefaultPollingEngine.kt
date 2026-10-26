@@ -55,15 +55,14 @@ class DefaultPollingEngine internal constructor(
     private val clock: AppClock,
     private val timeSource: TimeSource.WithComparableMarks,
     private val logger: Logger,
-    private val random: Random,
-    private val maxJitter: Duration,
+    private val jitter: () -> Duration,
 ) : PollingEngine {
     constructor(
         scope: CoroutineScope,
         appLifecycle: AppLifecycle,
         clock: AppClock,
         logger: Logger,
-    ) : this(scope, appLifecycle, clock, TimeSource.Monotonic, logger, Random.Default, POLL_JITTER)
+    ) : this(scope, appLifecycle, clock, TimeSource.Monotonic, logger, randomJitter(Random.Default, POLL_JITTER))
 
     // A child supervisor: a failure in one key's coroutine never cancels the others, nor the caller's scope.
     private val keysScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
@@ -169,9 +168,13 @@ class DefaultPollingEngine internal constructor(
     /** FR-ERR-03: 2, 4, 8 and 16 s, then 30 s. */
     private fun backoff(failures: Int): Duration =
         (FIRST_RETRY * (1 shl (failures - 1).coerceAtMost(MAX_DOUBLINGS))).coerceAtMost(MAX_RETRY)
+}
 
-    private fun jitter(): Duration {
-        val maxMs = maxJitter.inWholeMilliseconds
-        return random.nextLong(-maxMs, maxMs + 1).milliseconds
-    }
+/** A uniform jitter from -[max] to +[max], in whole milliseconds. */
+internal fun randomJitter(
+    random: Random,
+    max: Duration,
+): () -> Duration {
+    val maxMs = max.inWholeMilliseconds
+    return { random.nextLong(-maxMs, maxMs + 1).milliseconds }
 }
