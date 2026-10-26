@@ -366,7 +366,9 @@ class PollingEngineTest {
             // not after 2 s each time. A lone success waits the interval but does not reset the ladder.
             val engine = engine()
             val flapping =
-                recordingFetch { n -> if (n % 2 == 0) AppResult.Failure(AppError.Server(503)) else AppResult.Success(n) }
+                recordingFetch { n ->
+                    if (n % 2 == 0) AppResult.Failure(AppError.Server(503)) else AppResult.Success(n)
+                }
 
             backgroundScope.launch { engine.poll(VEHICLES, 10.seconds, flapping).collect {} }
             advanceTimeBy(3.minutes)
@@ -381,7 +383,9 @@ class PollingEngineTest {
             // Guard for the flapping rule: fetches 2 and 3 fail, 4 and 5 succeed, 6 and 7 fail.
             val engine = engine()
             val failing =
-                recordingFetch { n -> if (n in setOf(2, 3, 6, 7)) AppResult.Failure(AppError.Network) else AppResult.Success(n) }
+                recordingFetch { n ->
+                    if (n in setOf(2, 3, 6, 7)) AppResult.Failure(AppError.Network) else AppResult.Success(n)
+                }
 
             backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, failing).collect {} }
             advanceTimeBy(2.minutes)
