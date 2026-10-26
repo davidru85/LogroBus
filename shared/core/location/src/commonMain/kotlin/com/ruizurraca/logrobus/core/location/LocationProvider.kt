@@ -40,7 +40,7 @@ interface LocationProvider {
     fun locations(): Flow<LocationFix>
 }
 
-/** How often a collected [LocationProvider] asks for a new fix, at most, where the platform supports it (Android). */
+/** The interval at which a collected [LocationProvider] asks for fixes, where the platform takes one (Android). */
 internal val LOCATION_UPDATE_INTERVAL = 5.seconds
 
 /** The distance, in metres, the device must move before a new fix is delivered. */
