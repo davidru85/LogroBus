@@ -25,6 +25,8 @@ ktlint = "1.8.0"
 # Alpha on purpose: the only detekt line built against Kotlin 2.4 and AGP 9.3 (ADR-0011).
 detekt = "2.0.0-alpha.6"
 kover = "0.9.11"
+kotlinx-coroutines = "1.11.0"
+turbine = "1.2.1"
 # Not project dependencies: security floors for libraries that AGP 9.3 brings into its tools and plugin
 # classpath with critical advisories (docs/ci_cd.md §6). Drop each once AGP brings a fixed version itself.
 netty = "4.1.139.Final"
@@ -51,6 +53,10 @@ androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core",
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 bouncycastle-bom = { module = "org.bouncycastle:bc-jdk18on-bom", version.ref = "bouncycastle" }
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
