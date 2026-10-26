@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.core.polling
 
 import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
@@ -428,7 +429,8 @@ class PollingEngineTest {
     fun lb009_theProductionEngineWaitsTheIntervalPlusOrMinusOneSecond() =
         runTest {
             // The public constructor, as the composition root (LB-010) will call it.
-            val engine = DefaultPollingEngine(backgroundScope, appLifecycle, { START + currentTime.milliseconds }, logger)
+            val clock = AppClock { START + currentTime.milliseconds }
+            val engine = DefaultPollingEngine(backgroundScope, appLifecycle, clock, logger)
 
             backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
             advanceTimeBy(10.minutes)
