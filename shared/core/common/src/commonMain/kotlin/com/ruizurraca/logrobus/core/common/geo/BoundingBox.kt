@@ -18,11 +18,17 @@ data class BoundingBox(
 ) {
     fun contains(point: GeoPoint): Boolean = point.lat in south..north && point.lng in west..east
 
+    /** Redacted, so string templates and logged results never leak a location (NFR-PRIV-02). */
+    override fun toString(): String = "BoundingBox(redacted)"
+
     /**
      * This box with every edge moved [meters] outwards. The longitude margin is computed at the edge farthest from
      * the equator, where a degree of longitude is shortest, so the margin is at least [meters] at every latitude.
+     *
+     * @throws IllegalArgumentException if [meters] is negative.
      */
     fun expandedBy(meters: Double): BoundingBox {
+        require(meters >= 0) { "A box can only be expanded by a non-negative distance" }
         val dLat = metersToDegreesOfLatitude(meters)
         val newSouth = (south - dLat).coerceAtLeast(-MAX_LATITUDE)
         val newNorth = (north + dLat).coerceAtMost(MAX_LATITUDE)
@@ -32,7 +38,10 @@ data class BoundingBox(
     }
 
     companion object {
-        /** The smallest box that holds every point within [radiusMeters] of [center]. */
+        /**
+         * A box that holds every point within [radiusMeters] of [center]. Its longitude margin is slightly
+         * conservative.
+         */
         fun around(
             center: GeoPoint,
             radiusMeters: Double,
