@@ -50,7 +50,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Part 1 (this PR):** exactly the acceptance criteria, using only the Kotlin standard library.
   - **Part 2:** `Logger`, `AppDispatchers`, `AppLifecycle` and `LocationProvider`.
     - They need kotlinx-coroutines.
-    - `LocationProvider`'s Android implementation needs Google Play Services Location (`architecture.md` §6). That is a third-party SDK, which needs the owner's approval (`AGENTS.md` §10).
+    - `LocationProvider`'s Android implementation needs Google Play Services Location (`architecture.md` §5.1). That is a third-party SDK, which needs the owner's approval (`AGENTS.md` §10).
   - LB-004 stays in progress.
 - **Defaults for keys whose values the docs leave open** (`api_spec.md` §8):
   - `night_service_text`: the FR-STOP-06 sentence, in es and en (OQ-08).
