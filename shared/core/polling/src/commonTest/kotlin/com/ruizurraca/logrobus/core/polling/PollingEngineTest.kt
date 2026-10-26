@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.currentTime
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test
@@ -22,7 +23,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /** Spec §8.6, FR-ERR-03 and NFR-PERF-07: one shared engine polls live data for the visible screens. */
-@OptIn(ExperimentalCoroutinesApi::class) // currentTime
+@OptIn(ExperimentalCoroutinesApi::class) // currentTime, runCurrent
 class PollingEngineTest {
     private class FakeAppLifecycle : AppLifecycle {
         override val isInForeground = MutableStateFlow(true)
@@ -168,6 +169,38 @@ class PollingEngineTest {
             engine().poll(ARRIVALS, 20.seconds, failing).test {
                 assertEquals(Timed(null, fetchedAt = null, lastError = AppError.Server(503)), awaitItem())
             }
+        }
+
+    @Test
+    fun lb009_theBackgroundStopsAllRequestsAndTheForegroundFetchesAtOnce() =
+        runTest {
+            // NFR-PERF-07 and spec §8.6: no polling in the background, and fresh data on return.
+            val engine = engine()
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            backgroundScope.launch { engine.poll(VEHICLES, 10.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(5.seconds)
+
+            appLifecycle.isInForeground.value = false
+            advanceTimeBy(5.minutes)
+            assertEquals(listOf(0.seconds, 0.seconds), fetchTimes)
+
+            appLifecycle.isInForeground.value = true
+            runCurrent()
+            assertEquals(listOf(0.seconds, 0.seconds, 305.seconds, 305.seconds), fetchTimes)
+        }
+
+    @Test
+    fun lb009_aCollectorInTheBackgroundWaitsForTheForeground() =
+        runTest {
+            appLifecycle.isInForeground.value = false
+
+            backgroundScope.launch { engine().poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(1.minutes)
+            assertEquals(emptyList(), fetchTimes)
+
+            appLifecycle.isInForeground.value = true
+            runCurrent()
+            assertEquals(listOf(1.minutes), fetchTimes)
         }
 
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
