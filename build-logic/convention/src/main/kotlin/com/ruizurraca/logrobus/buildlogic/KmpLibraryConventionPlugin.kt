@@ -4,6 +4,7 @@ import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -11,8 +12,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 /**
  * `logrobus.kmp.library`: every shared Kotlin Multiplatform module (ADR-0007).
  * Targets Android (host tests enabled), iOS device and iOS simulator on Apple silicon;
- * derives the namespace from the module path; raises the security floors of AGP's tools; enforces [ModuleRules];
- * registers `ciUnitTest`.
+ * derives the namespace from the module path; lets host tests run Robolectric; raises the security floors of AGP's
+ * tools; enforces [ModuleRules]; registers `ciUnitTest`.
  */
 class KmpLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) =
@@ -38,6 +39,9 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                     implementation(kotlin("test"))
                 }
             }
+
+            // Host tests may use Robolectric, as :shared:core:location does.
+            tasks.withType(Test::class.java).configureEach { jvmArgs(ROBOLECTRIC_JDK_ACCESS) }
 
             tasks.register("ciUnitTest") {
                 group = "verification"

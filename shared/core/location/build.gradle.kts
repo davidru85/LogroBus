@@ -20,8 +20,3 @@ kotlin {
         }
     }
 }
-
-tasks.withType<Test>().configureEach {
-    // Robolectric's Android 17 (API 37) sandbox reaches jdk.internal.access, which JDK 21 does not export.
-    jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
-}
