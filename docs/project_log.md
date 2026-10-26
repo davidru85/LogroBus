@@ -74,6 +74,24 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Next: LB-009 (`PollingEngine`).** It needs only `AppLifecycle`, `AppDispatchers` and `RemoteConfig`, which now all exist.
 - **LB-003 (fixtures)** records from the live source and waits for the owner's go-ahead (OQ-11). LB-005's contract tests need those fixtures.
 
+## 2026-10-26: LB-014: ADR-0012 to ADR-0018 accepted
+
+**Done**
+- PR #18 (LB-004, part 1) and PR #19 (LB-014) were merged.
+  - #19 was stacked on #18. After #18 merged, GitHub retargeted #19 to `main` and marked it `BEHIND`, because the branch protection requires an up-to-date branch. `main` was merged into it (a merge commit, no rebase), the tree did not change, and its CI then ran green.
+- **ADR-0012 to ADR-0018 are accepted** and marked so in each ADR and in the index.
+
+**Decisions**
+- **The owner accepted all seven ADRs** (2026-10-26), including ADR-0016, which refines spec §8.3: Coil 3 on Android only, and `AsyncImage` on iOS.
+- **LB-014 is `blocked` on OQ-16.** The only ADR left is the analytics and crash backend.
+- **Owner decisions for LB-004 part 2**, recorded with that story:
+  - Google Play Services Location is approved for the Android `LocationProvider`.
+  - The three provisional defaults are confirmed.
+
+**Open / next**
+- LB-004, part 2: `Logger`, `AppDispatchers`, `AppLifecycle` and `LocationProvider`.
+- The libraries of ADR-0012 to ADR-0018 can now enter the version catalog with the first story that uses each one.
+
 ## 2026-10-26: LB-014: ADRs for the spec §8.3 choices
 
 **Done**
