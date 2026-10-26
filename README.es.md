@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); después llegará la capa de datos. Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); la capa de datos ya ha empezado (LB-004). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -102,6 +102,11 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **26-10-2026:**
+  - LB-004, parte 1: el núcleo compartido tiene sus primeras piezas:
+    - un reloj que corrige la hora del móvil con la del servidor, para que los tiempos de llegada sean correctos aunque el reloj del móvil vaya mal;
+    - los valores de configuración por defecto con los que funciona la app;
+    - utilidades de distancias y de formas de mapa.
 - **25-10-2026:**
   - Completada LB-002: la CI está terminada. Tres pull requests desechables confirmaron que un test roto, una violación de estilo y una caída de la cobertura de tests bloquean cada una la fusión.
   - CI: el job de iOS arranca el simulador del iPhone mientras aún se compila la app, en lugar de después, así que termina antes.
