@@ -41,6 +41,9 @@ private const val TAG = "PollingEngine"
 private val FIRST_RETRY = 2.seconds
 private val MAX_RETRY = 30.seconds
 
+/** A lone success between failures does not reset the backoff, so a flapping source is retried ever more slowly. */
+private const val SUCCESSES_TO_RESET = 2
+
 /** Enough doublings to pass [MAX_RETRY], few enough that the shift never overflows. */
 private const val MAX_DOUBLINGS = 4
 
@@ -97,6 +100,7 @@ class DefaultPollingEngine internal constructor(
 
         // The schedule outlives each activation. Only this key's coroutine touches it, one activation at a time.
         private var failures = 0
+        private var successesInARow = 0
         private var lastAttempt: ComparableTimeMark? = null
         private var plannedWait = Duration.ZERO
         private var wasInBackground = false
@@ -129,19 +133,22 @@ class DefaultPollingEngine internal constructor(
 
         private suspend fun loop() {
             while (true) {
-                when (val result = attempt()) {
-                    is AppResult.Success -> {
-                        failures = 0
-                        latest.value = Timed(result.value, clock.now(), lastError = null)
-                    }
+                plannedWait =
+                    when (val result = attempt()) {
+                        is AppResult.Success -> {
+                            if (++successesInARow >= SUCCESSES_TO_RESET) failures = 0
+                            latest.value = Timed(result.value, clock.now(), lastError = null)
+                            nextPoll()
+                        }
 
-                    is AppResult.Failure -> {
-                        failures++
-                        latest.value = latest.value?.copy(lastError = result.error)
-                            ?: Timed(value = null, fetchedAt = null, lastError = result.error)
+                        is AppResult.Failure -> {
+                            successesInARow = 0
+                            failures++
+                            latest.value = latest.value?.copy(lastError = result.error)
+                                ?: Timed(value = null, fetchedAt = null, lastError = result.error)
+                            backoff(failures)
+                        }
                     }
-                }
-                plannedWait = if (failures == 0) nextPoll() else backoff(failures)
                 lastAttempt = timeSource.markNow()
                 delay(plannedWait)
             }
