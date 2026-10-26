@@ -1,9 +1,20 @@
 package com.ruizurraca.logrobus.core.config
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+
 /** Typed access to remote configuration (spec §8.9, api_spec.md §8). */
 interface RemoteConfig {
     fun <T : Any> get(key: RemoteConfigKey<T>): T
 }
+
+/** Spec §8.6: polling never runs more often than this, whatever remote config says. */
+val MIN_POLL_INTERVAL: Duration = 10.seconds
+
+/** The polling interval that [key] configures, raised to [MIN_POLL_INTERVAL]. */
+fun RemoteConfig.pollInterval(key: RemoteConfigKey.PollIntervalKey): Duration =
+    get(key).milliseconds.coerceAtLeast(MIN_POLL_INTERVAL)
 
 /**
  * NFR-REL-05: the configuration the app runs on while no remote-config backend exists (OQ-16, LB-015). Every key
@@ -30,11 +41,17 @@ sealed class RemoteConfigKey<out T : Any>(
         default = "https://transporteurbano.logrono.es",
     )
 
+    /** A polling interval in milliseconds. Read it through [pollInterval], which applies the 10 s floor. */
+    sealed class PollIntervalKey(
+        name: String,
+        defaultMs: Int,
+    ) : RemoteConfigKey<Int>(name, defaultMs)
+
     /** FR-LIVE-02. */
-    data object PollVehiclesMs : RemoteConfigKey<Int>(name = "poll_vehicles_ms", default = 10_000)
+    data object PollVehiclesMs : PollIntervalKey(name = "poll_vehicles_ms", defaultMs = 10_000)
 
     /** FR-STOP-05. */
-    data object PollArrivalsMs : RemoteConfigKey<Int>(name = "poll_arrivals_ms", default = 20_000)
+    data object PollArrivalsMs : PollIntervalKey(name = "poll_arrivals_ms", defaultMs = 20_000)
 
     /** FR-LINE-07: how long a vehicle stays on the map after its last report. */
     data object VehicleGraceMs : RemoteConfigKey<Int>(name = "vehicle_grace_ms", default = 45_000)
@@ -88,8 +105,11 @@ sealed class RemoteConfigKey<out T : Any>(
     )
 
     companion object {
-        /** Every key, in the order of api_spec.md §8. */
-        val all: List<RemoteConfigKey<Any>> =
+        /**
+         * Every key, in the order of api_spec.md §8. Built lazily: when a key object is initialised first, this
+         * class initialises while that key is still incomplete, and an eager list would hold null for it.
+         */
+        val all: List<RemoteConfigKey<Any>> by lazy {
             listOf(
                 ApiBaseUrl,
                 PollVehiclesMs,
@@ -106,5 +126,6 @@ sealed class RemoteConfigKey<out T : Any>(
                 MapStyleUrl,
                 GeocoderProvinceFilter,
             )
+        }
     }
 }
