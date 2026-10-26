@@ -30,6 +30,7 @@ import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /** Spec §8.6: each wait is the interval plus or minus up to this much. */
 internal val POLL_JITTER = 1.seconds
@@ -51,6 +52,7 @@ class DefaultPollingEngine internal constructor(
     scope: CoroutineScope,
     private val appLifecycle: AppLifecycle,
     private val clock: AppClock,
+    private val timeSource: TimeSource.WithComparableMarks,
     private val logger: Logger,
     private val random: Random,
     private val maxJitter: Duration,
@@ -60,7 +62,7 @@ class DefaultPollingEngine internal constructor(
         appLifecycle: AppLifecycle,
         clock: AppClock,
         logger: Logger,
-    ) : this(scope, appLifecycle, clock, logger, Random.Default, POLL_JITTER)
+    ) : this(scope, appLifecycle, clock, TimeSource.Monotonic, logger, Random.Default, POLL_JITTER)
 
     // A child supervisor: a failure in one key's coroutine never cancels the others, nor the caller's scope.
     private val keysScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
