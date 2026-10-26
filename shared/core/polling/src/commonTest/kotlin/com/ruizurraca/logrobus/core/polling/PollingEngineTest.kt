@@ -203,6 +203,24 @@ class PollingEngineTest {
             assertEquals(listOf(1.minutes), fetchTimes)
         }
 
+    @Test
+    fun lb009_theNewestCallerOfAKeySetsItsIntervalAndFetch() =
+        runTest {
+            // Remote config can change an interval during a session (spec §8.9): the next screen's interval applies.
+            val engine = engine()
+            val seen = mutableListOf<Int?>()
+            val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(30.seconds)
+            first.cancel()
+
+            val newer = engine.poll(ARRIVALS, 30.seconds, recordingFetch { AppResult.Success(100 + it) })
+            backgroundScope.launch { newer.collect { seen += it.value } }
+            advanceTimeBy(65.seconds)
+
+            assertEquals(listOf(0, 20, 30, 60, 90).map { it.seconds }, fetchTimes)
+            assertEquals(listOf<Int?>(2, 103, 104, 105), seen)
+        }
+
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
 
     private companion object {
