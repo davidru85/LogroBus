@@ -5,15 +5,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import platform.Foundation.NSNotificationCenter
 import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationDidBecomeActiveNotification
 import platform.UIKit.UIApplicationDidEnterBackgroundNotification
 import platform.UIKit.UIApplicationState
 import platform.UIKit.UIApplicationWillEnterForegroundNotification
 
 /**
  * The iOS [AppLifecycle]: the app leaves the foreground when UIKit says it entered the background, and returns when
- * it says it will enter the foreground. Being inactive, under Control Centre or a call banner, still counts as
- * foreground, because the app is visible. Create it after launch, from the main thread, as one instance for the
- * process: its observers are never removed.
+ * it says it will enter the foreground or became active. Becoming active also covers a cold launch, where the initial
+ * state may be read before the first scene connects. Being inactive, under Control Centre or a call banner, still
+ * counts as foreground, because the app is visible. Create it from the main thread, as one instance for the process:
+ * its observers are never removed.
  */
 class NotificationAppLifecycle(
     initiallyInForeground: Boolean =
@@ -27,8 +29,8 @@ class NotificationAppLifecycle(
         notificationCenter.addObserverForName(UIApplicationDidEnterBackgroundNotification, null, null) {
             foreground.value = false
         }
-        notificationCenter.addObserverForName(UIApplicationWillEnterForegroundNotification, null, null) {
-            foreground.value = true
+        listOf(UIApplicationWillEnterForegroundNotification, UIApplicationDidBecomeActiveNotification).forEach { name ->
+            notificationCenter.addObserverForName(name, null, null) { foreground.value = true }
         }
     }
 }
