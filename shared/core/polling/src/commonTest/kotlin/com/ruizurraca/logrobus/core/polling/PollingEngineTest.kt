@@ -5,6 +5,7 @@ import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.currentTime
@@ -66,9 +67,34 @@ class PollingEngineTest {
             assertEquals(listOf(1.minutes, 80.seconds), fetchTimes)
         }
 
+    @Test
+    fun lb009_collectorsOfTheSameKeyShareOneRequestPerInterval() =
+        runTest {
+            val engine = engine()
+            val first = mutableListOf<Int?>()
+            val second = mutableListOf<Int?>()
+            var vehicleFetches = 0
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect { first += it.value } }
+            advanceTimeBy(30.seconds)
+            // A late collector gets the latest value at once, without a request of its own.
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect { second += it.value } }
+            // Another key polls on its own.
+            backgroundScope.launch {
+                engine.poll(VEHICLES, 10.seconds) { AppResult.Success(++vehicleFetches) }.collect {}
+            }
+            advanceTimeBy(30.seconds)
+
+            assertEquals(listOf(0.seconds, 20.seconds, 40.seconds), fetchTimes)
+            assertEquals(listOf<Int?>(1, 2, 3), first)
+            assertEquals(listOf<Int?>(2, 3), second)
+            assertEquals(3, vehicleFetches)
+        }
+
     private companion object {
         const val SEED = 2026
         val START = Instant.parse("2026-10-26T08:00:00Z")
         val ARRIVALS = PollKey("arrivals:152")
+        val VEHICLES = PollKey("vehicles")
     }
 }
