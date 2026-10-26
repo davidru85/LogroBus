@@ -10,6 +10,8 @@ kotlin {
         androidMain.dependencies {
             // Dispatchers.Main on Android.
             implementation(libs.kotlinx.coroutines.android)
+            // ProcessLifecycleOwner, behind AppLifecycle.
+            implementation(libs.androidx.lifecycle.process)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
