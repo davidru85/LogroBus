@@ -17,11 +17,16 @@ import platform.UIKit.UIApplicationWillEnterForegroundNotification
  * counts as foreground, because the app is visible. Create it from the main thread, as one instance for the process:
  * its observers are never removed.
  */
-class NotificationAppLifecycle(
-    initiallyInForeground: Boolean =
-        UIApplication.sharedApplication.applicationState != UIApplicationState.UIApplicationStateBackground,
-    notificationCenter: NSNotificationCenter = NSNotificationCenter.defaultCenter,
+class NotificationAppLifecycle internal constructor(
+    initiallyInForeground: Boolean,
+    notificationCenter: NSNotificationCenter,
 ) : AppLifecycle {
+    constructor() : this(
+        initiallyInForeground =
+            UIApplication.sharedApplication.applicationState != UIApplicationState.UIApplicationStateBackground,
+        notificationCenter = NSNotificationCenter.defaultCenter,
+    )
+
     private val foreground = MutableStateFlow(initiallyInForeground)
     override val isInForeground: StateFlow<Boolean> = foreground.asStateFlow()
 

@@ -11,9 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
  * The Android [AppLifecycle]: the app is in the foreground while its process lifecycle is at least started, that is,
  * while any of its activities is visible. Create it on the main thread, as `ProcessLifecycleOwner` requires.
  */
-class ProcessAppLifecycle(
-    lifecycle: Lifecycle = ProcessLifecycleOwner.get().lifecycle,
+class ProcessAppLifecycle internal constructor(
+    lifecycle: Lifecycle,
 ) : AppLifecycle {
+    constructor() : this(ProcessLifecycleOwner.get().lifecycle)
+
     private val foreground = MutableStateFlow(false)
     override val isInForeground: StateFlow<Boolean> = foreground.asStateFlow()
 
