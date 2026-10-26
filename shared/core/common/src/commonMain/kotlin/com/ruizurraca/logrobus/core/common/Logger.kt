@@ -55,8 +55,10 @@ object NoOpLogger : Logger {
 }
 
 /**
- * Prints `L/tag: message` lines, followed by the stack trace of any throwable, and drops entries below [minLevel].
- * [output] is the standard output by default: Logcat on Android, the Xcode console on iOS.
+ * Prints `L/tag: message` lines and drops entries below [minLevel]. A throwable is printed as the types of its cause
+ * chain, `[Outer <- Cause]`, never with its messages or stack trace: a message can quote a request URL with search
+ * text, or a payload with coordinates (NFR-PRIV-02). [output] is the standard output by default: Logcat on Android,
+ * the Xcode console on iOS.
  */
 @Suppress("ForbiddenMethodCall") // println is forbidden in favour of Logger; this is the Logger that prints.
 class ConsoleLogger(
@@ -71,6 +73,14 @@ class ConsoleLogger(
     ) {
         if (level < minLevel) return
         val line = "${level.letter}/$tag: $message"
-        output(if (throwable == null) line else "$line\n${throwable.stackTraceToString()}")
+        output(if (throwable == null) line else "$line [${throwable.typeChain()}]")
     }
 }
+
+/** How many causes are printed at most, which also stops a cause cycle. */
+private const val MAX_CAUSES = 8
+
+private fun Throwable.typeChain(): String =
+    generateSequence(this) { it.cause }
+        .take(MAX_CAUSES)
+        .joinToString(" <- ") { it::class.simpleName ?: "Throwable" }
