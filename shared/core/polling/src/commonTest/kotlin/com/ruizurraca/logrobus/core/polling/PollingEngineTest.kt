@@ -394,6 +394,22 @@ class PollingEngineTest {
             assertEquals(listOf(20, 2, 4, 20, 20, 2, 4).map { it.seconds }, fetchTimes.gaps().take(7))
         }
 
+    @Test
+    fun lb009_aValueLeftUncollectedForTwoMinutesIsNotReplayed() =
+        runTest {
+            // Code review: spec §5.7 calls a value over 120 s old expired. A screen that comes back after that long
+            // shows Loading and then fresh data, not an expired value first.
+            val engine = engine()
+            val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(5.seconds)
+            first.cancel()
+            advanceTimeBy(2.minutes)
+
+            engine.poll(ARRIVALS, 20.seconds, recordingFetch()).test {
+                assertEquals(Timed(2, START + 125.seconds, lastError = null), awaitItem())
+            }
+        }
+
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
 
     private companion object {
