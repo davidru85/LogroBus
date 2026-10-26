@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.Volatile
 import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -58,15 +59,22 @@ class DefaultPollingEngine internal constructor(
         fetch: suspend () -> AppResult<T>,
     ): Flow<Timed<T>> =
         flow {
-            @Suppress("UNCHECKED_CAST") // A key identifies one request, so its values always have the same type.
-            val poll = mutex.withLock { polls.getOrPut(key) { Poll(interval, fetch) } } as Poll<T>
+            val poll =
+                mutex.withLock {
+                    // A key identifies one request, so its values always have the same type.
+                    @Suppress("UNCHECKED_CAST")
+                    (polls.getOrPut(key) { Poll(interval, fetch) } as Poll<T>).also {
+                        it.interval = interval
+                        it.fetch = fetch
+                    }
+                }
             emitAll(poll.latest.filterNotNull())
         }
 
     /** One shared loop per key, which runs while [latest] has collectors and the app is in the foreground. */
     private inner class Poll<T>(
-        private val interval: Duration,
-        private val fetch: suspend () -> AppResult<T>,
+        @Volatile var interval: Duration,
+        @Volatile var fetch: suspend () -> AppResult<T>,
     ) {
         val latest = MutableStateFlow<Timed<T>?>(null)
 
