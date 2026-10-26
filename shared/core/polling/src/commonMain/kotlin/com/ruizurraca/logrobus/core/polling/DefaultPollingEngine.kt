@@ -18,6 +18,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** Spec §8.6: each wait is the interval plus or minus up to this much. */
@@ -64,8 +65,13 @@ class DefaultPollingEngine internal constructor(
             while (true) {
                 val result = fetch()
                 if (result is AppResult.Success) latest.value = Timed(result.value, clock.now(), lastError = null)
-                delay(interval)
+                delay(interval + jitter())
             }
         }
+    }
+
+    private fun jitter(): Duration {
+        val maxMs = maxJitter.inWholeMilliseconds
+        return random.nextLong(-maxMs, maxMs + 1).milliseconds
     }
 }
