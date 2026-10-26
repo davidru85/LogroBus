@@ -17,8 +17,8 @@ import platform.Foundation.NSError
 import platform.darwin.NSObject
 
 /**
- * The iOS [LocationProvider], on Core Location. Updates start and stop on the main dispatcher, because Core Location
- * delivers them on the run loop of the thread that created the manager.
+ * The iOS [LocationProvider], on Core Location. Create it on the main thread. Updates start and stop on the main
+ * dispatcher, because Core Location delivers them on the run loop of the thread that created the manager.
  */
 fun coreLocationProvider(dispatchers: AppDispatchers): LocationProvider =
     SourceLocationProvider(CoreLocationSource(), dispatchers.main)
@@ -26,7 +26,8 @@ fun coreLocationProvider(dispatchers: AppDispatchers): LocationProvider =
 internal class CoreLocationSource(
     private val newManager: () -> CLLocationManager = { CLLocationManager() },
 ) : LocationSource {
-    private val statusManager by lazy { newManager() }
+    // Created with the source, on the main thread, because permission() may be called from any thread.
+    private val statusManager = newManager()
 
     override fun permission(): LocationPermission =
         permissionOf(statusManager.authorizationStatus, statusManager.accuracyAuthorization)
