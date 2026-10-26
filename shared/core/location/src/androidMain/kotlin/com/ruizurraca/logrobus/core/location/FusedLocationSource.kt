@@ -32,7 +32,10 @@ internal class FusedLocationSource(
 
     // SourceLocationProvider starts updates only after permission() reported a grant.
     @SuppressLint("MissingPermission")
-    override fun start(onFix: (LocationFix) -> Unit): AutoCloseable {
+    override fun start(
+        onFix: (LocationFix) -> Unit,
+        onEnd: () -> Unit,
+    ): AutoCloseable {
         val callback =
             object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
@@ -44,7 +47,9 @@ internal class FusedLocationSource(
                 .Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL.inWholeMilliseconds)
                 .setMinUpdateDistanceMeters(LOCATION_UPDATE_DISTANCE_METERS.toFloat())
                 .build()
-        client.requestLocationUpdates(request, callback, Looper.getMainLooper())
+        // A failed request, for example without Google Play services, ends the updates. Location services switched off
+        // do not: the provider resumes when they are switched back on.
+        client.requestLocationUpdates(request, callback, Looper.getMainLooper()).addOnFailureListener { onEnd() }
         return AutoCloseable { client.removeLocationUpdates(callback) }
     }
 

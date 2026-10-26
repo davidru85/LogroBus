@@ -29,7 +29,7 @@ class FusedLocationSourceTest {
 
     /** Records the calls that the source makes; any other call fails the test. */
     private class FakeFusedClient(
-        val requestResult: Task<Void> = Tasks.forResult(null),
+        val requestResult: Task<*> = Tasks.forResult(null),
     ) {
         val requests = mutableListOf<Triple<LocationRequest, LocationCallback, Looper>>()
         val removed = mutableListOf<LocationCallback>()
@@ -110,7 +110,7 @@ class FusedLocationSourceTest {
     @Test
     fun lb004_androidUpdatesEndWhenTheFusedRequestFails() {
         // For example, Google Play services is missing or out of date.
-        val fake = FakeFusedClient(requestResult = Tasks.forException(IllegalStateException("No Play services")))
+        val fake = FakeFusedClient(requestResult = Tasks.forException<Unit>(IllegalStateException("No Play services")))
         var ended = false
 
         FusedLocationSource(application, fake.client).start(onFix = {}, onEnd = { ended = true })

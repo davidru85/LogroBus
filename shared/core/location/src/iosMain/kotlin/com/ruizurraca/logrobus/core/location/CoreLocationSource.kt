@@ -10,7 +10,10 @@ import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedAlways
 import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
+import platform.CoreLocation.kCLErrorDenied
+import platform.CoreLocation.kCLErrorDomain
 import platform.CoreLocation.kCLLocationAccuracyNearestTenMeters
+import platform.Foundation.NSError
 import platform.darwin.NSObject
 
 /**
@@ -28,10 +31,13 @@ internal class CoreLocationSource(
     override fun permission(): LocationPermission =
         permissionOf(statusManager.authorizationStatus, statusManager.accuracyAuthorization)
 
-    override fun start(onFix: (LocationFix) -> Unit): AutoCloseable {
+    override fun start(
+        onFix: (LocationFix) -> Unit,
+        onEnd: () -> Unit,
+    ): AutoCloseable {
         val manager = newManager()
         // The manager holds its delegate weakly; the returned AutoCloseable keeps it alive until updates stop.
-        val delegate = FixDelegate(onFix)
+        val delegate = FixDelegate(onFix, onEnd)
         manager.delegate = delegate
         manager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         manager.distanceFilter = LOCATION_UPDATE_DISTANCE_METERS
@@ -56,6 +62,7 @@ internal fun permissionOf(
 
 private class FixDelegate(
     private val onFix: (LocationFix) -> Unit,
+    private val onEnd: () -> Unit,
 ) : NSObject(),
     CLLocationManagerDelegateProtocol {
     override fun locationManager(
@@ -63,6 +70,21 @@ private class FixDelegate(
         didUpdateLocations: List<*>,
     ) {
         didUpdateLocations.filterIsInstance<CLLocation>().forEach { location -> location.toFixOrNull()?.let(onFix) }
+    }
+
+    /** Also called when the manager is created; then the authorization is still granted, as updates only start so. */
+    override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
+        if (permissionOf(manager.authorizationStatus, manager.accuracyAuthorization) == LocationPermission.NotGranted) {
+            onEnd()
+        }
+    }
+
+    /** kCLErrorDenied: the user revoked access. Other errors, such as kCLErrorLocationUnknown, are transient. */
+    override fun locationManager(
+        manager: CLLocationManager,
+        didFailWithError: NSError,
+    ) {
+        if (didFailWithError.domain == kCLErrorDomain && didFailWithError.code == kCLErrorDenied) onEnd()
     }
 }
 
