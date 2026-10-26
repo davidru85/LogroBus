@@ -33,9 +33,11 @@ interface LocationProvider {
     fun permission(): LocationPermission
 
     /**
-     * Location fixes while collected: updates start with the collection and stop when it is cancelled, so they stop
-     * when no visible screen needs them (FR-LOC-03). A slow collector gets the newest fix. Without permission, the
-     * flow completes without starting updates.
+     * Location fixes while collected: updates start with the collection and stop when it is cancelled. To stop them
+     * when no visible screen needs them (FR-LOC-03), collect only while the screen is visible (LB-201). A slow
+     * collector gets the newest fix. The flow completes when location is gone for good: without permission it
+     * completes without starting updates, and it also completes when the permission is revoked or the platform
+     * service fails. The collector then checks [permission] again.
      */
     fun locations(): Flow<LocationFix>
 }
@@ -50,8 +52,14 @@ internal const val LOCATION_UPDATE_DISTANCE_METERS = 10.0
 internal interface LocationSource {
     fun permission(): LocationPermission
 
-    /** Starts location updates, delivered to [onFix] on the main thread, and returns what stops them. */
-    fun start(onFix: (LocationFix) -> Unit): AutoCloseable
+    /**
+     * Starts location updates, delivered to [onFix] on the main thread, and returns what stops them. [onEnd] is called
+     * when no more fixes will come: the permission was revoked, or the platform service failed.
+     */
+    fun start(
+        onFix: (LocationFix) -> Unit,
+        onEnd: () -> Unit,
+    ): AutoCloseable
 }
 
 /** The shared half of each platform's [LocationProvider]: updates start and stop on [mainDispatcher]. */
@@ -67,7 +75,7 @@ internal class SourceLocationProvider(
                 close()
                 return@callbackFlow
             }
-            val updates = source.start { trySend(it) }
+            val updates = source.start(onFix = { trySend(it) }, onEnd = { close() })
             awaitClose { updates.close() }
         }.buffer(Channel.CONFLATED)
             .flowOn(mainDispatcher)
