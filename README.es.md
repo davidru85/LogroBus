@@ -31,6 +31,7 @@ Previsto para la v1.0: modo sin conexión, noticias y avisos de servicio, tarifa
 | Android | Kotlin, Jetpack Compose, Material 3 Expressive. Mínimo Android 8.0 (API 26) |
 | iOS | Swift, SwiftUI, Liquid Glass en iOS 26 o superior. Mínimo iOS 18, solo iPhone |
 | Mapas | MapLibre Native en ambas plataformas |
+| Ubicación | Fused Location Provider de los servicios de Google Play en Android, Core Location en iOS; solo en primer plano |
 
 ## Estructura del repositorio
 
@@ -103,6 +104,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **26-10-2026:**
+  - Completada LB-004. El núcleo compartido ya puede registrar mensajes, saber si la app está en primer plano y leer la ubicación del móvil. La ubicación viene de los servicios de Google Play en Android y de Core Location en iOS. Solo se actualiza mientras una pantalla la está escuchando, y las coordenadas nunca se imprimen, ni siquiera en los registros de errores. La petición de permiso llega con la pantalla Cerca de mí (LB-201).
   - El propietario aceptó los siete ADR de LB-014, así que cada biblioteca puede entrar en la compilación con la primera historia que la necesite.
   - LB-014: siete registros de decisiones de arquitectura (ADR-0012 a ADR-0018) para las bibliotecas que eligió la especificación: red, base de datos, inyección de dependencias, fechas y horas, imágenes, mapas y ajustes.
   - LB-004, parte 1: el núcleo compartido tiene sus primeras piezas:

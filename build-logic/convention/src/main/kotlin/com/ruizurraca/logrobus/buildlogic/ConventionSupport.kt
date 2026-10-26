@@ -1,5 +1,8 @@
 package com.ruizurraca.logrobus.buildlogic
 
+/** Robolectric's Android 17 (API 37) sandbox reaches jdk.internal.access, which JDK 21 does not export. */
+internal const val ROBOLECTRIC_JDK_ACCESS = "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED"
+
 private val productionSuffixes = listOf("Api", "Implementation", "CompileOnly", "RuntimeOnly")
 private val productionNames = setOf("api", "implementation", "compileOnly", "runtimeOnly")
 
