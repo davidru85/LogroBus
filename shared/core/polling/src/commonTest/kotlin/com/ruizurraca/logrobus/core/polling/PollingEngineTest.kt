@@ -414,7 +414,7 @@ class PollingEngineTest {
     @Test
     fun lb009_anInfiniteIntervalIsRejectedWhenPolling() =
         runTest {
-            // Data-rules review: delay(INFINITE) would park the key for good. Shorter intervals are raised to the floor.
+            // Data-rules review: delay(INFINITE) would park the key for good. Short ones are raised to the floor.
             assertFailsWith<IllegalArgumentException> {
                 engine().poll(ARRIVALS, Duration.INFINITE, recordingFetch())
             }

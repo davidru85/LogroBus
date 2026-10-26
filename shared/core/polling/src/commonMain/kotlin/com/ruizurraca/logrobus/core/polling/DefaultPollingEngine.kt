@@ -79,8 +79,9 @@ class DefaultPollingEngine internal constructor(
         key: PollKey,
         interval: Duration,
         fetch: suspend () -> AppResult<T>,
-    ): Flow<Timed<T>> =
-        flow {
+    ): Flow<Timed<T>> {
+        require(interval.isFinite()) { "A polling interval must be finite" }
+        return flow {
             val poll =
                 mutex.withLock {
                     // A key identifies one request, so its values always have the same type.
@@ -92,6 +93,7 @@ class DefaultPollingEngine internal constructor(
                 }
             emitAll(poll.latest.filterNotNull())
         }
+    }
 
     /** One shared loop per key, which runs while [latest] has collectors and the app is in the foreground. */
     private inner class Poll<T>(
