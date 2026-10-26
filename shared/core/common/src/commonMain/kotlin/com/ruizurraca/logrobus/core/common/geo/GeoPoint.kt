@@ -31,3 +31,5 @@ fun GeoPoint.distanceMetersTo(other: GeoPoint): Double {
 private const val DEGREES_PER_HALF_TURN = 180.0
 
 internal fun Double.toRadians(): Double = this * PI / DEGREES_PER_HALF_TURN
+
+internal fun Double.toDegrees(): Double = this * DEGREES_PER_HALF_TURN / PI
