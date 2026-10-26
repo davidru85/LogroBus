@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.core.polling
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.config.MIN_POLL_INTERVAL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +66,7 @@ class DefaultPollingEngine internal constructor(
             while (true) {
                 val result = fetch()
                 if (result is AppResult.Success) latest.value = Timed(result.value, clock.now(), lastError = null)
-                delay(interval + jitter())
+                delay((interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL))
             }
         }
     }
