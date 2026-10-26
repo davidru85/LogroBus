@@ -141,7 +141,7 @@ flowchart TB
 ### 4.1 Core network (`:shared:core:network`)
 
 - One `HttpClient` per process. It uses the OkHttp engine on Android and Darwin on iOS, the timeouts and headers of spec §8.7, the lenient `Json` from `api_spec.md` §3, and `expectSuccess = false`, so any 2xx succeeds.
-- The `Date` header of every BFF response is fed to `ServerCorrectedClock.onServerDate`, the `AppClock` in `:shared:core:common`. It adds to the device clock the mean offset of the last 5 samples (spec §8.6).
+- The `Date` header of every BFF response is fed to `ServerCorrectedClock.onServerDate`, the `AppClock` in `:shared:core:common`. It adds to the device clock the median offset of the last 5 samples (spec §8.6), so one stale `Date`, such as a cached response's, does not move it.
 - Collections are decoded item by item, so one bad item never fails a whole response.
 
 ### 4.2 Transit data (`:shared:transit:data`)

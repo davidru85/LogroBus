@@ -353,7 +353,7 @@ The pipeline order is spec §5.4. Each rule has a home and a test prefix.
 
 ## 8. Remote configuration
 
-The keys and defaults are spec §8.9, plus the additions marked *new*. Defaults are compiled into `:shared:core:config` (`RemoteConfigKey`, `CompiledDefaultsRemoteConfig`, LB-004) so the app works with no remote config at all. The backend is undecided (OQ-16). Polling intervals are read through `pollInterval`, which applies the 10 s floor of spec §8.6.
+The keys and defaults are spec §8.9, plus the additions marked *new*. Defaults are compiled into `:shared:core:config` (`RemoteConfigKey`, `CompiledDefaultsRemoteConfig`, LB-004) so the app works with no remote config at all. The backend is undecided (OQ-16). Polling intervals are read through `pollInterval`, which applies the 10 s floor of spec §8.6. Line ETAs (spec §8.6, 20 s) have no key of their own and reuse `poll_arrivals_ms`.
 
 | Key | Type | Default | Use |
 | --- | --- | --- | --- |

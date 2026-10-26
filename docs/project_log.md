@@ -42,7 +42,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **TDD:** seven red-green cycles, plus two refactors.
 - **Every LB-004 acceptance criterion has a test:**
   - `AppError` (`Network`, `Server(status)`, `Data`, `NotFound`) and `AppResult`, matched exhaustively.
-  - `AppClock` (a `fun interface`) and `ServerCorrectedClock`: the device clock plus the mean of the last 5 `Date` offsets. A device clock 90 s behind the server is corrected, and before the first sample the device clock is used as is.
+  - `AppClock` (a `fun interface`) and `ServerCorrectedClock`: the device clock plus the median of the last 5 `Date` offsets. A device clock 90 s behind the server is corrected, and before the first sample the device clock is used as is.
   - `RemoteConfigKey`, a sealed catalogue of the 14 keys with their compiled defaults, and `CompiledDefaultsRemoteConfig` (NFR-REL-05).
   - `pollInterval`, which clamps intervals under 10 000 ms to 10 s.
   - Geo, in `:shared:core:common`, package `geo`:
@@ -52,9 +52,18 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Found by the tests:** a JVM class-initialisation cycle.
   - When `PollIntervalTest` ran first, `RemoteConfigKey.all` held `null`.
   - The list is now built lazily.
+- **Review:** the code-reviewer and data-rules-reviewer subagents both approved with minor findings. These were fixed with TDD:
+  - **Median for the clock offset.** Under the mean, one stale `Date` (a response cached by a proxy) moved the offset from +90 s to −10 min 30 s for four samples.
+  - **Malformed polylines** now raise a documented `IllegalArgumentException` instead of `StringIndexOutOfBoundsException`, and precision is limited to 0..10.
+  - **`GeoPoint` and `BoundingBox`** print `(redacted)` in `toString` (NFR-PRIV-02), and negative box distances are rejected.
+  - **Refactor:** `AppResult` is a sealed class, so Swift keeps its generic; `serverOffset` is internal; the box test is checked to 0.5 %; an exhaustive `when` guards the key catalogue.
+  - **Not applied:**
+    - The `asin` NaN guard: in 2 million random antipodal pairs, `sqrt(h)` never exceeded 1, so no test could prove it.
+    - Re-clamping after jitter: it belongs to the `PollingEngine` and is noted on LB-009.
+  - **Recorded in `api_spec.md` §8:** line ETAs reuse `poll_arrivals_ms`.
 - **Verified:**
-  - 14 tests on the Android host and 19 on the iOS simulator;
-  - ktlint and detekt are clean, the latter after naming constants and using named arguments for the defaults;
+  - 21 common tests and 6 config tests pass on the Android host, and both modules pass on the iOS simulator;
+  - ktlint and detekt are clean;
   - `run-all.sh` passes.
 
 **Open / next**
