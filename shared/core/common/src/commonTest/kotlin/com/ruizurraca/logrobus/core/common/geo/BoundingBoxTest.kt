@@ -71,9 +71,9 @@ class BoundingBoxTest {
     fun lb004_theExpandedBoxContainsPointsWithinTheRadiusAndExcludesFartherOnes() {
         val box = BoundingBox.around(center, radiusMeters = 2_000.0)
 
-        listOf(center.north(1_900.0), center.north(-1_900.0), center.east(1_900.0), center.east(-1_900.0))
+        listOf(center.north(1_990.0), center.north(-1_990.0), center.east(1_990.0), center.east(-1_990.0))
             .forEach { assertTrue(box.contains(it), "$it should be inside") }
-        listOf(center.north(2_200.0), center.north(-2_200.0), center.east(2_200.0), center.east(-2_200.0))
+        listOf(center.north(2_010.0), center.north(-2_010.0), center.east(2_010.0), center.east(-2_010.0))
             .forEach { assertFalse(box.contains(it), "$it should be outside") }
     }
 }

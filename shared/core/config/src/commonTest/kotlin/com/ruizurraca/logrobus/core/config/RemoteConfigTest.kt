@@ -40,6 +40,30 @@ class RemoteConfigTest {
         assertEquals(documentedDefaults, RemoteConfigKey.all.map { it.name to config.get(it) })
     }
 
+    /** Exhaustive, with no `else`: a new key does not compile until this test and the list above include it. */
+    private fun backendName(key: RemoteConfigKey<*>): String =
+        when (key) {
+            RemoteConfigKey.ApiBaseUrl -> "api_base_url"
+            RemoteConfigKey.PollVehiclesMs -> "poll_vehicles_ms"
+            RemoteConfigKey.PollArrivalsMs -> "poll_arrivals_ms"
+            RemoteConfigKey.VehicleGraceMs -> "vehicle_grace_ms"
+            RemoteConfigKey.EtaPreviewMinutes -> "eta_preview_minutes"
+            RemoteConfigKey.FeatureLiveMap -> "feature_live_map"
+            RemoteConfigKey.FeaturePlanner -> "feature_planner"
+            RemoteConfigKey.FeatureQr -> "feature_qr"
+            RemoteConfigKey.NameOverrides -> "name_overrides"
+            RemoteConfigKey.FareTierTexts -> "fare_tier_texts"
+            RemoteConfigKey.NightServiceText -> "night_service_text"
+            RemoteConfigKey.MinSupportedVersion -> "min_supported_version"
+            RemoteConfigKey.MapStyleUrl -> "map_style_url"
+            RemoteConfigKey.GeocoderProvinceFilter -> "geocoder_province_filter"
+        }
+
+    @Test
+    fun lb004_everyKeyObjectIsInTheCatalogueUnderItsBackendName() {
+        assertEquals(documentedDefaults.map { it.first }, RemoteConfigKey.all.map(::backendName))
+    }
+
     @Test
     fun lb004_textDefaultsExistInSpanishAndEnglish() {
         val config = CompiledDefaultsRemoteConfig()
