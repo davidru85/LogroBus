@@ -20,13 +20,17 @@ sealed interface AppError {
     data object NotFound : AppError
 }
 
-/** The outcome of a repository call: a [Success] value or a typed [Failure] (AGENTS.md §5.11). */
-sealed interface AppResult<out T> {
+/**
+ * The outcome of a repository call: a [Success] value or a typed [Failure] (AGENTS.md §5.11). A sealed class, not an
+ * interface: the Objective-C export keeps generics on classes only, so Swift sees `Success.value` with its type.
+ */
+@Suppress("AbstractClassCanBeInterface") // A class on purpose: see above.
+sealed class AppResult<out T> {
     data class Success<out T>(
         val value: T,
-    ) : AppResult<T>
+    ) : AppResult<T>()
 
     data class Failure(
         val error: AppError,
-    ) : AppResult<Nothing>
+    ) : AppResult<Nothing>()
 }

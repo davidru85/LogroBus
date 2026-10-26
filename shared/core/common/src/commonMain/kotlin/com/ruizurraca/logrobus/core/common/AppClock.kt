@@ -25,8 +25,8 @@ class ServerCorrectedClock(
     @Volatile
     private var offsets: List<Duration> = emptyList()
 
-    /** The median of the recent `serverDate - deviceNow` samples. */
-    val serverOffset: Duration
+    /** The median of the recent `serverDate - deviceNow` samples. Internal: callers only need [now]. */
+    internal val serverOffset: Duration
         get() = offsets.median()
 
     fun onServerDate(serverDate: Instant) {
