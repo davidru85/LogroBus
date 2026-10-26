@@ -94,10 +94,10 @@ This document covers what we test, at which level, with which tools, and what ev
 
 ### 4.5 Android host tests (Robolectric)
 
-Android unit tests run on the JVM with Robolectric, through each module's `ciUnitTest` alias (`testDebugUnitTest`). The `logrobus.android.*` conventions and the test classes set up four things that API 37 needs:
+Android unit tests run on the JVM with Robolectric, through each module's `ciUnitTest` alias (`testDebugUnitTest`). A shared module can use it in its Android host tests too, with no resources: `:shared:core:location` does, for the Fused Location Provider. The `logrobus.android.*` and `logrobus.kmp.library` conventions and the test classes set up four things that API 37 needs:
 
 - **Resources:** `isIncludeAndroidResources = true`, so Robolectric reads the merged resources and manifest. Qualifiers such as `@Config(qualifiers = "es")` select the language.
-- **JDK access:** `--add-opens=java.base/jdk.internal.access=ALL-UNNAMED`. Robolectric's Android 17 (API 37) sandbox needs it on JDK 21.
+- **JDK access:** `--add-opens=java.base/jdk.internal.access=ALL-UNNAMED` (`ROBOLECTRIC_JDK_ACCESS` in build-logic, set by both conventions). Robolectric's Android 17 (API 37) sandbox needs it on JDK 21.
 - **Graphics:** test classes that assert on Compose UI use `@GraphicsMode(GraphicsMode.Mode.NATIVE)`. In the default LEGACY mode, text measures a few pixels wide and `assertIsDisplayed()` fails. Roborazzi needs NATIVE too.
 - **Espresso:** Compose UI Test brings Espresso 3.5.0, which calls `InputManager.getInstance()`, removed in API 37. Modules with Compose UI tests add `libs.androidx.test.espresso.core` (3.7.0).
 

@@ -26,8 +26,7 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         buildFeatures.compose = true
         // Robolectric reads the merged resources and manifest.
         testOptions.unitTests.isIncludeAndroidResources = true
-        // Robolectric's Android 17 (API 37) sandbox reaches jdk.internal.access, which JDK 21 does not export.
-        testOptions.unitTests.all { it.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED") }
+        testOptions.unitTests.all { it.jvmArgs(ROBOLECTRIC_JDK_ACCESS) }
     }
 
     extensions.configure<KotlinAndroidProjectExtension> {

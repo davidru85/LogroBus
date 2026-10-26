@@ -82,6 +82,17 @@ Done when:
   - Polylines round-trip at precision 5 and 6.
   - The bounding box expands correctly by 2 km and 5 km.
 
+Part 2 (added on 2026-10-26, when it started), also done when:
+- `Logger` has a no-op implementation and a console one. The console one prints the level, tag and message, and the types of any throwable's cause chain but never their messages (NFR-PRIV-02). It drops entries below its minimum level.
+- `AppDispatchers` bundles the main, default and I/O dispatchers, so that code receives them by injection and a test can replace all three with one test dispatcher.
+- `AppLifecycle` exposes whether the app is in the foreground as a `StateFlow`: `[Android]` from `ProcessLifecycleOwner` (started means foreground); `[iOS]` from the `UIApplication` enter-background and enter-foreground notifications.
+- `LocationProvider` (FR-LOC-03, NFR-PRIV-02):
+  - It reports the location permission as not granted, approximate or precise. Requesting it is left to the UI (LB-201).
+  - Location updates start when its flow is collected and stop when the collection is cancelled.
+  - Without permission, the flow completes without starting updates. It also completes when location is gone for good: the permission revoked (iOS) or the platform service failed (Android).
+  - `[Android]` uses the Fused Location Provider; `[iOS]` uses Core Location.
+  - A location fix never prints its coordinates.
+
 ### LB-005 `:shared:core:network` and DTOs
 Refs: `api_spec.md` §1–4, DD-07, DD-15, NFR-SEC-01, NFR-REL-02, NFR-PRIV-02
 

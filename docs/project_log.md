@@ -19,6 +19,61 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-26: LB-004, part 2: logger, dispatchers, app lifecycle and location
+
+**Done**
+- **TDD:**
+  - Five red-green cycles (`Logger`, `AppDispatchers`, `AppLifecycle`, the shared half of `LocationProvider`, and its Fused and Core Location adapters) and one refactor.
+  - Then four red-green cycles and three refactors from the reviews (below).
+  - The part 2 acceptance criteria were added to `acceptance_criteria.md` first.
+  - **Process slip:** six green commits that had no refactor after them lack the `TDD: refactor not needed` line (`testing_strategy.md` §7.1): `25a7a29`, `5b303b4`, `c07c747`, `5ba76c3`, `3acf856`, `dcc595e`. They were pushed, and history is never rewritten, so this entry records it instead.
+- **`:shared:core:common`:**
+  - `Logger`, with `NoOpLogger` and `ConsoleLogger`: minimum level, injectable output.
+  - `AppDispatchers`, injected, with a one-dispatcher constructor for tests.
+  - `AppLifecycle.isInForeground`: `ProcessAppLifecycle` on Android, `NotificationAppLifecycle` on iOS.
+- **`:shared:core:location`:**
+  - `LocationProvider`, `LocationPermission` and `LocationFix`.
+  - A shared `callbackFlow` starts the platform updates on collection and stops them on cancellation (FR-LOC-03). Without permission it completes at once; it keeps only the newest fix and runs on the injected main dispatcher.
+  - `fusedLocationProvider` (Android) and `coreLocationProvider` (iOS), behind an internal `LocationSource`, so the platform code stays thin.
+- **Tests** run on the Android host and on the iOS simulator. The Fused adapter's host tests use Robolectric, with a fake client built as a `Proxy`. The Core Location test uses a `CLLocationManager` subclass that records start and stop.
+- **Reviews** (code-reviewer and data-rules-reviewer subagents):
+  - **Fixed, with TDD:**
+    - `ConsoleLogger` printed throwable messages, which can quote a URL with search text or a payload with coordinates. It now prints the types of the cause chain only (NFR-PRIV-02).
+    - The location flow never ended once started. It now completes when the permission is revoked (iOS: an authorization change or `kCLErrorDenied`) or the Fused request fails (FR-LOC-02).
+    - iOS `AppLifecycle` could stay in the background after a cold launch. It now also follows did-become-active.
+    - The iOS permission manager could be created off the main thread. It is now created with the source.
+  - **Tests added for existing behaviour:** `flowOn(main)` and the conflated buffer. Each test fails when its behaviour is removed.
+  - **Refactors:**
+    - The provider factories take `AppDispatchers`.
+    - The test constructors are `internal`.
+    - Robolectric's JDK flag lives in the conventions.
+  - **Not applied:**
+    - Pausing location in the provider while the app is in the background. Stopping updates with hidden screens is LB-201's criterion, and the KDoc no longer claims the provider does it.
+    - Dropping old cached fixes. A cached first fix gives a quick nearby list, and the next fix replaces it. LB-202 can revisit this.
+  - **For LB-010:** create `AppLifecycle` and the location providers on the main thread, in the composition root (Koin `createdAtStart`).
+- **New dependencies** (`libs.versions.toml`):
+  - kotlinx-coroutines 1.11.0;
+  - lifecycle-process 2.11.0;
+  - play-services-location 21.4.0;
+  - for tests: Turbine 1.2.1, kotlinx-coroutines-test and Robolectric.
+- **App changes:**
+  - Play services adds a non-exported `GoogleApiActivity` and the `com.google.android.gms.version` metadata to the merged Android manifest, and no permission.
+  - The iOS binary does not reference Core Location yet, because nothing exported uses it.
+
+**Decisions**
+- **Owner (2026-10-26):**
+  - Google Play services Location is approved for Android. Its licence, the Android Software Development Kit License, is recorded as an approved exception in `engineering_workflow.md` §9.
+  - The LB-004 defaults are confirmed (`api_spec.md` §8).
+- **Agent:**
+  - The permission request, the manifest permissions and the iOS purpose string stay with LB-201, which shows the permission flow. The backlog notes that App Store Connect requires the purpose string once the binary uses Core Location.
+  - Update parameters, which the spec does not give: high accuracy, every 5 s and 10 m on Android; nearest ten metres and 10 m on iOS. Updates run only while a screen collects them.
+  - Logging in release is errors only, as `security_privacy.md` §4 says. `architecture.md` §7 said no-op and now matches.
+
+**Open / next**
+- **LB-004 is done** when this merges.
+- **Next: LB-009 (`PollingEngine`).** It needs only `AppLifecycle`, `AppDispatchers` and `RemoteConfig`, which now all exist.
+- **LB-003 (fixtures)** records from the live source and waits for the owner's go-ahead (OQ-11). LB-005's contract tests need those fixtures.
+
 ## 2026-10-26: LB-014: ADR-0012 to ADR-0018 accepted
 
 **Done**
