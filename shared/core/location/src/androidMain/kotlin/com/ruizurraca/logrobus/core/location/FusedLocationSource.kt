@@ -12,13 +12,13 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import kotlinx.coroutines.CoroutineDispatcher
+import com.ruizurraca.logrobus.core.common.AppDispatchers
 
 /** The Android [LocationProvider], on the Fused Location Provider of Google Play services (`architecture.md` §5.1). */
 fun fusedLocationProvider(
     context: Context,
-    mainDispatcher: CoroutineDispatcher,
-): LocationProvider = SourceLocationProvider(FusedLocationSource(context.applicationContext), mainDispatcher)
+    dispatchers: AppDispatchers,
+): LocationProvider = SourceLocationProvider(FusedLocationSource(context.applicationContext), dispatchers.main)
 
 internal class FusedLocationSource(
     private val context: Context,

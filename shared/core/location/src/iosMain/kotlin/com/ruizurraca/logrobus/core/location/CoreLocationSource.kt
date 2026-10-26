@@ -1,8 +1,8 @@
 package com.ruizurraca.logrobus.core.location
 
+import com.ruizurraca.logrobus.core.common.AppDispatchers
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
-import kotlinx.coroutines.CoroutineDispatcher
 import platform.CoreLocation.CLAccuracyAuthorization
 import platform.CoreLocation.CLAuthorizationStatus
 import platform.CoreLocation.CLLocation
@@ -17,11 +17,11 @@ import platform.Foundation.NSError
 import platform.darwin.NSObject
 
 /**
- * The iOS [LocationProvider], on Core Location. [mainDispatcher] must run on the main thread, because Core Location
- * delivers updates on the run loop of the thread that created the manager.
+ * The iOS [LocationProvider], on Core Location. Updates start and stop on the main dispatcher, because Core Location
+ * delivers them on the run loop of the thread that created the manager.
  */
-fun coreLocationProvider(mainDispatcher: CoroutineDispatcher): LocationProvider =
-    SourceLocationProvider(CoreLocationSource(), mainDispatcher)
+fun coreLocationProvider(dispatchers: AppDispatchers): LocationProvider =
+    SourceLocationProvider(CoreLocationSource(), dispatchers.main)
 
 internal class CoreLocationSource(
     private val newManager: () -> CLLocationManager = { CLLocationManager() },
