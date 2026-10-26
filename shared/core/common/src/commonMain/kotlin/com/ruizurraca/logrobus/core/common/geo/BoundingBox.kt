@@ -40,4 +40,5 @@ data class BoundingBox(
     }
 }
 
-private fun metersToDegreesOfLatitude(meters: Double): Double = meters / EARTH_RADIUS_METERS / 1.0.toRadians()
+/** Along a meridian, [meters] cover this many degrees of latitude, at any latitude. */
+private fun metersToDegreesOfLatitude(meters: Double): Double = (meters / EARTH_RADIUS_METERS).toDegrees()
