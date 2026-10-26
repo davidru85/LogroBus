@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -89,6 +90,21 @@ class PollingEngineTest {
             assertEquals(listOf<Int?>(1, 2, 3), first)
             assertEquals(listOf<Int?>(2, 3), second)
             assertEquals(3, vehicleFetches)
+        }
+
+    @Test
+    fun lb009_fetchTimesFallWithinTheIntervalPlusOrMinusOneSecond() =
+        runTest {
+            // Spec §8.6: jitter keeps the app's users from polling the source in step.
+            val engine = engine(maxJitter = POLL_JITTER)
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(10.minutes)
+
+            val gaps = fetchTimes.zipWithNext { previous, next -> next - previous }
+            assertTrue(gaps.size >= 20, "gaps: $gaps")
+            assertTrue(gaps.all { it in 19.seconds..21.seconds }, "gaps: $gaps")
+            assertTrue(gaps.distinct().size > 1, "no jitter: $gaps")
         }
 
     private companion object {
