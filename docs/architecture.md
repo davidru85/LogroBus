@@ -123,7 +123,7 @@ flowchart TB
 
 | Module | May depend on | Must not depend on |
 | --- | --- | --- |
-| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime, Ktor (network only), SQLDelight (database only) | Any domain, data or feature module; `:shared:core:testing` |
+| `:shared:core:*` | Other core modules (no cycles), stdlib, coroutines, kotlinx-datetime (ADR-0015), Ktor (network only, ADR-0012), SQLDelight (database only, ADR-0013) | Any domain, data or feature module; `:shared:core:testing` |
 | `:shared:core:testing` | Core and domain modules (fakes, builders) | Data and feature modules. No production module may depend on it (test scopes only) |
 | `:shared:transit:domain`, `:shared:favourites:domain` | `:shared:core:common` | Data modules, network, database, platform APIs |
 | `:shared:transit:data`, `:shared:favourites:data` | Their own domain module, `:shared:core:*`, Ktor and SQLDelight | Other capabilities' domains, feature modules |
@@ -352,7 +352,7 @@ flowchart TD
 | --- | --- |
 | Configuration | `RemoteConfig` in `:shared:core:config` with compiled defaults (NFR-REL-05). Backend deferred (OQ-16) |
 | Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
-| Settings | Multiplatform Settings (DataStore, `NSUserDefaults`) |
+| Settings | Multiplatform Settings (DataStore, `NSUserDefaults`), ADR-0018 |
 | Logging | The `Logger` interface: no-op in release, console in debug. Never logs coordinates or free text |
 | Localisation | Android `values/` (es-ES, the default) and `values-en/`; iOS `Localizable.xcstrings` with Spanish as the development language |
 | Security | HTTPS only, no pinning (spec §8.7), no secrets (`security_privacy.md`) |
