@@ -2,7 +2,6 @@ package com.ruizurraca.logrobus.core.common
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /** `architecture.md` §7: the `Logger` interface, a console implementation in debug and a quieter one in release. */
 class LoggerTest {
@@ -29,12 +28,14 @@ class LoggerTest {
     }
 
     @Test
-    fun lb004_consoleLoggerPrintsTheThrowable() {
-        ConsoleLogger(output = lines::add).error("Network", "Request failed", IllegalStateException("timeout"))
+    fun lb004_consoleLoggerPrintsTheThrowableTypesButNeverTheirMessages() {
+        // NFR-PRIV-02: exception messages can carry a request URL with search text, or a payload with coordinates.
+        val cause = IllegalArgumentException("q=calle mayor 12")
+        val throwable = IllegalStateException("Request failed for 42.4650,-2.4456", cause)
 
-        val line = lines.single()
-        assertTrue(line.startsWith("E/Network: Request failed\n"), line)
-        assertTrue("IllegalStateException: timeout" in line, line)
+        ConsoleLogger(output = lines::add).error("Network", "Request failed", throwable)
+
+        assertEquals(listOf("E/Network: Request failed [IllegalStateException <- IllegalArgumentException]"), lines)
     }
 
     @Test
