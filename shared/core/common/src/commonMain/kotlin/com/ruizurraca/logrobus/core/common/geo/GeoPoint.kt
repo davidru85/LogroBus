@@ -13,7 +13,10 @@ internal const val EARTH_RADIUS_METERS = 6_371_008.8
 data class GeoPoint(
     val lat: Double,
     val lng: Double,
-)
+) {
+    /** Redacted, so string templates and logged results never leak a location (NFR-PRIV-02). */
+    override fun toString(): String = "GeoPoint(redacted)"
+}
 
 /**
  * The great-circle (Haversine) distance to [other], in metres. Within 0.5 % of the ellipsoidal distance, which is
