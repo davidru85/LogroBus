@@ -353,7 +353,7 @@ The pipeline order is spec §5.4. Each rule has a home and a test prefix.
 
 ## 8. Remote configuration
 
-The keys and defaults are spec §8.9, plus the additions marked *new*. Defaults are compiled into `:shared:core` so the app works with no remote config at all. The backend is undecided (OQ-16).
+The keys and defaults are spec §8.9, plus the additions marked *new*. Defaults are compiled into `:shared:core:config` (`RemoteConfigKey`, `CompiledDefaultsRemoteConfig`, LB-004) so the app works with no remote config at all. The backend is undecided (OQ-16). Polling intervals are read through `pollInterval`, which applies the 10 s floor of spec §8.6.
 
 | Key | Type | Default | Use |
 | --- | --- | --- | --- |
@@ -366,10 +366,10 @@ The keys and defaults are spec §8.9, plus the additions marked *new*. Defaults 
 | `feature_planner` | Bool | true | Kill switch for How to Get There |
 | `feature_qr` | Bool | false | FR-FARE-05 |
 | `name_overrides` | JSON map | `{"PRADOVIEJOO":"PRADOVIEJO"}` | DD-11 |
-| `fare_tier_texts` | JSON map | es and en texts | FR-FARE-06 |
-| `night_service_text` | JSON map | es and en texts | FR-STOP-06 |
+| `fare_tier_texts` | JSON map | `FN20` and `FN50`: neutral es and en texts ("Descuento del 20 %", "20 % discount"), with no eligibility until OQ-09 is answered | FR-FARE-06 |
+| `night_service_text` | JSON map | The FR-STOP-06 sentence in es and en, until OQ-08 is answered | FR-STOP-06 |
 | `min_supported_version` | String | `1.0.0` | Force-update prompt |
-| `map_style_url` *(new)* | String | Development style (OQ-10) | Switch tile provider without a release |
+| `map_style_url` *(new)* | String | Empty: no provider until the owner decides OQ-10 (LB-013) | Switch tile provider without a release |
 | `geocoder_province_filter` *(new)* | String | `La Rioja` | FR-PLAN-02 |
 
 ## 9. Fixtures
