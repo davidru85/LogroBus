@@ -8,6 +8,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import org.junit.runner.RunWith
@@ -17,7 +18,9 @@ import org.robolectric.Shadows.shadowOf
 import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** FR-LOC-01 and FR-LOC-03 on Android: the Fused Location Provider behind [LocationProvider]. */
 @RunWith(RobolectricTestRunner::class)
@@ -25,7 +28,9 @@ class FusedLocationSourceTest {
     private val application = RuntimeEnvironment.getApplication()
 
     /** Records the calls that the source makes; any other call fails the test. */
-    private class FakeFusedClient {
+    private class FakeFusedClient(
+        val requestResult: Task<Void> = Tasks.forResult(null),
+    ) {
         val requests = mutableListOf<Triple<LocationRequest, LocationCallback, Looper>>()
         val removed = mutableListOf<LocationCallback>()
 
@@ -37,7 +42,7 @@ class FusedLocationSourceTest {
                 when (method.name) {
                     "requestLocationUpdates" -> {
                         requests += Triple(args[0] as LocationRequest, args[1] as LocationCallback, args[2] as Looper)
-                        Tasks.forResult(null)
+                        requestResult
                     }
 
                     "removeLocationUpdates" -> {
@@ -79,8 +84,10 @@ class FusedLocationSourceTest {
     fun lb004_androidUpdatesComeFromTheFusedProviderAndStopOnClose() {
         val fake = FakeFusedClient()
         val fixes = mutableListOf<LocationFix>()
+        var ended = false
 
-        val updates = FusedLocationSource(application, fake.client).start { fixes += it }
+        val updates =
+            FusedLocationSource(application, fake.client).start(onFix = { fixes += it }, onEnd = { ended = true })
 
         val (request, callback, looper) = fake.requests.single()
         assertEquals(Priority.PRIORITY_HIGH_ACCURACY, request.priority)
@@ -96,5 +103,19 @@ class FusedLocationSourceTest {
 
         updates.close()
         assertEquals(listOf(callback), fake.removed)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertFalse(ended)
+    }
+
+    @Test
+    fun lb004_androidUpdatesEndWhenTheFusedRequestFails() {
+        // For example, Google Play services is missing or out of date.
+        val fake = FakeFusedClient(requestResult = Tasks.forException(IllegalStateException("No Play services")))
+        var ended = false
+
+        FusedLocationSource(application, fake.client).start(onFix = {}, onEnd = { ended = true })
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(ended)
     }
 }
