@@ -19,6 +19,25 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-26: LB-014: ADRs for the spec §8.3 choices
+
+**Done**
+- This was started while the owner was away, because writing the ADRs needed no owner decision. The branch is stacked on LB-004's, to avoid conflicts in this log and the READMEs.
+- **Seven ADRs, all Proposed** (NFR-MNT-03). Each names its rejected alternatives with reasons:
+  - **ADR-0012, Ktor and kotlinx.serialization.** Rejected: platform clients, which would duplicate the lenient decoding; Ktorfit; JVM-only JSON libraries.
+  - **ADR-0013, SQLDelight.** Rejected: Room KMP (an annotated-entity model, and KSP on every target); Realm (deprecated); files.
+  - **ADR-0014, Koin, with a graph-verification test.** Rejected: kotlin-inject and Metro (compile-time plugins); manual DI; Hilt.
+  - **ADR-0015, `kotlin.time` for instants and kotlinx-datetime for `Europe/Madrid`.** Rejected: `expect`/`actual` over platform APIs; fixed offsets.
+  - **ADR-0016, Coil 3 on Android and `AsyncImage` on iOS.** This refines spec §8.3, which names Coil 3 for both: its multiplatform support renders through Compose, which ADR-0001 rules out on iOS. Owner to confirm.
+  - **ADR-0017, MapLibre Native on both platforms.** Rejected: Google Maps with MapKit; Mapbox; a web map. The tile provider stays with OQ-10.
+  - **ADR-0018, Multiplatform Settings.** Rejected: DataStore KMP used directly; a settings table; `expect`/`actual`.
+- **No dependency is added.** Each library enters the catalog with the first story that uses it.
+- **Linked from** the ADR index and from `architecture.md` (the dependency rules and the cross-cutting table).
+
+**Open / next**
+- **Owner:** accept or amend ADR-0012 to ADR-0018. ADR-0016 deviates from spec §8.3.
+- **LB-014 stays in progress** until OQ-16 picks the analytics and crash backend and its ADR is written.
+
 ## 2026-10-26: LB-004, part 1: core common and config
 
 **Context**
