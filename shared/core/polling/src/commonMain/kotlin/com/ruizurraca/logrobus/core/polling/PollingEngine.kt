@@ -12,9 +12,10 @@ interface PollingEngine {
     /**
      * Polls [fetch] while the returned flow is collected and the app is in the foreground, and emits the latest
      * [Timed] value. Collectors of the same [key] share one request per [interval], and a new collector gets the
-     * latest value at once. Each wait is [interval] with ±1 s of jitter, never below `MIN_POLL_INTERVAL`. After a
-     * failure, the next attempts wait 2, 4, 8 and 16 s, then 30 s (FR-ERR-03). Returning to the foreground fetches
-     * at once.
+     * latest value at once. The newest caller of a key sets its [interval] and [fetch].
+     *
+     * Each wait is [interval] with ±1 s of jitter, never below `MIN_POLL_INTERVAL`. After a failure, the next
+     * attempts wait 2, 4, 8 and 16 s, then 30 s (FR-ERR-03). Returning to the foreground fetches at once.
      *
      * [fetch] reports failures as [AppResult.Failure] and never throws. The flow never completes; stop collecting
      * to stop polling.
