@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.core.location
 import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreLocation.CLAccuracyAuthorization
+import platform.CoreLocation.CLError
 import platform.CoreLocation.CLLocation
 import platform.CoreLocation.CLLocationCoordinate2DMake
 import platform.CoreLocation.CLLocationManager
@@ -11,11 +12,16 @@ import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
 import platform.CoreLocation.kCLAuthorizationStatusDenied
 import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
 import platform.CoreLocation.kCLAuthorizationStatusRestricted
+import platform.CoreLocation.kCLErrorDenied
+import platform.CoreLocation.kCLErrorDomain
+import platform.CoreLocation.kCLErrorLocationUnknown
 import platform.CoreLocation.kCLLocationAccuracyNearestTenMeters
 import platform.Foundation.NSDate
+import platform.Foundation.NSError
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /** FR-LOC-01 and FR-LOC-03 on iOS: Core Location behind [LocationProvider]. */
 @OptIn(ExperimentalForeignApi::class) // CLLocationCoordinate2DMake
@@ -60,7 +66,7 @@ class CoreLocationSourceTest {
         val manager = RecordingManager()
         val fixes = mutableListOf<LocationFix>()
 
-        val updates = CoreLocationSource(newManager = { manager }).start { fixes += it }
+        val updates = CoreLocationSource(newManager = { manager }).start(onFix = { fixes += it }, onEnd = {})
 
         assertEquals(1, manager.starts)
         assertEquals(kCLLocationAccuracyNearestTenMeters, manager.desiredAccuracy)
@@ -73,4 +79,30 @@ class CoreLocationSourceTest {
         assertEquals(1, manager.stops)
         assertNull(manager.delegate)
     }
+
+    @Test
+    fun lb004_iosUpdatesEndWhenTheAuthorizationIsNoLongerGranted() {
+        // The test process has no location authorization, as after the user revokes it in Settings.
+        val manager = RecordingManager()
+        var ended = false
+
+        CoreLocationSource(newManager = { manager }).start(onFix = {}, onEnd = { ended = true })
+        manager.delegate!!.locationManagerDidChangeAuthorization(manager)
+
+        assertTrue(ended)
+    }
+
+    @Test
+    fun lb004_iosUpdatesEndOnADeniedErrorButNotOnATransientOne() {
+        val manager = RecordingManager()
+        var ends = 0
+        CoreLocationSource(newManager = { manager }).start(onFix = {}, onEnd = { ends++ })
+
+        manager.delegate!!.locationManager(manager, didFailWithError = clError(kCLErrorLocationUnknown))
+        assertEquals(0, ends)
+        manager.delegate!!.locationManager(manager, didFailWithError = clError(kCLErrorDenied))
+        assertEquals(1, ends)
+    }
+
+    private fun clError(code: CLError) = NSError(domain = kCLErrorDomain, code = code, userInfo = null)
 }

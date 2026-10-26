@@ -18,21 +18,29 @@ class LocationProviderTest {
         var permission: LocationPermission,
     ) : LocationSource {
         val listeners = mutableListOf<(LocationFix) -> Unit>()
+        val endListeners = mutableListOf<() -> Unit>()
         var starts = 0
         var stops = 0
 
         override fun permission() = permission
 
-        override fun start(onFix: (LocationFix) -> Unit): AutoCloseable {
+        override fun start(
+            onFix: (LocationFix) -> Unit,
+            onEnd: () -> Unit,
+        ): AutoCloseable {
             starts++
             listeners += onFix
+            endListeners += onEnd
             return AutoCloseable {
                 stops++
                 listeners -= onFix
+                endListeners -= onEnd
             }
         }
 
         fun report(fix: LocationFix) = listeners.toList().forEach { it(fix) }
+
+        fun end() = endListeners.toList().forEach { it() }
     }
 
     private val fix = LocationFix(GeoPoint(42.4650, -2.4456), accuracyMeters = 15.0)
@@ -66,6 +74,21 @@ class LocationProviderTest {
 
             assertEquals(LocationPermission.NotGranted, provider.permission())
             assertEquals(0, source.starts)
+        }
+
+    @Test
+    fun lb004_theFlowCompletesWhenThePlatformEndsUpdates() =
+        runTest {
+            // FR-LOC-02: a revoked permission, or a failed platform service, must reach the screen, not hang it.
+            val source = FakeLocationSource(LocationPermission.Precise)
+            val provider = SourceLocationProvider(source, UnconfinedTestDispatcher(testScheduler))
+
+            provider.locations().test {
+                source.end()
+                awaitComplete()
+            }
+
+            assertEquals(1, source.stops)
         }
 
     @Test
