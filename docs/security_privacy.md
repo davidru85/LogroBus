@@ -19,7 +19,7 @@ LogroBus has no accounts, no project-owned servers and no advertising. This docu
 
 | Data | Origin | Stored | Leaves the device | Recipient | Purpose |
 | --- | --- | --- | --- | --- | --- |
-| Precise or approximate location | OS, when the user is on Near Me or plans from "My location" | Memory only | Yes, as coordinates in API-07 and API-08 requests | Logroño transport BFF | Nearby stops, walking distances, trip planning |
+| Precise or approximate location | OS, when the user is on Near Me or plans from "My location": Google Play services' Fused Location Provider on Android, Core Location on iOS | Memory only | Yes, as coordinates in API-07 and API-08 requests | Logroño transport BFF | Nearby stops, walking distances, trip planning |
 | Coordinates of map points and saved places used in a plan | User | Saved places: on-device database | Yes, in API-07 requests | Logroño transport BFF | Trip planning |
 | Address search text | User | No | Yes, in geocoder requests | CartoCiudad (IGN) | Address suggestions |
 | Favourites, saved places, recent searches, settings | User | On-device database and settings | Only through the user's own OS backup (Android Auto Backup, iCloud) | The user's Google or Apple account | Persistence (FR-FAV-03) |
@@ -68,6 +68,7 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 **Google Play Data safety (draft):**
 - Location, approximate and precise: sent off the device to provide app functionality (trip planning and nearby stops), processed ephemerally, not used for advertising, not sold. Whether it counts as "shared" with the transport operator's service must be confirmed against Google's definitions.
 - App activity and app info and performance: none, while OQ-16 is deferred.
+- The Android app includes Google Play services Location (LB-004). Check Google's Data safety guidance for Play services SDKs before declaring.
 - Data is encrypted in transit. Users cannot request deletion because nothing is stored server-side; this must be stated.
 
 **Apple privacy nutrition label (draft):**

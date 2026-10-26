@@ -31,6 +31,7 @@ Planned for v1.0: offline mode, news and service notices, fares, recharge points
 | Android | Kotlin, Jetpack Compose, Material 3 Expressive. Minimum Android 8.0 (API 26) |
 | iOS | Swift, SwiftUI, Liquid Glass on iOS 26+. Minimum iOS 18, iPhone only |
 | Maps | MapLibre Native on both platforms |
+| Location | Google Play services' Fused Location Provider on Android, Core Location on iOS; foreground only |
 
 ## Repository structure
 
@@ -101,6 +102,7 @@ You will need:
 ### Recent changes
 
 - **2026-10-26:**
+  - LB-004 is done. The shared core can now log, tell whether the app is in the foreground, and read the phone's location. Location comes from Google Play services on Android and from Core Location on iOS. Updates run only while a screen is listening for them, and coordinates are never printed, not even in error logs. Asking for permission arrives with the Near Me screen (LB-201).
   - LB-014: seven architecture decision records (ADR-0012 to ADR-0018) for the libraries the spec chose: networking, database, dependency injection, dates and times, images, maps and settings. They await the owner's acceptance.
   - LB-004, part 1: the shared core has its first building blocks:
     - a clock that corrects the phone's time with the server's, so arrival times are right even when the phone's clock is wrong;
