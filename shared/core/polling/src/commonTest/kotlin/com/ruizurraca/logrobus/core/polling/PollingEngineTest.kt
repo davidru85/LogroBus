@@ -101,11 +101,35 @@ class PollingEngineTest {
             backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
             advanceTimeBy(10.minutes)
 
-            val gaps = fetchTimes.zipWithNext { previous, next -> next - previous }
+            val gaps = fetchTimes.gaps()
             assertTrue(gaps.size >= 20, "gaps: $gaps")
             assertTrue(gaps.all { it in 19.seconds..21.seconds }, "gaps: $gaps")
             assertTrue(gaps.distinct().size > 1, "no jitter: $gaps")
         }
+
+    @Test
+    fun lb009_jitterNeverTakesAWaitBelowTheTenSecondFloor() =
+        runTest {
+            // LB-004 review: MIN_POLL_INTERVAL applies again after the jitter, so 10 s never becomes 9 s.
+            val engine = engine(maxJitter = POLL_JITTER)
+            val tooFast = mutableListOf<Duration>()
+
+            backgroundScope.launch { engine.poll(VEHICLES, 10.seconds, recordingFetch()).collect {} }
+            backgroundScope.launch {
+                engine.poll(PollKey("too-fast"), 5.seconds) {
+                    tooFast += currentTime.milliseconds
+                    AppResult.Success(0)
+                }.collect {}
+            }
+            advanceTimeBy(10.minutes)
+
+            val gaps = fetchTimes.gaps()
+            assertTrue(gaps.all { it in 10.seconds..11.seconds }, "gaps: $gaps")
+            assertEquals(10.seconds, gaps.min())
+            assertTrue(tooFast.gaps().all { it >= 10.seconds }, "gaps: ${tooFast.gaps()}")
+        }
+
+    private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
 
     private companion object {
         const val SEED = 2026
