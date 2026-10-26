@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.core.common
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -39,10 +40,32 @@ class AppClockTest {
         val device = DeviceClock(serverNow)
         val clock = ServerCorrectedClock(device)
 
-        // Offsets of 10, 20, 30, 40, 50 and 60 s: the first leaves the window, so the mean of 20 to 60 s remains.
+        // Offsets of 10, 20, 30, 40, 50 and 60 s: the first leaves the window, so 20 to 60 s remain.
         listOf(10, 20, 30, 40, 50, 60).forEach { clock.onServerDate(serverNow + it.seconds) }
 
         assertEquals(40.seconds, clock.serverOffset)
         assertEquals(serverNow + 40.seconds, clock.now())
+    }
+
+    @Test
+    fun lb004_oneStaleServerDateDoesNotMoveTheOffset() {
+        val device = DeviceClock(serverNow - 90.seconds)
+        val clock = ServerCorrectedClock(device)
+
+        // Four live responses, then one whose Date is an hour old (a response cached by a proxy, spec §8.10).
+        repeat(4) { clock.onServerDate(serverNow) }
+        clock.onServerDate(serverNow - 1.hours)
+
+        assertEquals(90.seconds, clock.serverOffset)
+    }
+
+    @Test
+    fun lb004_withAnEvenNumberOfSamplesTheOffsetIsTheMeanOfTheMiddleTwo() {
+        val device = DeviceClock(serverNow)
+        val clock = ServerCorrectedClock(device)
+
+        listOf(10, 20, 40, 1_000).forEach { clock.onServerDate(serverNow + it.seconds) }
+
+        assertEquals(30.seconds, clock.serverOffset)
     }
 }
