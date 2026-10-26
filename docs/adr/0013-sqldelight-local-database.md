@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Proposed |
+| Status | Accepted (2026-10-26) |
 | Date | 2026-10-26 |
-| Deciders | Project owner (spec §8.3 baseline, 2026-10-22). Written up by the agent for LB-014; awaiting acceptance |
+| Deciders | Project owner (spec §8.3 baseline, 2026-10-22): accepted on 2026-10-26, after PR #19 merged. Written up by the agent for LB-014 |
 | Related | NFR-MNT-03, FR-STOP-01, spec §8.3, §8.5, §8.8, `architecture.md` §4.3, ADR-0007, ADR-0008 |
 
 ## Context
