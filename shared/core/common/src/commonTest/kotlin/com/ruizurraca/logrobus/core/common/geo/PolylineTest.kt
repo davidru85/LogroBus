@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.core.common.geo
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 
 /** LB-004: encoded polylines round-trip at precision 5 and at precision 6, which pattern shapes use (spec §8.8). */
@@ -33,6 +34,26 @@ class PolylineTest {
 
         assertNotEquals(logronoPath, roundTripped)
         assertEquals(GeoPoint(42.46512, -2.44568), roundTripped.first())
+    }
+
+    @Test
+    fun lb004_aTruncatedPolylineIsRejected() {
+        // Cut inside a value, and between a latitude and its longitude.
+        listOf("_p~iF~ps|U_", "_p~iF~ps|U_ulL").forEach { truncated ->
+            assertFailsWith<IllegalArgumentException>(truncated) { Polyline.decode(truncated, precision = 5) }
+        }
+    }
+
+    @Test
+    fun lb004_charactersOutsideThePolylineAlphabetAreRejected() {
+        assertFailsWith<IllegalArgumentException> { Polyline.decode("_p~iF ps|U", precision = 5) }
+    }
+
+    @Test
+    fun lb004_precisionMustBeBetween0And10() {
+        assertFailsWith<IllegalArgumentException> { Polyline.encode(logronoPath, precision = -1) }
+        assertFailsWith<IllegalArgumentException> { Polyline.encode(logronoPath, precision = 11) }
+        assertFailsWith<IllegalArgumentException> { Polyline.decode(googleEncoded, precision = 11) }
     }
 
     @Test
