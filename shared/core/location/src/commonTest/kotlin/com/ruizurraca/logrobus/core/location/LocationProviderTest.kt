@@ -3,6 +3,8 @@ package com.ruizurraca.logrobus.core.location
 import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -11,7 +13,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 /** FR-LOC-01 to 03 and NFR-PRIV-02: the shared half of every platform's location provider. */
-@OptIn(ExperimentalCoroutinesApi::class) // UnconfinedTestDispatcher
+@OptIn(ExperimentalCoroutinesApi::class) // UnconfinedTestDispatcher, runCurrent
 class LocationProviderTest {
     /** Stands in for the Fused Location Provider or Core Location. */
     private class FakeLocationSource(
@@ -62,6 +64,44 @@ class LocationProviderTest {
 
             assertEquals(1, source.stops)
             assertEquals(emptyList(), source.listeners)
+        }
+
+    @Test
+    fun lb004_updatesStartAndStopOnTheMainDispatcher() =
+        runTest {
+            // Core Location delivers updates on the run loop of the thread that created the manager.
+            val source = FakeLocationSource(LocationPermission.Precise)
+            val provider = SourceLocationProvider(source, mainDispatcher = StandardTestDispatcher(testScheduler))
+
+            val collection = launch(UnconfinedTestDispatcher(testScheduler)) { provider.locations().collect {} }
+            assertEquals(0, source.starts)
+            testScheduler.runCurrent()
+            assertEquals(1, source.starts)
+
+            collection.cancel()
+            assertEquals(0, source.stops)
+            testScheduler.runCurrent()
+            assertEquals(1, source.stops)
+        }
+
+    @Test
+    fun lb004_aSlowCollectorGetsTheNewestFixAndSkipsTheOnesInBetween() =
+        runTest {
+            val source = FakeLocationSource(LocationPermission.Precise)
+            val provider = SourceLocationProvider(source, UnconfinedTestDispatcher(testScheduler))
+            val received = mutableListOf<LocationFix>()
+            val (first, middle, newest) = listOf(10.0, 20.0, 30.0).map { fix.copy(accuracyMeters = it) }
+
+            val slowCollector = StandardTestDispatcher(testScheduler)
+
+            val collection = launch(slowCollector) { provider.locations().collect { received += it } }
+            testScheduler.runCurrent()
+            listOf(first, middle, newest).forEach(source::report)
+            testScheduler.runCurrent()
+
+            assertEquals(newest, received.last())
+            assertFalse(middle in received, "$received")
+            collection.cancel()
         }
 
     @Test
