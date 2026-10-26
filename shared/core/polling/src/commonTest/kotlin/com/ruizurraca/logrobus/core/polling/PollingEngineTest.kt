@@ -20,6 +20,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -407,6 +408,15 @@ class PollingEngineTest {
 
             engine.poll(ARRIVALS, 20.seconds, recordingFetch()).test {
                 assertEquals(Timed(2, START + 126.seconds, lastError = null), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb009_anInfiniteIntervalIsRejectedWhenPolling() =
+        runTest {
+            // Data-rules review: delay(INFINITE) would park the key for good. Shorter intervals are raised to the floor.
+            assertFailsWith<IllegalArgumentException> {
+                engine().poll(ARRIVALS, Duration.INFINITE, recordingFetch())
             }
         }
 
