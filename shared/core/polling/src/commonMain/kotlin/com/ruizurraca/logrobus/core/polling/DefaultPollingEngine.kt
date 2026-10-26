@@ -25,6 +25,12 @@ import kotlin.time.Duration.Companion.seconds
 /** Spec §8.6: each wait is the interval plus or minus up to this much. */
 internal val POLL_JITTER = 1.seconds
 
+private val FIRST_RETRY = 2.seconds
+private val MAX_RETRY = 30.seconds
+
+/** Enough doublings to pass [MAX_RETRY], few enough that the shift never overflows. */
+private const val MAX_DOUBLINGS = 4
+
 class DefaultPollingEngine internal constructor(
     private val scope: CoroutineScope,
     private val appLifecycle: AppLifecycle,
@@ -63,13 +69,28 @@ class DefaultPollingEngine internal constructor(
         }
 
         private suspend fun run() {
+            var failures = 0
             while (true) {
-                val result = fetch()
-                if (result is AppResult.Success) latest.value = Timed(result.value, clock.now(), lastError = null)
-                delay((interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL))
+                when (val result = fetch()) {
+                    is AppResult.Success -> {
+                        failures = 0
+                        latest.value = Timed(result.value, clock.now(), lastError = null)
+                    }
+
+                    is AppResult.Failure -> {
+                        failures++
+                        latest.value = latest.value?.copy(lastError = result.error)
+                            ?: Timed(value = null, fetchedAt = null, lastError = result.error)
+                    }
+                }
+                delay(if (failures == 0) (interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL) else backoff(failures))
             }
         }
     }
+
+    /** FR-ERR-03: 2, 4, 8 and 16 s, then 30 s. */
+    private fun backoff(failures: Int): Duration =
+        (FIRST_RETRY * (1 shl (failures - 1).coerceAtMost(MAX_DOUBLINGS))).coerceAtMost(MAX_RETRY)
 
     private fun jitter(): Duration {
         val maxMs = maxJitter.inWholeMilliseconds
