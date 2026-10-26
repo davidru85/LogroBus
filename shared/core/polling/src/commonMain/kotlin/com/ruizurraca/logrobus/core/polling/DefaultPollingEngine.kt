@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.core.polling
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.config.MIN_POLL_INTERVAL
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -41,6 +42,7 @@ class DefaultPollingEngine internal constructor(
     private val scope: CoroutineScope,
     private val appLifecycle: AppLifecycle,
     private val clock: AppClock,
+    private val logger: Logger,
     private val random: Random,
     private val maxJitter: Duration,
 ) : PollingEngine {
@@ -48,7 +50,8 @@ class DefaultPollingEngine internal constructor(
         scope: CoroutineScope,
         appLifecycle: AppLifecycle,
         clock: AppClock,
-    ) : this(scope, appLifecycle, clock, Random.Default, POLL_JITTER)
+        logger: Logger,
+    ) : this(scope, appLifecycle, clock, logger, Random.Default, POLL_JITTER)
 
     private val mutex = Mutex()
     private val polls = mutableMapOf<PollKey, Poll<*>>()

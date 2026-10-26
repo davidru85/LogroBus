@@ -4,7 +4,11 @@ import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.LogLevel
+import com.ruizurraca.logrobus.core.common.Logger
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -12,6 +16,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,6 +36,20 @@ class PollingEngineTest {
 
     private val appLifecycle = FakeAppLifecycle()
 
+    /** What the engine logged: level, tag, message and throwable. */
+    private val logged = mutableListOf<List<Any?>>()
+    private val logger =
+        object : Logger {
+            override fun log(
+                level: LogLevel,
+                tag: String,
+                message: String,
+                throwable: Throwable?,
+            ) {
+                logged += listOf(level, tag, message, throwable)
+            }
+        }
+
     /** When each fetch ran, in virtual time since the test started. */
     private val fetchTimes = mutableListOf<Duration>()
 
@@ -41,6 +60,7 @@ class PollingEngineTest {
         scope = backgroundScope,
         appLifecycle = appLifecycle,
         clock = { START + currentTime.milliseconds },
+        logger = logger,
         random = random,
         maxJitter = maxJitter,
     )
@@ -219,6 +239,69 @@ class PollingEngineTest {
 
             assertEquals(listOf(0, 20, 30, 60, 90).map { it.seconds }, fetchTimes)
             assertEquals(listOf<Int?>(2, 103, 104, 105), seen)
+        }
+
+    @Test
+    fun lb009_aThrowingFetchFailsOnlyItsKeyAndIsRetried() =
+        runTest {
+            // NFR-REL-02: a bug in one resource's mapper neither stops the other keys nor crashes the app.
+            val engine = engine()
+            val seen = mutableListOf<Timed<Int>>()
+            var vehicleFetches = 0
+            val bug = IllegalStateException("Unexpected stop 42.4650,-2.4456")
+            val throwing = recordingFetch { n -> if (n == 2) throw bug else AppResult.Success(n) }
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, throwing).collect { seen += it } }
+            backgroundScope.launch {
+                engine.poll(VEHICLES, 10.seconds) { AppResult.Success(++vehicleFetches) }.collect {}
+            }
+            advanceTimeBy(25.seconds)
+
+            assertEquals(listOf(0.seconds, 20.seconds, 22.seconds), fetchTimes)
+            assertEquals(Timed(1, START, lastError = AppError.Data), seen[1])
+            assertEquals(Timed(3, START + 22.seconds, lastError = null), seen[2])
+            assertEquals(3, vehicleFetches)
+            // The key is an id, and the console logger prints the throwable's type only (NFR-PRIV-02).
+            assertEquals(listOf<List<Any?>>(listOf(LogLevel.Error, "PollingEngine", "Fetch threw for arrivals:152", bug)), logged)
+        }
+
+    @Test
+    fun lb009_aTimeoutInsideFetchCountsAsANetworkFailure() =
+        runTest {
+            // A fetch that enforces spec §8.7's request timeout with withTimeout throws a CancellationException.
+            val engine = engine()
+            val seen = mutableListOf<Timed<Int>>()
+            val timingOut: suspend () -> AppResult<Int> = {
+                fetchTimes += currentTime.milliseconds
+                if (fetchTimes.size == 2) withTimeout(10.seconds) { awaitCancellation() }
+                AppResult.Success(fetchTimes.size)
+            }
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, timingOut).collect { seen += it } }
+            advanceTimeBy(35.seconds)
+
+            assertEquals(listOf(0.seconds, 20.seconds, 32.seconds), fetchTimes)
+            assertEquals(Timed(1, START, lastError = AppError.Network), seen[1])
+        }
+
+    @Test
+    fun lb009_aFetchCancelledBecauseItsCollectorsLeftIsNotAnError() =
+        runTest {
+            // Guard for the two tests above: the engine's own cancellation still stops the fetch, silently.
+            val engine = engine()
+            val slow: suspend () -> AppResult<Int> = {
+                fetchTimes += currentTime.milliseconds
+                delay(5.seconds)
+                AppResult.Success(fetchTimes.size)
+            }
+            val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, slow).collect {} }
+            advanceTimeBy(1.seconds)
+            first.cancel()
+            advanceTimeBy(1.seconds)
+
+            engine.poll(ARRIVALS, 20.seconds, slow).test {
+                assertEquals(Timed(2, START + 7.seconds, lastError = null), awaitItem())
+            }
         }
 
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
