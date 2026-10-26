@@ -209,6 +209,10 @@ class PollingEngineTest {
             appLifecycle.isInForeground.value = true
             runCurrent()
             assertEquals(listOf(0.seconds, 0.seconds, 305.seconds, 305.seconds), fetchTimes)
+
+            // Polling then carries on at each key's interval.
+            advanceTimeBy(21.seconds)
+            assertEquals(listOf(0, 0, 305, 305, 315, 325, 325).map { it.seconds }, fetchTimes)
         }
 
     @Test
@@ -418,6 +422,20 @@ class PollingEngineTest {
             assertFailsWith<IllegalArgumentException> {
                 engine().poll(ARRIVALS, Duration.INFINITE, recordingFetch())
             }
+        }
+
+    @Test
+    fun lb009_theProductionEngineWaitsTheIntervalPlusOrMinusOneSecond() =
+        runTest {
+            // The public constructor, as the composition root (LB-010) will call it.
+            val engine = DefaultPollingEngine(backgroundScope, appLifecycle, { START + currentTime.milliseconds }, logger)
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
+            advanceTimeBy(10.minutes)
+
+            val gaps = fetchTimes.gaps()
+            assertTrue(gaps.all { it in 19.seconds..21.seconds }, "gaps: $gaps")
+            assertTrue(gaps.any { it < 20.seconds } && gaps.any { it > 20.seconds }, "one-sided jitter: $gaps")
         }
 
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
