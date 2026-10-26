@@ -19,6 +19,58 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-26: LB-004, part 1: core common and config
+
+**Context**
+- The owner was away for about 10 hours and asked the agent to carry on without questions.
+- **Decisions the docs leave open:** the agent took the documented fallback or the most conservative option, and marked each one below for the owner to confirm.
+- **Merges:** none happened while the owner was away, because only the owner merges.
+
+**Agent decisions, to be confirmed by the owner**
+- **Split LB-004 in two, as was done for LB-001.**
+  - **Part 1 (this PR):** exactly the acceptance criteria, using only the Kotlin standard library.
+  - **Part 2:** `Logger`, `AppDispatchers`, `AppLifecycle` and `LocationProvider`.
+    - They need kotlinx-coroutines.
+    - `LocationProvider`'s Android implementation needs Google Play Services Location (`architecture.md` §5.1). That is a third-party SDK, which needs the owner's approval (`AGENTS.md` §10).
+  - LB-004 stays in progress.
+- **Defaults for keys whose values the docs leave open** (`api_spec.md` §8):
+  - `night_service_text`: the FR-STOP-06 sentence, in es and en (OQ-08).
+  - `fare_tier_texts`: neutral "20 % / 50 % discount" texts, with no eligibility claims (OQ-09).
+  - `map_style_url`: empty. Choosing a tile provider is a licensing matter for the owner (OQ-10), so none is set here.
+
+**Done**
+- **TDD:** seven red-green cycles, plus two refactors.
+- **Every LB-004 acceptance criterion has a test:**
+  - `AppError` (`Network`, `Server(status)`, `Data`, `NotFound`) and `AppResult`, matched exhaustively.
+  - `AppClock` (a `fun interface`) and `ServerCorrectedClock`: the device clock plus the median of the last 5 `Date` offsets. A device clock 90 s behind the server is corrected, and before the first sample the device clock is used as is.
+  - `RemoteConfigKey`, a sealed catalogue of the 14 keys with their compiled defaults, and `CompiledDefaultsRemoteConfig` (NFR-REL-05).
+  - `pollInterval`, which clamps intervals under 10 000 ms to 10 s.
+  - Geo, in `:shared:core:common`, package `geo`:
+    - `GeoPoint.distanceMetersTo` (Haversine) is within 0.15 % of WGS84 geodesic references computed with Vincenty's formula.
+    - `Polyline` round-trips Google's example at precision 5 and a Logroño path at precision 6.
+    - `BoundingBox.expandedBy` and `around` are tested at 2 km and 5 km.
+- **Found by the tests:** a JVM class-initialisation cycle.
+  - When `PollIntervalTest` ran first, `RemoteConfigKey.all` held `null`.
+  - The list is now built lazily.
+- **Review:** the code-reviewer and data-rules-reviewer subagents both approved with minor findings. These were fixed with TDD:
+  - **Median for the clock offset.** Under the mean, one stale `Date` (a response cached by a proxy) moved the offset from +90 s to −10 min 30 s for four samples.
+  - **Malformed polylines** now raise a documented `IllegalArgumentException` instead of `StringIndexOutOfBoundsException`, and precision is limited to 0..10.
+  - **`GeoPoint` and `BoundingBox`** print `(redacted)` in `toString` (NFR-PRIV-02), and negative box distances are rejected.
+  - **Refactor:** `AppResult` is a sealed class, so Swift keeps its generic; `serverOffset` is internal; the box test is checked to 0.5 %; an exhaustive `when` guards the key catalogue.
+  - **Not applied:**
+    - The `asin` NaN guard: in 2 million random antipodal pairs, `sqrt(h)` never exceeded 1, so no test could prove it.
+    - Re-clamping after jitter: it belongs to the `PollingEngine` and is noted on LB-009.
+  - **Recorded in `api_spec.md` §8:** line ETAs reuse `poll_arrivals_ms`.
+- **Verified:**
+  - 21 common tests and 6 config tests pass on the Android host, and both modules pass on the iOS simulator;
+  - ktlint and detekt are clean;
+  - `run-all.sh` passes.
+
+**Open / next**
+- **Owner:** confirm the three defaults above, and decide on Play Services Location for part 2.
+- **`TestAppClock`** (`:shared:core:testing`) arrives with the first test that needs a settable clock, likely in part 2 or LB-005.
+- **LB-005** feeds `ServerCorrectedClock.onServerDate` from every BFF response.
+
 ## 2026-10-25: LB-002 done: CI failure probes
 
 **Decisions (owner)**
