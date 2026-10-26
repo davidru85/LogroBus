@@ -403,10 +403,10 @@ class PollingEngineTest {
             val first = backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, recordingFetch()).collect {} }
             advanceTimeBy(5.seconds)
             first.cancel()
-            advanceTimeBy(2.minutes)
+            advanceTimeBy(121.seconds)
 
             engine.poll(ARRIVALS, 20.seconds, recordingFetch()).test {
-                assertEquals(Timed(2, START + 125.seconds, lastError = null), awaitItem())
+                assertEquals(Timed(2, START + 126.seconds, lastError = null), awaitItem())
             }
         }
 
