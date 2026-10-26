@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.core.polling
 
 import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -127,6 +128,41 @@ class PollingEngineTest {
             assertTrue(gaps.all { it in 10.seconds..11.seconds }, "gaps: $gaps")
             assertEquals(10.seconds, gaps.min())
             assertTrue(tooFast.gaps().all { it >= 10.seconds }, "gaps: ${tooFast.gaps()}")
+        }
+
+    @Test
+    fun lb009_failedFetchesRetryAfterTwoFourEightSixteenAndThenThirtySeconds() =
+        runTest {
+            // FR-ERR-03. Fetch 1 succeeds, fetches 2 to 7 fail and fetch 8 succeeds. The retries are exact, without
+            // jitter, and the last good value stays available with the error.
+            val engine = engine(maxJitter = POLL_JITTER)
+            val failing = recordingFetch { n -> if (n in 2..7) AppResult.Failure(AppError.Network) else AppResult.Success(n) }
+            val seen = mutableListOf<Timed<Int>>()
+
+            backgroundScope.launch { engine.poll(ARRIVALS, 20.seconds, failing).collect { seen += it } }
+            advanceTimeBy(3.minutes)
+
+            val gaps = fetchTimes.gaps()
+            assertEquals(listOf(2, 4, 8, 16, 30, 30).map { it.seconds }, gaps.subList(1, 7))
+            assertTrue(gaps[0] in 19.seconds..21.seconds && gaps[7] in 19.seconds..21.seconds, "gaps: $gaps")
+            assertEquals(
+                listOf(
+                    Timed(1, START, lastError = null),
+                    Timed(1, START, lastError = AppError.Network),
+                    Timed(8, START + fetchTimes[7], lastError = null),
+                ),
+                seen.take(3),
+            )
+        }
+
+    @Test
+    fun lb009_aFailureBeforeAnyValueCarriesOnlyTheError() =
+        runTest {
+            val failing = recordingFetch { AppResult.Failure(AppError.Server(503)) }
+
+            engine().poll(ARRIVALS, 20.seconds, failing).test {
+                assertEquals(Timed(null, fetchedAt = null, lastError = AppError.Server(503)), awaitItem())
+            }
         }
 
     private fun List<Duration>.gaps() = zipWithNext { previous, next -> next - previous }
