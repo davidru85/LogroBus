@@ -133,8 +133,8 @@ class PollingEngineTest {
     @Test
     fun lb009_jitterNeverTakesAWaitBelowTheTenSecondFloor() =
         runTest {
-            // LB-004 review: MIN_POLL_INTERVAL applies again after the jitter, so 10 s never becomes 9 s. Both reviews of
-            // LB-009: the jitter stays spread at the floor, so that clients at the floor do not poll in step.
+            // LB-004 review: MIN_POLL_INTERVAL applies again after the jitter, so 10 s never becomes 9 s.
+            // Both reviews of LB-009: the jitter stays spread at the floor, so clients there do not poll in step.
             val engine = engine(maxJitter = POLL_JITTER)
             val tooFast = mutableListOf<Duration>()
 

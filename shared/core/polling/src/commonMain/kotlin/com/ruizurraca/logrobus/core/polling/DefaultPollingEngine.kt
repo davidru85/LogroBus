@@ -168,8 +168,14 @@ class DefaultPollingEngine internal constructor(
                 AppResult.Failure(AppError.Data)
             }
 
-        /** The interval with jitter, raised to the floor afterwards, so that 10 s never becomes 9 s. */
-        private fun nextPoll(): Duration = (interval + jitter()).coerceAtLeast(MIN_POLL_INTERVAL)
+        /**
+         * The interval, at least the floor, with jitter. A wait that the jitter takes below the floor is reflected
+         * above it, so that 10 s never becomes 9 s and the waits at the floor still spread over 10 to 11 s.
+         */
+        private fun nextPoll(): Duration {
+            val wait = interval.coerceAtLeast(MIN_POLL_INTERVAL) + jitter()
+            return if (wait < MIN_POLL_INTERVAL) MIN_POLL_INTERVAL + (MIN_POLL_INTERVAL - wait) else wait
+        }
     }
 
     /** FR-ERR-03: 2, 4, 8 and 16 s, then 30 s. */
