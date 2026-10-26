@@ -38,6 +38,9 @@ internal val POLL_JITTER = 1.seconds
 
 private const val TAG = "PollingEngine"
 
+/** Spec §5.7: a value this old is expired, so a key without collectors for this long forgets its value. */
+private val REPLAY_EXPIRY = 120.seconds
+
 private val FIRST_RETRY = 2.seconds
 private val MAX_RETRY = 30.seconds
 
@@ -116,6 +119,9 @@ class DefaultPollingEngine internal constructor(
                         wasInBackground = false
                         delay(firstWait(resumed))
                         loop()
+                    } else if (!collected) {
+                        delay(REPLAY_EXPIRY)
+                        latest.value = null
                     }
                 }
             }
