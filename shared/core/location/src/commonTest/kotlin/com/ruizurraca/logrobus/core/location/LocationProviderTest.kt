@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.core.location
 
 import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.geo.GeoPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -10,6 +11,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 /** FR-LOC-01 to 03 and NFR-PRIV-02: the shared half of every platform's location provider. */
+@OptIn(ExperimentalCoroutinesApi::class) // UnconfinedTestDispatcher
 class LocationProviderTest {
     /** Stands in for the Fused Location Provider or Core Location. */
     private class FakeLocationSource(
