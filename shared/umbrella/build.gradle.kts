@@ -41,6 +41,10 @@ kotlin {
             implementation(projects.shared.core.database)
             implementation(projects.shared.core.location)
             implementation(projects.shared.core.polling)
+            implementation(libs.koin.core)
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.robolectric)
         }
     }
 }
