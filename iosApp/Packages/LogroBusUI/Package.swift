@@ -1,6 +1,10 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
+// Shared is a static framework, so the app links the system libraries it calls: SQLite, for SQLDelight's native driver
+// (ADR-0013). Every target that uses Shared carries the setting.
+let linksShared: [LinkerSetting] = [.linkedLibrary("sqlite3")]
+
 // LogroBusUI: the SwiftUI layer of the iOS app, one target per area (architecture.md §3.1 and §5.2).
 let package = Package(
     name: "LogroBusUI",
@@ -26,10 +30,10 @@ let package = Package(
         .binaryTarget(name: "Shared", path: "Frameworks/Shared.xcframework"),
         .target(name: "DesignSystem"),
         .target(name: "MapUI", dependencies: ["DesignSystem"]),
-        .target(name: "FeatureLines", dependencies: ["DesignSystem", "MapUI", "Shared"]),
-        .target(name: "FeatureStops", dependencies: ["DesignSystem", "MapUI", "Shared"]),
-        .target(name: "FeatureNearMe", dependencies: ["DesignSystem", "MapUI", "Shared"]),
-        .target(name: "FeaturePlanner", dependencies: ["DesignSystem", "MapUI", "Shared"]),
-        .target(name: "FeatureSettings", dependencies: ["DesignSystem", "MapUI", "Shared"])
+        .target(name: "FeatureLines", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
+        .target(name: "FeatureStops", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
+        .target(name: "FeatureNearMe", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
+        .target(name: "FeaturePlanner", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
+        .target(name: "FeatureSettings", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared)
     ]
 )

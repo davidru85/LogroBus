@@ -1,0 +1,14 @@
+package com.ruizurraca.logrobus.core.database
+
+import app.cash.sqldelight.db.SqlDriver
+
+/**
+ * The app's database on [driver], with the adapters of its typed columns. Create one per process (ADR-0013).
+ * SQLDelight asks for a table's adapters only once a query uses the table. The first query on favourite, news or
+ * plan_recent therefore stops this function compiling until it passes that table's InstantColumnAdapter too.
+ */
+fun logroBusDatabase(driver: SqlDriver): LogroBusDatabase =
+    LogroBusDatabase(
+        driver = driver,
+        sync_stateAdapter = Sync_state.Adapter(last_successAdapter = InstantColumnAdapter),
+    )

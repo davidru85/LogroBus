@@ -177,6 +177,21 @@ The schema is spec §8.8 minus the offline-only tables, plus these additions:
 
 Deferred to v1.0 with the offline mode (ADR-0008): the `arrival_snapshot` table and the seed import.
 
+Done in LB-007. The schema lives in `.sq` files by area: `Line`, `Stop`, `Content` (the v1.0 tables), `Favourite` and `Sync`.
+
+- **Departures from spec §8.8:**
+  - `stop_fts` is declared `content='stop'`: FTS4 rejects the spaces around `=` that the spec writes.
+  - Key columns are `NOT NULL`: `direction_code_cache`'s three columns and `sync_state.dataset`. SQLite keeps rows whose key is NULL apart, so a NULL line or code would cache duplicates, and a NULL direction would cache an ambiguous code as known (DD-04).
+  - `plan_recent.created_at` is `NOT NULL`.
+  - `favourite` is `UNIQUE(type, ref_id)`.
+  - `pattern_stop(stop_id)` and `stop_line(line_id)` are indexed.
+- **Types:** flag columns are `INTEGER` in SQLite and `Boolean` in Kotlin. Instant columns hold UTC epoch milliseconds and read as `kotlin.time.Instant` through one `InstantColumnAdapter`. `logroBusDatabase(driver)` wires the adapters; SQLDelight asks for a table's adapters once a query uses it.
+- **Search (FR-STOP-01, NFR-I18N-03):**
+  - `normalized_name` is `searchableName(name)`: the `searchWords` of the name, one space apart. `searchWords` folds case, accents, `ñ` and combining marks, and splits on anything but letters and digits (`:shared:core:common`).
+  - Triggers keep the external-content FTS4 index in step with every write to `stop`, including `INSERT OR REPLACE`.
+  - `searchStops(text)` queries each word as a prefix of `normalized_name`, so the text is never FTS syntax. A number also finds the stop with that id, first.
+- **Drivers:** `logroBusDriver(context)` on Android and `logroBusDriver()` on iOS open `logrobus.db`. Tests use the JDBC in-memory driver on the JVM and the native in-memory driver on iOS. `Shared` is a static framework, so the Swift package links the system SQLite.
+
 ### 4.4 Static data cache and sync
 
 ```mermaid
