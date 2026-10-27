@@ -33,13 +33,10 @@ class NetworkSecurityTest {
         val elements = mutableListOf<Pair<String, String?>>()
         while (parser.next() != XmlPullParser.END_DOCUMENT) {
             if (parser.eventType == XmlPullParser.START_TAG) {
-                elements += parser.name to parser.getAttributeValue(ANDROID_NAMESPACE, "cleartextTrafficPermitted")
+                // The network security config's attributes have no namespace.
+                elements += parser.name to parser.getAttributeValue(null, "cleartextTrafficPermitted")
             }
         }
         return elements
-    }
-
-    private companion object {
-        const val ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android"
     }
 }
