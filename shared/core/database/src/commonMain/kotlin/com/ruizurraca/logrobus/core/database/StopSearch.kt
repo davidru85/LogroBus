@@ -1,12 +1,12 @@
 package com.ruizurraca.logrobus.core.database
 
-import com.ruizurraca.logrobus.core.common.text.foldForSearch
+import com.ruizurraca.logrobus.core.common.text.searchWords
 
-/** What separates the words of folded text, which leaves only letters and digits as words. */
-private val NOT_A_WORD = Regex("[^a-z0-9]+")
-
-/** A stop's `normalized_name`: its [name] as search compares it. */
-fun searchableName(name: String): String = foldForSearch(name)
+/**
+ * A stop's `normalized_name`: the [searchWords] of its [name], one space apart. FTS4's simple tokenizer then sees the
+ * same words that [searchStops] queries, since it splits only on ASCII characters that are not letters or digits.
+ */
+fun searchableName(name: String): String = searchWords(name).joinToString(" ")
 
 /** No stop has this number, so the search matches by name only. */
 private const val NO_STOP = -1L
@@ -17,7 +17,7 @@ private const val NO_STOP = -1L
  * prefixes of the folded name only, so quotes, minus, star, colons and OR in [text] are never search syntax.
  */
 fun LogroBusDatabase.searchStops(text: String): List<Stop> {
-    val words = foldForSearch(text).split(NOT_A_WORD).filter(String::isNotEmpty)
+    val words = searchWords(text)
     if (words.isEmpty()) return emptyList()
     val match = words.joinToString(" ") { "normalized_name:$it*" }
     return stopQueries.search(id = text.trim().toLongOrNull() ?: NO_STOP, match = match).executeAsList()

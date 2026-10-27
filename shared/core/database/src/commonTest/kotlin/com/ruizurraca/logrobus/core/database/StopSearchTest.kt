@@ -29,7 +29,8 @@ class StopSearchTest {
         stops(1L to "Gran Vía - Ayuntamiento", 2L to "Gran Vía 38", 3L to "Vara de Rey")
 
         assertEquals(listOf(1L), search("ayunt"))
-        assertEquals(listOf(1L, 2L), search("via gran"))
+        // By searchable name: "gran via 38" before "gran via ayuntamiento".
+        assertEquals(listOf(2L, 1L), search("via gran"))
         assertEquals(listOf(1L), search("vía ayuntam"))
     }
 
