@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.buildlogic
 
 import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
@@ -22,9 +23,13 @@ internal fun Project.configureDetekt(
         buildUponDefaultConfig.set(true)
         config.setFrom(isolated.rootProject.projectDirectory.file("config/detekt/detekt.yml"))
     }
-    // Generated code, such as SQLDelight's classes named after tables, is not judged by the style rules.
-    val buildDirectory = layout.buildDirectory.get().asFile
-    tasks.withType<Detekt>().configureEach { exclude { isGeneratedSource(it.file, buildDirectory) } }
+    // Generated code, such as SQLDelight's classes named after tables, is not judged by the style rules, nor recorded
+    // in a baseline. The build directory is read when the task runs, in case a module moves it.
+    val buildDirectory = layout.buildDirectory
+    tasks.withType<Detekt>().configureEach { exclude { isGeneratedSource(it.file, buildDirectory.get().asFile) } }
+    tasks.withType<DetektCreateBaselineTask>().configureEach {
+        exclude { isGeneratedSource(it.file, buildDirectory.get().asFile) }
+    }
     tasks.register("ciDetekt") {
         group = "verification"
         description = "Runs detekt as CI does."
