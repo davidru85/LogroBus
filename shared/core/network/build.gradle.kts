@@ -7,9 +7,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.shared.core.common)
-            // JsonElement and KSerializer are part of this module's API; Ktor stays behind it (ADR-0012).
+            // JsonElement and KSerializer are part of this module's API, and so is HttpClientEngine: data modules' tests
+            // pass a MockEngine to SourceClient (ADR-0012, AGENTS.md §9).
             api(libs.kotlinx.serialization.json)
-            implementation(libs.ktor.client.core)
+            api(libs.ktor.client.core)
             implementation(libs.ktor.client.encoding)
         }
         androidMain.dependencies {
