@@ -63,7 +63,14 @@ class SourceClient internal constructor(
     private val baseUrl: () -> String,
     private val logger: Logger,
 ) {
-    private val http =
+    constructor(
+        identity: ClientIdentity,
+        clock: ServerCorrectedClock,
+        baseUrl: () -> String,
+        logger: Logger,
+    ) : this(platformEngine(), identity, clock, baseUrl, logger)
+
+    internal val http =
         HttpClient(engine) {
             expectSuccess = false
             install(UserAgent) { agent = identity.userAgent }
