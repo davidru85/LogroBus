@@ -29,3 +29,6 @@ CREATE TABLE pattern_stop (
   shape_index INTEGER NOT NULL,
   PRIMARY KEY (line_id, direction, seq)
 );
+
+-- The patterns that serve a stop, for its headsigns in search results (DD-16) and direction inference (DD-04).
+CREATE INDEX pattern_stop_by_stop ON pattern_stop (stop_id);
