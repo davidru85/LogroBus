@@ -23,6 +23,16 @@ class SourceJsonTest {
         val lines: List<Int> = emptyList(),
     )
 
+    /** A DTO that rejects a value itself, as an `init` check or a custom serializer can. */
+    @Serializable
+    private data class CheckedDto(
+        val id: Int? = null,
+    ) {
+        init {
+            check(id != 13) { "Unlucky" }
+        }
+    }
+
     private val logger = RecordingLogger()
 
     private fun json(text: String) = Json.parseToJsonElement(text)
@@ -117,5 +127,17 @@ class SourceJsonTest {
 
         val expected: Map<String, AppResult<StopDto>> = bodies.associateWith { AppResult.Failure(AppError.Data) }
         assertEquals(expected, results)
+    }
+
+    @Test
+    fun lb005_anItemThatItsTypeRejectsIsDroppedLikeAMalformedOne() {
+        // kotlinx.serialization wraps what a type throws while decoding in a JsonDecodingException, so the decoders'
+        // IllegalArgumentException catch holds it; this pins that, should a library update change it.
+        val items = json("""[{"id":12},{"id":13},{"id":14}]""").jsonArray
+
+        val decoded = items.decodeEach(CheckedDto.serializer(), logger)
+
+        assertEquals(Decoded(listOf(CheckedDto(12), CheckedDto(14)), dropped = 1), decoded)
+        assertEquals(AppResult.Failure(AppError.Data), json("""{"id":13}""").decodeAs(CheckedDto.serializer()))
     }
 }
