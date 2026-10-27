@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.buildlogic
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.Project
+import java.io.File
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
 
@@ -38,3 +39,9 @@ internal fun isUntypedKmpSourceSetTask(taskName: String): Boolean =
     taskName.endsWith("SourceSet") &&
         !taskName.startsWith("detektCommon") &&
         !taskName.startsWith("detektAndroid")
+
+/** Whether [file] lies under [buildDirectory]. */
+internal fun isGeneratedSource(
+    file: File,
+    buildDirectory: File,
+): Boolean = false
