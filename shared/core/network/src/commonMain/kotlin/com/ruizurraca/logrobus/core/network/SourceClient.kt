@@ -23,6 +23,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
+import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -95,7 +96,7 @@ class SourceClient(
         path: String,
         kind: RequestKind,
         query: Map<String, String> = emptyMap(),
-    ): AppResult<JsonElement> = send(HttpMethod.Get, path, kind)
+    ): AppResult<JsonElement> = send(HttpMethod.Get, path + query.toQueryString(), kind, logged = path)
 
     suspend fun post(
         path: String,
@@ -112,6 +113,7 @@ class SourceClient(
         method: HttpMethod,
         path: String,
         kind: RequestKind,
+        logged: String = path,
         configure: HttpRequestBuilder.() -> Unit = {},
     ): AppResult<JsonElement> {
         val result =
@@ -128,10 +130,10 @@ class SourceClient(
                     }.toResult()
             } catch (e: Exception) {
                 if (e is CancellationException) currentCoroutineContext().ensureActive()
-                logger.warn(TAG, "${method.value} $path failed: Network (${e::class.simpleName})")
+                logger.warn(TAG, "${method.value} $logged failed: Network (${e::class.simpleName})")
                 return AppResult.Failure(AppError.Network)
             }
-        if (result is AppResult.Failure) logger.warn(TAG, "${method.value} $path failed: ${result.error}")
+        if (result is AppResult.Failure) logger.warn(TAG, "${method.value} $logged failed: ${result.error}")
         return result
     }
 
@@ -159,3 +161,16 @@ class SourceClient(
         }
     }
 }
+
+/**
+ * `?name=value&…`, percent-encoded, except the commas of a list such as API-06's `lines=1,33`, which the source was
+ * captured with (spec §4). RFC 3986 allows a comma in a query.
+ */
+private fun Map<String, String>.toQueryString(): String =
+    if (isEmpty()) {
+        ""
+    } else {
+        entries.joinToString("&", prefix = "?") { (name, value) ->
+            name.encodeURLParameter() + "=" + value.split(',').joinToString(",") { it.encodeURLParameter() }
+        }
+    }
