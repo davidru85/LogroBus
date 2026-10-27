@@ -16,8 +16,9 @@ kotlin {
             implementation(libs.sqldelight.native.driver)
         }
         getByName("androidHostTest").dependencies {
-            // An in-memory JDBC database for tests (ADR-0013).
+            // An in-memory JDBC database for tests (ADR-0013), and Robolectric for the Android driver.
             implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.robolectric)
         }
     }
 }
