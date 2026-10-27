@@ -49,4 +49,18 @@ class StopSearchTest {
         assertEquals(emptyList<Long>(), search(" ¿?¡! "))
         assertEquals(emptyList<Long>(), search(""))
     }
+
+    @Test
+    fun lb007_theIndexFollowsRenamedAndDeletedStops() {
+        stops(1L to "Gran Vía", 2L to "Vara de Rey")
+
+        // As a sync would: plain SQL on the stop table only.
+        driver.execute(null, "UPDATE stop SET name = 'Mercado', normalized_name = 'mercado' WHERE id = 1", 0)
+        driver.execute(null, "DELETE FROM stop WHERE id = 2", 0)
+        stops(3L to "Vara de Rey 2")
+
+        assertEquals(emptyList<Long>(), search("gran"))
+        assertEquals(listOf(1L), search("mercado"))
+        assertEquals(listOf(3L), search("vara"))
+    }
 }
