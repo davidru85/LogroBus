@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.core.network
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
+import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
@@ -28,6 +29,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+
+private const val TAG = "SourceClient"
 
 /** Spec §8.7. */
 private val CONNECT_TIMEOUT = 5.seconds
@@ -56,7 +59,7 @@ class SourceClient internal constructor(
     identity: ClientIdentity,
     clock: ServerCorrectedClock,
     private val baseUrl: () -> String,
-    logger: Logger,
+    private val logger: Logger,
 ) {
     private val http =
         HttpClient(engine) {
@@ -88,22 +91,28 @@ class SourceClient internal constructor(
         send(HttpMethod.Post, path, kind) { setBody(TextContent(body.toString(), ContentType.Application.Json)) }
 
     // api_spec.md §7: no connection, DNS failures and timeouts are IOExceptions on every engine; cancellation is not.
+    // NFR-PRIV-02: a failure is logged by method, path and error type, never with a body or an error message.
     private suspend fun send(
         method: HttpMethod,
         path: String,
         kind: RequestKind,
         configure: HttpRequestBuilder.() -> Unit = {},
-    ): AppResult<JsonElement> =
-        try {
-            http
-                .request(baseUrl().trimEnd('/') + path) {
-                    this.method = method
-                    timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
-                    configure()
-                }.toResult()
-        } catch (_: IOException) {
-            AppResult.Failure(AppError.Network)
-        }
+    ): AppResult<JsonElement> {
+        val result =
+            try {
+                http
+                    .request(baseUrl().trimEnd('/') + path) {
+                        this.method = method
+                        timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
+                        configure()
+                    }.toResult()
+            } catch (e: IOException) {
+                logger.warn(TAG, "${method.value} $path failed: Network (${e::class.simpleName})")
+                return AppResult.Failure(AppError.Network)
+            }
+        if (result is AppResult.Failure) logger.warn(TAG, "${method.value} $path failed: ${result.error}")
+        return result
+    }
 
     // DD-15: any 2xx is a success; POSTs answer 201.
     private suspend fun HttpResponse.toResult(): AppResult<JsonElement> =

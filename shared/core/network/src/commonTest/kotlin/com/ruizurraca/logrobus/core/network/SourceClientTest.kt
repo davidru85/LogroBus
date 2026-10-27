@@ -239,7 +239,7 @@ class SourceClientTest {
                 listOf(
                     { json("""{"routes":[]}""", HttpStatusCode.Created) },
                     { json("""{"error":"No stop near 42.4650"}""", HttpStatusCode.BadRequest) },
-                    { respond("<html>42.4650</html>", HttpStatusCode.OK) },
+                    { respond("<p>No stop near 42.4650</p>", HttpStatusCode.OK) },
                     { throw IOException("No route to 42.4650") },
                 )
             val client = client { responses[requests.lastIndex]() }
