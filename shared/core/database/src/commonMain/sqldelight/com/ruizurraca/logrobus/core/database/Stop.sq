@@ -1,0 +1,57 @@
+import kotlin.Boolean;
+
+-- Spec §8.8: the stop catalogue (API-02).
+CREATE TABLE stop (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  operational INTEGER AS Boolean NOT NULL,
+  provisional INTEGER AS Boolean NOT NULL,
+  -- architecture.md §4.3: the name as search compares it (foldForSearch, NFR-I18N-03).
+  normalized_name TEXT NOT NULL
+);
+
+CREATE TABLE stop_line (
+  stop_id INTEGER NOT NULL,
+  line_id INTEGER NOT NULL,
+  PRIMARY KEY (stop_id, line_id)
+);
+
+-- The stops of a line.
+CREATE INDEX stop_line_by_line ON stop_line (line_id);
+
+-- Spec §8.8: full-text search over the stop table, which holds the text (an external-content FTS4 table). FTS4
+-- rejects spaces around an option's '=', as the spec writes it.
+CREATE VIRTUAL TABLE stop_fts USING fts4(name, normalized_name, content='stop');
+
+-- An external-content FTS4 table indexes only what it is given, so these triggers keep it in step with stop. FTS4
+-- reads a row's old text from stop to remove it from the index, so removal happens before the row changes.
+-- INSERT OR REPLACE deletes the row it replaces without firing delete triggers, so the old text leaves the index
+-- here, while it is still in stop. Only for a row that exists: FTS4 must not delete a document it never indexed.
+CREATE TRIGGER stop_fts_before_insert BEFORE INSERT ON stop WHEN EXISTS (SELECT 1 FROM stop WHERE id = new.id) BEGIN
+  DELETE FROM stop_fts WHERE docid = new.id;
+END;
+
+CREATE TRIGGER stop_fts_after_insert AFTER INSERT ON stop BEGIN
+  INSERT INTO stop_fts (docid, name, normalized_name) VALUES (new.id, new.name, new.normalized_name);
+END;
+
+CREATE TRIGGER stop_fts_before_update BEFORE UPDATE ON stop BEGIN
+  DELETE FROM stop_fts WHERE docid = old.id;
+END;
+
+CREATE TRIGGER stop_fts_after_update AFTER UPDATE ON stop BEGIN
+  INSERT INTO stop_fts (docid, name, normalized_name) VALUES (new.id, new.name, new.normalized_name);
+END;
+
+CREATE TRIGGER stop_fts_before_delete BEFORE DELETE ON stop BEGIN
+  DELETE FROM stop_fts WHERE docid = old.id;
+END;
+
+-- FR-STOP-01: the stop numbered :id first, then the stops whose folded name matches :match, by name.
+search:
+SELECT *
+FROM stop
+WHERE id = :id OR id IN (SELECT docid FROM stop_fts WHERE stop_fts MATCH :match)
+ORDER BY id = :id DESC, normalized_name, id;

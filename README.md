@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) and the client that talks to the source (LB-005, in progress). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) and the local database with stop search (LB-007). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -102,6 +102,10 @@ You will need:
 ### Recent changes
 
 - **2026-10-27:**
+  - LB-007 is done. The app has its local database, which keeps the lines, stops and routes, your favourites and saved places, and your recent trip searches.
+    - Stop search ignores accents, the ñ and capital letters, so "logrono" finds "Logroño".
+    - It matches the start of every word, in any order, and a stop number such as "38" finds that stop first.
+    - It answers in a few milliseconds over all 254 stops.
   - LB-005, part 2, first half: the client sends its query parameters the way the source expects them, and both apps refuse unencrypted HTTP connections. The data formats of each endpoint wait for the recorded sample data (LB-003).
   - LB-005, part 1: the shared client that talks to the bus data source.
     - It identifies the app and asks for compressed data.

@@ -1,10 +1,12 @@
 package com.ruizurraca.logrobus.buildlogic
 
 import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.DetektCreateBaselineTask
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
+import java.io.File
 
 /**
  * detekt (docs/code_style.md §2.1, ADR-0011) with `config/detekt/detekt.yml` on top of the defaults. The
@@ -20,6 +22,13 @@ internal fun Project.configureDetekt(
     extensions.configure<DetektExtension> {
         buildUponDefaultConfig.set(true)
         config.setFrom(isolated.rootProject.projectDirectory.file("config/detekt/detekt.yml"))
+    }
+    // Generated code, such as SQLDelight's classes named after tables, is not judged by the style rules, nor recorded
+    // in a baseline. The build directory is read when the task runs, in case a module moves it.
+    val buildDirectory = layout.buildDirectory
+    tasks.withType<Detekt>().configureEach { exclude { isGeneratedSource(it.file, buildDirectory.get().asFile) } }
+    tasks.withType<DetektCreateBaselineTask>().configureEach {
+        exclude { isGeneratedSource(it.file, buildDirectory.get().asFile) }
     }
     tasks.register("ciDetekt") {
         group = "verification"
@@ -38,3 +47,9 @@ internal fun isUntypedKmpSourceSetTask(taskName: String): Boolean =
     taskName.endsWith("SourceSet") &&
         !taskName.startsWith("detektCommon") &&
         !taskName.startsWith("detektAndroid")
+
+/** Whether [file] lies under [buildDirectory], where tools such as SQLDelight write the code they generate. */
+internal fun isGeneratedSource(
+    file: File,
+    buildDirectory: File,
+): Boolean = file.startsWith(buildDirectory)
