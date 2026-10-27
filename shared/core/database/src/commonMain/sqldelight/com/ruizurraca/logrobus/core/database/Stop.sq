@@ -22,9 +22,22 @@ CREATE TABLE stop_line (
 -- rejects spaces around an option's '=', as the spec writes it.
 CREATE VIRTUAL TABLE stop_fts USING fts4(name, normalized_name, content='stop');
 
--- An external-content FTS4 table indexes only what it is given.
+-- An external-content FTS4 table indexes only what it is given, so these triggers keep it in step with stop. FTS4
+-- reads a row's old text from stop to remove it from the index, so removal happens before the row changes.
 CREATE TRIGGER stop_fts_after_insert AFTER INSERT ON stop BEGIN
   INSERT INTO stop_fts (docid, name, normalized_name) VALUES (new.id, new.name, new.normalized_name);
+END;
+
+CREATE TRIGGER stop_fts_before_update BEFORE UPDATE ON stop BEGIN
+  DELETE FROM stop_fts WHERE docid = old.id;
+END;
+
+CREATE TRIGGER stop_fts_after_update AFTER UPDATE ON stop BEGIN
+  INSERT INTO stop_fts (docid, name, normalized_name) VALUES (new.id, new.name, new.normalized_name);
+END;
+
+CREATE TRIGGER stop_fts_before_delete BEFORE DELETE ON stop BEGIN
+  DELETE FROM stop_fts WHERE docid = old.id;
 END;
 
 -- FR-STOP-01: the stop numbered :id first, then the stops whose folded name matches :match, by name.
