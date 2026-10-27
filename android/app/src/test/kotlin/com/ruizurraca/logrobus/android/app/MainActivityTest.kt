@@ -5,10 +5,12 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.core.view.WindowCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -16,6 +18,10 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class MainActivityTest {
+    // Robolectric starts a new Application, and so a new Koin graph, for every test in one process (ADR-0014).
+    @After
+    fun stopTheGraph() = stopKoin()
+
     @get:Rule
     val compose = createAndroidComposeRule<MainActivity>()
 

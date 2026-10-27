@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.umbrella
 
 import org.koin.core.context.stopKoin
+import org.koin.mp.KoinPlatform
 import kotlin.test.AfterTest
 import kotlin.test.Test
 
@@ -11,6 +12,8 @@ class IosGraphTest {
 
     @Test
     fun lb010_theIosGraphResolvesEveryCoreDependency() {
-        assertResolvesTheCore(initKoin().koin)
+        initKoin()
+
+        assertResolvesTheCore(KoinPlatform.getKoin())
     }
 }
