@@ -3,6 +3,8 @@ package com.ruizurraca.logrobus.core.network
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
@@ -13,11 +15,18 @@ import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.io.IOException
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /** Spec §8.7 and `api_spec.md` §1: the rules every request to the source follows. */
 class SourceClientTest {
@@ -25,7 +34,7 @@ class SourceClientTest {
     private val requests = mutableListOf<HttpRequestData>()
 
     private fun client(
-        respond: MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { json("""{"result":{}}""") },
+        respond: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { json("""{"result":{}}""") },
     ) = SourceClient(
         engine =
             MockEngine { request ->
@@ -111,6 +120,43 @@ class SourceClientTest {
             val results = bodies.map { client.get("/api/linesDiscovery/lines", RequestKind.Static) }
 
             assertEquals(List(bodies.size) { AppResult.Failure(AppError.Data) }, results)
+        }
+
+    @Test
+    fun lb005_aTransportFailureOrATimeoutIsANetworkError() =
+        runTest {
+            val failures =
+                listOf(
+                    IOException("Unable to resolve host"),
+                    ConnectTimeoutException("Connect timeout has expired"),
+                    HttpRequestTimeoutException("$BASE_URL/api/vehicleMonitoring/all", 10_000),
+                )
+            val client = client { throw failures[requests.lastIndex % failures.size] }
+
+            val results =
+                failures.map { client.get("/api/vehicleMonitoring/all", RequestKind.Live) } +
+                    failures.map { client.post("/api/transit/walk-distances", buildJsonObject {}, RequestKind.Live) }
+
+            assertEquals(List(2 * failures.size) { AppResult.Failure(AppError.Network) }, results)
+        }
+
+    @Test
+    fun lb005_aCancelledCallIsCancelledNotFailed() =
+        runTest {
+            // A screen that leaves cancels its call; reporting that as a Network error would show an error state.
+            val started = CompletableDeferred<Unit>()
+            val client =
+                client {
+                    started.complete(Unit)
+                    awaitCancellation()
+                }
+            var result: AppResult<JsonElement>? = null
+
+            val call = launch { result = client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
+            started.await()
+            call.cancelAndJoin()
+
+            assertNull(result)
         }
 
     private fun MockRequestHandleScope.json(
