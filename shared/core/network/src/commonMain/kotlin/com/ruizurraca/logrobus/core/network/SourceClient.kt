@@ -57,14 +57,18 @@ enum class RequestKind(
     Static(30.seconds),
 }
 
-/** Every call to the source BFF goes through here (api_spec.md §1). */
-class SourceClient internal constructor(
+/**
+ * Every call to the source BFF goes through here (api_spec.md §1); create one per process. Tests, including the
+ * repository tests of the data modules, pass a Ktor `MockEngine` as the engine (AGENTS.md §9).
+ */
+class SourceClient(
     engine: HttpClientEngine,
     identity: ClientIdentity,
     clock: ServerCorrectedClock,
     private val baseUrl: () -> String,
     private val logger: Logger,
 ) {
+    /** A client on this platform's engine: OkHttp on Android, NSURLSession on iOS (ADR-0012). */
     constructor(
         identity: ClientIdentity,
         clock: ServerCorrectedClock,
