@@ -68,6 +68,22 @@ class StopSearchTest {
     }
 
     @Test
+    fun lb007_theIndexFollowsAStopReplacedInPlace() {
+        stops(1L to "Gran Vía")
+
+        // INSERT OR REPLACE is SQLite 3.18's only upsert; it deletes the old row without firing delete triggers.
+        driver.execute(
+            null,
+            "INSERT OR REPLACE INTO stop (id, name, lat, lng, operational, provisional, normalized_name) " +
+                "VALUES (1, 'Mercado', 42.4650, -2.4456, 1, 0, 'mercado')",
+            0,
+        )
+
+        assertEquals(emptyList<Long>(), search("gran"))
+        assertEquals(listOf(1L), search("mercado"))
+    }
+
+    @Test
     fun lb007_searchingTheWholeNetworkTakesUnder100Ms() {
         // NFR-PERF-03, on the JVM and the iOS simulator: 254 stops, the size of the network. The criterion's
         // reference devices are measured with the app (LB-007 in acceptance_criteria.md).
