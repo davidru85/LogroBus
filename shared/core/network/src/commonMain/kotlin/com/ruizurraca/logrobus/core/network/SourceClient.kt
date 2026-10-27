@@ -18,6 +18,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.content.TextContent
+import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -64,8 +65,7 @@ class SourceClient internal constructor(
         path: String,
         kind: RequestKind,
     ): AppResult<JsonElement> {
-        val response = http.get(url(path)) { timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds } }
-        return response.toResult()
+        return send { http.get(url(path)) { timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds } } }
     }
 
     suspend fun post(
@@ -73,13 +73,21 @@ class SourceClient internal constructor(
         body: JsonElement,
         kind: RequestKind,
     ): AppResult<JsonElement> {
-        val response =
+        return send {
             http.post(url(path)) {
                 timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
                 setBody(TextContent(body.toString(), ContentType.Application.Json))
             }
-        return response.toResult()
+        }
     }
+
+    // api_spec.md §7: no connection, DNS failures and timeouts are IOExceptions on every engine; cancellation is not.
+    private suspend fun send(request: suspend () -> HttpResponse): AppResult<JsonElement> =
+        try {
+            request().toResult()
+        } catch (_: IOException) {
+            AppResult.Failure(AppError.Network)
+        }
 
     // DD-15: any 2xx is a success; POSTs answer 201.
     private suspend fun HttpResponse.toResult(): AppResult<JsonElement> =
