@@ -18,6 +18,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.content.TextContent
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlin.time.Duration
@@ -83,9 +84,17 @@ class SourceClient internal constructor(
     // DD-15: any 2xx is a success; POSTs answer 201.
     private suspend fun HttpResponse.toResult(): AppResult<JsonElement> =
         if (status.isSuccess()) {
-            AppResult.Success(Json.parseToJsonElement(bodyAsText()))
+            parse(bodyAsText())
         } else {
             AppResult.Failure(AppError.Server(status.value))
+        }
+
+    // api_spec.md §7: a body that is not JSON fails this resource only.
+    private fun parse(body: String): AppResult<JsonElement> =
+        try {
+            AppResult.Success(Json.parseToJsonElement(body))
+        } catch (_: SerializationException) {
+            AppResult.Failure(AppError.Data)
         }
 
     private fun url(path: String) = baseUrl().trimEnd('/') + path
