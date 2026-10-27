@@ -11,6 +11,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import com.ruizurraca.logrobus.core.common.AppResult
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -68,6 +69,20 @@ class SourceClientTest {
             val timeouts = requests.map { it.getCapabilityOrNull(HttpTimeoutCapability) }
             assertEquals(listOf(5_000L, 5_000L, 5_000L), timeouts.map { it?.connectTimeoutMillis })
             assertEquals(listOf(30_000L, 10_000L, 10_000L), timeouts.map { it?.requestTimeoutMillis })
+        }
+
+    @Test
+    fun dd15_anyTwoHundredStatusIsASuccessAndPostsAnswer201() =
+        runTest {
+            val statuses = listOf(200, 201, 202, 299).map(HttpStatusCode::fromValue)
+            // Requests are recorded before they are answered, so the last index is the current request's.
+            val client = client { json("""{"ok":true}""", statuses[requests.lastIndex % statuses.size]) }
+
+            val results =
+                statuses.map { client.get("/api/vehicleMonitoring/all", RequestKind.Live) } +
+                    statuses.map { client.post("/api/transit/route", buildJsonObject {}, RequestKind.Live) }
+
+            assertEquals(List(8) { AppResult.Success(buildJsonObject { put("ok", true) }) }, results)
         }
 
     private fun MockRequestHandleScope.json(
