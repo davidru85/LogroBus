@@ -96,7 +96,7 @@ class SourceClient(
         path: String,
         kind: RequestKind,
         query: Map<String, String> = emptyMap(),
-    ): AppResult<JsonElement> = send(HttpMethod.Get, path + query.toQueryString(), kind, logged = path)
+    ): AppResult<JsonElement> = send(HttpMethod.Get, path, kind, query)
 
     suspend fun post(
         path: String,
@@ -107,19 +107,20 @@ class SourceClient(
 
     // api_spec.md §7 and NFR-REL-02: whatever stops a call (no connection, a timeout, a malformed api_base_url, a
     // redirect loop) fails that call alone. Only the caller's own cancellation propagates.
-    // NFR-PRIV-02: a failure is logged by method, path and error type, never with a body or an error message.
+    // NFR-PRIV-02: a failure is logged by method, path and error type, never with a query, a body or an error
+    // message.
     @Suppress("TooGenericExceptionCaught")
     private suspend fun send(
         method: HttpMethod,
         path: String,
         kind: RequestKind,
-        logged: String = path,
+        query: Map<String, String> = emptyMap(),
         configure: HttpRequestBuilder.() -> Unit = {},
     ): AppResult<JsonElement> {
         val result =
             try {
                 http
-                    .request(baseUrl().trimEnd('/') + path) {
+                    .request(baseUrl().trimEnd('/') + path + query.toQueryString()) {
                         this.method = method
                         timeout {
                             requestTimeoutMillis = kind.timeout.inWholeMilliseconds
@@ -130,10 +131,10 @@ class SourceClient(
                     }.toResult()
             } catch (e: Exception) {
                 if (e is CancellationException) currentCoroutineContext().ensureActive()
-                logger.warn(TAG, "${method.value} $logged failed: Network (${e::class.simpleName})")
+                logger.warn(TAG, "${method.value} $path failed: Network (${e::class.simpleName})")
                 return AppResult.Failure(AppError.Network)
             }
-        if (result is AppResult.Failure) logger.warn(TAG, "${method.value} $logged failed: ${result.error}")
+        if (result is AppResult.Failure) logger.warn(TAG, "${method.value} $path failed: ${result.error}")
         return result
     }
 
