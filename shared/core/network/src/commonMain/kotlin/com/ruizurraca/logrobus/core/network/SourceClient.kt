@@ -26,7 +26,9 @@ import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -122,11 +124,19 @@ class SourceClient internal constructor(
             AppResult.Failure(AppError.Server(status.value))
         }
 
-    // api_spec.md §7: a body that is not JSON fails this resource only.
-    private fun parse(body: String): AppResult<JsonElement> =
-        try {
-            AppResult.Success(SourceJson.parseToJsonElement(body))
-        } catch (_: SerializationException) {
+    // api_spec.md §7: a body that is not JSON fails this resource only. The reader takes an unquoted word, such as
+    // an HTML page without spaces, as a literal; every source response is an object or an array, so a scalar is Data.
+    private fun parse(body: String): AppResult<JsonElement> {
+        val element =
+            try {
+                SourceJson.parseToJsonElement(body)
+            } catch (_: SerializationException) {
+                null
+            }
+        return if (element is JsonObject || element is JsonArray) {
+            AppResult.Success(element)
+        } else {
             AppResult.Failure(AppError.Data)
         }
+    }
 }
