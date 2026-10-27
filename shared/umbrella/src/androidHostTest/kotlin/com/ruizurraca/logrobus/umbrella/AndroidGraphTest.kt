@@ -11,14 +11,19 @@ import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.PollingEngine
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertSame
 
 /** ADR-0014 on Android: the graph resolves every dependency the app has, so a missing binding fails here. */
 @RunWith(RobolectricTestRunner::class)
 class AndroidGraphTest {
+    @AfterTest
+    fun stop() = stopKoin()
+
     @Test
     fun lb010_theAndroidGraphResolvesEveryCoreDependency() {
         val koin = initKoin(RuntimeEnvironment.getApplication()).koin
