@@ -18,3 +18,6 @@ private val FOLDED =
  * "logrono" finds "Logroño" and "AYUNTAMIENTO" finds "Ayuntamiento". Spaces, digits and punctuation stay as they are.
  */
 fun foldForSearch(text: String): String = text.lowercase().map { FOLDED[it] ?: it }.joinToString("")
+
+/** The words of [text] as search compares them (NFR-I18N-03). */
+fun searchWords(text: String): List<String> = emptyList()

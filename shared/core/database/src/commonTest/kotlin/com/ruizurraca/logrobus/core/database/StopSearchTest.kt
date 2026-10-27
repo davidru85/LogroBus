@@ -34,6 +34,21 @@ class StopSearchTest {
     }
 
     @Test
+    fun lb007_theIndexAndTheQuerySplitWordsAlike() {
+        stops(
+            1L to "Hermanos D\u2019Elhuyar",
+            2L to "Logron\u0303o Deporte",
+            3L to "Gran\u00A0Vía",
+            4L to "Deportivo\u2013Hospital",
+        )
+
+        assertEquals(listOf(1L), search("elhuyar"))
+        assertEquals(listOf(2L), search("logrono"))
+        assertEquals(listOf(3L), search("via"))
+        assertEquals(listOf(4L), search("hospital"))
+    }
+
+    @Test
     fun lb007_aNumberFindsTheStopWithThatIdFirst() {
         stops(5L to "Gran Vía 38", 38L to "Vara de Rey", 380L to "Piqueras")
 
