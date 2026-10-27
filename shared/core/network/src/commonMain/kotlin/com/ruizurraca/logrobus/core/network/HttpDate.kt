@@ -21,9 +21,11 @@ private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Au
  * origin's `Date` and adds `Age`, the seconds since then (RFC 9111 §5.1), so the server's time is their sum.
  */
 internal fun serverNow(headers: Headers): Instant? {
-    val date = headers[HttpHeaders.Date]?.let(::parseHttpDate) ?: return null
-    val age = headers[HttpHeaders.Age]?.let { it.toLongOrNull()?.takeIf { seconds -> seconds >= 0 } ?: return null }
-    return (date + (age ?: 0).seconds).takeIf { it >= EARLIEST_SERVER_TIME }
+    val date = headers[HttpHeaders.Date]?.let(::parseHttpDate)
+    // No Age means a fresh response; an Age that cannot be read leaves the Date's age unknown.
+    val age = headers[HttpHeaders.Age].let { if (it == null) 0L else it.toLongOrNull()?.takeIf { s -> s >= 0 } }
+    val now = if (date == null || age == null) null else date + age.seconds
+    return now?.takeIf { it >= EARLIEST_SERVER_TIME }
 }
 
 /** The instant of a `Date` header [value], or null when it cannot be read: a bad `Date` is ignored, never an error. */

@@ -16,8 +16,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Spec §8.7: the client asks for gzip, so on OkHttp it must decompress the body itself. OkHttp only decompresses
- * transparently when it added `Accept-Encoding` on its own. NSURLSession always decompresses, so this is JVM-only.
+ * Spec §8.7: the client asks for gzip itself, so it must also decompress: on OkHttp, which decompresses transparently
+ * only when it added `Accept-Encoding` on its own, Ktor's `ContentEncoding` plugin does it. This pins the plugin on a
+ * `MockEngine`. On Darwin the plugin leaves decoding to NSURLSession, which always decompresses, so this is JVM-only.
  */
 class GzipTest {
     @Test

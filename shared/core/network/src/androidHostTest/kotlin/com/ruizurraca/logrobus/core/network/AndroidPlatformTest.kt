@@ -23,6 +23,6 @@ class AndroidPlatformTest {
     fun lb005_androidCallsGoThroughOkHttp() {
         val client = SourceClient(clientIdentity("1.2.0"), stoppedClock(), { BASE_URL }, NoOpLogger)
 
-        assertIs<OkHttpConfig>(client.http.engine.config)
+        client.http.use { assertIs<OkHttpConfig>(it.engine.config) }
     }
 }
