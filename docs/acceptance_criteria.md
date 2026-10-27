@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Baseline 1.0 for the MVP (M0–M4) |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-10-27 |
 | Based on | [`requirements.md`](requirements.md), spec §6 and §9, [`backlog.md`](backlog.md) |
 
 Verifiable acceptance criteria for every MVP story (epics E0–E4). A story is done only when all of its criteria pass **on both platforms** and the definition of done in `AGENTS.md` §11 is met.
@@ -143,8 +143,14 @@ Done when:
 - Two collectors of the same `PollKey` produce one upstream request per interval.
 - Fetch times fall within the interval ±1 s of jitter (virtual-time test).
 - After repeated failures the retry delays are 2, 4, 8, 16 and then 30 s. The last good value stays available, with `lastError` set.
-- Moving `AppLifecycle` to the background stops all requests; returning to the foreground triggers an immediate fetch.
+- Moving `AppLifecycle` to the background stops all requests; returning to the foreground triggers an immediate fetch, unless the last attempt is under 10 s old (`MIN_POLL_INTERVAL`, still fresh by spec §5.7).
 - No request is made while no collector is subscribed.
+- Added from the LB-009 reviews:
+  - The jittered wait never drops below the 10 s floor, and waits at the floor still spread over 10 to 11 s.
+  - A collector that leaves and comes back waits for the key's next scheduled fetch, and the backoff survives it.
+  - A lone success between failures waits the interval without restarting the backoff; two successes in a row restart it.
+  - A `fetch` that throws fails only its own key (`Data`; a timeout inside it gives `Network`) and is retried; the other keys keep polling.
+  - A key without collectors for 120 s forgets its value, so a returning screen shows Loading rather than an expired value.
 
 ### LB-010 DI and platform presentation conventions
 Refs: ADR-0004, ADR-0007, `architecture.md` §5

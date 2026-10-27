@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the data layer has started (LB-004). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -101,6 +101,13 @@ You will need:
 
 ### Recent changes
 
+- **2026-10-27:**
+  - LB-009 is done. One shared engine now refreshes live data, such as arrivals and bus positions, for the screens that show it:
+    - Screens showing the same data share one request.
+    - It waits the configured interval, never under 10 s, with a random second either way, so users do not all hit the source at once.
+    - It stops in the background and refreshes on return.
+    - After an error it keeps the last data and retries after 2, 4, 8 and 16 s, then every 30 s.
+    - Re-entering a screen never makes it poll faster.
 - **2026-10-26:**
   - LB-004 is done. The shared core can now log, tell whether the app is in the foreground, and read the phone's location. Location comes from Google Play services on Android and from Core Location on iOS. Updates run only while a screen is listening for them, and coordinates are never printed, not even in error logs. Asking for permission arrives with the Near Me screen (LB-201).
   - The owner accepted the seven ADRs of LB-014, so each library can join the build with the first story that needs it.

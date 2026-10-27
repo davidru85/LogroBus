@@ -19,6 +19,55 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-27: LB-009: `PollingEngine`
+
+**Done**
+- **Merges (2026-10-26):** PR #20 (ADR acceptance) and PR #21 (LB-004 part 2) were merged. #21 conflicted with #20 in the docs only (`AGENTS.md`, both READMEs, this log); `main` was merged into it, keeping both sides. Its first CI run then failed in the iOS job: the simulator the build had just used vanished before the test step (`xcodebuild` exit 70). Rerunning the failed jobs passed, so this was a runner flake.
+- **TDD:** seven red-green cycles for the criteria, plus one for the newest caller's interval, and six more cycles from the reviews (below), with three refactors.
+- **`:shared:core:polling`:**
+  - `PollingEngine`, `PollKey` and `Timed`.
+  - `DefaultPollingEngine`: per key, a `StateFlow` of the latest value and one loop, which runs while it has collectors and the app is in the foreground. Details in `architecture.md` §4.5.
+  - 20 tests in `commonTest`, on virtual time, run on the Android host and the iOS simulator.
+- **Reviews** (code-reviewer and data-rules-reviewer subagents; both asked for changes):
+  - **Fixed, with TDD:**
+    - A `fetch` that threw killed its key and could crash the app or cancel every key. A timeout inside it stopped polling silently. Both now fail the key alone (`Data` or `Network`), are logged by type and key, and are retried. The keys run under a child supervisor.
+    - Every activation fetched at once and reset the backoff, so re-entering a screen every 2 s polled every 2 s. A key now keeps its schedule, and the backoff, across activations. A return to the foreground fetches at once unless the last attempt is under 10 s old.
+    - A source failing every other request was retried after 2 s every cycle. Two successes in a row are now needed to restart the ladder.
+    - Clamping at the floor put half of the 10 s waits at exactly 10 s, so clients at the floor polled in step. The jitter is now reflected above the floor.
+    - A screen coming back after 30 min first got a 30-min-old value. After 120 s without collectors, the key forgets its value.
+    - An infinite interval parked the key forever. `poll()` now rejects it.
+  - **Tests strengthened:**
+    - two collectors overlapping when the interval changes;
+    - jitter on both sides of the interval;
+    - polling carrying on after the foreground fetch;
+    - the public constructor's jitter (mutation-checked).
+  - **Not applied:**
+    - **Jitter on the backoff.** The criterion asks for exact 2, 4, 8, 16 and 30 s. Clients fail at their own jittered polling instants, so their retries keep that spread. Only requests in flight at the very moment of a source restart retry in step.
+    - **A typed `PollKey<T>`.** A phantom type does not stop two keys with the same string and different types. `PollKey` documents a `<resource>:<id>` scheme instead.
+    - **`refresh(key)` and an in-flight flag on `Timed`,** for the Refreshing state, Tap to refresh and Retry (spec §7.3). These are additive changes, so they are recorded on LB-213, the story that needs them.
+  - **Process notes:**
+    - The first green stubbed constructor parameters five cycles early, so detekt stayed red on unused parameters until they were used.
+    - 96656e7, a refactor, added the public constructor without a test. f0cb64d added that test later.
+    - f0cb64d itself was committed with a ktlint finding, because the check's exit status was lost in a command chain. df6450f fixes it.
+    - Every green commit without a refactor after it says `TDD: refactor not needed`.
+
+**Decisions**
+- **Agent, for the owner to confirm:**
+  - **Return to the foreground:** spec §8.6 asks for an immediate fetch, and the engine now waits up to the 10 s floor if the last attempt is younger than that. This reconciles the immediate fetch with the floor: a value under 10 s old is still fresh (45 s, spec §5.7). The LB-009 criterion says so.
+  - **Retries** after 2, 4 and 8 s stay below the 10 s floor, as FR-ERR-03 requires (`architecture.md` §4.5).
+- **Agent:**
+  - `PollingEngine` is the one place outside the network and database boundaries that catches exceptions (`code_style.md`).
+  - Freshness is computed by the presentation layer from `fetchedAt` on a UI ticker, because repeated identical failures are merged into one emission.
+
+**Open / next**
+- **LB-009 is done** when this merges.
+- **For LB-010:** create one `DefaultPollingEngine` in the composition root, with an application-wide scope, `AppLifecycle`, the `ServerCorrectedClock` and the `Logger`.
+- **Next: LB-005, part 1:**
+  - the `HttpClient` factory: headers, timeouts, the 2xx rule, and `Date` sampling into `ServerCorrectedClock`;
+  - lenient `Json` and per-item decoding.
+  These are all tested with `MockEngine`. The DTO contract tests wait for LB-003's fixtures (OQ-11).
+- **iOS CI budget:** the iOS job is still over 10 min (about 13 min on #21's rerun). It's raised with the owner.
+
 ## 2026-10-26: LB-004, part 2: logger, dispatchers, app lifecycle and location
 
 **Done**
