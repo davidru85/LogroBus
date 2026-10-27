@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft, pre-scaffold |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-10-27 |
 | Based on | Spec §8; ADR-0001 to ADR-0009 (notably ADR-0007 feature modules, ADR-0008 offline deferral, ADR-0009 telemetry) |
 
 LogroBus follows clean architecture and is split into feature modules. Business logic, data access and the **presentation models** are shared through Kotlin Multiplatform. The **presentation layer** (ViewModels and UI) is platform-specific: Jetpack Compose with Material 3 Expressive on Android, and SwiftUI with Liquid Glass on iOS (ADR-0007).
@@ -191,13 +191,18 @@ interface PollingEngine {
     /** Emits the latest value with its fetch time while collected; de-duplicated by key. */
     fun <T> poll(key: PollKey, interval: Duration, fetch: suspend () -> AppResult<T>): Flow<Timed<T>>
 }
-data class Timed<T>(val value: T?, val fetchedAt: Instant?, val lastError: AppError?)
+value class PollKey(val value: String)  // "<resource>:<id>", ids only: keys are logged
+data class Timed<out T>(val value: T?, val fetchedAt: Instant?, val lastError: AppError?)
 ```
 
-- Subscriptions with the same key share one upstream loop (`shareIn(WhileSubscribed)`).
-- Intervals come from remote config: vehicles every 10 s, arrivals every 20 s, with a 10 s floor and ±1 s jitter.
-- When a fetch fails, the engine retries with backoff of 2, 4 and 8 s, capped at 30 s. The last good value stays available (FR-ERR-03).
-- The engine pauses in the background and fetches immediately on returning to the foreground. Platform ViewModels own the collection scope: Android's `viewModelScope`, iOS's `.task` cancellation.
+`DefaultPollingEngine` (LB-009) is created once in the composition root with an application-wide scope, `AppLifecycle`, `AppClock` and `Logger`.
+
+- **Sharing:** each key has a `StateFlow` of its latest value and one loop, which runs while that `StateFlow` has collectors and the app is in the foreground (`subscriptionCount` combined with `AppLifecycle.isInForeground`, then `collectLatest`). Collectors of a key share its requests, and a new collector gets the latest value at once. Each new collection sets the key's interval and `fetch`, so a remote-config change applies from the next screen that collects it.
+- **Schedule:** intervals come from remote config through `pollInterval()`: vehicles every 10 s, arrivals every 20 s. The engine applies the 10 s floor again and adds ±1 s of jitter, reflecting a wait below the floor above it. The next wait starts when a fetch returns, so one key never has two requests in flight. The schedule (the last attempt on a monotonic `TimeSource`, the planned wait, the failure count) belongs to the key, so leaving and re-entering a screen waits for the next scheduled fetch.
+- **Failures (FR-ERR-03):** retries wait 2, 4, 8 and 16 s, then 30 s. They are exempt from the 10 s floor, as FR-ERR-03 requires. The last good value stays available with `lastError` set. A lone success between failures waits the interval without restarting the ladder; two in a row restart it, so a flapping source is retried ever more slowly.
+- **A `fetch` that throws** fails its key alone (`Data`; a `CancellationException` such as a timeout gives `Network`), is logged by type and key, and is retried. The per-key coroutines run under a child supervisor.
+- **Lifecycle:** the engine pauses in the background and fetches at once on returning to the foreground, unless the last attempt is under 10 s old, which is still fresh (spec §5.7). This reconciles spec §8.6's immediate fetch with its 10 s floor. A key without collectors for 120 s forgets its value, so a returning screen shows Loading rather than an expired value. Platform ViewModels own the collection scope: Android's `viewModelScope`, iOS's `.task` cancellation.
+- **For presentation:** `StateFlow` merges identical emissions, so a repeated failure emits once and `fetchedAt` does not move. Freshness (fresh, stale, expired) is computed from `fetchedAt` on a UI ticker, not per emission. A manual refresh and an in-flight flag for the Refreshing state come with LB-213.
 
 ### 4.6 Feature modules (`:shared:feature:<x>`)
 

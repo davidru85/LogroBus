@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); la capa de datos ya ha empezado (LB-004). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -103,6 +103,13 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **27-10-2026:**
+  - Completada LB-009. Un único motor compartido refresca ahora los datos en directo, como las llegadas y la posición de los autobuses, para las pantallas que los muestran:
+    - Las pantallas que muestran los mismos datos comparten una sola petición.
+    - Espera el intervalo configurado, nunca menos de 10 s, con un segundo al azar arriba o abajo, para que los usuarios no consulten la fuente todos a la vez.
+    - Se detiene en segundo plano y refresca al volver.
+    - Tras un error conserva los últimos datos y reintenta a los 2, 4, 8 y 16 s, y después cada 30 s.
+    - Volver a entrar en una pantalla nunca hace que consulte más deprisa.
 - **26-10-2026:**
   - Completada LB-004. El núcleo compartido ya puede registrar mensajes, saber si la app está en primer plano y leer la ubicación del móvil. La ubicación viene de los servicios de Google Play en Android y de Core Location en iOS. Solo se actualiza mientras una pantalla la está escuchando, y las coordenadas nunca se imprimen, ni siquiera en los registros de errores. La petición de permiso llega con la pantalla Cerca de mí (LB-201).
   - El propietario aceptó los siete ADR de LB-014, así que cada biblioteca puede entrar en la compilación con la primera historia que la necesite.
