@@ -3,8 +3,8 @@ package com.ruizurraca.logrobus.core.network
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
-import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
+import com.ruizurraca.logrobus.core.common.warn
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
