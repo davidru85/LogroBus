@@ -9,6 +9,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
@@ -17,6 +18,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
@@ -61,6 +63,14 @@ class SourceClient internal constructor(
             install(UserAgent) { agent = identity.userAgent }
             install(HttpTimeout) { connectTimeoutMillis = CONNECT_TIMEOUT.inWholeMilliseconds }
             install(ContentEncoding) { gzip() }
+            // Spec §8.6: every response, an error included, carries the server's clock.
+            install(
+                createClientPlugin("ServerDate") {
+                    onResponse { response ->
+                        response.headers[HttpHeaders.Date]?.let(::parseHttpDate)?.let(clock::onServerDate)
+                    }
+                },
+            )
             defaultRequest { accept(ContentType.Application.Json) }
         }
 
