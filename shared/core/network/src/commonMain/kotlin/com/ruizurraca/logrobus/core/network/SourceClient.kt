@@ -24,8 +24,10 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
-import kotlinx.io.IOException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.serialization.SerializationException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -99,8 +101,10 @@ class SourceClient internal constructor(
     ): AppResult<JsonElement> =
         send(HttpMethod.Post, path, kind) { setBody(TextContent(body.toString(), ContentType.Application.Json)) }
 
-    // api_spec.md §7: no connection, DNS failures and timeouts are IOExceptions on every engine; cancellation is not.
+    // api_spec.md §7 and NFR-REL-02: whatever stops a call (no connection, a timeout, a malformed api_base_url, a
+    // redirect loop) fails that call alone. Only the caller's own cancellation propagates.
     // NFR-PRIV-02: a failure is logged by method, path and error type, never with a body or an error message.
+    @Suppress("TooGenericExceptionCaught")
     private suspend fun send(
         method: HttpMethod,
         path: String,
@@ -119,7 +123,8 @@ class SourceClient internal constructor(
                         }
                         configure()
                     }.toResult()
-            } catch (e: IOException) {
+            } catch (e: Exception) {
+                if (e is CancellationException) currentCoroutineContext().ensureActive()
                 logger.warn(TAG, "${method.value} $path failed: Network (${e::class.simpleName})")
                 return AppResult.Failure(AppError.Network)
             }
