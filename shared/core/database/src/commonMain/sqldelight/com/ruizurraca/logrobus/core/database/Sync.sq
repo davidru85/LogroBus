@@ -1,16 +1,18 @@
 -- Spec §8.8: what the data layer learns and records between syncs.
 
 -- Spec §5.6, DD-04: the direction inferred for each numeric ET direction code of a line.
+-- Key columns are NOT NULL, unlike spec §8.8: SQLite keeps rows whose key is NULL apart, so a NULL line or code would
+-- cache duplicates, and a NULL direction would cache an ambiguous code as if it were known (architecture.md §4.3).
 CREATE TABLE direction_code_cache (
-  line_id INTEGER,
-  code TEXT,
-  direction TEXT,
+  line_id INTEGER NOT NULL,
+  code TEXT NOT NULL,
+  direction TEXT NOT NULL,
   PRIMARY KEY (line_id, code)
 );
 
 -- Spec §8.5: when each static dataset last synced, and its content hash.
 CREATE TABLE sync_state (
-  dataset TEXT PRIMARY KEY,
+  dataset TEXT NOT NULL PRIMARY KEY,
   last_success INTEGER,
   content_hash TEXT
 );

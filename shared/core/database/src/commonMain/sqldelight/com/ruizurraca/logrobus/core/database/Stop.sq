@@ -18,6 +18,9 @@ CREATE TABLE stop_line (
   PRIMARY KEY (stop_id, line_id)
 );
 
+-- The stops of a line.
+CREATE INDEX stop_line_by_line ON stop_line (line_id);
+
 -- Spec §8.8: full-text search over the stop table, which holds the text (an external-content FTS4 table). FTS4
 -- rejects spaces around an option's '=', as the spec writes it.
 CREATE VIRTUAL TABLE stop_fts USING fts4(name, normalized_name, content='stop');
