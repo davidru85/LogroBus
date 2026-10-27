@@ -44,7 +44,7 @@ class StopSearchTest {
 
         // Quotes, minus, star, colon and OR are syntax in an FTS query; here they are only separators or words.
         assertEquals(listOf(1L), search("\"gran\" -vía*"))
-        assertEquals(listOf(1L), search("normalized_name:gran"))
+        assertEquals(listOf(1L), search("gran:vía"))
         assertEquals(emptyList<Long>(), search("gran OR vara"))
         assertEquals(emptyList<Long>(), search(" ¿?¡! "))
         assertEquals(emptyList<Long>(), search(""))
