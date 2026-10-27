@@ -1,0 +1,39 @@
+import kotlin.Boolean;
+
+-- Spec §8.8: content for More (fares, recharge points and news), which the v1.0 stories fill in.
+CREATE TABLE fare_product (
+  code TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  price_cents INTEGER NOT NULL,
+  category TEXT NOT NULL,
+  tier TEXT NOT NULL,
+  area TEXT NOT NULL,
+  channel TEXT NOT NULL,
+  valid_from TEXT,
+  valid_until TEXT,
+  max_quantity INTEGER NOT NULL
+);
+
+CREATE TABLE recharge_point (
+  id INTEGER PRIMARY KEY,
+  name TEXT,
+  type TEXT,
+  address TEXT,
+  lat REAL,
+  lng REAL
+);
+
+CREATE TABLE news (
+  id INTEGER PRIMARY KEY,
+  document_id TEXT UNIQUE NOT NULL,
+  title TEXT,
+  summary TEXT,
+  body_html TEXT,
+  image_url TEXT,
+  featured INTEGER AS Boolean,
+  published_at INTEGER,
+  updated_at INTEGER,
+  affected_lines TEXT,
+  notified INTEGER AS Boolean NOT NULL DEFAULT 0
+);

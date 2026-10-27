@@ -1,4 +1,23 @@
+import kotlin.Boolean;
+
+-- Spec §8.8: the stop catalogue (API-02).
 CREATE TABLE stop (
-  id INTEGER PRIMARY KEY, name TEXT NOT NULL, lat REAL NOT NULL, lng REAL NOT NULL,
-  operational INTEGER NOT NULL, provisional INTEGER NOT NULL
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  operational INTEGER AS Boolean NOT NULL,
+  provisional INTEGER AS Boolean NOT NULL,
+  -- architecture.md §4.3: the name as search compares it (foldForSearch, NFR-I18N-03).
+  normalized_name TEXT NOT NULL
 );
+
+CREATE TABLE stop_line (
+  stop_id INTEGER NOT NULL,
+  line_id INTEGER NOT NULL,
+  PRIMARY KEY (stop_id, line_id)
+);
+
+-- Spec §8.8: full-text search over the stop table, which holds the text (an external-content FTS4 table). FTS4
+-- rejects spaces around an option's '=', as the spec writes it.
+CREATE VIRTUAL TABLE stop_fts USING fts4(name, normalized_name, content='stop');
