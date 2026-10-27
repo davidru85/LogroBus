@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Last updated | 2026-10-26 |
+| Last updated | 2026-10-27 |
 | Status values | `todo`, `in-progress`, `blocked`, `deferred`, `done`, `dropped` |
 | Priority | Spec priority: P0 = launch blocker, P1 = launch target, P2 = post-launch |
 
@@ -32,7 +32,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-006 | Normaliser and mappers for lines, stops, VM, ET and the planner, with one test per DD rule (DD-01 to DD-11, DD-15 to DD-18) | Spec §5.3–5.6 | P0 | todo |
 | LB-007 | `:shared:core:database`: SQLDelight schema (spec §8.8 plus the additions in `architecture.md` §4.3, minus offline-only tables), FTS stop search with accent folding | FR-STOP-01, NFR-I18N-03 | P0 | todo |
 | LB-008 | `StaticSyncEngine` (cache, no seed): download on first use, TTLs, content hash, validation thresholds, atomic replace | FR-ERR-04, FR-ERR-05, NFR-REL-03, ADR-0008 | P0 | todo |
-| LB-009 | `PollingEngine`: keyed de-duplication, intervals with a floor, jitter, backoff, pause and resume on `AppLifecycle.isInForeground` (LB-004); apply `MIN_POLL_INTERVAL` again after adding jitter, so 10 s never becomes 9 s (LB-004 review) | Spec §8.6, FR-ERR-03, NFR-PERF-07 | P0 | todo |
+| LB-009 | `PollingEngine`: keyed de-duplication, intervals with a floor, jitter, backoff, pause and resume on `AppLifecycle.isInForeground` (LB-004); apply `MIN_POLL_INTERVAL` again after adding jitter, so 10 s never becomes 9 s (LB-004 review). Done in `:shared:core:polling` (`DefaultPollingEngine`), with the review additions in `acceptance_criteria.md` | Spec §8.6, FR-ERR-03, NFR-PERF-07 | P0 | done |
 | LB-010 | DI and interop: Koin graph in `:shared:umbrella`, SKIE, the `SharedDependencies` factory for Swift, started in LB-001 with the start destination (with preview fakes), the platform ViewModel conventions on both platforms | ADR-0004, ADR-0007 | P0 | todo |
 | LB-011 | Design system foundations. Android: `MaterialExpressiveTheme`, tokens, `LineBadge`, `EtaText`, expressive wrappers. iOS: tokens, `LineBadge`, `EtaText`, `adaptiveGlass` helpers; CI: the Android screenshot (Roborazzi) and iOS snapshot jobs, moved from LB-002 | `design_guidelines.md` §4–6, NFR-MNT-04, NFR-PLAT-01; neutral placeholder theme until OQ-18 | P0 | todo |
 | LB-012 | App shell: three tabs with per-tab back stacks, More toolbar entry, onboarding placeholder, on both platforms. The shared `TopLevelDestination` (FR-NAV-01, FR-NAV-02, tests `lb012_…`) landed early, in LB-001 part 2 | FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005 | P0 | todo |
@@ -73,7 +73,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-210 | "Directions to this stop" switches to How to Get There with the destination set; "Show on map" from pushed stop detail | FR-STOP-09 | P1 | todo |
 | LB-211 | "Buses" layer: all live vehicles (API-03), coloured by line, grey for an unknown line; polling only while visible | FR-NEAR-07, FR-LIVE-01 to 03 | P1 | todo |
 | LB-212 | "Routes" layer: all line shapes | FR-NEAR-07, FR-LIVE-05 | P1 | todo |
-| LB-213 | Live refresh every 20 s while visible, immediately on returning to the foreground, and on pull or refresh | FR-NEAR-09, FR-HOME-04, FR-HOME-06 | P0 | todo |
+| LB-213 | Live refresh every 20 s while visible, immediately on returning to the foreground, and on pull or refresh. Needs `PollingEngine.refresh(key)`, rate-limited, and an in-flight flag on `Timed` for the Refreshing state and Retry (spec §7.3), deferred from LB-009 | FR-NEAR-09, FR-HOME-04, FR-HOME-06 | P0 | todo |
 
 ## E3 How to Get There (M3)
 
