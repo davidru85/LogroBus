@@ -24,7 +24,7 @@ class IosPlatformTest {
         // and a stale Date, and spec §8.7 sends no cookies. OkHttp has neither unless asked.
         val client = SourceClient(clientIdentity("1.2.0"), stoppedClock(), { BASE_URL }, NoOpLogger)
 
-        val engine = assertIs<DarwinClientEngineConfig>(client.http.engine.config)
+        val engine = client.http.use { assertIs<DarwinClientEngineConfig>(it.engine.config) }
         val session = NSURLSessionConfiguration.defaultSessionConfiguration().apply(engine.sessionConfig)
 
         assertNull(session.URLCache)

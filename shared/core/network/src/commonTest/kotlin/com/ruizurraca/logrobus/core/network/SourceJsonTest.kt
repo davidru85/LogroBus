@@ -9,8 +9,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonArray
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 /** `api_spec.md` §3: lenient decoding of the source's payloads. */
 class SourceJsonTest {
@@ -107,9 +105,7 @@ class SourceJsonTest {
 
         val entry = logger.entries.single()
         assertEquals(listOf(LogLevel.Warn, "SourceJson", null), listOf(entry[0], entry[1], entry[3]))
-        val message = entry[2] as String
-        assertTrue("StopDto" in message && "1" in message, message)
-        listOf("Calle Mayor", "42.46", "\"x\"").forEach { assertFalse(it in message, message) }
+        assertEquals("Dropped StopDto at index 1 (JsonDecodingException)", entry[2])
     }
 
     @Test

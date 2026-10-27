@@ -245,12 +245,12 @@ class SourceClientTest {
             // Two 40-minute-old static responses would otherwise outvote one live response.
             val responses =
                 listOf(
-                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:20:30 GMT"), HttpHeaders.Age to listOf("2400")),
-                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:20:31 GMT"), HttpHeaders.Age to listOf("2400")),
+                    cached(date = "Tue, 27 Oct 2026 07:20:30 GMT", age = "2400"),
+                    cached(date = "Tue, 27 Oct 2026 07:20:31 GMT", age = "2400"),
                     headersOf(HttpHeaders.Date, "Tue, 27 Oct 2026 08:00:32 GMT"),
                     // An Age that cannot be read says nothing about how old the Date is.
-                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:00:00 GMT"), HttpHeaders.Age to listOf("-1")),
-                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:00:00 GMT"), HttpHeaders.Age to listOf("1h")),
+                    cached(date = "Tue, 27 Oct 2026 07:00:00 GMT", age = "-1"),
+                    cached(date = "Tue, 27 Oct 2026 07:00:00 GMT", age = "1h"),
                 )
             val client = client { respond("{}", HttpStatusCode.OK, responses[requests.lastIndex]) }
 
@@ -265,7 +265,8 @@ class SourceClientTest {
         runTest {
             // A proxy whose clock was never set would move the app clock by decades.
             val dates = listOf("Thu, 01 Jan 1970 00:00:00 GMT", "Wed, 31 Dec 2025 23:59:59 GMT")
-            val client = client { respond("{}", HttpStatusCode.OK, headersOf(HttpHeaders.Date, dates[requests.lastIndex])) }
+            val client =
+                client { respond("{}", HttpStatusCode.OK, headersOf(HttpHeaders.Date, dates[requests.lastIndex])) }
 
             dates.forEach { client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
 
@@ -318,6 +319,11 @@ class SourceClientTest {
                 assertFalse("42.46" in "${entry[2]}", "${entry[2]}")
             }
         }
+
+    private fun cached(
+        date: String,
+        age: String,
+    ) = headersOf(HttpHeaders.Date to listOf(date), HttpHeaders.Age to listOf(age))
 
     private fun MockRequestHandleScope.json(
         body: String,
