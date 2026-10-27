@@ -1,0 +1,31 @@
+import kotlin.Boolean;
+
+-- Spec §8.8: the line catalogue (API-01).
+CREATE TABLE line (
+  id INTEGER PRIMARY KEY,
+  code TEXT NOT NULL,
+  raw_name TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  color INTEGER NOT NULL,
+  on_color INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  operational INTEGER AS Boolean NOT NULL
+);
+
+CREATE TABLE pattern (
+  line_id INTEGER NOT NULL,
+  direction TEXT NOT NULL,
+  headsign TEXT NOT NULL,
+  -- An encoded polyline, precision 6.
+  shape_polyline TEXT NOT NULL,
+  PRIMARY KEY (line_id, direction)
+);
+
+CREATE TABLE pattern_stop (
+  line_id INTEGER NOT NULL,
+  direction TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  stop_id INTEGER NOT NULL,
+  shape_index INTEGER NOT NULL,
+  PRIMARY KEY (line_id, direction, seq)
+);
