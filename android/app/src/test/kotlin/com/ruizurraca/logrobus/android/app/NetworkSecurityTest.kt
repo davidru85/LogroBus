@@ -2,15 +2,21 @@ package com.ruizurraca.logrobus.android.app
 
 import android.content.pm.ApplicationInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 import org.robolectric.RuntimeEnvironment
 import org.xmlpull.v1.XmlPullParser
 
 /** NFR-SEC-01 and LB-005: the app never sends HTTP in cleartext. */
 @RunWith(AndroidJUnit4::class)
 class NetworkSecurityTest {
+    // Robolectric starts a new Application, and so a new Koin graph, for every test in one process (ADR-0014).
+    @After
+    fun stopTheGraph() = stopKoin()
+
     private val application = RuntimeEnvironment.getApplication()
 
     @Test

@@ -9,12 +9,16 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
-import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
-/** Starts the dependency graph of the Android app, once per process, from the Application (ADR-0014). */
-fun initKoin(context: Context): KoinApplication = startKoin { modules(coreModules(androidModule(context.applicationContext))) }
+/**
+ * Starts the dependency graph of the Android app, once per process, from the Application (ADR-0014). It returns
+ * nothing, so no Koin type reaches the app shell.
+ */
+fun initKoin(context: Context) {
+    startKoin { modules(coreModules(androidModule(context.applicationContext))) }
+}
 
 private fun androidModule(context: Context) =
     module {
@@ -22,6 +26,14 @@ private fun androidModule(context: Context) =
         // Created at start, on the main thread that starts Koin.
         single<AppLifecycle>(createdAtStart = true) { ProcessAppLifecycle() }
         single<LocationProvider>(createdAtStart = true) { fusedLocationProvider(context, get()) }
-        single { clientIdentity(appVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()) }
+        single {
+            clientIdentity(
+                appVersion =
+                    context.packageManager
+                        .getPackageInfo(context.packageName, 0)
+                        .versionName
+                        .orEmpty(),
+            )
+        }
         single<SqlDriver> { logroBusDriver(context) }
     }
