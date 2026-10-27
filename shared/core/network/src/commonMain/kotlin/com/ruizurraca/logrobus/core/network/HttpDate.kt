@@ -1,11 +1,24 @@
 package com.ruizurraca.logrobus.core.network
 
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 /** RFC 9110 §5.6.7: the form servers send, `Sun, 06 Nov 1994 08:49:37 GMT`. The obsolete forms are not read. */
 private val IMF_FIXDATE = Regex("""[A-Z][a-z]{2}, (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT""")
 
 private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+/**
+ * The server's time when it sent the response with these [headers], or null when they cannot tell. A cache keeps the
+ * origin's `Date` and adds `Age`, the seconds since then (RFC 9111 §5.1), so the server's time is their sum.
+ */
+internal fun serverNow(headers: Headers): Instant? {
+    val date = headers[HttpHeaders.Date]?.let(::parseHttpDate) ?: return null
+    val age = headers[HttpHeaders.Age]?.let { it.toLongOrNull()?.takeIf { seconds -> seconds >= 0 } ?: return null }
+    return date + (age ?: 0).seconds
+}
 
 /** The instant of a `Date` header [value], or null when it cannot be read: a bad `Date` is ignored, never an error. */
 internal fun parseHttpDate(value: String): Instant? =
