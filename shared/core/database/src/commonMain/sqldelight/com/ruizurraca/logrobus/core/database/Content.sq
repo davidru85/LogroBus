@@ -1,4 +1,5 @@
 import kotlin.Boolean;
+import kotlin.time.Instant;
 
 -- Spec §8.8: content for More (fares, recharge points and news), which the v1.0 stories fill in.
 CREATE TABLE fare_product (
@@ -32,8 +33,8 @@ CREATE TABLE news (
   body_html TEXT,
   image_url TEXT,
   featured INTEGER AS Boolean,
-  published_at INTEGER,
-  updated_at INTEGER,
+  published_at INTEGER AS Instant,
+  updated_at INTEGER AS Instant,
   affected_lines TEXT,
   notified INTEGER AS Boolean NOT NULL DEFAULT 0
 );
