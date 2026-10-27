@@ -94,6 +94,7 @@ class SourceClient(
     suspend fun get(
         path: String,
         kind: RequestKind,
+        query: Map<String, String> = emptyMap(),
     ): AppResult<JsonElement> = send(HttpMethod.Get, path, kind)
 
     suspend fun post(
