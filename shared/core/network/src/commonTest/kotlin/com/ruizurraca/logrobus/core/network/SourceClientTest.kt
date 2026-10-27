@@ -11,6 +11,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
@@ -83,6 +84,21 @@ class SourceClientTest {
                     statuses.map { client.post("/api/transit/route", buildJsonObject {}, RequestKind.Live) }
 
             assertEquals(List(8) { AppResult.Success(buildJsonObject { put("ok", true) }) }, results)
+        }
+
+    @Test
+    fun lb005_anyOtherStatusIsAServerErrorWithThatStatus() =
+        runTest {
+            val statuses = listOf(304, 404, 500, 503).map(HttpStatusCode::fromValue)
+            // A JSON body, as an error page from the BFF could have: the status alone decides.
+            val client = client { json("""{"error":"x"}""", statuses[requests.lastIndex % statuses.size]) }
+
+            val results =
+                statuses.map { client.get("/api/estimatedTimetable/byLine/1", RequestKind.Live) } +
+                    statuses.map { client.post("/api/transit/route", buildJsonObject {}, RequestKind.Live) }
+
+            val expected = statuses.map { AppResult.Failure(AppError.Server(it.value)) }
+            assertEquals(expected + expected, results)
         }
 
     private fun MockRequestHandleScope.json(
