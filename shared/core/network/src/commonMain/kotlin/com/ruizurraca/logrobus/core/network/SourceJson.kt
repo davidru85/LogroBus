@@ -60,5 +60,10 @@ fun <T> JsonArray.decodeEach(
     return Decoded(items, dropped)
 }
 
-/** Decodes a bare object, as the transit endpoints send it (api_spec.md §3). */
-fun <T> JsonElement.decodeAs(serializer: KSerializer<T>): AppResult<T> = AppResult.Failure(AppError.Network)
+/** Decodes a bare object, as the transit endpoints send it (api_spec.md §3); [AppError.Data] when it cannot be. */
+fun <T> JsonElement.decodeAs(serializer: KSerializer<T>): AppResult<T> =
+    try {
+        AppResult.Success(SourceJson.decodeFromJsonElement(serializer, this))
+    } catch (_: IllegalArgumentException) {
+        AppResult.Failure(AppError.Data)
+    }
