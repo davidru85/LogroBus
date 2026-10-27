@@ -23,6 +23,9 @@ kotlin {
         )
     val xcFramework = XCFramework("Shared")
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        // SQLDelight's native driver calls the system SQLite, which SQLiter's cinterop does not link (ADR-0013). This
+        // covers the test binaries; for the static framework, the app links it through LogroBusUI's Package.swift.
+        target.binaries.all { linkerOpts("-lsqlite3") }
         target.binaries.framework {
             baseName = "Shared"
             isStatic = true
