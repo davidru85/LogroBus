@@ -29,6 +29,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.seconds
@@ -76,6 +77,52 @@ class SourceClientTest {
             val post = requests.last().body as TextContent
             assertEquals(ContentType.Application.Json, post.contentType.withoutParameters())
             assertEquals("""{"origin":"stop:38"}""", post.text)
+        }
+
+    @Test
+    fun lb005_aGetSendsItsQueryWithListsAsTheSourceWritesThem() =
+        runTest {
+            // API-06 as captured (spec §4): the lines are a comma-separated list. Anything else is percent-encoded.
+            val client = client()
+
+            val arrivals = mapOf("lines" to "1,33", "previewMinutes" to "60")
+            client.get("/api/estimatedTimetable/byStop/38", RequestKind.Live, arrivals)
+            client.get("/api/linesDiscovery/stops", RequestKind.Static, mapOf("q" to "Logroño 1+1, Ñ&c=d", "a b" to ""))
+
+            assertEquals(
+                "$BASE_URL/api/estimatedTimetable/byStop/38?lines=1,33&previewMinutes=60",
+                requests.first().url.toString(),
+            )
+            // Every byte but the unreserved ones is percent-encoded, UTF-8 included; commas in values stay as they are.
+            val other = requests.last().url
+            assertEquals("q=Logro%C3%B1o%201%2B1,%20%C3%91%26c%3Dd&a%20b=", other.encodedQuery)
+            assertEquals(listOf("Logroño 1+1, Ñ&c=d", ""), listOf(other.parameters["q"], other.parameters["a b"]))
+        }
+
+    @Test
+    fun lb005_aPathWithItsOwnQueryIsRejected() =
+        runTest {
+            // A query written into the path would reach the failure log (NFR-PRIV-02) and clash with the query map.
+            val client = client()
+
+            assertFailsWith<IllegalArgumentException> {
+                client.get("/api/estimatedTimetable/byLine/1?previewMinutes=30", RequestKind.Live)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                client.post("/api/transit/route?debug=1", buildJsonObject {}, RequestKind.Live)
+            }
+            assertEquals(emptyList(), requests)
+        }
+
+    @Test
+    fun lb005_aFailedCallIsLoggedWithoutItsQuery() =
+        runTest {
+            val client = client { json("{}", HttpStatusCode.ServiceUnavailable) }
+
+            client.get("/api/estimatedTimetable/byStop/38", RequestKind.Live, mapOf("lines" to "1,33"))
+
+            val logged = logger.entries.map { it[2] }
+            assertEquals(listOf("GET /api/estimatedTimetable/byStop/38 failed: Server(status=503)"), logged)
         }
 
     @Test

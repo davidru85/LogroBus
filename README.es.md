@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) y el cliente que habla con la fuente (LB-005, parte 1). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) y el cliente que habla con la fuente (LB-005, en curso). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -104,6 +104,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **27-10-2026:**
+  - LB-005, parte 2, primera mitad: el cliente envía los parámetros de consulta tal como los espera la fuente, y las dos apps rechazan las conexiones HTTP sin cifrar. Los formatos de datos de cada endpoint esperan a los datos de ejemplo grabados (LB-003).
   - LB-005, parte 1: el cliente compartido que habla con la fuente de datos de los autobuses.
     - Identifica la app y pide los datos comprimidos.
     - Desiste a los 10 s con los datos en directo y a los 30 s con el catálogo de líneas y paradas.

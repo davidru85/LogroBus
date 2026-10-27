@@ -2,6 +2,7 @@ import Foundation
 import Testing
 
 /// LB-001: the built app, not just its spec, is iPhone only, targets iOS 18 and uses the store bundle id.
+/// LB-005: it refuses cleartext HTTP.
 struct AppBundleTests {
 
     @Test
@@ -27,6 +28,14 @@ struct AppBundleTests {
     func lb001_appTargetsIos18() {
         // ADR-0003: iOS 18 minimum.
         #expect(Bundle.main.object(forInfoDictionaryKey: "MinimumOSVersion") as? String == "18.0")
+    }
+
+    @Test
+    func lb005_appUsesDefaultTransportSecurity() {
+        // NFR-SEC-01: App Transport Security with no exceptions refuses cleartext HTTP; any exception adds this key.
+        // The bundle must be the app's, or a missing key would prove nothing.
+        #expect(Bundle.main.bundleIdentifier == "com.ruizurraca.logrobus")
+        #expect(Bundle.main.object(forInfoDictionaryKey: "NSAppTransportSecurity") == nil)
     }
 
     @Test
