@@ -19,6 +19,61 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-27: LB-005, part 1: `SourceClient` and lenient JSON
+
+**Done**
+- **Merge:** PR #22 (LB-009) was merged; LB-005 started from the hand-over.
+- **Dependencies:** Ktor 3.6.0 (core, encoding, OkHttp, Darwin, and mock for tests) and kotlinx.serialization 1.12.0, with the Kotlin serialization plugin (ADR-0012). Both are Apache-2.0. kotlinx-datetime still waits for LB-006 (ADR-0015).
+- **TDD:** 13 red-green cycles, then 4 more from the reviews, plus 2 guard tests and 8 refactors: 44 commits. All 28 tests pass on the Android host and 27 on the iOS simulator. `GzipTest` runs on the JVM only.
+- **`:shared:core:network`** (`architecture.md` §4.1):
+  - `SourceClient`, which returns `AppResult<JsonElement>`:
+    - headers, timeouts and the 2xx rule (DD-15);
+    - `Server(status)`, `Data` and `Network` mapping;
+    - every response's `Date` corrects `ServerCorrectedClock`;
+    - failures are logged without bodies or messages.
+  - `ClientIdentity` and `clientIdentity(appVersion)`, and the OkHttp and Darwin engines.
+  - `parseHttpDate` and `serverNow`.
+  - The lenient JSON helpers: `SourceJson`, `arrayAt`, `decodeEach` and `decodeAs`.
+- **Found while testing:**
+  - NSURLSession caches responses and stores cookies by default. The iOS engine now turns both off, because a cached response would carry stale arrivals and a stale `Date`.
+  - The JSON reader takes an unquoted word as a literal, so a short HTML page or `OK` passed as success. A body must now be an object or an array.
+- **Reviews** (code-reviewer and data-rules-reviewer subagents; both asked for changes, with no blockers):
+  - **Fixed, with TDD:**
+    - **Engine timeouts.** Ktor's OkHttp engine kept OkHttp's 10 s read timeout, so a 30 s static download failed at 10 s on Android. The engines' socket timeouts now follow the request timeout.
+    - **Any failure to send is `Network` for that call.** A malformed `api_base_url` or a redirect loop used to throw past the `IOException` catch. Only the caller's own cancellation propagates, which a mutation test checks.
+    - **`Age`.** Behind a caching proxy (spec §8.10), stale `Date`s outvoted the live one and ran the clock 40 min slow. A response now counts from `Date` plus `Age`.
+    - **Early dates.** A time before 2026, such as a proxy at 1970, is ignored.
+  - **Refactors:**
+    - the engine constructor is public, so the part-2 repository tests can inject a `MockEngine`;
+    - the iOS version is read from `NSProcessInfo`, which any thread may use, instead of `UIDevice`;
+    - the dropped-item test asserts the exact message;
+    - the platform tests close their clients;
+    - `GzipTest` documents what it pins.
+  - **Not applied:**
+    - **Catching `Exception` in `decodeEach` and `decodeAs`.** kotlinx.serialization 1.12 already wraps what a type throws while decoding, an `init` check or `error()` in a custom serializer, in a `JsonDecodingException`, which the catch holds. A guard test pins this.
+    - **A separate 5 s connect timeout on iOS.** NSURLSession has only an idle timeout, so a 5 s value would also cap the time to first byte of the static payloads.
+  - **Process notes:**
+    - `8ec86c1` is a red commit typed `fix(network)`; it should be `test(network)`. History is not rewritten.
+    - `9b09518` (gzip) and `f59064d` (an item its type rejects) are guard tests that passed when added. They have no `TDD:` line; their bodies explain this and the mutation or probe that backs them.
+    - `39b5635`, a green commit, changed its red test's input. Its body explains why: the space-free HTML body exposed the scalar gap, which the next cycle fixed test-first.
+
+**Decisions**
+- **Agent, for the owner to confirm:** on iOS, connecting is bounded by the 10 s or 30 s request timeout, not by 5 s. The Darwin engine has no connect timeout of its own (`api_spec.md` §1).
+- **Agent:**
+  - Ktor stays behind `SourceClient`. Only `HttpClientEngine` is public, for tests; data modules get `JsonElement` and the JSON helpers.
+  - `parseHttpDate` reads IMF-fixdate only, with no exception path. Ktor's `fromHttpToGmtDate` can throw past its own catch, and kotlinx-datetime enters with LB-006.
+  - The earliest accepted server time is 2026-01-01, a compiled bound. Capping the offset instead would also block correcting a device clock that is wrong.
+
+**Open / next**
+- **LB-005 part 2:**
+  - the DTOs and services for API-01 to API-08, whose contract tests wait for LB-003's fixtures (OQ-11);
+  - GET query parameters (API-05, API-06), logging the path without its query;
+  - the cleartext settings in both apps.
+- **For LB-010:**
+  - create one `SourceClient` in the composition root, with `clientIdentity(appVersion)`, the `ServerCorrectedClock`, `{ remoteConfig.get(ApiBaseUrl) }` and the `Logger`;
+  - pass the same clock to `DefaultPollingEngine`.
+- **iOS CI budget:** still raised with the owner.
+
 ## 2026-10-27: LB-009: `PollingEngine`
 
 **Done**
