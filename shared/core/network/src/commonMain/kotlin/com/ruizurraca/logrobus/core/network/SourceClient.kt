@@ -13,8 +13,12 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.isSuccess
 import io.ktor.http.content.TextContent
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -59,8 +63,8 @@ class SourceClient internal constructor(
         path: String,
         kind: RequestKind,
     ): AppResult<JsonElement> {
-        http.get(url(path)) { timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds } }
-        return AppResult.Failure(AppError.Network)
+        val response = http.get(url(path)) { timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds } }
+        return response.toResult()
     }
 
     suspend fun post(
@@ -68,12 +72,21 @@ class SourceClient internal constructor(
         body: JsonElement,
         kind: RequestKind,
     ): AppResult<JsonElement> {
-        http.post(url(path)) {
-            timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
-            setBody(TextContent(body.toString(), ContentType.Application.Json))
-        }
-        return AppResult.Failure(AppError.Network)
+        val response =
+            http.post(url(path)) {
+                timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
+                setBody(TextContent(body.toString(), ContentType.Application.Json))
+            }
+        return response.toResult()
     }
+
+    // DD-15: any 2xx is a success; POSTs answer 201.
+    private suspend fun HttpResponse.toResult(): AppResult<JsonElement> =
+        if (status.isSuccess()) {
+            AppResult.Success(Json.parseToJsonElement(bodyAsText()))
+        } else {
+            AppResult.Failure(AppError.Network)
+        }
 
     private fun url(path: String) = baseUrl().trimEnd('/') + path
 }
