@@ -16,6 +16,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
@@ -41,6 +42,7 @@ class SourceClientTest {
     private val logger = RecordingLogger()
 
     private fun client(
+        baseUrl: String = BASE_URL,
         respond: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { json("""{"result":{}}""") },
     ) = SourceClient(
         engine =
@@ -50,7 +52,7 @@ class SourceClientTest {
             },
         identity = ClientIdentity(appVersion = "1.2.0", platform = "Android", osVersion = "16"),
         clock = clock,
-        baseUrl = { BASE_URL },
+        baseUrl = { baseUrl },
         logger = logger,
     )
 
@@ -162,6 +164,37 @@ class SourceClientTest {
                     failures.map { client.post("/api/transit/walk-distances", buildJsonObject {}, RequestKind.Live) }
 
             assertEquals(List(2 * failures.size) { AppResult.Failure(AppError.Network) }, results)
+        }
+
+    @Test
+    fun lb005_anyOtherFailureToSendIsANetworkErrorForThatCallOnly() =
+        runTest {
+            // A redirect loop on a proxy, and an engine that cancels the call while its caller is still active.
+            val failures = listOf(IllegalStateException("Max send count exceeded"), CancellationException("Closed"))
+            val client = client { throw failures[requests.lastIndex] }
+
+            val results = failures.map { client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
+
+            assertEquals(List(failures.size) { AppResult.Failure(AppError.Network) }, results)
+            assertEquals(
+                listOf(
+                    "GET /api/vehicleMonitoring/all failed: Network (IllegalStateException)",
+                    "GET /api/vehicleMonitoring/all failed: Network (CancellationException)",
+                ),
+                logger.entries.map { it[2] },
+            )
+        }
+
+    @Test
+    fun lb005_aMalformedBaseUrlFailsTheCallNotTheCaller() =
+        runTest {
+            // api_base_url comes from remote config (spec §8.10).
+            val client = client(baseUrl = "https://transporteurbano.logrono.es:443x")
+
+            val result = client.post("/api/transit/route", buildJsonObject {}, RequestKind.Live)
+
+            assertEquals(AppResult.Failure(AppError.Network), result)
+            assertEquals(emptyList(), requests)
         }
 
     @Test
