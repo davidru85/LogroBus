@@ -1,0 +1,4 @@
+CREATE TABLE stop (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, lat REAL NOT NULL, lng REAL NOT NULL,
+  operational INTEGER NOT NULL, provisional INTEGER NOT NULL
+);
