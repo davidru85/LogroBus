@@ -22,6 +22,9 @@ internal fun Project.configureDetekt(
         buildUponDefaultConfig.set(true)
         config.setFrom(isolated.rootProject.projectDirectory.file("config/detekt/detekt.yml"))
     }
+    // Generated code, such as SQLDelight's classes named after tables, is not judged by the style rules.
+    val buildDirectory = layout.buildDirectory.get().asFile
+    tasks.withType<Detekt>().configureEach { exclude { isGeneratedSource(it.file, buildDirectory) } }
     tasks.register("ciDetekt") {
         group = "verification"
         description = "Runs detekt as CI does."
@@ -40,8 +43,8 @@ internal fun isUntypedKmpSourceSetTask(taskName: String): Boolean =
         !taskName.startsWith("detektCommon") &&
         !taskName.startsWith("detektAndroid")
 
-/** Whether [file] lies under [buildDirectory]. */
+/** Whether [file] lies under [buildDirectory], where tools such as SQLDelight write the code they generate. */
 internal fun isGeneratedSource(
     file: File,
     buildDirectory: File,
-): Boolean = false
+): Boolean = file.startsWith(buildDirectory)
