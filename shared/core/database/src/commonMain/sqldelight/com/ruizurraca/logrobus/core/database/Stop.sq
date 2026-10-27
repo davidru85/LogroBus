@@ -24,6 +24,12 @@ CREATE VIRTUAL TABLE stop_fts USING fts4(name, normalized_name, content='stop');
 
 -- An external-content FTS4 table indexes only what it is given, so these triggers keep it in step with stop. FTS4
 -- reads a row's old text from stop to remove it from the index, so removal happens before the row changes.
+-- INSERT OR REPLACE deletes the row it replaces without firing delete triggers, so the old text leaves the index
+-- here, while it is still in stop. Only for a row that exists: FTS4 must not delete a document it never indexed.
+CREATE TRIGGER stop_fts_before_insert BEFORE INSERT ON stop WHEN EXISTS (SELECT 1 FROM stop WHERE id = new.id) BEGIN
+  DELETE FROM stop_fts WHERE docid = new.id;
+END;
+
 CREATE TRIGGER stop_fts_after_insert AFTER INSERT ON stop BEGIN
   INSERT INTO stop_fts (docid, name, normalized_name) VALUES (new.id, new.name, new.normalized_name);
 END;
