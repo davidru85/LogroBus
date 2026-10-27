@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.core.network
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
@@ -27,11 +28,22 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /** Spec §8.7 and `api_spec.md` §1: the rules every request to the source follows. */
 class SourceClientTest {
     /** Every request the client sent, in order. */
     private val requests = mutableListOf<HttpRequestData>()
+
+    /** The app clock, on a device clock stopped at [START]. */
+    private val clock =
+        ServerCorrectedClock(
+            object : Clock {
+                override fun now() = START
+            },
+        )
 
     private fun client(
         respond: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { json("""{"result":{}}""") },
@@ -42,6 +54,7 @@ class SourceClientTest {
                 respond(request)
             },
         identity = ClientIdentity(appVersion = "1.2.0", platform = "Android", osVersion = "16"),
+        clock = clock,
         baseUrl = { BASE_URL },
     )
 
@@ -159,6 +172,44 @@ class SourceClientTest {
             assertNull(result)
         }
 
+    @Test
+    fun lb005_theDateOfEveryResponseCorrectsTheAppClock() =
+        runTest {
+            // The server is about 31 s ahead of the device; error responses carry its clock too.
+            val responses =
+                listOf(
+                    HttpStatusCode.OK to "Tue, 27 Oct 2026 08:00:30 GMT",
+                    HttpStatusCode.ServiceUnavailable to "Tue, 27 Oct 2026 08:00:32 GMT",
+                    HttpStatusCode.Created to "Tue, 27 Oct 2026 08:00:31 GMT",
+                )
+            val client =
+                client {
+                    val (status, date) = responses[requests.lastIndex]
+                    respond("{}", status, headersOf(HttpHeaders.Date, date))
+                }
+
+            responses.forEach { client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
+
+            // The median of 30, 32 and 31 s: all three responses were sampled.
+            assertEquals(START + 31.seconds, clock.now())
+        }
+
+    @Test
+    fun lb005_aMissingOrUnreadableDateLeavesTheAppClockAlone() =
+        runTest {
+            val dates = listOf(null, "yesterday", "Tue, 27 Oct 2026 25:00:30 GMT")
+            val client =
+                client {
+                    val date = dates[requests.lastIndex]
+                    respond("{}", HttpStatusCode.OK, if (date == null) headersOf() else headersOf(HttpHeaders.Date, date))
+                }
+
+            val results = dates.map { client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
+
+            assertEquals(List(dates.size) { AppResult.Success(buildJsonObject {}) }, results)
+            assertEquals(START, clock.now())
+        }
+
     private fun MockRequestHandleScope.json(
         body: String,
         status: HttpStatusCode = HttpStatusCode.OK,
@@ -166,5 +217,6 @@ class SourceClientTest {
 
     private companion object {
         const val BASE_URL = "https://transporteurbano.logrono.es"
+        val START = Instant.parse("2026-10-27T08:00:00Z")
     }
 }
