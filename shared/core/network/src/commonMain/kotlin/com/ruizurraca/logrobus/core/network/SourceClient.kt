@@ -81,9 +81,7 @@ class SourceClient internal constructor(
             // Spec §8.6: every response, an error included, carries the server's clock.
             install(
                 createClientPlugin("ServerDate") {
-                    onResponse { response ->
-                        response.headers[HttpHeaders.Date]?.let(::parseHttpDate)?.let(clock::onServerDate)
-                    }
+                    onResponse { response -> serverNow(response.headers)?.let(clock::onServerDate) }
                 },
             )
             defaultRequest { accept(ContentType.Application.Json) }
