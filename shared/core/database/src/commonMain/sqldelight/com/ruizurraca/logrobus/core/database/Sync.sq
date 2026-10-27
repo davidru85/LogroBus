@@ -1,3 +1,5 @@
+import kotlin.time.Instant;
+
 -- Spec §8.8: what the data layer learns and records between syncs.
 
 -- Spec §5.6, DD-04: the direction inferred for each numeric ET direction code of a line.
@@ -13,6 +15,12 @@ CREATE TABLE direction_code_cache (
 -- Spec §8.5: when each static dataset last synced, and its content hash.
 CREATE TABLE sync_state (
   dataset TEXT NOT NULL PRIMARY KEY,
-  last_success INTEGER,
+  last_success INTEGER AS Instant,
   content_hash TEXT
 );
+
+recordSync:
+INSERT OR REPLACE INTO sync_state (dataset, last_success, content_hash) VALUES (?, ?, ?);
+
+syncState:
+SELECT * FROM sync_state WHERE dataset = ?;
