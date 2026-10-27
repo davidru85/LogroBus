@@ -3,8 +3,6 @@ package com.ruizurraca.logrobus.core.network
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
-import com.ruizurraca.logrobus.core.common.Logger
-import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
@@ -32,36 +30,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
 /** Spec §8.7 and `api_spec.md` §1: the rules every request to the source follows. */
 class SourceClientTest {
     /** Every request the client sent, in order. */
     private val requests = mutableListOf<HttpRequestData>()
 
-    /** The app clock, on a device clock stopped at [START]. */
-    private val clock =
-        ServerCorrectedClock(
-            object : Clock {
-                override fun now() = START
-            },
-        )
-
-    /** What the client logged: level, tag, message and throwable. */
-    private val logged = mutableListOf<List<Any?>>()
-    private val logger =
-        object : Logger {
-            override fun log(
-                level: LogLevel,
-                tag: String,
-                message: String,
-                throwable: Throwable?,
-            ) {
-                logged += listOf(level, tag, message, throwable)
-            }
-        }
+    private val clock = stoppedClock()
+    private val logger = RecordingLogger()
 
     private fun client(
         respond: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { json("""{"result":{}}""") },
@@ -264,9 +241,9 @@ class SourceClientTest {
                     "POST /api/transit/route failed: Data",
                     "POST /api/transit/route failed: Network (IOException)",
                 ),
-                logged.map { it[2] },
+                logger.entries.map { it[2] },
             )
-            logged.forEach { entry ->
+            logger.entries.forEach { entry ->
                 assertEquals(listOf(LogLevel.Warn, "SourceClient", null), listOf(entry[0], entry[1], entry[3]))
                 assertFalse("42.46" in "${entry[2]}", "${entry[2]}")
             }
@@ -276,9 +253,4 @@ class SourceClientTest {
         body: String,
         status: HttpStatusCode = HttpStatusCode.OK,
     ) = respond(body, status, headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()))
-
-    private companion object {
-        const val BASE_URL = "https://transporteurbano.logrono.es"
-        val START = Instant.parse("2026-10-27T08:00:00Z")
-    }
 }
