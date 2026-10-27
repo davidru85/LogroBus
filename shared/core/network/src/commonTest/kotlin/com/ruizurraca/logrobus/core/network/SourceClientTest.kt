@@ -266,9 +266,9 @@ class SourceClientTest {
                 ),
                 logged.map { it[2] },
             )
-            logged.forEach { (level, tag, message, throwable) ->
-                assertEquals(listOf(LogLevel.Warn, "SourceClient", null), listOf(level, tag, throwable))
-                assertFalse("42.46" in "$message", "$message")
+            logged.forEach { entry ->
+                assertEquals(listOf(LogLevel.Warn, "SourceClient", null), listOf(entry[0], entry[1], entry[3]))
+                assertFalse("42.46" in "${entry[2]}", "${entry[2]}")
             }
         }
 
