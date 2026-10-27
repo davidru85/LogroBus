@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Active; ktlint, detekt and Kover are wired (LB-002, ADR-0011) |
-| Last updated | 2026-10-24 |
+| Last updated | 2026-10-27 |
 | Config files | `.editorconfig`, `.swiftlint.yml`, `config/detekt/detekt.yml` (LB-002) |
 
 `AGENTS.md` §8 summarises the conventions. This document holds the detailed rules and the tool configuration. Formatting is automated wherever possible: a style rule that a tool can enforce must be enforced by the tool.
@@ -37,7 +37,7 @@
 
 - In shared modules, visibility is `internal` by default. Only what other modules or Swift need is `public`.
 - Prefer immutable data: `val`, `data class`, and read-only collections across layers.
-- Model errors with `AppResult` and `AppError`. Never use exceptions for expected failures. Catch exceptions only at the network and database boundaries.
+- Model errors with `AppResult` and `AppError`. Never use exceptions for expected failures. Catch exceptions only at the network and database boundaries, and in `PollingEngine`, which turns whatever a `fetch` throws into a failure of that key alone (NFR-REL-02).
 - Coroutines: inject `AppDispatchers`; ViewModels use `viewModelScope`; repositories expose `Flow` and `suspend` functions; never use `runBlocking` outside tests.
 - Name test functions in `lowerCamelCase` with underscores between clauses: `dd05_reinterpretsWallClockInMadrid_duringCest`. Do not use backtick names with spaces.
 - The package layout mirrors the modules, `com.ruizurraca.logrobus.<area>.<layer>`. For example: `com.ruizurraca.logrobus.feature.nearme.presentation`, `com.ruizurraca.logrobus.transit.data`, and on Android `com.ruizurraca.logrobus.android.feature.nearme`.
