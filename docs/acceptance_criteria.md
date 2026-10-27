@@ -131,10 +131,10 @@ Done when:
 Refs: spec §8.8, `architecture.md` §4.3, FR-STOP-01, NFR-I18N-03, NFR-PERF-03
 
 Done when:
-- The schema contains spec §8.8 plus `stop.normalized_name`, `favourite.missing_syncs`, `plan_recent` and `arrival_snapshot`.
+- The schema contains spec §8.8 plus `stop.normalized_name`, `favourite.missing_syncs` and `plan_recent` (`architecture.md` §4.3). `arrival_snapshot` waits for offline mode in v1.0 (ADR-0008).
 - Search matches regardless of accents, `ñ` and case: "logrono" matches "Logroño", "AYUNTAMIENTO" matches "Ayuntamiento", and the query "38" matches stop 38 by id.
 - A search over the full 254-stop dataset returns in under 100 ms on the reference devices (benchmark).
-- Migrations are versioned. A migration test upgrades from the previous schema without losing rows in `favourite`, `place` or `plan_recent`.
+- Migrations are versioned. A migration test upgrades from the previous schema without losing rows in `favourite`, `place` or `plan_recent`. Until the first release the schema is version 1 and has no previous schema, so this applies from the first schema change after it (ADR-0013).
 
 ### LB-008 `StaticSyncEngine`
 Refs: FR-ERR-04, FR-ERR-05, NFR-REL-03, spec §8.5, FR-FAV-04, ADR-0008
