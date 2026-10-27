@@ -239,6 +239,28 @@ class SourceClientTest {
         }
 
     @Test
+    fun lb005_aCachedResponseIsDatedByItsAge() =
+        runTest {
+            // A caching proxy behind api_base_url (spec §8.10) keeps the origin's Date and adds Age (RFC 9111 §5.1).
+            // Two 40-minute-old static responses would otherwise outvote one live response.
+            val responses =
+                listOf(
+                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:20:30 GMT"), HttpHeaders.Age to listOf("2400")),
+                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:20:31 GMT"), HttpHeaders.Age to listOf("2400")),
+                    headersOf(HttpHeaders.Date, "Tue, 27 Oct 2026 08:00:32 GMT"),
+                    // An Age that cannot be read says nothing about how old the Date is.
+                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:00:00 GMT"), HttpHeaders.Age to listOf("-1")),
+                    headersOf(HttpHeaders.Date to listOf("Tue, 27 Oct 2026 07:00:00 GMT"), HttpHeaders.Age to listOf("1h")),
+                )
+            val client = client { respond("{}", HttpStatusCode.OK, responses[requests.lastIndex]) }
+
+            responses.forEach { client.get("/api/linesDiscovery/lines", RequestKind.Static) }
+
+            // The median of 30, 31 and 32 s.
+            assertEquals(START + 31.seconds, clock.now())
+        }
+
+    @Test
     fun lb005_aMissingOrUnreadableDateLeavesTheAppClockAlone() =
         runTest {
             val dates = listOf(null, "yesterday", "Tue, 27 Oct 2026 25:00:30 GMT")
