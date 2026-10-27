@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Living document |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-10-27 |
 | Last verified against the live source | 2026-10-22 (capture in spec v0.1) |
 | Derived from | Spec §3.2, §4, §5, §8.7, §8.9 |
 
@@ -18,10 +18,11 @@ The source API is undocumented, unversioned and owned by a third party. It sends
 | Base URL | Remote config `api_base_url`, default `https://transporteurbano.logrono.es`. Paths below are relative to it |
 | Transport | HTTPS only (NFR-SEC-01). No cookies, tokens or API keys in v1 |
 | Headers | `User-Agent: LogronoBus/<version> (<Android\|iOS> <os-version>)`, `Accept: application/json`, `Accept-Encoding: gzip`, and `Content-Type: application/json` on POSTs |
-| Timeouts | 5 s to connect. 10 s per request for live endpoints (API-03 to 08 and the geocoder). 30 s for static ones (API-01, 02, 10 to 12) |
+| Timeouts | 5 s to connect. 10 s per request for live endpoints (API-03 to 08 and the geocoder). 30 s for static ones (API-01, 02, 10 to 12). The engines' socket timeouts follow the request timeout. NSURLSession has no separate connect timeout, so on iOS connecting is bounded by the request timeout (LB-005) |
 | Success | Any `2xx`. POSTs answer `201` (DD-15) |
 | Failure | A non-2xx status, a non-JSON body or a missing envelope key is a recoverable `AppError` for that resource only (NFR-REL-02) |
-| Server clock | Read the `Date` header on every BFF response and feed it to `AppClock` (spec §8.6) |
+| Server clock | Read the `Date` header (IMF-fixdate) on every BFF response, error statuses included, add its `Age` if a cache sent it, and feed the result to `AppClock` (spec §8.6). A missing or unreadable header, or a time before 2026, is ignored |
+| Cookies and cache | None: OkHttp keeps neither by default, and the iOS NSURLSession is configured without them (LB-005) |
 | Load | Respect the polling intervals (10 s floor), and only poll for visible screens. Never load-test the source |
 | Forbidden | Parsing `/env.js`, leaked non-production hosts (spec §3.4), API-13, the legacy recharge-points file, and the authenticated endpoints of spec §4.14 |
 
@@ -57,16 +58,22 @@ internal val SourceJson = Json {
 ```
 
 - Every DTO field is nullable with a default. The mappers, not the decoder, enforce what is required.
-- Collections are decoded as `JsonArray` and then element by element, so one bad item is dropped and counted instead of failing the response:
+- A response body must be a JSON object or array. The reader takes an unquoted word, such as a short HTML page, as a literal, so a scalar body is `Data` too.
+- Collections are decoded as `JsonArray` and then element by element, so one bad item is dropped and counted instead of failing the response. In `:shared:core:network` (LB-005):
 
 ```kotlin
-internal inline fun <reified T> JsonArray.decodeEach(json: Json, report: DecodeReport): List<T> =
-    mapNotNull { element ->
-        runCatching { json.decodeFromJsonElement<T>(element) }
-            .onFailure { report.dropped(T::class.simpleName ?: "?", it) }
-            .getOrNull()
-    }
+// Reads a BFF envelope: Data when a key is missing or the value is not an array.
+fun JsonElement.arrayAt(vararg keys: String): AppResult<JsonArray>
+
+// One item that fails to decode is dropped and logged by DTO name, index and error type, never the error message,
+// which quotes the input (NFR-PRIV-02). The dropped count feeds the DataQualityReport (LB-006).
+fun <T> JsonArray.decodeEach(serializer: KSerializer<T>, logger: Logger): Decoded<T>   // Decoded(items, dropped)
+
+// A bare object, as the transit endpoints send it: Data when it cannot be decoded.
+fun <T> JsonElement.decodeAs(serializer: KSerializer<T>): AppResult<T>
 ```
+
+- kotlinx.serialization wraps whatever a type throws while decoding, an `init` check included, in a `JsonDecodingException`. A failing item is therefore always dropped alone.
 
 - Envelopes: BFF endpoints use `{ "result": { <key>: [...] } }`, transit endpoints use a bare object, the CMS uses Strapi's `{ data, meta }`, and OTP uses GraphQL's `{ data, errors? }` (spec §4.2). A missing `result` or collection key is a `Data` error.
 
@@ -344,9 +351,9 @@ The pipeline order is spec §5.4. Each rule has a home and a test prefix.
 
 | Condition | `AppError` | UI (spec §7.3) |
 | --- | --- | --- |
-| No connectivity, DNS failure, timeout | `Network` | Error state with reason "network" and Retry; previous data is kept if present. The offline banner is v1.0 (ADR-0008) |
+| No connectivity, DNS failure, timeout, or any other failure to send (a malformed base URL, a redirect loop) | `Network` | Error state with reason "network" and Retry; previous data is kept if present. The offline banner is v1.0 (ADR-0008) |
 | Non-2xx | `Server(status)` | Error state, reason "server", Retry |
-| Non-JSON body, missing envelope, undecodable root | `Data` | Error state, reason "data", Retry; counted in the `DataQualityReport` |
+| Non-JSON or scalar body, missing envelope, undecodable root | `Data` | Error state, reason "data", Retry; counted in the `DataQualityReport` |
 | Items dropped during decoding or validation | none (partial) | Content shown silently; counted in analytics |
 | Deep-link id not found | `NotFound` | Parent list with a "Not found" toast |
 | Static sync failure | logged only | Nothing shown (FR-ERR-04) |

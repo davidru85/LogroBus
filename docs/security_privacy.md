@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft; store declarations are prepared as the final MVP step (LB-414) |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-10-27 |
 | Based on | Spec NFR-SEC-01 to 05, NFR-PRIV-01 to 05 |
 
 LogroBus has no accounts, no project-owned servers and no advertising. This document records what data the app handles, which permissions it uses, the security controls, and the draft store declarations. **It is not legal advice; the owner validates the privacy policy and the store answers before release.**
@@ -43,6 +43,7 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 | Area | Control | Requirement |
 | --- | --- | --- |
 | Transport | HTTPS only. Android network security config with `cleartextTrafficPermitted="false"`; iOS App Transport Security defaults with no exceptions. No certificate pinning (spec §8.7) | NFR-SEC-01 |
+| HTTP client | No cookies and no response cache: OkHttp keeps neither by default, and the iOS NSURLSession is configured without them. A failed call is logged by method, path and error type, a dropped item by type and index, never with a body or an error message (LB-005) | Spec §8.7, NFR-PRIV-02 |
 | Source payloads | Lenient decoding plus validation: ids, coordinates within the service bounding box, string length caps. Invalid items are dropped and logged | Spec §5.4 |
 | CMS HTML (v1.0) | Allow-list sanitiser in shared code; no WebView with JavaScript; only `https` links are opened | NFR-SEC-02, 03 |
 | Deep links | Ids must be numeric and positive, coordinates within range and inside the service area plus 5 km, and unknown parameters are ignored. Invalid links open the parent screen | Spec §6.15 |

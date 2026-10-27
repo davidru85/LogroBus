@@ -29,6 +29,9 @@ detekt = "2.0.0-alpha.6"
 kover = "0.9.11"
 kotlinx-coroutines = "1.11.0"
 turbine = "1.2.1"
+# Ktor and kotlinx.serialization move as a set with Kotlin (ADR-0012).
+ktor = "3.6.0"
+kotlinx-serialization = "1.12.0"
 # Not project dependencies: security floors for libraries that AGP 9.3 brings into its tools and plugin
 # classpath with critical advisories (docs/ci_cd.md §6). Drop each once AGP brings a fixed version itself.
 netty = "4.1.139.Final"
@@ -62,6 +65,12 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 bouncycastle-bom = { module = "org.bouncycastle:bc-jdk18on-bom", version.ref = "bouncycastle" }
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
@@ -73,5 +82,6 @@ android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

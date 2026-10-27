@@ -104,6 +104,14 @@ Done when:
 - Cleartext HTTP is impossible: `[Android]` `cleartextTrafficPermitted=false`; `[iOS]` default ATS with no exceptions.
 - No log line contains request bodies or coordinates.
 
+Part 1 (2026-10-27: `:shared:core:network`, before the DTOs), also done when:
+- The engines' own timeouts follow the request timeout: OkHttp reads and writes, and NSURLSession's idle timeout, last 10 s for live requests and 30 s for static ones. NSURLSession has no separate connect timeout, so on iOS connecting is bounded by the request timeout.
+- A transport failure, a timeout or any other failure to send, such as a malformed `api_base_url`, maps to `Network` for that call only. A call whose caller is cancelled is cancelled, not failed.
+- A body that is only a word or a JSON scalar maps to `Data`: every source response is an object or an array.
+- The `Date` header of every response, error statuses included, corrects `AppClock` (spec §8.6). A cached response counts from `Date` plus `Age`. A missing or unreadable `Date` or `Age`, or a time before 2026, leaves the clock alone.
+- `[iOS]` NSURLSession keeps no response cache and no cookies; `[Android]` OkHttp has neither by default.
+- A failed call is logged by method, path and error type; a dropped item by DTO name, index and error type. Neither log line contains a body or an error message.
+
 ### LB-006 Normaliser and mappers
 Refs: spec §5.3–5.6, DD-01 to DD-11, DD-15 to DD-18, NFR-MNT-01
 
