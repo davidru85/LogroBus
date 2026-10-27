@@ -155,6 +155,18 @@ class SourceClientTest {
         }
 
     @Test
+    fun lb005_aBodyThatIsOnlyAWordOrAScalarIsADataError() =
+        runTest {
+            // The JSON reader takes an unquoted word as a literal, and every source response is an object or an array.
+            val bodies = listOf("<html>Unavailable</html>", "OK", "\"ok\"", "42", "true", "null")
+            val client = client { respond(bodies[requests.lastIndex], HttpStatusCode.OK) }
+
+            val results = bodies.map { client.get("/api/linesDiscovery/stops", RequestKind.Static) }
+
+            assertEquals(List(bodies.size) { AppResult.Failure(AppError.Data) }, results)
+        }
+
+    @Test
     fun lb005_aTransportFailureOrATimeoutIsANetworkError() =
         runTest {
             val failures =
