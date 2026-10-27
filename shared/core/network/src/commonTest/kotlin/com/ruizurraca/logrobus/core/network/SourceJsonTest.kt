@@ -3,7 +3,6 @@ package com.ruizurraca.logrobus.core.network
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
-import com.ruizurraca.logrobus.core.common.Logger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -24,19 +23,7 @@ class SourceJsonTest {
         val lines: List<Int> = emptyList(),
     )
 
-    /** What was logged: level, tag, message and throwable. */
-    private val logged = mutableListOf<List<Any?>>()
-    private val logger =
-        object : Logger {
-            override fun log(
-                level: LogLevel,
-                tag: String,
-                message: String,
-                throwable: Throwable?,
-            ) {
-                logged += listOf(level, tag, message, throwable)
-            }
-        }
+    private val logger = RecordingLogger()
 
     private fun json(text: String) = Json.parseToJsonElement(text)
 
@@ -108,7 +95,7 @@ class SourceJsonTest {
 
         items.decodeEach(StopDto.serializer(), logger)
 
-        val entry = logged.single()
+        val entry = logger.entries.single()
         assertEquals(listOf(LogLevel.Warn, "SourceJson", null), listOf(entry[0], entry[1], entry[3]))
         val message = entry[2] as String
         assertTrue("StopDto" in message && "1" in message, message)
