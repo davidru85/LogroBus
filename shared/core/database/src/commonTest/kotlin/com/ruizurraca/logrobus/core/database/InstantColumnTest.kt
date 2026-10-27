@@ -15,6 +15,12 @@ class InstantColumnTest {
         database.syncQueries.recordSync(dataset = "stops", last_success = at, content_hash = "e3b0c442")
 
         assertEquals(listOf(at.toEpochMilliseconds().toString()), driver.strings("SELECT last_success FROM sync_state"))
-        assertEquals(at, database.syncQueries.syncState("stops").executeAsOne().last_success)
+        assertEquals(
+            at,
+            database.syncQueries
+                .syncState("stops")
+                .executeAsOne()
+                .last_success,
+        )
     }
 }
