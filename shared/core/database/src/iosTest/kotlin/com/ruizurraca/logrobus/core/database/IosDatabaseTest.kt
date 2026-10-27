@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.core.database
 
 import co.touchlab.sqliter.DatabaseFileContext
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -9,6 +10,8 @@ import kotlin.test.assertEquals
 class IosDatabaseTest {
     private val name = "lb007-test.db"
 
+    // Before as well as after: a file left by a crashed run would hold stop 38 already.
+    @BeforeTest
     @AfterTest
     fun deleteTheFile() = DatabaseFileContext.deleteDatabase(name)
 

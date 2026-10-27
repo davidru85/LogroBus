@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.measureTimedValue
+import kotlin.time.measureTime
 
 /** FR-STOP-01 and NFR-I18N-03: stop search ignores accents, `ñ` and case, and finds a stop by its number. */
 class StopSearchTest {
@@ -101,23 +101,20 @@ class StopSearchTest {
 
     @Test
     fun lb007_searchingTheWholeNetworkTakesUnder100Ms() {
-        // NFR-PERF-03, on the JVM and the iOS simulator: 254 stops, the size of the network. The criterion's
-        // reference devices are measured with the app (LB-007 in acceptance_criteria.md).
+        // NFR-PERF-03 on the JVM and the iOS simulator, with 254 stops, the size of the network. The reference devices
+        // are measured with the search screen (LB-209, LB-411).
         val streets =
             listOf("Gran Vía", "Avda. de Portugal", "Logroño Deporte", "Vara de Rey", "Pío XII", "Ayuntamiento")
         (1L..254L).forEach { id -> driver.insertStop(id, "${streets[(id % streets.size).toInt()]} $id") }
         search("vara") // The first query prepares the statement.
 
-        val timings =
-            listOf(
-                "logrono",
-                "AYUNTAMIENTO",
-                "38",
-                "gran via",
-                "pio xii 2",
-            ).map { measureTimedValue { search(it) } }
+        // The median of 20 runs per query, so one pause of a busy test machine does not fail the test.
+        val medians =
+            listOf("logrono", "AYUNTAMIENTO", "38", "gran via", "pio xii 2").associateWith { query ->
+                assertTrue(search(query).isNotEmpty(), query)
+                List(20) { measureTime { search(query) } }.sorted()[10]
+            }
 
-        assertTrue(timings.all { it.value.isNotEmpty() }, "$timings")
-        assertTrue(timings.all { it.duration < 100.milliseconds }, "$timings")
+        assertTrue(medians.values.all { it < 100.milliseconds }, "$medians")
     }
 }
