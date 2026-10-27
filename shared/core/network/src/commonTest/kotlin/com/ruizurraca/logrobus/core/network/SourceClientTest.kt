@@ -84,7 +84,8 @@ class SourceClientTest {
             // API-06 as captured (spec §4): the lines are a comma-separated list. Anything else is percent-encoded.
             val client = client()
 
-            client.get("/api/estimatedTimetable/byStop/38", RequestKind.Live, mapOf("lines" to "1,33", "previewMinutes" to "60"))
+            val arrivals = mapOf("lines" to "1,33", "previewMinutes" to "60")
+            client.get("/api/estimatedTimetable/byStop/38", RequestKind.Live, arrivals)
             client.get("/api/linesDiscovery/stops", RequestKind.Static, mapOf("q" to "a b&c=d"))
 
             assertEquals(
@@ -101,7 +102,8 @@ class SourceClientTest {
 
             client.get("/api/estimatedTimetable/byStop/38", RequestKind.Live, mapOf("lines" to "1,33"))
 
-            assertEquals(listOf("GET /api/estimatedTimetable/byStop/38 failed: Server(status=503)"), logger.entries.map { it[2] })
+            val logged = logger.entries.map { it[2] }
+            assertEquals(listOf("GET /api/estimatedTimetable/byStop/38 failed: Server(status=503)"), logged)
         }
 
     @Test
