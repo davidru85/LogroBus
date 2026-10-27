@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) and the client that talks to the source (LB-005, part 1). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -102,6 +102,13 @@ You will need:
 ### Recent changes
 
 - **2026-10-27:**
+  - LB-005, part 1: the shared client that talks to the bus data source.
+    - It identifies the app and asks for compressed data.
+    - It gives up after 10 s on live data and 30 s on the line and stop catalogue.
+    - It reads the server's clock from every answer, so arrival times stay right when the phone's clock is wrong, even behind a cache.
+    - A broken answer, or one bad item in a list, fails only that piece of data; the other items still show.
+    - It keeps no cookies and no cached answers, and its error logs never contain locations or answers.
+    - The data formats of each endpoint come in part 2.
   - LB-009 is done. One shared engine now refreshes live data, such as arrivals and bus positions, for the screens that show it:
     - Screens showing the same data share one request.
     - It waits the configured interval, never under 10 s, with a random second either way, so users do not all hit the source at once.

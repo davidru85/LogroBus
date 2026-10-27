@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) y el cliente que habla con la fuente (LB-005, parte 1). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -104,6 +104,13 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **27-10-2026:**
+  - LB-005, parte 1: el cliente compartido que habla con la fuente de datos de los autobuses.
+    - Identifica la app y pide los datos comprimidos.
+    - Desiste a los 10 s con los datos en directo y a los 30 s con el catálogo de líneas y paradas.
+    - Lee la hora del servidor en cada respuesta, para que los tiempos de llegada sigan siendo correctos aunque el reloj del móvil vaya mal, incluso detrás de una caché.
+    - Una respuesta rota, o un elemento erróneo en una lista, solo hace fallar ese dato; los demás elementos se siguen mostrando.
+    - No guarda cookies ni respuestas en caché, y sus registros de errores nunca contienen ubicaciones ni respuestas.
+    - Los formatos de datos de cada endpoint llegan en la parte 2.
   - Completada LB-009. Un único motor compartido refresca ahora los datos en directo, como las llegadas y la posición de los autobuses, para las pantallas que los muestran:
     - Las pantallas que muestran los mismos datos comparten una sola petición.
     - Espera el intervalo configurado, nunca menos de 10 s, con un segundo al azar arriba o abajo, para que los usuarios no consulten la fuente todos a la vez.

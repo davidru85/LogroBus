@@ -140,9 +140,24 @@ flowchart TB
 
 ### 4.1 Core network (`:shared:core:network`)
 
-- One `HttpClient` per process. It uses the OkHttp engine on Android and Darwin on iOS, the timeouts and headers of spec §8.7, the lenient `Json` from `api_spec.md` §3, and `expectSuccess = false`, so any 2xx succeeds.
-- The `Date` header of every BFF response is fed to `ServerCorrectedClock.onServerDate`, the `AppClock` in `:shared:core:common`. It adds to the device clock the median offset of the last 5 samples (spec §8.6), so one stale `Date`, such as a cached response's, does not move it.
-- Collections are decoded item by item, so one bad item never fails a whole response.
+Done in LB-005 part 1; the DTOs and services come in part 2.
+
+- **`SourceClient`**, one per process, created in the composition root (LB-010). `get(path, kind)` and `post(path, body, kind)` return `AppResult<JsonElement>`.
+  - **Engine:** a Ktor `HttpClient` with `expectSuccess = false`, on OkHttp on Android and on the Darwin engine (NSURLSession) on iOS, chosen by `platformEngine()`. The iOS session keeps no response cache and no cookies, which NSURLSession has by default. Tests pass a `MockEngine` to the public constructor that takes an engine.
+  - **Headers:** `User-Agent: LogronoBus/<version> (<platform> <os-version>)` from `ClientIdentity`, which `clientIdentity(appVersion)` fills in for this device; `Accept: application/json`; and gzip through Ktor's `ContentEncoding` plugin. The plugin is required: OkHttp decompresses transparently only when it added `Accept-Encoding` itself.
+  - **Timeouts:** 5 s to connect, and a request timeout per `RequestKind`: `Live` 10 s, `Static` 30 s. The engines' socket timeouts follow the request timeout. The Darwin engine has no connect timeout of its own, so on iOS connecting is bounded by the request timeout.
+  - **Results:** a 2xx with an object or array body succeeds. Another status is `Server(status)`, and a body that is not JSON, or only a scalar, is `Data`. Any failure to send is `Network` for that call only: no connection, a timeout, a malformed `api_base_url` or a redirect loop. Only the caller's own cancellation propagates.
+  - **Logging:** a failure is logged at warn level as `<METHOD> <path> failed: <error>`, never with a body or an exception message (NFR-PRIV-02).
+- **Server clock:** a client plugin passes the time of every response, error statuses included, to `ServerCorrectedClock.onServerDate`, the `AppClock` in `:shared:core:common`.
+  - The time is the `Date` header (IMF-fixdate only) plus `Age`, so a response from a cache counts from when the origin sent it.
+  - A missing or unreadable header, or a time before 2026, is ignored.
+  - The clock adds to the device clock the median offset of the last 5 samples (spec §8.6), so one stray sample does not move it.
+- **Lenient JSON** (`api_spec.md` §3):
+  - `SourceJson` is the lenient configuration.
+  - `arrayAt("result", "lines")` reads a BFF envelope.
+  - `decodeEach(serializer, logger)` decodes a collection item by item, returning the items and the number dropped. A dropped item is logged by DTO name, index and error type.
+  - `decodeAs(serializer)` decodes a bare object, as the transit endpoints send it.
+  - A missing envelope or an undecodable object is `Data`.
 
 ### 4.2 Transit data (`:shared:transit:data`)
 
