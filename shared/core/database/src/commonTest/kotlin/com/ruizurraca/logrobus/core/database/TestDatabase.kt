@@ -2,7 +2,6 @@ package com.ruizurraca.logrobus.core.database
 
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.db.SqlDriver
-import com.ruizurraca.logrobus.core.common.text.foldForSearch
 
 /** A new in-memory database with the schema, on this platform's test driver. */
 internal expect fun testDriver(): SqlDriver
@@ -18,7 +17,7 @@ internal fun SqlDriver.strings(sql: String): List<String> =
         parameters = 0,
     ).value
 
-/** Inserts a stop with plain SQL, as a sync would, its name folded as the normaliser folds it. */
+/** Inserts a stop with plain SQL, as a sync would, with its searchable name. */
 internal fun SqlDriver.insertStop(
     id: Long,
     name: String,
@@ -32,6 +31,6 @@ internal fun SqlDriver.insertStop(
     ) {
         bindLong(0, id)
         bindString(1, name)
-        bindString(2, foldForSearch(name))
+        bindString(2, searchableName(name))
     }
 }

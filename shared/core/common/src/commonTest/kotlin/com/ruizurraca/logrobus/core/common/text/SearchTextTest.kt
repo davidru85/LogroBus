@@ -19,4 +19,20 @@ class SearchTextTest {
 
         assertEquals(folded, folded.mapValues { (text, _) -> foldForSearch(text) })
     }
+
+    @Test
+    fun lb007_searchWordsAreTheFoldedLettersAndDigitsBetweenAnythingElse() {
+        // A typographic apostrophe, a combining tilde (NFD), a non-breaking space and an en dash all occur in names.
+        val words =
+            mapOf(
+                "Hermanos D\u2019Elhuyar" to listOf("hermanos", "d", "elhuyar"),
+                "Logron\u0303o" to listOf("logrono"),
+                "Gran\u00A0Vía" to listOf("gran", "via"),
+                "Deportivo\u2013Hospital" to listOf("deportivo", "hospital"),
+                "Avda. Pío XII, 38" to listOf("avda", "pio", "xii", "38"),
+                " ¿?¡! " to emptyList(),
+            )
+
+        assertEquals(words, words.mapValues { (text, _) -> searchWords(text) })
+    }
 }
