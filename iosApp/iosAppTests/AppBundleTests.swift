@@ -33,6 +33,8 @@ struct AppBundleTests {
     @Test
     func lb005_appUsesDefaultTransportSecurity() {
         // NFR-SEC-01: App Transport Security with no exceptions refuses cleartext HTTP; any exception adds this key.
+        // The bundle must be the app's, or a missing key would prove nothing.
+        #expect(Bundle.main.bundleIdentifier == "com.ruizurraca.logrobus")
         #expect(Bundle.main.object(forInfoDictionaryKey: "NSAppTransportSecurity") == nil)
     }
 

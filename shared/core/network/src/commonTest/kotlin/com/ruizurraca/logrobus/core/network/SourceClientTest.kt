@@ -87,13 +87,16 @@ class SourceClientTest {
 
             val arrivals = mapOf("lines" to "1,33", "previewMinutes" to "60")
             client.get("/api/estimatedTimetable/byStop/38", RequestKind.Live, arrivals)
-            client.get("/api/linesDiscovery/stops", RequestKind.Static, mapOf("q" to "a b&c=d"))
+            client.get("/api/linesDiscovery/stops", RequestKind.Static, mapOf("q" to "Logroño 1+1, Ñ&c=d", "a b" to ""))
 
             assertEquals(
                 "$BASE_URL/api/estimatedTimetable/byStop/38?lines=1,33&previewMinutes=60",
                 requests.first().url.toString(),
             )
-            assertEquals("a b&c=d", requests.last().url.parameters["q"])
+            // Every byte but the unreserved ones is percent-encoded, UTF-8 included; commas in values stay as they are.
+            val other = requests.last().url
+            assertEquals("q=Logro%C3%B1o%201%2B1,%20%C3%91%26c%3Dd&a%20b=", other.encodedQuery)
+            assertEquals(listOf("Logroño 1+1, Ñ&c=d", ""), listOf(other.parameters["q"], other.parameters["a b"]))
         }
 
     @Test
