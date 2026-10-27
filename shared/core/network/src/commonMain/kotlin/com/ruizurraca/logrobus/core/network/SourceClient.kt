@@ -23,6 +23,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
+import io.ktor.http.encodeURLParameter
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -94,7 +95,8 @@ class SourceClient(
     suspend fun get(
         path: String,
         kind: RequestKind,
-    ): AppResult<JsonElement> = send(HttpMethod.Get, path, kind)
+        query: Map<String, String> = emptyMap(),
+    ): AppResult<JsonElement> = send(HttpMethod.Get, path, kind, query)
 
     suspend fun post(
         path: String,
@@ -105,18 +107,22 @@ class SourceClient(
 
     // api_spec.md §7 and NFR-REL-02: whatever stops a call (no connection, a timeout, a malformed api_base_url, a
     // redirect loop) fails that call alone. Only the caller's own cancellation propagates.
-    // NFR-PRIV-02: a failure is logged by method, path and error type, never with a body or an error message.
+    // NFR-PRIV-02: a failure is logged by method, path and error type, never with a query, a body or an error
+    // message.
     @Suppress("TooGenericExceptionCaught")
     private suspend fun send(
         method: HttpMethod,
         path: String,
         kind: RequestKind,
+        query: Map<String, String> = emptyMap(),
         configure: HttpRequestBuilder.() -> Unit = {},
     ): AppResult<JsonElement> {
+        // A programming error, so it throws before the catch below: the query goes in the map, never in the path.
+        require('?' !in path) { "Pass the query as a map, not in the path" }
         val result =
             try {
                 http
-                    .request(baseUrl().trimEnd('/') + path) {
+                    .request(baseUrl().trimEnd('/') + path + query.toQueryString()) {
                         this.method = method
                         timeout {
                             requestTimeoutMillis = kind.timeout.inWholeMilliseconds
@@ -158,3 +164,16 @@ class SourceClient(
         }
     }
 }
+
+/**
+ * `?name=value&…`, percent-encoded except for the commas in values, so that a list goes out as the source was captured
+ * with it: API-06's `lines=1,33` (spec §4). RFC 3986 allows a comma in a query. Names are encoded in full.
+ */
+private fun Map<String, String>.toQueryString(): String =
+    if (isEmpty()) {
+        ""
+    } else {
+        entries.joinToString("&", prefix = "?") { (name, value) ->
+            name.encodeURLParameter() + "=" + value.split(',').joinToString(",") { it.encodeURLParameter() }
+        }
+    }

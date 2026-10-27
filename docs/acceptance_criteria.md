@@ -112,6 +112,10 @@ Part 1 (2026-10-27: `:shared:core:network`, before the DTOs), also done when:
 - `[iOS]` NSURLSession keeps no response cache and no cookies; `[Android]` OkHttp has neither by default.
 - A failed call is logged by method, path and error type; a dropped item by DTO name, index and error type. Neither log line contains a body or an error message.
 
+Part 2, before the fixtures (2026-10-27), also done when:
+- A GET sends its query parameters percent-encoded, except the commas in values, so a list goes out as the source was captured: `?lines=1,33&previewMinutes=60` (API-06). The failure log names the path without the query, and a path that carries its own query is rejected.
+- The cleartext criterion above is tested: `[Android]` the manifest names a network security config whose only element, `base-config`, denies cleartext; `[iOS]` the built app's Info.plist has no `NSAppTransportSecurity` key.
+
 ### LB-006 Normaliser and mappers
 Refs: spec §5.3–5.6, DD-01 to DD-11, DD-15 to DD-18, NFR-MNT-01
 

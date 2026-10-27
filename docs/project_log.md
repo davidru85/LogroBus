@@ -19,6 +19,40 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-27: LB-005, part 2, first half: GET queries and no cleartext
+
+**Done**
+- **Merge:** PR #23 (LB-005 part 1) was merged. Its CI was green, with the iOS job at about 15 min.
+- **TDD:**
+  - three red-green cycles: the GET query, Android cleartext, and a path that carries a query;
+  - two refactors;
+  - three guard tests, which pass over behaviour already in place: the query log, iOS ATS, and stronger encoding cases.
+- **`SourceClient.get(path, kind, query)`** (API-05, API-06):
+  - names and values are percent-encoded, except the commas in values, so `lines=1,33` goes out as the source was captured (spec §4);
+  - the failure log names the path without the query;
+  - a path that carries `?` is rejected as a programming error, before the catch.
+- **Cleartext HTTP refused** (NFR-SEC-01):
+  - `[Android]` `res/xml/network_security_config.xml` has one `base-config` with `cleartextTrafficPermitted="false"`, named by the manifest. `NetworkSecurityTest` (Robolectric) reads the hidden `ApplicationInfo.networkSecurityConfigRes` and the config's elements. Mutation-checked.
+  - `[iOS]` the generated Info.plist has no `NSAppTransportSecurity` key, so the default ATS applies. `lb005_appUsesDefaultTransportSecurity` passes in `scripts/ios/test.sh`.
+- **Tests:** 31 network tests on the Android host and 30 on the iOS simulator, plus the Android app test and the 7 iOS app tests, all passing.
+- **Review** (code-reviewer subagent): approved with nits. Applied:
+  - the rejection of a path with a query;
+  - wider encoding cases;
+  - the ATS test checks its own bundle;
+  - the KDoc on commas.
+- **Process notes:**
+  - The Android green commit `2a9103a` also fixed its red test, which read the attribute in the `android` namespace; the network security config's attributes have none. Next time, a test fix goes in its own `test(...)` commit.
+  - `a9a115f` (iOS ATS) and `9512407` (encoding cases, ATS bundle) are guard tests without a `TDD:` line. The ATS test was not mutation-checked, which would need a regenerated project.
+
+**Decisions**
+- **Agent:**
+  - Commas in query values are sent as is, matching the captured requests. A comma inside free text is harmless for parsers that follow RFC 3986, and no BFF endpoint takes free text.
+  - The Android network security config has no `debug-overrides`: debug builds refuse cleartext too.
+
+**Open / next**
+- **LB-005 part 2, second half:** the DTOs and services for API-01 to API-08. They wait for LB-003's fixtures, which wait for the owner's go-ahead on OQ-11.
+- **Next without the fixtures:** LB-007, the SQLDelight database.
+
 ## 2026-10-27: LB-005, part 1: `SourceClient` and lenient JSON
 
 **Done**
