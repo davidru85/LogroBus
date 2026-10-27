@@ -85,7 +85,7 @@ class SourceClient internal constructor(
         if (status.isSuccess()) {
             AppResult.Success(Json.parseToJsonElement(bodyAsText()))
         } else {
-            AppResult.Failure(AppError.Network)
+            AppResult.Failure(AppError.Server(status.value))
         }
 
     private fun url(path: String) = baseUrl().trimEnd('/') + path
