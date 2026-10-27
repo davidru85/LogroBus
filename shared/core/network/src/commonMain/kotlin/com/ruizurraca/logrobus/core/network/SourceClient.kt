@@ -117,6 +117,8 @@ class SourceClient(
         query: Map<String, String> = emptyMap(),
         configure: HttpRequestBuilder.() -> Unit = {},
     ): AppResult<JsonElement> {
+        // A programming error, so it throws before the catch below: the query goes in the map, never in the path.
+        require('?' !in path) { "Pass the query as a map, not in the path" }
         val result =
             try {
                 http
