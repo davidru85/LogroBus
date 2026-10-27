@@ -166,8 +166,8 @@ class SourceClient(
 }
 
 /**
- * `?name=value&…`, percent-encoded, except the commas of a list such as API-06's `lines=1,33`, which the source was
- * captured with (spec §4). RFC 3986 allows a comma in a query.
+ * `?name=value&…`, percent-encoded except for the commas in values, so that a list goes out as the source was captured
+ * with it: API-06's `lines=1,33` (spec §4). RFC 3986 allows a comma in a query. Names are encoded in full.
  */
 private fun Map<String, String>.toQueryString(): String =
     if (isEmpty()) {
