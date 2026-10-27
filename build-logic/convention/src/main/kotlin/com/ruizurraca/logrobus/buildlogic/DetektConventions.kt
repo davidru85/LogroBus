@@ -3,9 +3,9 @@ package com.ruizurraca.logrobus.buildlogic
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.Project
-import java.io.File
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
+import java.io.File
 
 /**
  * detekt (docs/code_style.md §2.1, ADR-0011) with `config/detekt/detekt.yml` on top of the defaults. The
