@@ -140,14 +140,14 @@ flowchart TB
 
 ### 4.1 Core network (`:shared:core:network`)
 
-Done in LB-005 part 1; the DTOs and services come in part 2.
+Done in LB-005 part 1 and the first half of part 2; the DTOs and services come with LB-003's fixtures.
 
-- **`SourceClient`**, one per process, created in the composition root (LB-010). `get(path, kind)` and `post(path, body, kind)` return `AppResult<JsonElement>`.
+- **`SourceClient`**, one per process, created in the composition root (LB-010). `get(path, kind, query)` and `post(path, body, kind)` return `AppResult<JsonElement>`. The query is a map, never part of the path; its values are percent-encoded except for commas, so a list goes out as the source was captured (`lines=1,33`).
   - **Engine:** a Ktor `HttpClient` with `expectSuccess = false`, on OkHttp on Android and on the Darwin engine (NSURLSession) on iOS, chosen by `platformEngine()`. The iOS session keeps no response cache and no cookies, which NSURLSession has by default. Tests pass a `MockEngine` to the public constructor that takes an engine.
   - **Headers:** `User-Agent: LogronoBus/<version> (<platform> <os-version>)` from `ClientIdentity`, which `clientIdentity(appVersion)` fills in for this device; `Accept: application/json`; and gzip through Ktor's `ContentEncoding` plugin. The plugin is required: OkHttp decompresses transparently only when it added `Accept-Encoding` itself.
   - **Timeouts:** 5 s to connect, and a request timeout per `RequestKind`: `Live` 10 s, `Static` 30 s. The engines' socket timeouts follow the request timeout. The Darwin engine has no connect timeout of its own, so on iOS connecting is bounded by the request timeout.
   - **Results:** a 2xx with an object or array body succeeds. Another status is `Server(status)`, and a body that is not JSON, or only a scalar, is `Data`. Any failure to send is `Network` for that call only: no connection, a timeout, a malformed `api_base_url` or a redirect loop. Only the caller's own cancellation propagates.
-  - **Logging:** a failure is logged at warn level as `<METHOD> <path> failed: <error>`, never with a body or an exception message (NFR-PRIV-02).
+  - **Logging:** a failure is logged at warn level as `<METHOD> <path> failed: <error>`, never with the query, a body or an exception message (NFR-PRIV-02).
 - **Server clock:** a client plugin passes the time of every response, error statuses included, to `ServerCorrectedClock.onServerDate`, the `AppClock` in `:shared:core:common`.
   - The time is the `Date` header (IMF-fixdate only) plus `Age`, so a response from a cache counts from when the origin sent it.
   - A missing or unreadable header, or a time before 2026, is ignored.

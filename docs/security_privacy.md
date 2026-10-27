@@ -42,8 +42,8 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 
 | Area | Control | Requirement |
 | --- | --- | --- |
-| Transport | HTTPS only. Android network security config with `cleartextTrafficPermitted="false"`; iOS App Transport Security defaults with no exceptions. No certificate pinning (spec §8.7) | NFR-SEC-01 |
-| HTTP client | No cookies and no response cache: OkHttp keeps neither by default, and the iOS NSURLSession is configured without them. A failed call is logged by method, path and error type, a dropped item by type and index, never with a body or an error message (LB-005) | Spec §8.7, NFR-PRIV-02 |
+| Transport | HTTPS only. Android network security config with `cleartextTrafficPermitted="false"`; iOS App Transport Security defaults with no exceptions. Both are in place and tested (LB-005). No certificate pinning (spec §8.7) | NFR-SEC-01 |
+| HTTP client | No cookies and no response cache: OkHttp keeps neither by default, and the iOS NSURLSession is configured without them. A failed call is logged by method, path and error type, a dropped item by type and index, never with a query, a body or an error message (LB-005) | Spec §8.7, NFR-PRIV-02 |
 | Source payloads | Lenient decoding plus validation: ids, coordinates within the service bounding box, string length caps. Invalid items are dropped and logged | Spec §5.4 |
 | CMS HTML (v1.0) | Allow-list sanitiser in shared code; no WebView with JavaScript; only `https` links are opened | NFR-SEC-02, 03 |
 | Deep links | Ids must be numeric and positive, coordinates within range and inside the service area plus 5 km, and unknown parameters are ignored. Invalid links open the parent screen | Spec §6.15 |

@@ -16,9 +16,10 @@ The source API is undocumented, unversioned and owned by a third party. It sends
 | Topic | Rule |
 | --- | --- |
 | Base URL | Remote config `api_base_url`, default `https://transporteurbano.logrono.es`. Paths below are relative to it |
-| Transport | HTTPS only (NFR-SEC-01). No cookies, tokens or API keys in v1 |
+| Transport | HTTPS only (NFR-SEC-01): the Android network security config and the default iOS App Transport Security refuse cleartext (LB-005). No cookies, tokens or API keys in v1 |
 | Headers | `User-Agent: LogronoBus/<version> (<Android\|iOS> <os-version>)`, `Accept: application/json`, `Accept-Encoding: gzip`, and `Content-Type: application/json` on POSTs |
 | Timeouts | 5 s to connect. 10 s per request for live endpoints (API-03 to 08 and the geocoder). 30 s for static ones (API-01, 02, 10 to 12). The engines' socket timeouts follow the request timeout. NSURLSession has no separate connect timeout, so on iOS connecting is bounded by the request timeout (LB-005) |
+| Query strings | Percent-encoded, except the commas in values, so a list goes out as captured: `?lines=1,33&previewMinutes=60`. Passed as a map, never in the path (LB-005) |
 | Success | Any `2xx`. POSTs answer `201` (DD-15) |
 | Failure | A non-2xx status, a non-JSON body or a missing envelope key is a recoverable `AppError` for that resource only (NFR-REL-02) |
 | Server clock | Read the `Date` header (IMF-fixdate) on every BFF response, error statuses included, add its `Age` if a cache sent it, and feed the result to `AppClock` (spec §8.6). A missing or unreadable header, or a time before 2026, is ignored |
