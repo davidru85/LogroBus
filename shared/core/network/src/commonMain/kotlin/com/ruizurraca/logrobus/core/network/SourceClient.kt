@@ -9,15 +9,16 @@ import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.timeout
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
-import io.ktor.client.request.get
-import io.ktor.client.request.post
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.isSuccess
+import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
+import io.ktor.http.isSuccess
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -64,27 +65,29 @@ class SourceClient internal constructor(
     suspend fun get(
         path: String,
         kind: RequestKind,
-    ): AppResult<JsonElement> {
-        return send { http.get(url(path)) { timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds } } }
-    }
+    ): AppResult<JsonElement> = send(HttpMethod.Get, path, kind)
 
     suspend fun post(
         path: String,
         body: JsonElement,
         kind: RequestKind,
-    ): AppResult<JsonElement> {
-        return send {
-            http.post(url(path)) {
-                timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
-                setBody(TextContent(body.toString(), ContentType.Application.Json))
-            }
-        }
-    }
+    ): AppResult<JsonElement> =
+        send(HttpMethod.Post, path, kind) { setBody(TextContent(body.toString(), ContentType.Application.Json)) }
 
     // api_spec.md §7: no connection, DNS failures and timeouts are IOExceptions on every engine; cancellation is not.
-    private suspend fun send(request: suspend () -> HttpResponse): AppResult<JsonElement> =
+    private suspend fun send(
+        method: HttpMethod,
+        path: String,
+        kind: RequestKind,
+        configure: HttpRequestBuilder.() -> Unit = {},
+    ): AppResult<JsonElement> =
         try {
-            request().toResult()
+            http
+                .request(baseUrl().trimEnd('/') + path) {
+                    this.method = method
+                    timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
+                    configure()
+                }.toResult()
         } catch (_: IOException) {
             AppResult.Failure(AppError.Network)
         }
@@ -104,6 +107,4 @@ class SourceClient internal constructor(
         } catch (_: SerializationException) {
             AppResult.Failure(AppError.Data)
         }
-
-    private fun url(path: String) = baseUrl().trimEnd('/') + path
 }
