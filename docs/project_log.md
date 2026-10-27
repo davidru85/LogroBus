@@ -19,6 +19,71 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-27: LB-007: local database and stop search
+
+**Done**
+- **Merge:** PR #24 (LB-005 part 2, first half) was merged. Its CI was green, with the iOS job at about 12.6 min.
+- **Criteria aligned with the ADRs** at the start:
+  - `arrival_snapshot` waits for v1.0 (ADR-0008);
+  - migration tests start with the first schema change after release (ADR-0013), since version 1 has no previous schema.
+- **Dependencies:** SQLDelight 2.4.1 (Apache-2.0, ADR-0013):
+  - the Gradle plugin and the coroutines extension;
+  - the Android, native and JDBC SQLite drivers, JDBC for tests only.
+  A spike confirmed that its plugin works with AGP 9's KMP Android plugin.
+- **TDD:** 6 red-green cycles, then 4 more from the reviews, with 4 refactors and 2 guard tests.
+- **`:shared:core:common`:** `foldForSearch` and `searchWords`. They fold case, accents, `ñ` and combining marks, and split on anything but letters and digits.
+- **`:shared:core:database`** (`architecture.md` §4.3):
+  - the schema of spec §8.8 plus the MVP additions, in five `.sq` files;
+  - FTS4 stop search through `searchStops` and `searchableName`;
+  - triggers that keep the index in step with every write;
+  - `Instant` columns in UTC epoch milliseconds;
+  - `logroBusDatabase(driver)`, and `logroBusDriver` on each platform.
+- **Tests:**
+  - 12 database tests on the Android host and 12 on the iOS simulator. The Android file test runs on Robolectric, so the JVM, Robolectric's SQLite and iOS's system SQLite all support FTS4.
+  - Search over 254 stops: the median is well under 100 ms on both.
+  - `scripts/ios/test.sh` passes.
+- **Build:**
+  - detekt skips sources under `build/`, in its baseline task too. SQLDelight's generated classes, such as `Fare_product`, failed the naming rules.
+  - The Swift package links the system SQLite, because `Shared` is a static framework.
+- **Found while testing:** spec §8.8's `content = 'stop'` fails in SQLite with "unrecognized parameter", because FTS4 rejects spaces around `=`. The schema writes `content='stop'`.
+- **Reviews** (code-reviewer and data-rules-reviewer subagents; both asked for changes, with no blockers):
+  - **Fixed, with TDD:**
+    - `INSERT OR REPLACE` left a renamed stop findable by its old name: REPLACE fires no delete trigger. A guarded `BEFORE INSERT` trigger fixes it.
+    - The FTS4 tokenizer and the query split words differently, so a typographic apostrophe, a non-breaking space, a dash or a decomposed accent hid matches. There is now one split for both.
+    - Constraints: `NOT NULL` key columns, `UNIQUE` favourites, and lookup indexes. The schema test now also checks keys, defaults and indexes.
+    - Instants are typed, in UTC epoch milliseconds.
+  - **Refactors:**
+    - one public, parameterless iOS driver function;
+    - the iOS file test cleans up before and after;
+    - the timing test uses the median of 20 runs;
+    - detekt baselines skip generated code too.
+  - **Build:** the SQLite link for iOS. It is verified only by the app still building; it is exercised once LB-010 calls the driver.
+  - **Process notes:**
+    - `d7cfd5a` fixes a red test's expectation in its own commit, with no `TDD:` line.
+    - `eb64a3f` (red) also reformats `SchemaTest`.
+    - `6133785` (green) changed one expected order, because the folded name lost its punctuation; its body explains this.
+    - `829698a` (timing) is a guard test.
+    - `1782de7` (SQLite link) was committed after SwiftLint and the iOS tests but without `run-all.sh`. Its multi-line Swift targets broke `lb001_logroBusUiPackageHasTheArchitectureTargets`, which reads one target per line. The next commit restores single-line targets. Lesson: run `run-all.sh` before every commit that touches a file a check reads, not only Kotlin.
+
+**Decisions**
+- **Agent, for the owner to confirm:** these departures from spec §8.8, recorded in `architecture.md` §4.3. They are free to change before the first release.
+  - `NOT NULL` keys in `direction_code_cache` and `sync_state`;
+  - `UNIQUE(type, ref_id)` on `favourite`;
+  - `NOT NULL` `plan_recent.created_at`;
+  - two indexes;
+  - `content='stop'`.
+- **Agent:**
+  - The fare, recharge-point and news tables of spec §8.8 exist now, empty, for v1.0. This avoids a migration later.
+  - A stop's searchable name is computed in `:shared:core:database` (`searchableName`), so the sync (LB-008) cannot fold it differently from the query.
+
+**Open / next**
+- **LB-008:**
+  - write stops through plain inserts, or `INSERT OR REPLACE`, in one transaction, with `searchableName` for `normalized_name`;
+  - add the queries it needs. The first query on `favourite`, `news` or `plan_recent` requires its `InstantColumnAdapter` in `logroBusDatabase`.
+- **LB-010:** create `logroBusDatabase(logroBusDriver(context))` on Android, and `logroBusDatabase(logroBusDriver())` on iOS.
+- **LB-209 and LB-411:** the search benchmark on the reference devices.
+- **LB-005, second half:** still waits for LB-003's fixtures (OQ-11).
+
 ## 2026-10-27: LB-005, part 2, first half: GET queries and no cleartext
 
 **Done**
