@@ -201,7 +201,8 @@ class SourceClientTest {
             val client =
                 client {
                     val date = dates[requests.lastIndex]
-                    respond("{}", HttpStatusCode.OK, if (date == null) headersOf() else headersOf(HttpHeaders.Date, date))
+                    val headers = if (date == null) headersOf() else headersOf(HttpHeaders.Date, date)
+                    respond("{}", HttpStatusCode.OK, headers)
                 }
 
             val results = dates.map { client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
