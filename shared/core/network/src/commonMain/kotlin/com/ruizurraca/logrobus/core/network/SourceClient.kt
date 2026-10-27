@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.core.network
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
@@ -55,6 +56,7 @@ class SourceClient internal constructor(
     identity: ClientIdentity,
     clock: ServerCorrectedClock,
     private val baseUrl: () -> String,
+    logger: Logger,
 ) {
     private val http =
         HttpClient(engine) {

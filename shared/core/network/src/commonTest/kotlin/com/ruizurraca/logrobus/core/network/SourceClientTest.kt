@@ -2,6 +2,8 @@ package com.ruizurraca.logrobus.core.network
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.LogLevel
+import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
@@ -25,8 +27,10 @@ import kotlinx.io.IOException
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -45,6 +49,20 @@ class SourceClientTest {
             },
         )
 
+    /** What the client logged: level, tag, message and throwable. */
+    private val logged = mutableListOf<List<Any?>>()
+    private val logger =
+        object : Logger {
+            override fun log(
+                level: LogLevel,
+                tag: String,
+                message: String,
+                throwable: Throwable?,
+            ) {
+                logged += listOf(level, tag, message, throwable)
+            }
+        }
+
     private fun client(
         respond: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData = { json("""{"result":{}}""") },
     ) = SourceClient(
@@ -56,6 +74,7 @@ class SourceClientTest {
         identity = ClientIdentity(appVersion = "1.2.0", platform = "Android", osVersion = "16"),
         clock = clock,
         baseUrl = { BASE_URL },
+        logger = logger,
     )
 
     @Test
@@ -209,6 +228,36 @@ class SourceClientTest {
 
             assertEquals(List(dates.size) { AppResult.Success(buildJsonObject {}) }, results)
             assertEquals(START, clock.now())
+        }
+
+    @Test
+    fun lb005_aFailedCallIsLoggedWithoutItsBodyOrCoordinates() =
+        runTest {
+            // NFR-PRIV-02: the request body, the response body and the error message can all hold coordinates.
+            val origin = buildJsonObject { putJsonObject("origin") { put("lat", 42.4650) } }
+            val responses: List<suspend MockRequestHandleScope.() -> HttpResponseData> =
+                listOf(
+                    { json("""{"routes":[]}""", HttpStatusCode.Created) },
+                    { json("""{"error":"No stop near 42.4650"}""", HttpStatusCode.BadRequest) },
+                    { respond("<html>42.4650</html>", HttpStatusCode.OK) },
+                    { throw IOException("No route to 42.4650") },
+                )
+            val client = client { responses[requests.lastIndex]() }
+
+            responses.forEach { client.post("/api/transit/route", origin, RequestKind.Live) }
+
+            assertEquals(
+                listOf(
+                    "POST /api/transit/route failed: Server(status=400)",
+                    "POST /api/transit/route failed: Data",
+                    "POST /api/transit/route failed: Network (IOException)",
+                ),
+                logged.map { it[2] },
+            )
+            logged.forEach { (level, tag, message, throwable) ->
+                assertEquals(listOf(LogLevel.Warn, "SourceClient", null), listOf(level, tag, throwable))
+                assertFalse("42.46" in "$message", "$message")
+            }
         }
 
     private fun MockRequestHandleScope.json(
