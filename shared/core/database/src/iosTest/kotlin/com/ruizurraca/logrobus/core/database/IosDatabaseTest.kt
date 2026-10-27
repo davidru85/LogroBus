@@ -21,7 +21,7 @@ class IosDatabaseTest {
 
         val reopened = logroBusDriver(name)
 
-        assertEquals(listOf(38L), LogroBusDatabase(reopened).searchStops("vara").map { it.id })
+        assertEquals(listOf(38L), logroBusDatabase(reopened).searchStops("vara").map { it.id })
         reopened.close()
     }
 }

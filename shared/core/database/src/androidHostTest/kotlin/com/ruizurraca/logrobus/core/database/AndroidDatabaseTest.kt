@@ -22,7 +22,7 @@ class AndroidDatabaseTest {
         val reopened = logroBusDriver(application)
 
         assertTrue(application.getDatabasePath("logrobus.db").exists())
-        assertEquals(listOf(38L), LogroBusDatabase(reopened).searchStops("vara").map { it.id })
+        assertEquals(listOf(38L), logroBusDatabase(reopened).searchStops("vara").map { it.id })
         reopened.close()
     }
 }

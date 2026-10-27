@@ -9,7 +9,7 @@ import kotlin.time.measureTimedValue
 /** FR-STOP-01 and NFR-I18N-03: stop search ignores accents, `ñ` and case, and finds a stop by its number. */
 class StopSearchTest {
     private val driver = testDriver()
-    private val database = LogroBusDatabase(driver)
+    private val database = logroBusDatabase(driver)
 
     private fun stops(vararg stops: Pair<Long, String>) = stops.forEach { (id, name) -> driver.insertStop(id, name) }
 
