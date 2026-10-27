@@ -1,3 +1,5 @@
+import kotlin.time.Instant;
+
 -- Spec §8.8: what the user saves on the device.
 CREATE TABLE favourite (
   id TEXT PRIMARY KEY,
@@ -5,7 +7,7 @@ CREATE TABLE favourite (
   ref_id TEXT NOT NULL,
   label TEXT,
   position INTEGER NOT NULL,
-  created_at INTEGER NOT NULL,
+  created_at INTEGER AS Instant NOT NULL,
   -- architecture.md §4.3, FR-FAV-04: consecutive syncs in which a favourite stop was missing.
   missing_syncs INTEGER NOT NULL DEFAULT 0,
   -- One favourite per line or stop, so a double tap cannot save it twice (FR-FAV-05 counts them).
@@ -24,5 +26,5 @@ CREATE TABLE plan_recent (
   id TEXT PRIMARY KEY,
   origin TEXT,
   destination TEXT,
-  created_at INTEGER NOT NULL
+  created_at INTEGER AS Instant NOT NULL
 );
