@@ -16,6 +16,8 @@ dependencies {
     implementation(libs.compose.ui)
 
     testImplementation(libs.junit4)
+    // To read and stop the graph that the Application starts (ADR-0014).
+    testImplementation(libs.koin.core)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.compose.ui.test.junit4)
