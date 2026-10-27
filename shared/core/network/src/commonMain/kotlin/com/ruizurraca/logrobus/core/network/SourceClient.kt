@@ -112,7 +112,11 @@ class SourceClient internal constructor(
                 http
                     .request(baseUrl().trimEnd('/') + path) {
                         this.method = method
-                        timeout { requestTimeoutMillis = kind.timeout.inWholeMilliseconds }
+                        timeout {
+                            requestTimeoutMillis = kind.timeout.inWholeMilliseconds
+                            // OkHttp's read and write timeouts, 10 s by default, and NSURLSession's idle timeout.
+                            socketTimeoutMillis = kind.timeout.inWholeMilliseconds
+                        }
                         configure()
                     }.toResult()
             } catch (e: IOException) {
