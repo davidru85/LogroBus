@@ -21,3 +21,15 @@ CREATE TABLE stop_line (
 -- Spec §8.8: full-text search over the stop table, which holds the text (an external-content FTS4 table). FTS4
 -- rejects spaces around an option's '=', as the spec writes it.
 CREATE VIRTUAL TABLE stop_fts USING fts4(name, normalized_name, content='stop');
+
+-- An external-content FTS4 table indexes only what it is given.
+CREATE TRIGGER stop_fts_after_insert AFTER INSERT ON stop BEGIN
+  INSERT INTO stop_fts (docid, name, normalized_name) VALUES (new.id, new.name, new.normalized_name);
+END;
+
+-- FR-STOP-01: the stop numbered :id first, then the stops whose folded name matches :match, by name.
+search:
+SELECT *
+FROM stop
+WHERE id = :id OR id IN (SELECT docid FROM stop_fts WHERE stop_fts MATCH :match)
+ORDER BY id = :id DESC, normalized_name, id;
