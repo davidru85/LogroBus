@@ -1,2 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<network-security-config />
+<!-- NFR-SEC-01: HTTPS only, for every domain and in every build. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
