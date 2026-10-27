@@ -53,7 +53,8 @@ private const val MAX_DOUBLINGS = 4
 /**
  * The app's one [PollingEngine]. Each key's loop runs in [scope], an application-wide scope, while the key has
  * collectors and [appLifecycle] says the app is in the foreground. Values are stamped with [clock], the
- * server-corrected time that freshness is measured against.
+ * server-corrected time that freshness is measured against; the schedule runs on [timeSource], which is monotonic.
+ * What a fetch throws is logged to [logger] by type and key only.
  */
 class DefaultPollingEngine internal constructor(
     scope: CoroutineScope,
