@@ -88,6 +88,9 @@ class SourceClientTest {
             val timeouts = requests.map { it.getCapabilityOrNull(HttpTimeoutCapability) }
             assertEquals(listOf(5_000L, 5_000L, 5_000L), timeouts.map { it?.connectTimeoutMillis })
             assertEquals(listOf(30_000L, 10_000L, 10_000L), timeouts.map { it?.requestTimeoutMillis })
+            // The engines' own timers: OkHttp reads and writes for 10 s by default, and NSURLSession has only an idle
+            // timeout, which also bounds connecting. Both follow the request timeout.
+            assertEquals(listOf(30_000L, 10_000L, 10_000L), timeouts.map { it?.socketTimeoutMillis })
         }
 
     @Test
