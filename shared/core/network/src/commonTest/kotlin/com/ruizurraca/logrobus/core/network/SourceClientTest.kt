@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.core.network
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.HttpTimeoutCapability
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.ContentType
@@ -53,6 +54,20 @@ class SourceClientTest {
             val post = requests.last().body as TextContent
             assertEquals(ContentType.Application.Json, post.contentType.withoutParameters())
             assertEquals("""{"origin":"stop:38"}""", post.text)
+        }
+
+    @Test
+    fun lb005_connectingTimesOutAfterFiveSecondsAndARequestAfterTenOrThirty() =
+        runTest {
+            val client = client()
+
+            client.get("/api/linesDiscovery/stops", RequestKind.Static)
+            client.get("/api/vehicleMonitoring/all", RequestKind.Live)
+            client.post("/api/transit/route", buildJsonObject {}, RequestKind.Live)
+
+            val timeouts = requests.map { it.getCapabilityOrNull(HttpTimeoutCapability) }
+            assertEquals(listOf(5_000L, 5_000L, 5_000L), timeouts.map { it?.connectTimeoutMillis })
+            assertEquals(listOf(30_000L, 10_000L, 10_000L), timeouts.map { it?.requestTimeoutMillis })
         }
 
     private fun MockRequestHandleScope.json(
