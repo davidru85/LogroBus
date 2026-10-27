@@ -68,7 +68,8 @@ class SourceJsonTest {
 
         val results = bodies.associateWith { json(it).arrayAt("result", "lines") }
 
-        assertEquals<Map<String, AppResult<JsonArray>>>(bodies.associateWith { AppResult.Failure(AppError.Data) }, results)
+        val expected: Map<String, AppResult<JsonArray>> = bodies.associateWith { AppResult.Failure(AppError.Data) }
+        assertEquals(expected, results)
     }
 
     @Test
@@ -107,9 +108,10 @@ class SourceJsonTest {
 
         items.decodeEach(StopDto.serializer(), logger)
 
-        val (level, tag, message, throwable) = logged.single()
-        assertEquals(listOf(LogLevel.Warn, "SourceJson", null), listOf(level, tag, throwable))
-        assertTrue("StopDto" in "$message" && "1" in "$message", "$message")
-        listOf("Calle Mayor", "42.46", "\"x\"").forEach { assertFalse(it in "$message", "$message") }
+        val entry = logged.single()
+        assertEquals(listOf(LogLevel.Warn, "SourceJson", null), listOf(entry[0], entry[1], entry[3]))
+        val message = entry[2] as String
+        assertTrue("StopDto" in message && "1" in message, message)
+        listOf("Calle Mayor", "42.46", "\"x\"").forEach { assertFalse(it in message, message) }
     }
 }

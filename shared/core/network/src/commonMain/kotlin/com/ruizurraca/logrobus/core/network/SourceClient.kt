@@ -24,7 +24,6 @@ import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -115,7 +114,7 @@ class SourceClient internal constructor(
     // api_spec.md §7: a body that is not JSON fails this resource only.
     private fun parse(body: String): AppResult<JsonElement> =
         try {
-            AppResult.Success(Json.parseToJsonElement(body))
+            AppResult.Success(SourceJson.parseToJsonElement(body))
         } catch (_: SerializationException) {
             AppResult.Failure(AppError.Data)
         }

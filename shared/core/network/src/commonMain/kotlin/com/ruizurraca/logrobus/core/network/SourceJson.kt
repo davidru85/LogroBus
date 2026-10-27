@@ -12,7 +12,7 @@ import kotlinx.serialization.json.JsonObject
 
 private const val TAG = "SourceJson"
 
-/** api_spec.md §3: every DTO field is nullable or defaulted, and the mappers, not the decoder, decide what is required. */
+/** api_spec.md §3: DTO fields are nullable or defaulted; the mappers, not the decoder, decide what is required. */
 internal val SourceJson =
     Json {
         ignoreUnknownKeys = true
@@ -49,7 +49,8 @@ fun <T> JsonArray.decodeEach(
         mapIndexedNotNull { index, element ->
             try {
                 SourceJson.decodeFromJsonElement(serializer, element)
-            } catch (e: IllegalArgumentException) { // SerializationException, or a value the type rejects.
+            } catch (e: IllegalArgumentException) {
+                // A SerializationException, or a value that the type itself rejects.
                 dropped++
                 val type = serializer.descriptor.serialName.substringAfterLast('.')
                 logger.warn(TAG, "Dropped $type at index $index (${e::class.simpleName})")
