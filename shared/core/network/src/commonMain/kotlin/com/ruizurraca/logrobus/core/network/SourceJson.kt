@@ -59,3 +59,6 @@ fun <T> JsonArray.decodeEach(
         }
     return Decoded(items, dropped)
 }
+
+/** Decodes a bare object, as the transit endpoints send it (api_spec.md §3). */
+fun <T> JsonElement.decodeAs(serializer: KSerializer<T>): AppResult<T> = AppResult.Failure(AppError.Network)

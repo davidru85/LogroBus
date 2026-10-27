@@ -114,4 +114,21 @@ class SourceJsonTest {
         assertTrue("StopDto" in message && "1" in message, message)
         listOf("Calle Mayor", "42.46", "\"x\"").forEach { assertFalse(it in message, message) }
     }
+
+    @Test
+    fun lb005_aBareObjectIsDecodedLeniently() {
+        val body = json("""{"id":38,"name":"Ayuntamiento","lines":null,"distanceM":512}""")
+
+        assertEquals(AppResult.Success(StopDto(38, "Ayuntamiento")), body.decodeAs(StopDto.serializer()))
+    }
+
+    @Test
+    fun lb005_aBareObjectThatCannotBeDecodedIsADataError() {
+        val bodies = listOf("""[]""", """"routes"""", """null""", """{"id":"x"}""", """{"lines":{}}""")
+
+        val results = bodies.associateWith { json(it).decodeAs(StopDto.serializer()) }
+
+        val expected: Map<String, AppResult<StopDto>> = bodies.associateWith { AppResult.Failure(AppError.Data) }
+        assertEquals(expected, results)
+    }
 }
