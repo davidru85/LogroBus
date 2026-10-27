@@ -29,6 +29,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.seconds
@@ -93,6 +94,21 @@ class SourceClientTest {
                 requests.first().url.toString(),
             )
             assertEquals("a b&c=d", requests.last().url.parameters["q"])
+        }
+
+    @Test
+    fun lb005_aPathWithItsOwnQueryIsRejected() =
+        runTest {
+            // A query written into the path would reach the failure log (NFR-PRIV-02) and clash with the query map.
+            val client = client()
+
+            assertFailsWith<IllegalArgumentException> {
+                client.get("/api/estimatedTimetable/byLine/1?previewMinutes=30", RequestKind.Live)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                client.post("/api/transit/route?debug=1", buildJsonObject {}, RequestKind.Live)
+            }
+            assertEquals(emptyList(), requests)
         }
 
     @Test
