@@ -8,6 +8,12 @@ import kotlin.time.Instant
 /** RFC 9110 §5.6.7: the form servers send, `Sun, 06 Nov 1994 08:49:37 GMT`. The obsolete forms are not read. */
 private val IMF_FIXDATE = Regex("""[A-Z][a-z]{2}, (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT""")
 
+/**
+ * No server sends an earlier time: LogroBus did not exist before it. A clock that was never set, such as a proxy's
+ * at 1970, would otherwise move the app clock by decades. A device clock that is wrong is still corrected.
+ */
+private val EARLIEST_SERVER_TIME = Instant.parse("2026-01-01T00:00:00Z")
+
 private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 /**
@@ -17,7 +23,7 @@ private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Au
 internal fun serverNow(headers: Headers): Instant? {
     val date = headers[HttpHeaders.Date]?.let(::parseHttpDate) ?: return null
     val age = headers[HttpHeaders.Age]?.let { it.toLongOrNull()?.takeIf { seconds -> seconds >= 0 } ?: return null }
-    return date + (age ?: 0).seconds
+    return (date + (age ?: 0).seconds).takeIf { it >= EARLIEST_SERVER_TIME }
 }
 
 /** The instant of a `Date` header [value], or null when it cannot be read: a bad `Date` is ignored, never an error. */
