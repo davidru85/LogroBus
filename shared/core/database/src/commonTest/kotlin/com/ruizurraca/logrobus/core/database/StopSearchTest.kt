@@ -2,6 +2,9 @@ package com.ruizurraca.logrobus.core.database
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTimedValue
 
 /** FR-STOP-01 and NFR-I18N-03: stop search ignores accents, `ñ` and case, and finds a stop by its number. */
 class StopSearchTest {
@@ -62,5 +65,27 @@ class StopSearchTest {
         assertEquals(emptyList<Long>(), search("gran"))
         assertEquals(listOf(1L), search("mercado"))
         assertEquals(listOf(3L), search("vara"))
+    }
+
+    @Test
+    fun lb007_searchingTheWholeNetworkTakesUnder100Ms() {
+        // NFR-PERF-03, on the JVM and the iOS simulator: 254 stops, the size of the network. The criterion's
+        // reference devices are measured with the app (LB-007 in acceptance_criteria.md).
+        val streets =
+            listOf("Gran Vía", "Avda. de Portugal", "Logroño Deporte", "Vara de Rey", "Pío XII", "Ayuntamiento")
+        (1L..254L).forEach { id -> driver.insertStop(id, "${streets[(id % streets.size).toInt()]} $id") }
+        search("vara") // The first query prepares the statement.
+
+        val timings =
+            listOf(
+                "logrono",
+                "AYUNTAMIENTO",
+                "38",
+                "gran via",
+                "pio xii 2",
+            ).map { measureTimedValue { search(it) } }
+
+        assertTrue(timings.all { it.value.isNotEmpty() }, "$timings")
+        assertTrue(timings.all { it.duration < 100.milliseconds }, "$timings")
     }
 }
