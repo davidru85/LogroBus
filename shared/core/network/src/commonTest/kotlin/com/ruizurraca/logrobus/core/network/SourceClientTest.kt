@@ -101,6 +101,18 @@ class SourceClientTest {
             assertEquals(expected + expected, results)
         }
 
+    @Test
+    fun lb005_aBodyThatIsNotJsonIsADataError() =
+        runTest {
+            // A proxy's HTML error page, an empty body and a body cut short.
+            val bodies = listOf("<html><body>Bad gateway</body></html>", "", """{"result":{"lines":[""")
+            val client = client { respond(bodies[requests.lastIndex % bodies.size], HttpStatusCode.OK) }
+
+            val results = bodies.map { client.get("/api/linesDiscovery/lines", RequestKind.Static) }
+
+            assertEquals(List(bodies.size) { AppResult.Failure(AppError.Data) }, results)
+        }
+
     private fun MockRequestHandleScope.json(
         body: String,
         status: HttpStatusCode = HttpStatusCode.OK,
