@@ -261,6 +261,18 @@ class SourceClientTest {
         }
 
     @Test
+    fun lb005_aDateFromBeforeTheAppExistedLeavesTheAppClockAlone() =
+        runTest {
+            // A proxy whose clock was never set would move the app clock by decades.
+            val dates = listOf("Thu, 01 Jan 1970 00:00:00 GMT", "Wed, 31 Dec 2025 23:59:59 GMT")
+            val client = client { respond("{}", HttpStatusCode.OK, headersOf(HttpHeaders.Date, dates[requests.lastIndex])) }
+
+            dates.forEach { client.get("/api/vehicleMonitoring/all", RequestKind.Live) }
+
+            assertEquals(START, clock.now())
+        }
+
+    @Test
     fun lb005_aMissingOrUnreadableDateLeavesTheAppClockAlone() =
         runTest {
             val dates = listOf(null, "yesterday", "Tue, 27 Oct 2026 25:00:30 GMT")
