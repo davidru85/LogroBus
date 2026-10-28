@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) y la base de datos local con la búsqueda de paradas (LB-007). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar (LB-010, parte 1). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -103,6 +103,8 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **28-10-2026:**
+  - LB-010, parte 1: las dos apps ponen en marcha el núcleo compartido al arrancar: un reloj corregido por el servidor, el cliente de la fuente de datos, el motor de datos en directo y la base de datos local, cada uno creado una sola vez. Las builds de release solo registran errores. iOS ve los tipos compartidos como tipos nativos de Swift (SKIE). Las convenciones de pantalla llegan en la parte 2, con la primera pantalla.
 - **27-10-2026:**
   - Completada LB-007. La app tiene su base de datos local, que guarda las líneas, las paradas y los recorridos, tus favoritos y lugares guardados, y tus búsquedas recientes de rutas.
     - La búsqueda de paradas ignora las tildes, la ñ y las mayúsculas, así que «logrono» encuentra «Logroño».

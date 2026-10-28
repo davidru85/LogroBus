@@ -19,6 +19,68 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-28: LB-010, part 1: the dependency graph and SKIE
+
+**Done**
+- **Merge:** PR #25 (LB-007) was merged. Its CI was green, with the iOS job at about 16.4 min.
+- **Split:** LB-010 is in two parts. Part 2, the ViewModel conventions, needs a use case to show and comes with LB-101 (`backlog.md`).
+- **Dependencies** (both Apache-2.0):
+  - Koin 4.2.2 (`koin-core`, ADR-0014);
+  - SKIE 0.10.15 (ADR-0004), kept in the catalogue beside Kotlin 2.4.20 as a documented pair.
+- **TDD:** 6 red-green cycles, then 3 more from the reviews, with 2 refactors.
+- **`:shared:umbrella`:**
+  - `coreModules` and `startGraph`, which refuses overrides;
+  - one `ServerCorrectedClock` bound as `AppClock`;
+  - `SourceClient`, which reads `api_base_url` on every call;
+  - `DefaultPollingEngine` on an application scope that `stopKoin` cancels;
+  - the database, whose driver `stopKoin` closes;
+  - per platform: the logger, the app lifecycle (created at start, on the main thread), the location provider, the client identity and the SQLite driver.
+- **Startup:**
+  - `initKoin` takes the app's version and build type, and returns nothing, so no Koin type reaches the shells.
+  - Android: `LogroBusApplication` passes `BuildConfig` (now on).
+  - iOS: `LogroBusApp.init` calls SKIE's `doInitKoin(appVersion:debug:)`.
+  - `SharedDependencies.isReady` says whether the graph has started.
+  - Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
+- **SKIE:**
+  - The tab labels switch over `TopLevelDestination` without a default, which settles the `TODO(LB-010)`.
+  - One Swift file now imports Foundation itself.
+- **iOS linking:** referencing the iOS driver made the umbrella's test binary fail to link with undefined `_sqlite3_*`, as LB-007's review predicted. Every iOS binary of the umbrella now links `-lsqlite3`; the app links SQLite through `Package.swift`.
+- **Tests:** all pass, and `run-all.sh` passes.
+  - the umbrella: 8 on the Android host and 6 on the iOS simulator;
+  - `:android:app`: 7;
+  - the iOS app: 8, through `scripts/ios/test.sh`.
+- **Reviews** (code-reviewer and data-rules-reviewer subagents; both asked for changes, with no blockers):
+  - **Fixed, with TDD:**
+    - Koin allowed overrides, so a later module could quietly replace the clock or the engine.
+    - The log level followed the shared binary, so a release archive on a debug framework, or Android's debuggable benchmark variant, logged verbosely. The version could also come out empty, giving `LogronoBus/ (…)`.
+    - Stopping the graph left the scope and the database open.
+  - **Refactors:**
+    - one test Application instead of a teardown in every Robolectric class;
+    - the Fused provider is lazy.
+  - **For part 2:** the list of roots in `GraphAssertions` is written by hand, so new bindings must be added to it.
+  - **Process notes:**
+    - `e9b1f97`, the red commit for the log level, turned production code back into a stub. The choice had shipped untested in `7f4e15f`, so its test came after the code.
+    - `7f4e15f` and `1da9f6c` lack `TDD: refactor not needed`.
+    - `1da9f6c` also changes `initKoin`'s return type and the iOS tests.
+    - `d92cf61` is a red commit that changes only production Swift; the failing build is its test.
+    - `42143c6` was committed without `run-all.sh`, and its `::println` default broke detekt's `ForbiddenMethodCall` until `c09d554`.
+
+**Decisions**
+- **Agent:**
+  - The Fused location provider is lazy, while `ProcessAppLifecycle`, `NotificationAppLifecycle` and Core Location are created when the graph starts, on the main thread.
+  - `SharedDependencies.isReady` is public. It is the Swift-visible check that the graph has started, and part 2's preview fakes can use it.
+
+**Open / next**
+- **LB-010 part 2, with LB-101:**
+  - `koinViewModel` and the Android ViewModel convention;
+  - Swift ViewModels over `SharedDependencies` use cases;
+  - `SharedDependencies.preview` fakes;
+  - the cancellation test.
+- **Still waiting on the owner:**
+  - LB-005's DTOs wait for LB-003's fixtures (OQ-11);
+  - the iOS CI budget;
+  - the spec §8.8 departures of LB-007.
+
 ## 2026-10-27: LB-007: local database and stop search
 
 **Done**
