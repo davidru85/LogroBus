@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 
 /**
  * The app's theme (design_guidelines.md §4): Material 3 Expressive, with its expressive motion, on the [Tokens]
@@ -22,4 +23,11 @@ fun LogroBusTheme(
         typography = Tokens.typography,
         content = content,
     )
+}
+
+/** The theme's values beyond MaterialTheme's. */
+object LogroBusTheme {
+    val statusColors: StatusColors
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusColors.current
 }

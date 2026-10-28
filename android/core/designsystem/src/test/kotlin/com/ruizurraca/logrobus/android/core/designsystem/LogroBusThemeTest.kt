@@ -38,6 +38,21 @@ class LogroBusThemeTest {
     }
 
     @Test
+    fun lb011_theThemeGivesTheStatusColours_inLightAndDark() {
+        var light: StatusColors? = null
+        var dark: StatusColors? = null
+        compose.setContent {
+            LogroBusTheme(darkTheme = false) {
+                light = LogroBusTheme.statusColors
+                LogroBusTheme(darkTheme = true) { dark = LogroBusTheme.statusColors }
+            }
+        }
+
+        assertEquals(Tokens.lightStatus, light)
+        assertEquals(Tokens.darkStatus, dark)
+    }
+
+    @Test
     fun lb011_cardsHave12dpCorners() {
         var shapes: Shapes? = null
         compose.setContent { LogroBusTheme { shapes = MaterialTheme.shapes } }
