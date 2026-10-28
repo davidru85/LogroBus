@@ -47,7 +47,7 @@ LogroBus is built with several AI coding agents (Claude Code and others, such as
 
 | List | Contents | Why |
 | --- | --- | --- |
-| `allow` | Gradle, `scripts/checks/*`, `scripts/agent/*`, `xcodebuild`, `swiftlint`, `shellcheck`, read-only git and `gh pr` queries, and `git push` (owner decision, 2026-10-28) | Routine work without prompts. The deny list still blocks pushes to `main` and force pushes, and `main` is protected on GitHub |
+| `allow` | Gradle, `scripts/checks/*`, `scripts/agent/*`, `xcodebuild`, `swiftlint`, `shellcheck`, read-only git and `gh pr` queries, and `git push` to any branch but `main` (owner decision, 2026-10-28) | Routine work without prompts. The deny list catches the usual spellings of a push to `main` (`origin main`, `origin HEAD:main`) and of a force push (`--force`, `-f`), but not every one, such as `--force-with-lease` or a `+branch` refspec. `main`'s branch protection on GitHub rejects any direct push, and AGENTS.md forbids force pushes |
 | `ask` | `gh pr create`, `gh pr merge`, `git reset --hard`, `scripts/record-fixtures.sh` (calls the live source), `scripts/bootstrap.sh`, `scripts/github/*` (repository administration) | Outward-facing or hard-to-reverse actions |
 | `deny` | Editing the functional spec; reading `local.properties`, keystores, `.p12`, `.p8` and `.env`; pushing to `main`; force pushes; `rm -rf` | Frozen baseline, secrets, branch policy |
 
