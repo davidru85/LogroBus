@@ -25,7 +25,12 @@ object SharedDependencies : UseCases {
     val isReady: Boolean
         get() = KoinPlatform.getKoinOrNull() != null
 
-    override fun observeLastSyncs(): ObserveLastSyncs = KoinPlatform.getKoin().get()
+    override fun observeLastSyncs(): ObserveLastSyncs = graph().get()
+
+    private fun graph() =
+        checkNotNull(KoinPlatform.getKoinOrNull()) {
+            "The dependency graph has not started: the app starts it at launch, and previews and tests use preview()"
+        }
 
     /** A new set of scripted use cases, for SwiftUI previews and Swift ViewModel tests. They need no graph. */
     fun preview(): PreviewUseCases = PreviewUseCases()

@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.umbrella
 
+import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -7,11 +8,14 @@ import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
+import kotlin.concurrent.Volatile
 import kotlin.time.Instant
 
 /**
@@ -24,6 +28,8 @@ class PreviewUseCases internal constructor() : UseCases {
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
     private val collections = MutableStateFlow(0)
 
+    @Volatile private var failing = false
+
     /** How many collections of these use cases are running: a test sees that leaving a screen stops its own. */
     val activeCollections: Int
         get() = collections.value
@@ -35,13 +41,20 @@ class PreviewUseCases internal constructor() : UseCases {
     fun neverSynced(): PreviewUseCases = apply { lastSuccesses.value = emptyMap() }
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
-    fun failing(): PreviewUseCases = this
+    fun failing(): PreviewUseCases = apply { failing = true }
 
     override fun observeLastSyncs(): ObserveLastSyncs =
         DefaultObserveLastSyncs(
             object : SyncStatusRepository {
                 override fun observeLastSuccesses() =
-                    lastSuccesses.filterNotNull().map { AppResult.Success(it) }.counted()
+                    flow {
+                        // Like the real repository, a failure ends the flow.
+                        if (failing) {
+                            emit(AppResult.Failure(AppError.Data))
+                        } else {
+                            emitAll(lastSuccesses.filterNotNull().map { AppResult.Success(it) })
+                        }
+                    }.counted()
             },
         )
 

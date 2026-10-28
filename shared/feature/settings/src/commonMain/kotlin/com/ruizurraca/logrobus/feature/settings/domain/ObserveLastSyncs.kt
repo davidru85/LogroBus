@@ -26,7 +26,16 @@ class DefaultObserveLastSyncs(
 ) : ObserveLastSyncs {
     override fun invoke(): Flow<AppResult<List<DatasetSync>>> =
         repository.observeLastSuccesses().map { result ->
-            val last = (result as? AppResult.Success)?.value.orEmpty()
-            AppResult.Success(StaticDataset.entries.map { DatasetSync(it, last[it]) })
+            when (result) {
+                is AppResult.Success -> {
+                    AppResult.Success(
+                        StaticDataset.entries.map { DatasetSync(it, result.value[it]) },
+                    )
+                }
+
+                is AppResult.Failure -> {
+                    result
+                }
+            }
         }
 }
