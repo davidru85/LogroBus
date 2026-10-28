@@ -15,5 +15,8 @@ public final class AboutDataViewModel {
 
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
     public func observe() async {
+        for await syncs in observeLastSyncs.invoke() {
+            state = AboutDataUiMapper.shared.content(syncs: syncs)
+        }
     }
 }
