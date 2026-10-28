@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.toArgb
 import com.ruizurraca.logrobus.core.common.color.contrastRatio
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.Locale
 
 /** NFR-MNT-04, NFR-A11Y-06 and OQ-18: the placeholder palette is neutral, and all its text is readable. */
 class TokensTest {
@@ -17,7 +18,7 @@ class TokensTest {
             schemes.flatMap { (name, scheme) ->
                 scheme.textPairs().mapNotNull { (role, colours) ->
                     val ratio = contrastRatio(colours.first.argb, colours.second.argb)
-                    "$name $role: %.2f".format(ratio).takeIf { ratio < MINIMUM_CONTRAST }
+                    "$name $role: %.2f".format(Locale.ROOT, ratio).takeIf { ratio < MINIMUM_CONTRAST }
                 }
             }
         assertEquals(emptyList<String>(), unreadable)
