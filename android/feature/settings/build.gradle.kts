@@ -8,6 +8,7 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel)
     // koinViewModel() and the ViewModel DSL (ADR-0014). The module it exposes is a Koin type.
     api(libs.koin.core)
     implementation(libs.koin.androidx.compose)

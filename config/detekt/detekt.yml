@@ -20,8 +20,9 @@ naming:
 
 style:
   UnusedPrivateFunction:
-    # Android Studio renders private @Preview functions; nothing calls them (AGENTS.md §7: one per UX state).
-    ignoreAnnotated: ['Preview']
+    # Android Studio renders private @Preview functions, and the multipreviews built on @Preview; nothing calls them
+    # (AGENTS.md §7: one per UX state).
+    ignoreAnnotated: ['Preview', 'PreviewLightDark', 'PreviewFontScale', 'PreviewScreenSizes', 'PreviewDynamicColors']
   MagicNumber:
     # The defaults, plus the Android host tests (KMP withHostTest).
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/androidHostTest/**']
