@@ -10,6 +10,14 @@ enum class ErrorReason {
     ;
 
     companion object {
-        fun of(error: AppError): ErrorReason = DATA
+        fun of(error: AppError): ErrorReason =
+            when (error) {
+                AppError.Network -> NETWORK
+
+                is AppError.Server -> SERVER
+
+                // A screen that treats a missing resource as Empty maps NotFound before it gets here.
+                AppError.Data, AppError.NotFound -> DATA
+            }
     }
 }

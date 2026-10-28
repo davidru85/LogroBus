@@ -42,7 +42,7 @@ object AboutDataUiMapper {
             }
 
             is AppResult.Failure -> {
-                AboutDataUiState.Loading
+                AboutDataUiState.Error(ErrorReason.of(result.error))
             }
         }
 }
