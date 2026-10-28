@@ -2,7 +2,9 @@ package com.ruizurraca.logrobus.android.feature.settings
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
@@ -42,8 +44,11 @@ class AboutDataRouteTest {
     fun lb010_theRouteShowsTheStateOfItsViewModelFromTheGraph() {
         compose.setContent { AboutDataRoute() }
 
+        compose.onNodeWithText(compose.activity.getString(R.string.about_dataset_lines)).assertExists()
         compose.onNodeWithText(compose.activity.getString(R.string.about_dataset_stops)).assertExists()
-        compose.onNodeWithText(compose.activity.getString(R.string.about_last_sync_never)).assertExists()
+        compose
+            .onAllNodesWithText(compose.activity.getString(R.string.about_last_sync_never))
+            .assertCountEquals(StaticDataset.entries.size)
     }
 
     @Test
