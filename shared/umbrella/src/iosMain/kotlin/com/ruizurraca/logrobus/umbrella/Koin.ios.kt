@@ -8,6 +8,7 @@ import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.coreLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 
 /**
  * Starts the dependency graph of the iOS app, once, from the app's initialiser on the main thread (ADR-0014). The app
@@ -31,5 +32,5 @@ private fun iosModule(
     single<AppLifecycle>(createdAtStart = true) { NotificationAppLifecycle() }
     single<LocationProvider>(createdAtStart = true) { coreLocationProvider(get()) }
     single { clientIdentity(appVersion) }
-    single<SqlDriver> { logroBusDriver() }
+    single<SqlDriver> { logroBusDriver() } onClose { it?.close() }
 }

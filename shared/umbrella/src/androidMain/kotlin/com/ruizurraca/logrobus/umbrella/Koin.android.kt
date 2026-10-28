@@ -9,6 +9,7 @@ import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 
 /**
  * Starts the dependency graph of the Android app, once per process, from the Application (ADR-0014). The app passes
@@ -33,5 +34,5 @@ private fun androidModule(
     single<AppLifecycle>(createdAtStart = true) { ProcessAppLifecycle() }
     single<LocationProvider>(createdAtStart = true) { fusedLocationProvider(context, get()) }
     single { clientIdentity(appVersion) }
-    single<SqlDriver> { logroBusDriver(context) }
+    single<SqlDriver> { logroBusDriver(context) } onClose { it?.close() }
 }
