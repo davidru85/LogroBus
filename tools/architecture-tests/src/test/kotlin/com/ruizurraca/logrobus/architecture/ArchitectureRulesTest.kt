@@ -232,4 +232,35 @@ class ArchitectureRulesTest {
             ArchitectureRules.usesExpressiveApiOutsideDesignSystem("com.ruizurraca.logrobus.android.app", "fun A() {}"),
         )
     }
+
+    @Test
+    fun lb011_aJobsMatrixModulesAreReadFromThatJobOnly() {
+        val workflow =
+            """
+            jobs:
+              unit-tests:
+                strategy:
+                  matrix:
+                    module:
+                      - ":android:app"
+                      - ":android:core:designsystem"
+              screenshots:
+                strategy:
+                  matrix:
+                    module:
+                      - ":android:core:designsystem"
+                      - :android:feature:settings
+                steps:
+                  - run: ./gradlew "${'$'}MODULE:verifyRoborazziDebug"
+            """.trimIndent()
+
+        assertEquals(
+            setOf(":android:core:designsystem", ":android:feature:settings"),
+            ArchitectureRules.jobMatrixModules(workflow, "screenshots"),
+        )
+        assertEquals(
+            setOf(":android:app", ":android:core:designsystem"),
+            ArchitectureRules.jobMatrixModules(workflow, "unit-tests"),
+        )
+    }
 }

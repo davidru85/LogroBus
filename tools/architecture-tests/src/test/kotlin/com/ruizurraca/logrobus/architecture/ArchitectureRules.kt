@@ -99,6 +99,13 @@ object ArchitectureRules {
     fun workflowMatrixModules(workflow: String): Set<String> =
         matrixModuleItem.findAll(workflow).map { it.groupValues[1] }.toSet()
 
+    /** Gradle module paths listed in [job]'s matrix only, not in the other jobs of the workflow. */
+    @Suppress("UnusedParameter") // Stub: the rule comes next.
+    fun jobMatrixModules(
+        workflow: String,
+        job: String,
+    ): Set<String> = emptySet()
+
     /**
      * Jobs of a GitHub Actions workflow that its [gate] job does not list in `needs`. The gate is the one required
      * check (docs/ci_cd.md §4), so it could pass while one of these jobs fails.
