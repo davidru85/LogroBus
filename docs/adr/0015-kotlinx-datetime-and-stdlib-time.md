@@ -28,6 +28,7 @@ Since Kotlin 2.1.20 the standard library has `kotlin.time.Instant` and `Clock`, 
 
   It is not used for user-visible formatting, which stays on each platform with its locale (AGENTS.md §5.4).
 - **No dependency yet.** kotlinx-datetime enters the version catalog with the first story that converts to Madrid time (LB-006, the VM mapper for DD-05).
+  - *Update, 2026-10-28:* the first such story was LB-010 part 2. kotlinx-datetime 0.8.0 entered the catalog then, in `:shared:core:presentation`, where `MadridDateTime` puts a time on the Madrid wall clock for display. LB-006 will move the zone to a module that both `:shared:transit:data` and the presentation layer can use, so the Madrid rules still live in one place.
 
 ## Consequences
 
