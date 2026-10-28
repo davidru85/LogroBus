@@ -8,6 +8,9 @@ import kotlin.time.Instant
 /**
  * A time on the Madrid wall clock (AGENTS.md §5.5, ADR-0015), whatever the device time zone. Plain fields, so each
  * platform formats it with its own locale (AGENTS.md §5, rule 4).
+ *
+ * For display only: it carries no offset, so the repeated hour on the last Sunday of October gives two instants the
+ * same value. Never compare, sort or convert it back to an instant; keep the `Instant` for that.
  */
 data class MadridDateTime(
     val year: Int,

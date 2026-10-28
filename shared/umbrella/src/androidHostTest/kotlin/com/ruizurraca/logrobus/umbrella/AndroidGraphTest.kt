@@ -42,7 +42,11 @@ class AndroidGraphTest {
         // Every function of UseCases, so a use case added for Swift is checked without editing this test.
         val useCases = UseCases::class.java.methods
         assertTrue(useCases.isNotEmpty())
-        useCases.forEach { assertNotNull(it.invoke(SharedDependencies), it.name) }
+        useCases.forEach {
+            // Swift asks for a use case with no arguments and passes its inputs to the use case itself.
+            assertEquals(0, it.parameterCount, "${it.name} takes parameters")
+            assertNotNull(it.invoke(SharedDependencies), it.name)
+        }
     }
 
     @Test
