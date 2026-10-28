@@ -10,6 +10,8 @@ roborazzi {
 
 dependencies {
     api(libs.compose.material3)
+    // The shared presentation models the components draw, such as EtaUi.
+    api(projects.shared.core.presentation)
     implementation(libs.compose.ui)
 
     testImplementation(libs.junit4)
