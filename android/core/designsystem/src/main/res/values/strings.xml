@@ -6,6 +6,7 @@
     <!-- ETAs (spec §5.7, design_guidelines.md §6.3, keys eta.*): what shows, then what TalkBack says. -->
     <string name="eta_now">Ahora</string>
     <string name="eta_minutes">%1$d min</string>
+    <string name="eta_approximate">~%1$s</string>
     <string name="eta_scheduled">Programado</string>
     <string name="eta_cancelled">Cancelado</string>
     <string name="eta_late">+%1$d min tarde</string>
@@ -15,8 +16,17 @@
         <item quantity="one">en %1$d minuto</item>
         <item quantity="other">en %1$d minutos</item>
     </plurals>
-    <string name="eta_clock_spoken">a las %1$s</string>
-    <string name="eta_scheduled_spoken">programado a las %1$s</string>
+    <!-- "A la una", in the singular, for the hour 1; "a las" otherwise. The quantity is the hour. -->
+    <plurals name="eta_clock_spoken">
+        <item quantity="one">a la %1$s</item>
+        <item quantity="other">a las %1$s</item>
+    </plurals>
+    <plurals name="eta_scheduled_spoken">
+        <item quantity="one">programado a la %1$s</item>
+        <item quantity="other">programado a las %1$s</item>
+    </plurals>
+    <string name="eta_scheduled_short_spoken">programado</string>
+    <string name="eta_now_approximately_spoken">llega ahora, aproximadamente</string>
     <string name="eta_approximately_spoken">aproximadamente %1$s</string>
     <plurals name="eta_late_spoken">
         <item quantity="one">%1$d minuto tarde</item>
@@ -27,4 +37,6 @@
         <item quantity="other">%1$d minutos antes</item>
     </plurals>
     <string name="eta_cancelled_spoken">cancelado</string>
+    <!-- The time, then what the secondary line says: "en 4 minutos, 3 minutos tarde". -->
+    <string name="eta_spoken_join">%1$s, %2$s</string>
 </resources>
