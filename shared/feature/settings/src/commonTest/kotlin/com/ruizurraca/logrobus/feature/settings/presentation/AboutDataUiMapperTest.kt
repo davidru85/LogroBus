@@ -1,5 +1,8 @@
 package com.ruizurraca.logrobus.feature.settings.presentation
 
+import com.ruizurraca.logrobus.core.common.AppError
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -12,10 +15,12 @@ class AboutDataUiMapperTest {
     @Test
     fun lb404_eachLastSyncShowsOnTheMadridClock_orAsNever() {
         val content =
-            AboutDataUiMapper.content(
-                listOf(
-                    DatasetSync(StaticDataset.LINES, Instant.parse("2026-10-28T09:30:00Z")),
-                    DatasetSync(StaticDataset.STOPS, null),
+            AboutDataUiMapper.state(
+                AppResult.Success(
+                    listOf(
+                        DatasetSync(StaticDataset.LINES, Instant.parse("2026-10-28T09:30:00Z")),
+                        DatasetSync(StaticDataset.STOPS, null),
+                    ),
                 ),
             )
 
@@ -27,6 +32,14 @@ class AboutDataUiMapperTest {
                 ),
             ),
             content,
+        )
+    }
+
+    @Test
+    fun lb010_aFailureIsTheErrorState_withItsReason() {
+        assertEquals(
+            AboutDataUiState.Error(ErrorReason.DATA),
+            AboutDataUiMapper.state(AppResult.Failure(AppError.Data)),
         )
     }
 }

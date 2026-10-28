@@ -1,5 +1,7 @@
 package com.ruizurraca.logrobus.feature.settings.presentation
 
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -11,6 +13,17 @@ sealed interface AboutDataUiState {
     data class Content(
         val lastSyncs: List<LastSyncUi>,
     ) : AboutDataUiState
+
+    /** FR-ERR-05: the message for [reason], and Retry. */
+    data class Error(
+        val reason: ErrorReason,
+    ) : AboutDataUiState
+}
+
+/** What About data's screen sends its ViewModel. */
+sealed interface AboutDataEvent {
+    /** FR-ERR-05: read again after an Error. */
+    data object Retry : AboutDataEvent
 }
 
 /** A dataset with the time of its last successful sync, or null if it never synced. */
@@ -20,6 +33,16 @@ data class LastSyncUi(
 )
 
 object AboutDataUiMapper {
-    fun content(syncs: List<DatasetSync>): AboutDataUiState.Content =
-        AboutDataUiState.Content(syncs.map { LastSyncUi(it.dataset, it.lastSuccess?.let(MadridDateTime::of)) })
+    fun state(result: AppResult<List<DatasetSync>>): AboutDataUiState =
+        when (result) {
+            is AppResult.Success -> {
+                AboutDataUiState.Content(
+                    result.value.map { LastSyncUi(it.dataset, it.lastSuccess?.let(MadridDateTime::of)) },
+                )
+            }
+
+            is AppResult.Failure -> {
+                AboutDataUiState.Loading
+            }
+        }
 }

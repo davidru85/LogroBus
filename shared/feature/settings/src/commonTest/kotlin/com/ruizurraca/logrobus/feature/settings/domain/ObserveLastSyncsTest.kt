@@ -1,6 +1,8 @@
 package com.ruizurraca.logrobus.feature.settings.domain
 
 import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.AppError
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +15,12 @@ import kotlin.time.Instant
 class ObserveLastSyncsTest {
     private val linesSynced = Instant.parse("2026-10-28T09:30:00Z")
     private val stopsSynced = Instant.parse("2026-10-28T09:31:00Z")
-    private val lastSuccesses = MutableStateFlow(mapOf(StaticDataset.LINES to linesSynced))
+    private val lastSuccesses =
+        MutableStateFlow<AppResult<Map<StaticDataset, Instant>>>(
+            AppResult.Success(
+                mapOf(StaticDataset.LINES to linesSynced),
+            ),
+        )
     private val observeLastSyncs =
         DefaultObserveLastSyncs(
             object : SyncStatusRepository {
@@ -26,7 +33,9 @@ class ObserveLastSyncsTest {
         runTest {
             observeLastSyncs().test {
                 assertEquals(
-                    listOf(DatasetSync(StaticDataset.LINES, linesSynced), DatasetSync(StaticDataset.STOPS, null)),
+                    AppResult.Success(
+                        listOf(DatasetSync(StaticDataset.LINES, linesSynced), DatasetSync(StaticDataset.STOPS, null)),
+                    ),
                     awaitItem(),
                 )
             }
@@ -37,14 +46,27 @@ class ObserveLastSyncsTest {
         runTest {
             observeLastSyncs().test {
                 awaitItem()
-                lastSuccesses.value = mapOf(StaticDataset.LINES to linesSynced, StaticDataset.STOPS to stopsSynced)
+                lastSuccesses.value =
+                    AppResult.Success(mapOf(StaticDataset.LINES to linesSynced, StaticDataset.STOPS to stopsSynced))
                 assertEquals(
-                    listOf(
-                        DatasetSync(StaticDataset.LINES, linesSynced),
-                        DatasetSync(StaticDataset.STOPS, stopsSynced),
+                    AppResult.Success(
+                        listOf(
+                            DatasetSync(StaticDataset.LINES, linesSynced),
+                            DatasetSync(StaticDataset.STOPS, stopsSynced),
+                        ),
                     ),
                     awaitItem(),
                 )
+            }
+        }
+
+    @Test
+    fun lb010_aFailureToReadReachesTheScreenAsAFailure() =
+        runTest {
+            lastSuccesses.value = AppResult.Failure(AppError.Data)
+
+            observeLastSyncs().test {
+                assertEquals(AppResult.Failure(AppError.Data), awaitItem())
             }
         }
 }

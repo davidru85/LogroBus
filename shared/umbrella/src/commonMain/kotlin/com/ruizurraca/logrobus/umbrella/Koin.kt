@@ -70,7 +70,7 @@ private val coreModule =
 
 private val transitDataModule =
     module {
-        single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get()) }
+        single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get(), get()) }
     }
 
 private val settingsModule =
