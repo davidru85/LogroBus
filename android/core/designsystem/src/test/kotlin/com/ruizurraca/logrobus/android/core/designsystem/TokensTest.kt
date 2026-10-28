@@ -25,6 +25,22 @@ class TokensTest {
     }
 
     @Test
+    fun lb011_theWarningColourIsReadableOnEverySurface() {
+        val unreadable =
+            mapOf(
+                "light" to (Tokens.lightStatus to Tokens.lightColors),
+                "dark" to (Tokens.darkStatus to Tokens.darkColors),
+            ).flatMap { (name, colours) ->
+                val (status, scheme) = colours
+                listOf(scheme.surface, scheme.surfaceContainerHighest).mapNotNull { background ->
+                    val ratio = contrastRatio(status.warning.argb, background.argb)
+                    "$name: %.2f".format(Locale.ROOT, ratio).takeIf { ratio < MINIMUM_CONTRAST }
+                }
+            }
+        assertEquals(emptyList<String>(), unreadable)
+    }
+
+    @Test
     fun lb011_thePlaceholderSurfacesAreGrey() {
         // Greys plus one accent (design_guidelines.md §4): no tint on the surfaces, unlike Material's baseline.
         val tinted =

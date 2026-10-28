@@ -103,6 +103,10 @@ object Tokens {
             surfaceContainerHighest = Color(0xFF353535),
         )
 
+    /** The status colours of the light and dark schemes, such as the stale warning (design_guidelines.md §6.1). */
+    val lightStatus = StatusColors(warning = Color(0xFFFFC107))
+    val darkStatus = StatusColors(warning = Color(0xFFFFC107))
+
     /** Material's type scale, emphasized styles included, on the system font until OQ-18. */
     val typography = Typography()
 
