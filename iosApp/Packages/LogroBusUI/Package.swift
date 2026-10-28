@@ -8,6 +8,8 @@ let linksShared: [LinkerSetting] = [.linkedLibrary("sqlite3")]
 // LogroBusUI: the SwiftUI layer of the iOS app, one target per area (architecture.md §3.1 and §5.2).
 let package = Package(
     name: "LogroBusUI",
+    // Spanish (es-ES) is the source language; English ships too (AGENTS.md §7).
+    defaultLocalization: "es",
     platforms: [.iOS(.v18)],
     products: [
         .library(
@@ -36,4 +38,10 @@ let package = Package(
         .target(name: "FeaturePlanner", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
         .target(name: "FeatureSettings", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared)
     ]
+)
+
+// Swift ViewModel tests, on SharedDependencies.shared.preview() (architecture.md §5.2). The iosApp scheme runs them, so
+// scripts/ios/test.sh does too. Kept apart from the list above, which holds one target per line.
+package.targets.append(
+    .testTarget(name: "FeatureSettingsTests", dependencies: ["FeatureSettings", "Shared"], linkerSettings: linksShared)
 )
