@@ -6,6 +6,8 @@ import Shared
 @Observable
 public final class AboutDataViewModel {
     public private(set) var state: any AboutDataUiState = AboutDataUiStateLoading.shared
+    /// Bumped by Retry. The view keys its `.task` on it, so a new value starts a new `observe()`.
+    public private(set) var attempt = 0
     private let observeLastSyncs: any ObserveLastSyncs
 
     /// Takes the use cases from the graph, or from `SharedDependencies.shared.preview()` in previews and tests.
@@ -14,6 +16,9 @@ public final class AboutDataViewModel {
     }
 
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
+    public func onEvent(_ event: any AboutDataEvent) {
+    }
+
     public func observe() async {
         for await result in observeLastSyncs.invoke() {
             state = AboutDataUiMapper.shared.state(result: result)

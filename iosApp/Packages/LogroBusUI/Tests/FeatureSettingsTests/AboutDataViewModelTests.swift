@@ -1,4 +1,5 @@
 @testable import FeatureSettings
+import Foundation
 import Shared
 import Testing
 
@@ -37,13 +38,48 @@ struct AboutDataViewModelTests {
 
     @Test
     func lb010_theStateStaysLoadingUntilTheUseCaseEmits() async throws {
-        let viewModel = AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading())
+        let useCases = SharedDependencies.shared.preview().loading()
+        let viewModel = AboutDataViewModel(useCases: useCases)
 
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
-        try await Task.sleep(for: .milliseconds(200))
+        // Subscribed, and still nothing to show.
+        try await waitUntil { useCases.activeCollections == 1 }
 
         #expect(viewModel.state is AboutDataUiStateLoading)
+    }
+
+    @Test
+    func lb010_aFailureShowsTheErrorState_andRetryReadsAgain() async throws {
+        let useCases = SharedDependencies.shared.preview().failing()
+        let viewModel = AboutDataViewModel(useCases: useCases)
+
+        await viewModel.observe()
+        let error = try #require(viewModel.state as? AboutDataUiStateError)
+        #expect(error.reason == .data)
+
+        useCases.neverSynced()
+        viewModel.onEvent(AboutDataEventRetry.shared)
+        #expect(viewModel.state is AboutDataUiStateLoading)
+        #expect(viewModel.attempt == 1)
+
+        // What `.task(id: viewModel.attempt)` does when the attempt changes.
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state is AboutDataUiStateContent }
+    }
+
+    @Test(arguments: ["America/New_York", "Asia/Tokyo"])
+    func lb405_timesShowOnTheMadridClockInTheGivenLocale_whateverTheDeviceZone(zone: String) throws {
+        let deviceZone = NSTimeZone.default
+        NSTimeZone.default = try #require(TimeZone(identifier: zone))
+        defer { NSTimeZone.default = deviceZone }
+        let time = MadridDateTime(year: 2026, month: 10, day: 28, hour: 10, minute: 30)
+
+        let spanish = time.formatted(locale: Locale(identifier: "es_ES"))
+        #expect(spanish.contains("10:30"))
+        #expect(spanish.contains("oct"))
+        #expect(time.formatted(locale: Locale(identifier: "en_US")).contains("10:30 AM"))
     }
 }
 
