@@ -55,6 +55,11 @@ extension StaticDataset {
 }
 
 extension MadridDateTime {
+    /// The time in `locale`, as a medium date and a short time (AGENTS.md §5.5).
+    func formatted(locale: Locale) -> String {
+        formatted
+    }
+
     /// The time in the user's locale, as a medium date and a short time (AGENTS.md §5.5). The fields are already on
     /// the Madrid clock, so one fixed zone carries them through the formatter unchanged.
     var formatted: String {
