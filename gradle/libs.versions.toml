@@ -16,6 +16,9 @@ android-minSdk = "26"
 jvm-toolchain = "21"
 android-jvmTarget = "17"
 compose-bom = "2026.09.00"
+# Pinned over the BOM's 1.4.0, whose expressive components and emphasized type are internal (ADR-0005: pinned and
+# upgraded deliberately). Move to the stable 1.5.0 when it ships.
+compose-material3 = "1.5.0-beta02"
 androidx-activity = "1.13.0"
 androidx-lifecycle = "2.11.0"
 play-services-location = "21.4.0"
@@ -56,7 +59,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
-compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
