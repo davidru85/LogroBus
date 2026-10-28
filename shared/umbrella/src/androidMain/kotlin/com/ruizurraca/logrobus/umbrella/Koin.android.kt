@@ -21,7 +21,7 @@ fun initKoin(
     appVersion: String,
     debug: Boolean,
 ) {
-    startGraph(coreModules(androidModule(context.applicationContext, appVersion, debug)))
+    startGraph(sharedModules(androidModule(context.applicationContext, appVersion, debug)))
 }
 
 private fun androidModule(
