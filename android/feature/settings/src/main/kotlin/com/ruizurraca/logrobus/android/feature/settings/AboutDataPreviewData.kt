@@ -1,12 +1,9 @@
 package com.ruizurraca.logrobus.android.feature.settings
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
@@ -25,12 +22,9 @@ internal object AboutDataPreviewData {
     val error: AboutDataUiState = AboutDataUiState.Error(ErrorReason.DATA)
 }
 
-// Material's baseline light and dark schemes until LB-011's brand theme.
 @Composable
 private fun PreviewTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-        Surface(content = content)
-    }
+    LogroBusTheme { Surface(content = content) }
 }
 
 @PreviewLightDark
