@@ -23,7 +23,7 @@ import org.koin.dsl.module
 import kotlin.time.Clock
 
 /** The scope of work that lives as long as the process, such as the polling engine's loops. */
-private val APPLICATION_SCOPE = named("application")
+internal val APPLICATION_SCOPE = named("application")
 
 /**
  * The graph of the shared core (ADR-0014): one instance of each service for the whole process. [platform] provides
