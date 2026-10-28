@@ -15,11 +15,13 @@ import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import org.koin.dsl.onClose
 import kotlin.time.Clock
 
 /** The scope of work that lives as long as the process, such as the polling engine's loops. */
@@ -49,7 +51,10 @@ private val coreModule =
         single { ServerCorrectedClock(deviceClock = Clock.System) } bind AppClock::class
         single { AppDispatchers() }
         single<RemoteConfig> { CompiledDefaultsRemoteConfig() }
-        single(APPLICATION_SCOPE) { CoroutineScope(SupervisorJob() + get<AppDispatchers>().default) }
+        // Stopping the graph cancels the work it started, such as polling loops.
+        single(APPLICATION_SCOPE) {
+            CoroutineScope(SupervisorJob() + get<AppDispatchers>().default)
+        } onClose { it?.cancel() }
         single<PollingEngine> { DefaultPollingEngine(get(APPLICATION_SCOPE), get(), get<AppClock>(), get()) }
         single {
             val remoteConfig = get<RemoteConfig>()
