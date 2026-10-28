@@ -66,6 +66,13 @@ object ArchitectureRules {
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
+    /** Whether a file outside the Android design system uses Material 3's experimental expressive APIs (ADR-0005). */
+    @Suppress("UnusedParameter") // Stub: the rule comes next.
+    fun usesExpressiveApiOutsideDesignSystem(
+        packageName: String?,
+        source: String,
+    ): Boolean = false
+
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
         swiftTarget
