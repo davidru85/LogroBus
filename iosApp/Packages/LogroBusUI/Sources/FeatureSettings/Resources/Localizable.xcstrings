@@ -1,0 +1,78 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "about.dataset.lines": {
+      "comment": "About data: the lines dataset, with its patterns and shapes (LB-404).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas"
+          }
+        }
+      }
+    },
+    "about.dataset.stops": {
+      "comment": "About data: the stops dataset (LB-404).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paradas"
+          }
+        }
+      }
+    },
+    "about.last_sync.never": {
+      "comment": "About data: a dataset that has never synced (LB-404).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not synced yet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no se ha sincronizado"
+          }
+        }
+      }
+    },
+    "about.last_sync.title": {
+      "comment": "About data: the section with each dataset's last successful sync (FR-SET-03).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last sync"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última sincronización"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
