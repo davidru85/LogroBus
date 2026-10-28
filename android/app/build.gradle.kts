@@ -7,6 +7,8 @@ android {
         // OQ-14: the store identifier, shared with iOS. It cannot change after the first release.
         applicationId = "com.ruizurraca.logrobus"
     }
+    // VERSION_NAME and DEBUG reach the shared graph from here (LB-010).
+    buildFeatures.buildConfig = true
 }
 
 dependencies {

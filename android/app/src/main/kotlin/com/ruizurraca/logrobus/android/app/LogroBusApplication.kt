@@ -7,6 +7,7 @@ import com.ruizurraca.logrobus.umbrella.initKoin
 class LogroBusApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        initKoin(this)
+        // The version for the User-Agent (spec §8.7), and the build type for the log level (security_privacy.md §4).
+        initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG)
     }
 }
