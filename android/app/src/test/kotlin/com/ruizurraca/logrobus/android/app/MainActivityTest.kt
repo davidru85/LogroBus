@@ -1,5 +1,7 @@
 package com.ruizurraca.logrobus.android.app
 
+import android.app.Activity
+import android.util.TypedValue
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
@@ -57,6 +59,25 @@ class MainActivityTest {
         val bars = WindowCompat.getInsetsController(window, window.decorView)
         assertFalse("status bar icons are light", bars.isAppearanceLightStatusBars)
         assertFalse("navigation bar icons are light", bars.isAppearanceLightNavigationBars)
+    }
+
+    @Test
+    @Config(qualifiers = "night")
+    fun lb011_theWindowThemeFollowsDarkMode() {
+        // The starting window shows before Compose draws, so it must be dark too, or dark mode opens on a white flash.
+        assertFalse("the window theme is light", compose.activity.isLightTheme())
+    }
+
+    @Test
+    @Config(qualifiers = "notnight")
+    fun lb011_theWindowThemeIsLightInLightMode() {
+        assertTrue("the window theme is light", compose.activity.isLightTheme())
+    }
+
+    private fun Activity.isLightTheme(): Boolean {
+        val value = TypedValue()
+        theme.resolveAttribute(android.R.attr.isLightTheme, value, true)
+        return value.data != 0
     }
 
     @Test
