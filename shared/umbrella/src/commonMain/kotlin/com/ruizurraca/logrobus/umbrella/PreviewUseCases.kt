@@ -1,22 +1,48 @@
 package com.ruizurraca.logrobus.umbrella
 
+import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
-import kotlinx.coroutines.flow.emptyFlow
+import com.ruizurraca.logrobus.transit.domain.StaticDataset
+import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
+import kotlin.time.Instant
 
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid.
  */
 class PreviewUseCases internal constructor() : UseCases {
+    // Null scripts a first load that never ends.
+    private val lastSuccesses =
+        MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
+    private val collections = MutableStateFlow(0)
+
     /** How many collections of these use cases are running: a test sees that leaving a screen stops its own. */
     val activeCollections: Int
-        get() = -1
+        get() = collections.value
 
     /** Scripts a first load that never ends: the use cases emit nothing. */
-    fun loading(): PreviewUseCases = this
+    fun loading(): PreviewUseCases = apply { lastSuccesses.value = null }
 
     /** Scripts an app that has never synced. */
-    fun neverSynced(): PreviewUseCases = this
+    fun neverSynced(): PreviewUseCases = apply { lastSuccesses.value = emptyMap() }
 
-    override fun observeLastSyncs(): ObserveLastSyncs = ObserveLastSyncs { emptyFlow() }
+    override fun observeLastSyncs(): ObserveLastSyncs =
+        DefaultObserveLastSyncs(
+            object : SyncStatusRepository {
+                override fun observeLastSuccesses() = lastSuccesses.filterNotNull().counted()
+            },
+        )
+
+    private fun <T> Flow<T>.counted(): Flow<T> =
+        onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }
+
+    private companion object {
+        val SAMPLE_SYNC = Instant.parse("2026-10-28T09:30:00Z")
+    }
 }
