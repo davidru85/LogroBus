@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); el sistema de diseño de Android está listo (LB-011, parte 1). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -104,6 +104,12 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **28-10-2026:**
+  - LB-011, parte 1: la app de Android tiene su sistema de diseño.
+    - Un aspecto neutro provisional en modo claro y oscuro, hasta que lleguen los diseños definitivos. Todos los textos se leen con facilidad.
+    - Las insignias de línea muestran siempre el código, en negro o blanco, el que mejor se lea sobre el color de la línea. Los lectores de pantalla dicen «Línea 3», nunca el color.
+    - Los tiempos de llegada muestran «Ahora», «4 min» o la hora, con «~» en las predicciones inciertas, los retrasos y adelantos, y los autobuses programados y cancelados. Cada uno se lee en voz alta en español o inglés.
+    - Las capturas en modo claro, oscuro y con texto muy grande protegen el aspecto de cada pieza en cada pull request.
+    - La parte de iOS llega en la parte 2.
   - Completada LB-010. La parte 2 fija el patrón que sigue cada pantalla en las dos plataformas: la pantalla obtiene su lógica del código compartido, las previsualizaciones y los tests usan datos guionizados, al salir de una pantalla se detienen sus actualizaciones, y un fallo muestra un motivo breve con «Reintentar».
     - La primera pantalla que lo sigue es el comienzo de «Acerca de los datos»: cuándo se actualizaron por última vez las líneas y las paradas, con la hora de Madrid, en español e inglés. Se abrirá desde el menú Más cuando lleguen las pestañas (LB-012).
     - El arnés de agentes deja que Claude Code suba ramas sin pedir permiso cada vez, como decidió el propietario. Siguen bloqueados el push a `main` y el force push.

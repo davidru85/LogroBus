@@ -212,6 +212,17 @@ Done when:
 - Every component has light, dark and 200 % font snapshots.
 - CI runs the Android screenshot tests (`verifyRoborazziDebug`, a matrix per module) and the iOS snapshot tests in their own jobs, behind the Kotlin and iOS gates (moved from LB-002).
 
+Part 1 (2026-10-28, shared and Android), also done when:
+- `onColorFor` and `contrastRatio` (`:shared:core:common`) follow WCAG 2.2, and give each of spec §3's 13 line colours an `onColor` of at least 4.5:1. The data layer uses the same rule (DD-08, LB-006).
+- `EtaUi` (`:shared:core:presentation`) carries every case of spec §5.7 as meaning, not words.
+- `[Android]` Every text colour of the placeholder schemes reaches 4.5:1 against its container, and every surface is grey.
+- `[Android]` `EtaText` shows and speaks every case, in Spanish and English, with plurals and "a la 01:05". The spoken label says what the screen shows, for every combination `EtaUi` allows. "Now" pulses, stays at 4.5:1 at its faintest, and holds still when animations are off.
+- `[Android]` The warning colour of stale data is a token (`StatusColors`) that reaches 4.5:1 on every surface.
+- `[Android]` The window theme follows dark mode, so the app never starts on a white window in dark mode.
+- `[Android]` An architecture test keeps `ExperimentalMaterial3ExpressiveApi` inside the design system's package. Another requires the screenshot job to list every module with reference images.
+- `[Android]` The app and About data draw on `LogroBusTheme`, in light and dark. About data's four states have screenshots.
+- The expressive wrappers (`LbLoadingIndicator`, `LbButtonGroup`) are built with the first screen that needs each; no screen does yet.
+
 ### LB-012 App shell
 Refs: FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005
 

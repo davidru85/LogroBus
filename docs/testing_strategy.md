@@ -103,7 +103,12 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
 
 ### 4.6 Screenshots
 
-- **Android:** Roborazzi on the JVM. Reference images live under `android/feature/<x>/src/test/screenshots/`. Verification runs on every PR; recording is an explicit task (`recordRoborazziDebug`).
+- **Android:** Roborazzi (1.77.0) on the JVM, with Robolectric's native graphics.
+  - Reference images live under each module's `src/test/screenshots/` (`android/core/designsystem/…`, `android/feature/<x>/…`).
+  - Verification runs on every PR, in the `android-screenshots` job. Recording is an explicit task (`recordRoborazziDebug`); look at every recorded image before committing it.
+  - **SDK 36:** screenshot tests run on `SCREENSHOT_SDK` (36) through `@Config(sdk = …)`. On SDK 37, the target, Robolectric 4.17 drew only the first capture of a test run, and later ones came out as the bare window background. The module's other tests keep the target SDK.
+  - A screen's states run as a parameterised test (`ParameterizedRobolectricTestRunner`), one capture per test, from a compose rule; a component's variants may share one test.
+  - 200 % font: wrap the content in `LocalDensity provides Density(density, fontScale = 2f)`.
 - **iOS:** swift-snapshot-testing on the pinned CI simulator, with references under `__Snapshots__/`. A reduced set also runs nightly on an iOS 18 simulator to cover the fallback appearance without Liquid Glass (NFR-PLAT-01).
 - Each screen needs these variants: light, dark, 200 % font, and every UX state.
 

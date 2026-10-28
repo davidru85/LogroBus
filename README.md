@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the Android design system is in place (LB-011, part 1). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -102,6 +102,12 @@ You will need:
 ### Recent changes
 
 - **2026-10-28:**
+  - LB-011, part 1: the Android app has its design system.
+    - A neutral placeholder look in light and dark mode, until the final designs arrive. Every text colour is easy to read.
+    - Line badges always show the line code, in black or white, whichever reads better on the line's colour. Screen readers say "Line 3", never the colour.
+    - Arrival times show "Now", "4 min" or the clock time, with "~" for uncertain predictions, late and early times, scheduled and cancelled buses. Each is read aloud in Spanish or English.
+    - Screenshots in light, dark and extra-large text guard the look of each piece on every pull request.
+    - The iOS side comes in part 2.
   - LB-010 is done. Part 2 sets the pattern every screen follows on both platforms: the screen gets its logic from the shared code, previews and tests use scripted data, leaving a screen stops its updates, and a failure shows a short reason with Retry.
     - The first screen that follows it is the start of "About data": when the lines and the stops were last updated, on Madrid's clock, in Spanish and English. It opens from the More menu once the tabs arrive (LB-012).
     - The agent harness lets Claude Code push branches without asking each time, as the owner decided. Pushing to `main` and force pushes stay blocked.
