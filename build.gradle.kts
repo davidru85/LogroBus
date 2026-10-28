@@ -24,6 +24,7 @@ plugins {
     alias(libs.plugins.skie) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kover) apply false
+    alias(libs.plugins.roborazzi) apply false
 }
 
 // Root aggregates: `check` and `ciUnitTest` also cover the build-logic included build.
