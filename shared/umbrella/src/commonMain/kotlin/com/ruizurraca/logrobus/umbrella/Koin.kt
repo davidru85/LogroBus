@@ -15,6 +15,7 @@ import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
@@ -30,6 +31,11 @@ private val APPLICATION_SCOPE = named("application")
  * `User-Agent` and the SQLite driver.
  */
 internal fun coreModules(platform: Module): List<Module> = listOf(platform, coreModule)
+
+/** Starts the graph of [modules] for the process (ADR-0014). */
+internal fun startGraph(modules: List<Module>) {
+    startKoin { modules(modules) }
+}
 
 private val coreModule =
     module {
