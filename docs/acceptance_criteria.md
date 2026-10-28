@@ -188,6 +188,18 @@ Part 1 (2026-10-27, the graph of the shared core), also done when:
 - Stopping the graph cancels its application scope and closes the database.
 - SKIE exports `TopLevelDestination` as a Swift enum, so the tab labels switch over it without a default.
 
+Part 2 (2026-10-28, the conventions on About data's last syncs), also done when:
+- The first screen with a use case is the last-sync section of About data (LB-404, FR-SET-03), because LB-101 waits for LB-003's fixtures (OQ-11). It reads `sync_state` and needs no source data.
+- What the screen shows is LB-404's criteria and LB-405's time-zone criterion, met early and tested under their ids (`lb404_…`, `lb405_…`).
+- A failure to read is a typed `AppResult` failure, never an exception, and both screens show FR-ERR-05's Error state with its reason and Retry. Retry reads again.
+- The first load draws the final layout with placeholders, not a spinner (spec §7.3).
+- `[Android]` The ViewModel's upstream survives 5 s without collectors, which covers a configuration change, then stops. Each `ViewModelStoreOwner` gets its own ViewModel.
+- `[Android]` The app's graph gives each screen its ViewModel, through `initKoin(uiModules)`.
+- The graph gives Swift every function of `UseCases`, checked by reflection on the Android host, so a new use case needs no new test line.
+- `SharedDependencies.shared.preview()` scripts synced, never-synced, loading and failing states, and counts the collections running. Before the graph starts, asking `SharedDependencies` for a use case fails with a message that points at `preview()`.
+- `[iOS]` The ViewModel's init only stores its use cases, so SwiftUI may rebuild it cheaply.
+- `[iOS]` The iosApp scheme runs the package's Swift ViewModel tests, so `scripts/ios/test.sh` does too, until LB-101's matrix job.
+
 ### LB-011 Design system foundations
 Refs: NFR-MNT-04, NFR-PLAT-01, NFR-A11Y-06, OQ-18, `design_guidelines.md` §4–6
 
@@ -579,11 +591,18 @@ Refs: FR-SET-03, NFR-PRIV-05
 - **Given** the latest sync failed, **when** the page renders, **then** it still shows the time of the last *successful* sync.
 - **Given** the attributions section, **when** it renders, **then** it lists "Data: Ayuntamiento de Logroño", OpenStreetMap and CartoCiudad / IGN.
 
+Done early, with LB-010 part 2 (2026-10-28): the last successful sync of each dataset (tests `lb404_…`).
+- `ObserveLastSyncs` lists every static dataset in order (spec §8.5: lines and stops), with its last successful sync or none.
+- A row without a success counts as never synced, and rows of v1.0 datasets are ignored.
+- Keeping an earlier success through a failed sync is LB-008's part (`architecture.md` §4.4).
+- The screen is not yet reachable: More arrives with LB-012.
+
 ### LB-405 Localisation
 Refs: NFR-I18N-01 to 03
 
 - **Given** the device language is Spanish or English, **when** the app runs, **then** every UI string is in that language. Any other device language falls back to Spanish.
 - **Given** the device time zone is America/New_York, **when** times render, **then** they are in Europe/Madrid.
+  - Done early, with LB-010 part 2, for About data's times (tests `lb405_…`). `MadridDateTime` converts through the CET and CEST transitions, and each platform formats it in a fixed zone with its locale.
 - **Given** a count of 1 and a count of 2 minutes, **when** they render in either language, **then** the plural forms come from platform resources.
 - Done when: a lint or test check fails on any hard-coded user-facing string in UI code.
 

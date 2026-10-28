@@ -164,6 +164,7 @@ Done in LB-005 part 1 and the first half of part 2; the DTOs and services come w
 - **DTOs and services:** `LinesApi` (API-01, 02), `RealtimeApi` (API-03 to 06).
 - **Normaliser:** the pipeline of spec §5.4, with the DD-rule map in `api_spec.md` §6. It emits domain entities and a `DataQualityReport`.
 - **Repositories:** `NetworkRepository` (lines, patterns, stops, search), `ArrivalsRepository`, `VehiclesRepository`.
+- **Sync status (as built, LB-010 part 2):** `SyncStatusRepositoryImpl` reads `sync_state` for `SyncStatusRepository` (`:shared:transit:domain`). It gives the last successful sync of each `StaticDataset` (spec §8.5: lines and stops in the MVP), stored under the keys `lines` and `stops`, which never change with the enum's names. The static sync (LB-008) writes `sync_state` with the same keys.
 
 ### 4.3 Persistence (`:shared:core:database`)
 
@@ -179,7 +180,7 @@ Deferred to v1.0 with the offline mode (ADR-0008): the `arrival_snapshot` table 
 
 Done in LB-007. The schema lives in `.sq` files by area: `Line`, `Stop`, `Content` (the v1.0 tables), `Favourite` and `Sync`.
 
-- **Departures from spec §8.8:**
+- **Departures from spec §8.8** (confirmed by the owner on 2026-10-28):
   - `stop_fts` is declared `content='stop'`: FTS4 rejects the spaces around `=` that the spec writes.
   - Key columns are `NOT NULL`: `direction_code_cache`'s three columns and `sync_state.dataset`. SQLite keeps rows whose key is NULL apart, so a NULL line or code would cache duplicates, and a NULL direction would cache an ambiguous code as known (DD-04).
   - `plan_recent.created_at` is `NOT NULL`.
@@ -212,6 +213,9 @@ sequenceDiagram
 
 - On first use, an empty cache plus a failed download means the screen shows the network error with Retry (FR-ERR-05). There is no bundled seed in the MVP.
 - A failed or suspicious refresh keeps the previous cache (NFR-REL-03) and is silent (FR-ERR-04).
+- `sync_state.last_success` records the last *successful* sync, which About data shows (FR-SET-03, LB-404):
+  - An unchanged hash skips the replace, but the sync still succeeded: it records `last_success`, which also restarts the TTL.
+  - A failed or suspicious refresh leaves `last_success` as it was. `recordSync` is `INSERT OR REPLACE` over the whole row, so it must not write a null `last_success` over an earlier success.
 - Background refresh runs as a daily WorkManager job on Android and as a `BGAppRefreshTask` on iOS.
 
 ### 4.5 Live data and `PollingEngine` (`:shared:core:polling`)
@@ -250,7 +254,7 @@ Each shared feature module contains three packages:
 | `stops` | `ObserveStopArrivals`, `SearchStops`, `SaveStop` | `StopDetailUiState`, `ArrivalUi`, `StopSearchUiState` | API-02, 06 |
 | `nearme` | `GetNearbyStops`, `ObserveSavedStopArrivals`, `ObserveNetworkVehicles` | `NearMeUiState`, `SavedStopCardUi`, `NearbyStopRowUi`, map layer models | API-02, 03, 06, 08 |
 | `planner` | `SearchPlaces`, `PlanJourney`, `ObserveRecentPlans` | `PlannerUiState`, `ItineraryCardUi`, `ItineraryDetailUiState` | API-07, 08, 06, CartoCiudad |
-| `settings` | `ObserveSyncStatus`, `UpdatePreferences`, `ClearCache` | `SettingsUiState`, `AboutDataUiState` | none |
+| `settings` | `ObserveLastSyncs` (built), `UpdatePreferences`, `ClearCache` | `SettingsUiState`, `AboutDataUiState` | none |
 
 An example of shared presentation models:
 
@@ -283,6 +287,12 @@ object StopDetailUiMapper {                  // pure: same output on both platfo
 
 UI models use plain types (`Int`, `String`, `Long` ARGB colours), so they export cleanly to Swift. Each platform turns `EtaDisplay` into localised text and spoken labels with its own string resources.
 
+**As built (LB-010 part 2):**
+- `settings` has `ObserveLastSyncs`, a `fun interface` implemented by `DefaultObserveLastSyncs`. It lists every `StaticDataset` in order, with its last successful sync or `null`.
+- Its presentation models are `AboutDataUiState` (`Loading`, `Content`, `Error(reason)`), `AboutDataEvent.Retry`, `LastSyncUi` and `AboutDataUiMapper.state(result)`.
+- Errors: the repository catches at the database boundary and emits `AppResult.Failure`; the mapper turns a failure into `Error` with an `ErrorReason` (`NETWORK`, `SERVER`, `DATA`; `:shared:core:presentation`), the short reason of FR-ERR-05.
+- Times reach the UI as `MadridDateTime` (`:shared:core:presentation`): plain fields on the Madrid wall clock, which each platform formats with its locale (ADR-0015, AGENTS.md §5.5).
+
 ### 4.7 Telemetry contracts (`:shared:core:telemetry`)
 
 These contracts are defined in ADR-0009:
@@ -297,11 +307,17 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 ### 5.1 Android
 
 - `:android:app`:
-  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG)` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. Telemetry joins it with LB-409. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
+  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG, uiModules = listOf(settingsUiModule))` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. Telemetry joins it with LB-409. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
   - A single activity draws edge-to-edge. `NavigationSuiteScaffold` holds the three tabs, and each tab keeps a Navigation 3 back stack of `@Serializable` `NavKey`s defined in `:android:core:navigation` (ADR-0005).
 - `:android:feature:<x>`:
   - Each screen is an `XRoute` (wiring), a stateless `XScreen(UiState, onEvent)` and an `XViewModel : androidx.lifecycle.ViewModel`.
   - The ViewModel injects shared use cases (`koinViewModel()`), collects their flows in `viewModelScope`, maps them with the shared mappers and exposes `StateFlow<XUiState>`.
+  - **As built (LB-010 part 2, `AboutDataViewModel`):**
+    - `state` is the use case mapped by the shared mapper, then `stateIn(viewModelScope, WhileSubscribed(5 s), Loading)`. The query therefore outlives a configuration change, and stops 5 s after the screen leaves; a test pins both.
+    - `onEvent(AboutDataEvent)`: Retry bumps a counter that `flatMapLatest` turns into a new read, starting at Loading.
+    - The screen draws Loading as the final layout with placeholders, and Error with its reason and Retry. Its states for previews and screenshots live in `AboutDataPreviewData`.
+    - The route collects it with `collectAsStateWithLifecycle()`.
+    - Each feature module exposes a Koin `<x>UiModule` that declares its ViewModels with `viewModelOf`, and the app passes the modules to `initKoin`.
 - Maps: MapLibre Native through `maplibre-compose` in `:android:core:map`.
 - Location uses the Fused Location Provider of Google Play services (`fusedLocationProvider`, in `:shared:core:location`; owner approval, 2026-10-26). Permission prompts use the Activity Result API in the UI.
 - `AppLifecycle` follows `ProcessLifecycleOwner` (`ProcessAppLifecycle`, in `:shared:core:common`).
@@ -317,37 +333,50 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - After a Kotlin change, rerun the script. Swift Package Manager resolves binary targets before any build phase runs, so a build phase cannot refresh the framework.
     - The fallback, feature folders inside the app target, was not needed.
   - The Xcode project is generated from `iosApp/project.yml` by XcodeGen and is never committed. The same script writes `Configuration/Version.xcconfig` from `version.properties`.
-  - `SharedDependencies` exists from LB-001. It exposes the start destination and `isReady`, whether the graph has started. LB-010 part 2 adds the use cases. SKIE is applied (LB-010 part 1).
+  - `SharedDependencies` (LB-001, LB-010) gives the start destination and `isReady`, whether the graph has started. It implements `UseCases`, the use cases a Swift ViewModel can ask for, from the graph. SKIE is applied (LB-010 part 1).
+  - `SharedDependencies.shared.preview()` returns a new `PreviewUseCases`: the real use cases over scripted repositories.
+    - By default every dataset synced at 10:30 in Madrid; `loading()` and `neverSynced()` change the script.
+    - `activeCollections` counts the collections running, for cancellation tests.
 - **Composition root.**
   - `LogroBusApp.init` calls `doInitKoin(appVersion:debug:)`, a Swift global function through SKIE, with `CFBundleShortVersionString` and `#if DEBUG`, on the main actor. The iOS module of the graph creates `NotificationAppLifecycle` and Core Location there. Swift implementations of platform contracts, such as telemetry once chosen, will be passed the same way.
   - Swift obtains use cases from the Kotlin `SharedDependencies` factory object. Koin generics are not used from Swift.
-- **Swift ViewModels:** one `@MainActor @Observable final class XViewModel` per screen, in its `Feature<X>` target:
+- **Swift ViewModels:** one `@MainActor @Observable final class XViewModel` per screen, in its `Feature<X>` target. As built in LB-010 part 2:
 
 ```swift
-@MainActor @Observable
-final class StopDetailViewModel {
-    private(set) var state: StopDetailUiState = StopDetailUiStateLoading.shared
-    private let observeArrivals: ObserveStopArrivals     // shared use case (Kotlin interface)
-    private let clock: AppClock
+@MainActor
+@Observable
+public final class AboutDataViewModel {
+    public private(set) var state: any AboutDataUiState = AboutDataUiStateLoading.shared
+    public private(set) var attempt = 0                  // the view's .task(id:) restarts observe() on Retry
+    private let useCases: any UseCases                   // kept, so the init stays cheap
 
-    init(stopId: Int32, deps: SharedDependencies = .shared) {
-        observeArrivals = deps.observeStopArrivals()
-        clock = deps.appClock()
-        self.stopId = stopId
+    public init(useCases: any UseCases = SharedDependencies.shared) {
+        self.useCases = useCases
     }
-    private let stopId: Int32
 
-    /// Called from `.task { await viewModel.observe() }`; cancelled automatically when the view disappears.
-    func observe() async {
-        for await timed in observeArrivals.invoke(stopId: stopId) {
-            state = StopDetailUiMapper.shared.content(/* stop, timed, clock.now(), filter, group */)
+    public func onEvent(_ event: any AboutDataEvent) {
+        switch onEnum(of: event) {
+        case .retry:
+            state = AboutDataUiStateLoading.shared
+            attempt += 1
+        }
+    }
+
+    /// Called from `.task(id: viewModel.attempt) { await viewModel.observe() }`; cancelled when the screen leaves.
+    public func observe() async {
+        for await result in useCases.observeLastSyncs().invoke() {
+            state = AboutDataUiMapper.shared.state(result: result)
         }
     }
 }
 ```
 
 - **Views** switch over the state with `switch onEnum(of: viewModel.state) { … }`.
-- **Previews and tests:** SwiftUI previews and Swift ViewModel tests use the fake dependencies exposed by `SharedDependencies.preview` (scripted repositories in Kotlin).
+- **Previews and tests:** SwiftUI previews and Swift ViewModel tests use `SharedDependencies.shared.preview()`.
+  - The tests live in a `Feature<X>Tests` target of `LogroBusUI`, with Swift Testing.
+  - The `iosApp` scheme runs them, so `scripts/ios/test.sh` does too, until LB-101's matrix job.
+  - A cancellation test cancels `observe()`, as `.task {}` does, and waits for `activeCollections` to fall back to 0.
+- **The view, as built:** Loading is the final list over sample content with `.redacted(reason: .placeholder)`, Error is a `ContentUnavailableView` with the reason and Retry, and times follow SwiftUI's environment locale.
 - **Maps:** MapLibre Native iOS (Swift package) wrapped in `MapUI`. Floating controls use the `DesignSystem` glass helpers.
 - **Platform:** iPhone only in the MVP (NFR-PLAT-03), with an iOS 18 deployment target and Liquid Glass on iOS 26 or later (ADR-0003).
 - **Location and lifecycle:** Core Location (`coreLocationProvider`, in `:shared:core:location`), on the main thread. `AppLifecycle` follows the `UIApplication` enter-background and enter-foreground notifications (`NotificationAppLifecycle`).
@@ -387,7 +416,7 @@ flowchart TD
 
 | Concern | Approach |
 | --- | --- |
-| Dependency injection | Koin (ADR-0014). `:shared:umbrella` holds the graph of the shared core, one instance of each service per process: one `ServerCorrectedClock` (also the `AppClock`), the source client, the polling engine on an application scope, and the database. `startGraph` refuses a second definition of any type, and stopping the graph cancels its scope and closes the database. The app shells pass the version and the build type (LB-010) |
+| Dependency injection | Koin (ADR-0014). `:shared:umbrella` holds the shared graph:<br>- the core, one instance of each service per process: one `ServerCorrectedClock` (also the `AppClock`), the source client, the polling engine on an application scope, and the database;<br>- one module per data and feature module in use (transit data and settings so far).<br>`startGraph` refuses a second definition of any type, and stopping the graph cancels its scope and closes the database. The app shells pass the version and the build type. Android adds each feature module's ViewModels through `initKoin(uiModules)`, and Swift gets use cases from `SharedDependencies` (LB-010) |
 | Configuration | `RemoteConfig` in `:shared:core:config` with compiled defaults (NFR-REL-05). Backend deferred (OQ-16) |
 | Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
 | Settings | Multiplatform Settings (DataStore, `NSUserDefaults`), ADR-0018 |

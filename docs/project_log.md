@@ -19,6 +19,80 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-28: LB-010, part 2: the ViewModel conventions, on About data
+
+**Done**
+- **Owner decisions, 2026-10-28:**
+  - The departures of LB-007's schema from spec §8.8 are confirmed (`architecture.md` §4.3).
+  - "Continue with LB-010": part 2 now, instead of LB-011.
+  - `git push` to any branch but `main` without asking. `.claude/settings.json` moves it from `ask` to `allow`, because an ask rule beats any allow rule (`agent_harness.md` §4.1, commit `d43b34d`).
+- **Merge:** PR #26 (part 1) was merged with a merge commit (`d9fa9c9`), and `main` was merged into this branch.
+- **The example screen:** LB-101 waits for the fixtures (OQ-11), so part 2 builds on About data's last sync per dataset (LB-404, FR-SET-03). It reads `sync_state` and needs no source data.
+- **Dependencies** (Apache-2.0):
+  - kotlinx-datetime 0.8.0 (ADR-0015, which gets a dated note);
+  - `koin-androidx-compose` 4.2.2 (ADR-0014);
+  - androidx `lifecycle-runtime-compose` and `lifecycle-viewmodel` 2.11.0;
+  - Compose `ui-tooling`.
+- **Shared:**
+  - `MadridDateTime` (display only).
+  - `ErrorReason`.
+  - `StaticDataset` and `SyncStatusRepository`, with `SyncStatusRepositoryImpl`: stable keys, catches at the database boundary.
+  - `ObserveLastSyncs`.
+  - `AboutDataUiState` (`Loading`, `Content`, `Error`), `AboutDataEvent.Retry` and `AboutDataUiMapper.state`.
+  - In the umbrella: `UseCases`, which `SharedDependencies` implements; `preview()`, which returns scripted `PreviewUseCases`; one Koin module each for transit data and settings.
+- **Android:**
+  - `AboutDataViewModel` (`stateIn` with WhileSubscribed 5 s, Retry through `flatMapLatest`).
+  - `AboutDataRoute` (`koinViewModel()`) and a stateless `AboutDataScreen`: placeholders while loading, Error with Retry, scrolling.
+  - Times in ICU's pattern for the locale and the 12 or 24-hour setting.
+  - `AboutDataPreviewData` with light and dark previews.
+  - `settingsUiModule`, which the app passes to `initKoin(uiModules)`.
+- **iOS:**
+  - `AboutDataViewModel`: a cheap init, `observe()` with `for await`, and `attempt` for Retry.
+  - `AboutDataView`: `.task(id:)`, `onEnum(of:)`, a redacted list while loading, `ContentUnavailableView` for Error, and the environment locale.
+  - A string catalogue for the target.
+  - `FeatureSettingsTests`, run by the iosApp scheme.
+- **TDD:** 8 red-green cycles, the last 3 from the reviews, then a refactor.
+- **Tests:** all pass; `run-all.sh` passes.
+  - shared: on the Android host and the iOS simulator;
+  - `:android:feature:settings`: 10, and `:android:app`: 8;
+  - iOS: 13 through `scripts/ios/test.sh`.
+- **Reviews** (code-reviewer, data-rules-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; no blockers):
+  - **Fixed, with TDD:**
+    - The repository threw SQLite's exceptions, which would crash both apps, and the screens had no Error state (AGENTS.md §5 rule 11, FR-ERR-05).
+    - The first load was a spinner (spec §7.3).
+    - Android had no cancellation test.
+    - Times ignored the 24-hour setting on Android and SwiftUI's locale on iOS.
+    - The Swift ViewModel resolved Koin in its init.
+    - Before the graph started, a lookup failed with no hint.
+  - **Docs:**
+    - The static sync is LB-008, not LB-006.
+    - §4.4 now says that an unchanged hash still records `last_success`, and that a failed sync must not erase it.
+    - The criteria of LB-404 and LB-405 met early are listed under those stories.
+    - `agent_harness.md` says exactly what the deny list catches.
+
+**Decisions**
+- LB-010 is done. LB-404 is in progress: the rest of its page (data source, disclaimer, attributions) comes with M4.
+- Retry starts a new read on each platform: Android through `flatMapLatest` over a counter, iOS through `.task(id:)` on `attempt`.
+- The error strings (`error.*`) live in the settings feature for now. LB-011 moves the Error component and the time formatters into the design systems.
+
+**Open / next**
+- For the owner: the deny list does not catch every spelling of a force push or of a push to `main`, such as `--force-with-lease`, a `+branch` refspec or `--no-verify origin main`. `main`'s protection on GitHub still rejects direct pushes. Should the deny list add those patterns?
+- **LB-011:**
+  - design tokens instead of Material's baseline schemes;
+  - Roborazzi and swift-snapshot-testing for About data's states;
+  - a shared Error component;
+  - the `MadridDateTime` formatters.
+- **LB-012:**
+  - the More entry, with a title and back action;
+  - inset padding;
+  - per-entry ViewModel stores (`rememberViewModelStoreNavEntryDecorator`).
+- **LB-006:** move the Madrid zone where `:shared:transit:data` can use it too.
+- **LB-101:** the iOS ViewModel test job (`Feature<X>` matrix).
+- **Definition of done:** TalkBack and VoiceOver passes over About data.
+- **Still pending owner decisions:** OQ-11, OQ-16, the iOS CI 10-minute budget, the iOS connect timeout, and the foreground-fetch floor.
+
+---
+
 ## 2026-10-28: LB-010, part 1: the dependency graph and SKIE
 
 **Done**

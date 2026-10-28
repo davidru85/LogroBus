@@ -13,6 +13,10 @@ import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
+import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
+import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
+import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -28,11 +32,12 @@ import kotlin.time.Clock
 internal val APPLICATION_SCOPE = named("application")
 
 /**
- * The graph of the shared core (ADR-0014): one instance of each service for the whole process. [platform] provides
- * what only a platform can create: the [Logger], the app lifecycle, the location provider, the client identity for the
- * `User-Agent` and the SQLite driver.
+ * The shared graph (ADR-0014): the core, with one instance of each service for the whole process, then one module per
+ * data and feature module. [platform] provides what only a platform can create: the [Logger], the app lifecycle, the
+ * location provider, the client identity for the `User-Agent` and the SQLite driver.
  */
-internal fun coreModules(platform: Module): List<Module> = listOf(platform, coreModule)
+internal fun sharedModules(platform: Module): List<Module> =
+    listOf(platform, coreModule, transitDataModule, settingsModule)
 
 /**
  * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of
@@ -61,6 +66,16 @@ private val coreModule =
             SourceClient(get(), get(), { remoteConfig.get(RemoteConfigKey.ApiBaseUrl) }, get())
         }
         single { logroBusDatabase(get()) }
+    }
+
+private val transitDataModule =
+    module {
+        single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get(), get()) }
+    }
+
+private val settingsModule =
+    module {
+        factory<ObserveLastSyncs> { DefaultObserveLastSyncs(get()) }
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */
