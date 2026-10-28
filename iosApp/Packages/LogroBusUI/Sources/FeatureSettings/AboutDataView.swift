@@ -5,6 +5,7 @@ import SwiftUI
 /// lands (LB-012); the data source, disclaimer and attributions come with LB-404.
 public struct AboutDataView: View {
     @State private var viewModel: AboutDataViewModel
+    @Environment(\.locale) private var locale
 
     public init(viewModel: AboutDataViewModel = AboutDataViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -12,36 +13,53 @@ public struct AboutDataView: View {
 
     public var body: some View {
         content
-            // Cancelled when the screen leaves, which stops the use case's collection.
-            .task { await viewModel.observe() }
+            // Cancelled when the screen leaves, which stops the use case's collection; restarted by Retry.
+            .task(id: viewModel.attempt) { await viewModel.observe() }
     }
 
     @ViewBuilder private var content: some View {
         switch onEnum(of: viewModel.state) {
         case .loading:
-            ProgressView()
+            // Spec §7.3: the final layout with placeholders, never a lone spinner.
+            lastSyncs(StaticDataset.allCases.map { ($0, Self.placeholderTime) })
+                .redacted(reason: .placeholder)
         case .content(let content):
-            List {
-                Section {
-                    ForEach(content.lastSyncs, id: \.dataset) { sync in
-                        LabeledContent {
-                            if let lastSuccess = sync.lastSuccess {
-                                Text(lastSuccess.formatted)
-                            } else {
-                                Text("about.last_sync.never", bundle: .module)
-                            }
-                        } label: {
-                            Text(sync.dataset.label, bundle: .module)
-                        }
-                    }
-                } header: {
-                    Text("about.last_sync.title", bundle: .module)
+            lastSyncs(content.lastSyncs.map { ($0.dataset, $0.lastSuccess) })
+        case .error(let error):
+            ContentUnavailableView {
+                Text(error.reason.message, bundle: .module)
+            } actions: {
+                Button {
+                    viewModel.onEvent(AboutDataEventRetry.shared)
+                } label: {
+                    Text("error.retry", bundle: .module)
                 }
             }
-        case .error:
-            EmptyView()
         }
     }
+
+    private func lastSyncs(_ rows: [(dataset: StaticDataset, lastSuccess: MadridDateTime?)]) -> some View {
+        List {
+            Section {
+                ForEach(rows, id: \.dataset) { row in
+                    LabeledContent {
+                        if let lastSuccess = row.lastSuccess {
+                            Text(lastSuccess.formatted(locale: locale))
+                        } else {
+                            Text("about.last_sync.never", bundle: .module)
+                        }
+                    } label: {
+                        Text(row.dataset.label, bundle: .module)
+                    }
+                }
+            } header: {
+                Text("about.last_sync.title", bundle: .module)
+            }
+        }
+    }
+
+    /// Sample content for the redacted first load.
+    private static let placeholderTime = MadridDateTime(year: 2026, month: 1, day: 1, hour: 0, minute: 0)
 }
 
 extension StaticDataset {
@@ -54,22 +72,28 @@ extension StaticDataset {
     }
 }
 
-extension MadridDateTime {
-    /// The time in `locale`, as a medium date and a short time (AGENTS.md §5.5).
-    func formatted(locale: Locale) -> String {
-        formatted
+extension ErrorReason {
+    /// FR-ERR-05: the short reason (design_guidelines.md §9, keys `error.*`).
+    var message: LocalizedStringKey {
+        switch self {
+        case .network: "error.network"
+        case .server: "error.server"
+        case .data: "error.data"
+        }
     }
+}
 
-    /// The time in the user's locale, as a medium date and a short time (AGENTS.md §5.5). The fields are already on
-    /// the Madrid clock, so one fixed zone carries them through the formatter unchanged.
-    var formatted: String {
+extension MadridDateTime {
+    /// The time in `locale`, as a medium date and a short time (AGENTS.md §5.5). The fields are already on the Madrid
+    /// clock, so one fixed zone carries them through the formatter unchanged, whatever the device's zone.
+    func formatted(locale: Locale) -> String {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .gmt
         let components = DateComponents(
             year: Int(year), month: Int(month), day: Int(day), hour: Int(hour), minute: Int(minute)
         )
         guard let date = calendar.date(from: components) else { return "" }
-        return date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened, timeZone: .gmt))
+        return date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened, locale: locale, timeZone: .gmt))
     }
 }
 
@@ -77,10 +101,34 @@ extension MadridDateTime {
     AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
 }
 
+#Preview("Synced, dark") {
+    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Never synced") {
     AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
 }
 
+#Preview("Never synced, dark") {
+    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Loading") {
     AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+}
+
+#Preview("Loading, dark") {
+    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Error") {
+    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+}
+
+#Preview("Error, dark") {
+    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+        .preferredColorScheme(.dark)
 }
