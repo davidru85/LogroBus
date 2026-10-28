@@ -36,7 +36,7 @@ fun LineBadge(
             .clearAndSetSemantics { contentDescription = label }
             .defaultMinSize(minWidth = size.minWidth, minHeight = size.minHeight)
             .background(Color(color), RoundedCornerShape(Tokens.lineBadgeCorner))
-            .padding(horizontal = size.padding),
+            .padding(horizontal = size.padding, vertical = Tokens.lineBadgeVerticalPadding),
         contentAlignment = Alignment.Center,
     ) {
         Text(code, color = Color(onColor), style = size.textStyle, fontWeight = FontWeight.Bold, softWrap = false)

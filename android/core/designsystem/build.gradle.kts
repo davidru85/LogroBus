@@ -13,6 +13,8 @@ dependencies {
     // The shared presentation models the components draw, such as EtaUi.
     api(projects.shared.core.presentation)
     implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(libs.junit4)
     // contrastRatio, to check the placeholder palette (NFR-A11Y-06).

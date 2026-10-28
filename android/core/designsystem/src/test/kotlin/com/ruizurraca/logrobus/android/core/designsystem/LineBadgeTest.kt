@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.android.core.designsystem
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -81,7 +82,7 @@ class LineBadgeTest {
     @Composable
     private fun CurrentLineBadges(darkTheme: Boolean) {
         LogroBusTheme(darkTheme) {
-            Surface {
+            Surface(Modifier.fillMaxSize()) {
                 Column(Modifier.padding(8.dp)) {
                     LineBadgeSize.entries.forEach { size ->
                         FlowRow(Modifier.padding(4.dp)) {

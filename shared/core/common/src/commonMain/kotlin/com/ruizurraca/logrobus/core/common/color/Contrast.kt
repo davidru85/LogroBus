@@ -5,10 +5,10 @@ import kotlin.math.min
 import kotlin.math.pow
 
 /** Opaque black, as an ARGB value. */
-const val BLACK: Long = 0xFF000000
+internal const val BLACK: Long = 0xFF000000
 
 /** Opaque white, as an ARGB value. */
-const val WHITE: Long = 0xFFFFFFFF
+internal const val WHITE: Long = 0xFFFFFFFF
 
 /** WCAG 2.2's contrast ratio between two opaque ARGB colours, from 1 (none) to 21 (black on white). */
 fun contrastRatio(
