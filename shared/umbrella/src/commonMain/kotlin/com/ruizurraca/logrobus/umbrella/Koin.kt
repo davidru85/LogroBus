@@ -64,7 +64,12 @@ private val coreModule =
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */
+internal fun appLogger(debug: Boolean): Logger = ConsoleLogger(minLevel(debug))
+
+/** The same, printing to [output], for tests. */
 internal fun appLogger(
     debug: Boolean,
-    output: (String) -> Unit = ::println,
-): Logger = ConsoleLogger(minLevel = if (debug) LogLevel.Debug else LogLevel.Error, output = output)
+    output: (String) -> Unit,
+): Logger = ConsoleLogger(minLevel(debug), output)
+
+private fun minLevel(debug: Boolean): LogLevel = if (debug) LogLevel.Debug else LogLevel.Error
