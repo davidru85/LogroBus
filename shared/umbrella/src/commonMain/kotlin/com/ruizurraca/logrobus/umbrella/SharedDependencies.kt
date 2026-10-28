@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
+import org.koin.mp.KoinPlatform
 
 /**
  * The only entry point Swift uses to reach shared code (architecture.md §5.2, ADR-0004). It hands out shared
@@ -11,7 +12,7 @@ object SharedDependencies {
     val startDestination: TopLevelDestination
         get() = TopLevelDestination.start
 
-    /** Whether the app has started the dependency graph. */
+    /** Whether the app has started the dependency graph, which the use cases come from (ADR-0014). */
     val isReady: Boolean
-        get() = false
+        get() = KoinPlatform.getKoinOrNull() != null
 }
