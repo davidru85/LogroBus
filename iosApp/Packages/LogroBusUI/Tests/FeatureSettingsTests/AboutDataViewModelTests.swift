@@ -79,7 +79,9 @@ struct AboutDataViewModelTests {
         let spanish = time.formatted(locale: Locale(identifier: "es_ES"))
         #expect(spanish.contains("10:30"))
         #expect(spanish.contains("oct"))
-        #expect(time.formatted(locale: Locale(identifier: "en_US")).contains("10:30 AM"))
+        // ICU puts a narrow no-break space before AM, so the two parts are checked apart.
+        let english = time.formatted(locale: Locale(identifier: "en_US"))
+        #expect(english.contains("10:30") && english.contains("AM"))
     }
 }
 

@@ -72,6 +72,78 @@
           }
         }
       }
+    },
+    "error.data": {
+      "comment": "Error state: data that could not be read (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The data couldn’t be read."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se han podido leer los datos."
+          }
+        }
+      }
+    },
+    "error.network": {
+      "comment": "Error state: no connection (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No connection. Check your network."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay conexión. Comprueba tu red."
+          }
+        }
+      }
+    },
+    "error.retry": {
+      "comment": "Error state: the action that reads again (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        }
+      }
+    },
+    "error.server": {
+      "comment": "Error state: the source failed (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service isn’t responding. Try again later."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servicio no responde. Inténtalo más tarde."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

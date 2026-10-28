@@ -20,7 +20,7 @@ import kotlin.time.Instant
 
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
- * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid.
+ * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid; each script replaces the last.
  */
 class PreviewUseCases internal constructor() : UseCases {
     // Null scripts a first load that never ends.
@@ -35,10 +35,18 @@ class PreviewUseCases internal constructor() : UseCases {
         get() = collections.value
 
     /** Scripts a first load that never ends: the use cases emit nothing. */
-    fun loading(): PreviewUseCases = apply { lastSuccesses.value = null }
+    fun loading(): PreviewUseCases =
+        apply {
+            failing = false
+            lastSuccesses.value = null
+        }
 
     /** Scripts an app that has never synced. */
-    fun neverSynced(): PreviewUseCases = apply { lastSuccesses.value = emptyMap() }
+    fun neverSynced(): PreviewUseCases =
+        apply {
+            failing = false
+            lastSuccesses.value = emptyMap()
+        }
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }
