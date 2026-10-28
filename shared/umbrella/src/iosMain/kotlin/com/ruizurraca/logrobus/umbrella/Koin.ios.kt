@@ -7,7 +7,6 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.coreLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
-import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import platform.Foundation.NSBundle
 import kotlin.experimental.ExperimentalNativeApi
@@ -18,7 +17,7 @@ import kotlin.native.Platform
  * returns nothing, so no Koin type reaches Swift.
  */
 fun initKoin() {
-    startKoin { modules(coreModules(iosModule)) }
+    startGraph(coreModules(iosModule))
 }
 
 @OptIn(ExperimentalNativeApi::class) // Platform.isDebugBinary

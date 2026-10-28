@@ -9,7 +9,6 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
-import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
 /**
@@ -17,7 +16,7 @@ import org.koin.dsl.module
  * nothing, so no Koin type reaches the app shell.
  */
 fun initKoin(context: Context) {
-    startKoin { modules(coreModules(androidModule(context.applicationContext))) }
+    startGraph(coreModules(androidModule(context.applicationContext)))
 }
 
 private fun androidModule(context: Context) =
