@@ -71,7 +71,7 @@ LogroBus/
 ├── android/
 │   ├── app/                         # application, single activity, tab shell, navigation, DI start-up
 │   ├── core/
-│   │   ├── designsystem/            # MaterialExpressiveTheme, tokens, LineBadge, EtaText, expressive wrappers
+│   │   ├── designsystem/            # MaterialExpressiveTheme, tokens, LineBadge, EtaText (LB-011); expressive wrappers as screens need them
 │   │   ├── map/                     # MapLibre composables, layers, markers
 │   │   └── navigation/              # NavKeys and entry-point contracts shared by features and the app
 │   └── feature/
