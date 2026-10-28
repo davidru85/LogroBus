@@ -141,7 +141,10 @@ private fun Resources.delayText(delay: EtaDelay): String =
 private val EtaDisplay.ClockTime.text: String
     get() = String.format(Locale.ROOT, "%02d:%02d", hour, minute)
 
-/** ETAs use the emphasized title with tabular figures, so digits do not shift as they tick (design_guidelines.md §4). */
+/**
+ * ETAs use the emphasized title with tabular figures, so digits do not shift as they tick
+ * (design_guidelines.md §4).
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class) // Expressive APIs stay inside the design system (ADR-0005).
 internal val etaStyle: TextStyle
     @Composable get() = MaterialTheme.typography.titleMediumEmphasized.copy(fontFeatureSettings = "tnum")
