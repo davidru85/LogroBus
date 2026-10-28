@@ -261,6 +261,16 @@ class ArchitectureTest {
         assertEquals(emptyList<String>(), offenders)
     }
 
+    @Test
+    fun lb011_expressiveApisStayInTheDesignSystem() {
+        // ADR-0005: an expressive API change then touches one package.
+        val offenders =
+            androidFiles()
+                .filter { ArchitectureRules.usesExpressiveApiOutsideDesignSystem(it.packagee?.name, it.text) }
+                .map { it.relativePath() }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
 
