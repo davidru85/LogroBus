@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataEvent
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiMapper
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiState
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,6 +21,9 @@ class AboutDataViewModel(
         observeLastSyncs()
             .map<AppResult<List<DatasetSync>>, AboutDataUiState>(AboutDataUiMapper::state)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), AboutDataUiState.Loading)
+
+    @Suppress("UnusedParameter") // Stub: Retry comes next.
+    fun onEvent(event: AboutDataEvent) = Unit
 
     private companion object {
         // The query outlives a configuration change, and stops this long after the screen leaves.

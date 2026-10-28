@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
+import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataEvent
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiMapper
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiState
 import com.ruizurraca.logrobus.feature.settings.presentation.LastSyncUi
@@ -38,13 +39,14 @@ fun AboutDataRoute(
     viewModel: AboutDataViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AboutDataScreen(state, modifier)
+    AboutDataScreen(state, viewModel::onEvent, modifier)
 }
 
 /** Renders [state] and nothing else. The data source, disclaimer and attributions come with LB-404. */
 @Composable
 fun AboutDataScreen(
     state: AboutDataUiState,
+    onEvent: (AboutDataEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (state) {
@@ -111,7 +113,7 @@ private val previewSync = Instant.parse("2026-10-28T09:30:00Z")
 @Preview(showBackground = true)
 @Composable
 private fun AboutDataLoadingPreview() {
-    MaterialTheme { AboutDataScreen(AboutDataUiState.Loading) }
+    MaterialTheme { AboutDataScreen(AboutDataUiState.Loading, onEvent = {}) }
 }
 
 @Preview(showBackground = true)
@@ -120,6 +122,7 @@ private fun AboutDataSyncedPreview() {
     MaterialTheme {
         AboutDataScreen(
             AboutDataUiMapper.state(AppResult.Success(StaticDataset.entries.map { DatasetSync(it, previewSync) })),
+            onEvent = {},
         )
     }
 }
@@ -128,6 +131,9 @@ private fun AboutDataSyncedPreview() {
 @Composable
 private fun AboutDataNeverSyncedPreview() {
     MaterialTheme {
-        AboutDataScreen(AboutDataUiMapper.state(AppResult.Success(StaticDataset.entries.map { DatasetSync(it, null) })))
+        AboutDataScreen(
+            AboutDataUiMapper.state(AppResult.Success(StaticDataset.entries.map { DatasetSync(it, null) })),
+            onEvent = {},
+        )
     }
 }
