@@ -16,7 +16,10 @@ import kotlin.native.Platform
  * Starts the dependency graph of the iOS app, once, from the app's initialiser on the main thread (ADR-0014). It
  * returns nothing, so no Koin type reaches Swift.
  */
-fun initKoin() {
+fun initKoin(
+    appVersion: String,
+    debug: Boolean,
+) {
     startGraph(coreModules(iosModule))
 }
 

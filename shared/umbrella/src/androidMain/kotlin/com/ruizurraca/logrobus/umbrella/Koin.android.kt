@@ -15,7 +15,11 @@ import org.koin.dsl.module
  * Starts the dependency graph of the Android app, once per process, from the Application (ADR-0014). It returns
  * nothing, so no Koin type reaches the app shell.
  */
-fun initKoin(context: Context) {
+fun initKoin(
+    context: Context,
+    appVersion: String,
+    debug: Boolean,
+) {
     startGraph(coreModules(androidModule(context.applicationContext)))
 }
 

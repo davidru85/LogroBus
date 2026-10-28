@@ -25,6 +25,8 @@ class AppGraphTest {
         val application = ApplicationProvider.getApplicationContext<Application>()
 
         assertNotNull("The graph should be started at launch", GlobalContext.getOrNull()?.get<AppClock>())
-        assertThrows(KoinApplicationAlreadyStartedException::class.java) { initKoin(application) }
+        assertThrows(KoinApplicationAlreadyStartedException::class.java) {
+            initKoin(application, appVersion = "1.2.0", debug = true)
+        }
     }
 }
