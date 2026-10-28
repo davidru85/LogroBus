@@ -19,6 +19,9 @@ naming:
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/androidHostTest/**']
 
 style:
+  UnusedPrivateFunction:
+    # Android Studio renders private @Preview functions; nothing calls them (AGENTS.md §7: one per UX state).
+    ignoreAnnotated: ['Preview']
   MagicNumber:
     # The defaults, plus the Android host tests (KMP withHostTest).
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/androidHostTest/**']
