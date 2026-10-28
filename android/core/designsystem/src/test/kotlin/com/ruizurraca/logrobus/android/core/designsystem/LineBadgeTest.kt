@@ -66,6 +66,7 @@ class LineBadgeTest {
     }
 
     @Test
+    @Config(sdk = [SCREENSHOT_SDK])
     fun lb011_theCurrentLines_screenshots() {
         captureRoboImage("src/test/screenshots/LineBadge_light.png") { CurrentLineBadges(darkTheme = false) }
         captureRoboImage("src/test/screenshots/LineBadge_dark.png") { CurrentLineBadges(darkTheme = true) }

@@ -95,7 +95,7 @@ class EtaTextTest {
     }
 
     @Test
-    @Config(qualifiers = "en")
+    @Config(qualifiers = "en", sdk = [SCREENSHOT_SDK])
     fun lb011_everyEtaCase_screenshots() {
         captureRoboImage("src/test/screenshots/EtaText_light.png") { EveryEta(darkTheme = false) }
         captureRoboImage("src/test/screenshots/EtaText_dark.png") { EveryEta(darkTheme = true) }
