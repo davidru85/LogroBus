@@ -82,6 +82,12 @@ private fun nowPulseAlpha(): Float {
     return if (ValueAnimator.areAnimatorsEnabled()) pulse else 1f
 }
 
+/** The alpha of "Now" for a [pulse] value: the pulse while animations are on, still at 1 when they are off. */
+internal fun nowAlpha(
+    pulse: Float,
+    animationsEnabled: Boolean,
+): Float = pulse
+
 /** What an ETA shows: its value, and the secondary line under it, if any. */
 internal data class EtaLines(
     val value: String,
@@ -150,5 +156,5 @@ internal val etaStyle: TextStyle
     @Composable get() = MaterialTheme.typography.titleMediumEmphasized.copy(fontFeatureSettings = "tnum")
 
 private const val LOW_CONFIDENCE_ICON = 16
-private const val PULSE_MIN_ALPHA = 0.55f
+internal const val PULSE_MIN_ALPHA = 0.55f
 private const val PULSE_MILLIS = 900
