@@ -2,4 +2,29 @@
 <resources>
     <!-- The spoken label of a line badge: the line, never its colour (design_guidelines.md §6.2, key line.badge). -->
     <string name="line_badge">Línea %1$s</string>
+
+    <!-- ETAs (spec §5.7, design_guidelines.md §6.3, keys eta.*): what shows, then what TalkBack says. -->
+    <string name="eta_now">Ahora</string>
+    <string name="eta_minutes">%1$d min</string>
+    <string name="eta_scheduled">Programado</string>
+    <string name="eta_cancelled">Cancelado</string>
+    <string name="eta_late">+%1$d min tarde</string>
+    <string name="eta_early">%1$d min antes</string>
+    <string name="eta_now_spoken">llega ahora</string>
+    <plurals name="eta_minutes_spoken">
+        <item quantity="one">en %1$d minuto</item>
+        <item quantity="other">en %1$d minutos</item>
+    </plurals>
+    <string name="eta_clock_spoken">a las %1$s</string>
+    <string name="eta_scheduled_spoken">programado a las %1$s</string>
+    <string name="eta_approximately_spoken">aproximadamente %1$s</string>
+    <plurals name="eta_late_spoken">
+        <item quantity="one">%1$d minuto tarde</item>
+        <item quantity="other">%1$d minutos tarde</item>
+    </plurals>
+    <plurals name="eta_early_spoken">
+        <item quantity="one">%1$d minuto antes</item>
+        <item quantity="other">%1$d minutos antes</item>
+    </plurals>
+    <string name="eta_cancelled_spoken">cancelado</string>
 </resources>
