@@ -4,6 +4,8 @@ package com.ruizurraca.logrobus.architecture
 object ArchitectureRules {
     private const val ROOT_PACKAGE = "com.ruizurraca.logrobus"
     private const val UMBRELLA_PACKAGE = "$ROOT_PACKAGE.umbrella"
+    private const val DESIGN_SYSTEM_PACKAGE = "$ROOT_PACKAGE.android.core.designsystem"
+    private const val EXPRESSIVE_API = "ExperimentalMaterial3ExpressiveApi"
 
     private val includeCall = Regex("""\binclude\s*\(([^)]*)\)""")
     private val quoted = Regex(""""([^"]+)"""")
@@ -67,11 +69,14 @@ object ArchitectureRules {
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
     /** Whether a file outside the Android design system uses Material 3's experimental expressive APIs (ADR-0005). */
-    @Suppress("UnusedParameter") // Stub: the rule comes next.
     fun usesExpressiveApiOutsideDesignSystem(
         packageName: String?,
         source: String,
-    ): Boolean = false
+    ): Boolean {
+        val own = packageName.orEmpty()
+        val inDesignSystem = own == DESIGN_SYSTEM_PACKAGE || own.startsWith("$DESIGN_SYSTEM_PACKAGE.")
+        return !inDesignSystem && EXPRESSIVE_API in source
+    }
 
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
