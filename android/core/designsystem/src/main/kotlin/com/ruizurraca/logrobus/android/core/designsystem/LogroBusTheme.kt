@@ -4,6 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 
 /**
@@ -17,12 +18,14 @@ fun LogroBusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialExpressiveTheme(
-        colorScheme = if (darkTheme) Tokens.darkColors else Tokens.lightColors,
-        shapes = Tokens.shapes,
-        typography = Tokens.typography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalStatusColors provides if (darkTheme) Tokens.darkStatus else Tokens.lightStatus) {
+        MaterialExpressiveTheme(
+            colorScheme = if (darkTheme) Tokens.darkColors else Tokens.lightColors,
+            shapes = Tokens.shapes,
+            typography = Tokens.typography,
+            content = content,
+        )
+    }
 }
 
 /** The theme's values beyond MaterialTheme's. */
