@@ -35,6 +35,9 @@ kotlinx-serialization = "1.12.0"
 sqldelight = "2.4.1"
 # Koin assembles the graph in :shared:umbrella (ADR-0014).
 koin = "4.2.2"
+# Swift interop for :shared:umbrella (ADR-0004). It must support the Kotlin version above: 0.10.15 supports 2.4.20
+# (see the compatibility set at the top). Bump the two together.
+skie = "0.10.15"
 # Not project dependencies: security floors for libraries that AGP 9.3 brings into its tools and plugin
 # classpath with critical advisories (docs/ci_cd.md §6). Drop each once AGP brings a fixed version itself.
 netty = "4.1.139.Final"
@@ -92,5 +95,6 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+skie = { id = "co.touchlab.skie", version.ref = "skie" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

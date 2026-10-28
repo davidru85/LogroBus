@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     id("logrobus.kmp.library")
+    // Flows as AsyncSequence, sealed classes and enums as Swift enums, suspend functions as async (ADR-0004).
+    alias(libs.plugins.skie)
 }
 
 // The single Kotlin artefact consumed by iOS (ADR-0004, ADR-0007, ADR-0010): a static
