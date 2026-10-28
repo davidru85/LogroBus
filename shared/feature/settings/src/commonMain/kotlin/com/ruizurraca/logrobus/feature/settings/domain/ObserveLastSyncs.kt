@@ -3,7 +3,7 @@ package com.ruizurraca.logrobus.feature.settings.domain
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 
 /** When [dataset] last synced successfully, or null if it never has. */
@@ -23,5 +23,6 @@ fun interface ObserveLastSyncs {
 class DefaultObserveLastSyncs(
     private val repository: SyncStatusRepository,
 ) : ObserveLastSyncs {
-    override fun invoke(): Flow<List<DatasetSync>> = emptyFlow()
+    override fun invoke(): Flow<List<DatasetSync>> =
+        repository.observeLastSuccesses().map { last -> StaticDataset.entries.map { DatasetSync(it, last[it]) } }
 }

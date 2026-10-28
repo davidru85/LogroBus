@@ -20,5 +20,6 @@ data class LastSyncUi(
 )
 
 object AboutDataUiMapper {
-    fun content(syncs: List<DatasetSync>): AboutDataUiState.Content = AboutDataUiState.Content(emptyList())
+    fun content(syncs: List<DatasetSync>): AboutDataUiState.Content =
+        AboutDataUiState.Content(syncs.map { LastSyncUi(it.dataset, it.lastSuccess?.let(MadridDateTime::of)) })
 }
