@@ -7,6 +7,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /** ADR-0014 on Android: the graph resolves every dependency the app has, so a missing binding fails here. */
 @RunWith(RobolectricTestRunner::class)
@@ -19,5 +21,14 @@ class AndroidGraphTest {
         initKoin(RuntimeEnvironment.getApplication())
 
         assertResolvesTheCore(KoinPlatform.getKoin())
+    }
+
+    @Test
+    fun lb010_sharedDependenciesKnowsWhenTheGraphIsReady() {
+        assertFalse(SharedDependencies.isReady)
+
+        initKoin(RuntimeEnvironment.getApplication())
+
+        assertTrue(SharedDependencies.isReady)
     }
 }

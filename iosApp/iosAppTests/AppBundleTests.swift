@@ -1,8 +1,9 @@
 import Foundation
+import Shared
 import Testing
 
 /// LB-001: the built app, not just its spec, is iPhone only, targets iOS 18 and uses the store bundle id.
-/// LB-005: it refuses cleartext HTTP.
+/// LB-005: it refuses cleartext HTTP. LB-010: it starts the shared dependency graph at launch.
 struct AppBundleTests {
 
     @Test
@@ -36,6 +37,12 @@ struct AppBundleTests {
         // The bundle must be the app's, or a missing key would prove nothing.
         #expect(Bundle.main.bundleIdentifier == "com.ruizurraca.logrobus")
         #expect(Bundle.main.object(forInfoDictionaryKey: "NSAppTransportSecurity") == nil)
+    }
+
+    @Test
+    func lb010_appStartsTheDependencyGraphAtLaunch() {
+        // ADR-0014: the app's initialiser starts the graph once, before any screen asks SharedDependencies for it.
+        #expect(SharedDependencies.shared.isReady)
     }
 
     @Test

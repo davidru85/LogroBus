@@ -10,4 +10,8 @@ object SharedDependencies {
     /** FR-NAV-02: the tab the app opens on. */
     val startDestination: TopLevelDestination
         get() = TopLevelDestination.start
+
+    /** Whether the app has started the dependency graph. */
+    val isReady: Boolean
+        get() = false
 }
