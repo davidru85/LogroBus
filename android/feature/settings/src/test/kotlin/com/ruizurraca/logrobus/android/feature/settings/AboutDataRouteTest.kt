@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -33,7 +34,10 @@ class AboutDataRouteTest {
     fun startGraph() {
         val neverSynced = StaticDataset.entries.map { DatasetSync(it, null) }
         startKoin {
-            modules(module { factory { ObserveLastSyncs { flowOf(neverSynced) } } }, settingsUiModule)
+            modules(
+                module { factory { ObserveLastSyncs { flowOf(AppResult.Success(neverSynced)) } } },
+                settingsUiModule,
+            )
         }
     }
 

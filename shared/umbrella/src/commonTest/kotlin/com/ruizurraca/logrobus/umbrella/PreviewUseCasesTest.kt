@@ -1,6 +1,8 @@
 package com.ruizurraca.logrobus.umbrella
 
 import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.AppError
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import kotlinx.coroutines.flow.first
@@ -17,7 +19,9 @@ class PreviewUseCasesTest {
     fun lb010_thePreviewShowsEveryDatasetSynced() =
         runTest {
             assertEquals(
-                listOf(DatasetSync(StaticDataset.LINES, sample), DatasetSync(StaticDataset.STOPS, sample)),
+                AppResult.Success(
+                    listOf(DatasetSync(StaticDataset.LINES, sample), DatasetSync(StaticDataset.STOPS, sample)),
+                ),
                 SharedDependencies.preview().observeLastSyncs()().first(),
             )
         }
@@ -26,7 +30,9 @@ class PreviewUseCasesTest {
     fun lb010_thePreviewCanScriptAnAppThatNeverSynced() =
         runTest {
             assertEquals(
-                listOf(DatasetSync(StaticDataset.LINES, null), DatasetSync(StaticDataset.STOPS, null)),
+                AppResult.Success(
+                    listOf(DatasetSync(StaticDataset.LINES, null), DatasetSync(StaticDataset.STOPS, null)),
+                ),
                 SharedDependencies
                     .preview()
                     .neverSynced()
@@ -56,5 +62,14 @@ class PreviewUseCasesTest {
             }
 
             assertEquals(0, preview.activeCollections)
+        }
+
+    @Test
+    fun lb010_thePreviewCanScriptAFailure_whichEndsTheFlowLikeTheRealOne() =
+        runTest {
+            SharedDependencies.preview().failing().observeLastSyncs()().test {
+                assertEquals(AppResult.Failure(AppError.Data), awaitItem())
+                awaitComplete()
+            }
         }
 }

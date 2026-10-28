@@ -3,6 +3,8 @@ package com.ruizurraca.logrobus.transit.data
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.ruizurraca.logrobus.core.common.AppDispatchers
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
@@ -14,13 +16,15 @@ import kotlin.time.Instant
 class SyncStatusRepositoryImpl(
     private val database: LogroBusDatabase,
     private val dispatchers: AppDispatchers,
+    private val logger: Logger,
 ) : SyncStatusRepository {
-    override fun observeLastSuccesses(): Flow<Map<StaticDataset, Instant>> =
+    override fun observeLastSuccesses(): Flow<AppResult<Map<StaticDataset, Instant>>> =
         database.syncQueries
             .lastSuccesses()
             .asFlow()
             .mapToList(dispatchers.io)
             .map { rows -> rows.mapNotNull { row -> datasetOf(row.dataset)?.let { it to row.last_success } }.toMap() }
+            .map { AppResult.Success(it) }
 
     // v1.0 datasets may already have rows; the MVP has no use for them.
     private fun datasetOf(key: String): StaticDataset? = StaticDataset.entries.firstOrNull { it.key == key }

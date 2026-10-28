@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.android.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiMapper
@@ -17,7 +18,7 @@ class AboutDataViewModel(
 ) : ViewModel() {
     val state: StateFlow<AboutDataUiState> =
         observeLastSyncs()
-            .map<List<DatasetSync>, AboutDataUiState>(AboutDataUiMapper::content)
+            .map<AppResult<List<DatasetSync>>, AboutDataUiState>(AboutDataUiMapper::state)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), AboutDataUiState.Loading)
 
     private companion object {

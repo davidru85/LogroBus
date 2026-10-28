@@ -38,6 +38,8 @@ public struct AboutDataView: View {
                     Text("about.last_sync.title", bundle: .module)
                 }
             }
+        case .error:
+            EmptyView()
         }
     }
 }

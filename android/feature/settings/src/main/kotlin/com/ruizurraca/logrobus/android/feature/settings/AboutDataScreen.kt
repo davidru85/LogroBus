@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiMapper
@@ -54,6 +55,8 @@ fun AboutDataScreen(
         is AboutDataUiState.Content -> {
             LastSyncs(state.lastSyncs, modifier)
         }
+
+        is AboutDataUiState.Error -> {}
     }
 }
 
@@ -115,7 +118,9 @@ private fun AboutDataLoadingPreview() {
 @Composable
 private fun AboutDataSyncedPreview() {
     MaterialTheme {
-        AboutDataScreen(AboutDataUiMapper.content(StaticDataset.entries.map { DatasetSync(it, previewSync) }))
+        AboutDataScreen(
+            AboutDataUiMapper.state(AppResult.Success(StaticDataset.entries.map { DatasetSync(it, previewSync) })),
+        )
     }
 }
 
@@ -123,6 +128,6 @@ private fun AboutDataSyncedPreview() {
 @Composable
 private fun AboutDataNeverSyncedPreview() {
     MaterialTheme {
-        AboutDataScreen(AboutDataUiMapper.content(StaticDataset.entries.map { DatasetSync(it, null) }))
+        AboutDataScreen(AboutDataUiMapper.state(AppResult.Success(StaticDataset.entries.map { DatasetSync(it, null) })))
     }
 }
