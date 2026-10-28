@@ -48,6 +48,10 @@ kotlin {
             implementation(projects.shared.core.polling)
             implementation(libs.koin.core)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
+        }
         getByName("androidHostTest").dependencies {
             implementation(libs.robolectric)
         }

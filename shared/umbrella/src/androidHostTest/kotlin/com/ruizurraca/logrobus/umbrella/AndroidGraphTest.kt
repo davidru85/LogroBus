@@ -19,6 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /** ADR-0014 on Android: the graph resolves every dependency the app has, so a missing binding fails here. */
@@ -32,6 +33,16 @@ class AndroidGraphTest {
         initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
 
         assertResolvesTheCore(KoinPlatform.getKoin())
+    }
+
+    @Test
+    fun lb010_theGraphGivesSwiftEveryUseCase() {
+        initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+
+        // Every function of UseCases, so a use case added for Swift is checked without editing this test.
+        val useCases = UseCases::class.java.methods
+        assertTrue(useCases.isNotEmpty())
+        useCases.forEach { assertNotNull(it.invoke(SharedDependencies), it.name) }
     }
 
     @Test
