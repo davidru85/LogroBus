@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertContentDescriptionEquals
@@ -20,17 +22,19 @@ import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.ruizurraca.logrobus.core.common.color.contrastRatio
 import com.ruizurraca.logrobus.core.presentation.EtaDelay
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.core.presentation.EtaUi
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Spec §5.7, design_guidelines.md §6.3 and NFR-A11Y-02: every ETA case, drawn and spoken. */
+/** Spec §5.7, design_guidelines.md §6.3 and NFR-A11Y-02: every ETA case, drawn and spoken, in Spanish and English. */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class EtaTextTest {
@@ -42,40 +46,25 @@ class EtaTextTest {
     @Test
     @Config(qualifiers = "en")
     fun lb011_eachEtaCaseShowsItsValueAndSecondaryLine() {
-        val shown = everyCase.map { (eta, _) -> resources.etaLines(eta) }
+        assertEquals(everyCase.map { it.english }, everyCase.map { resources.etaLines(it.eta) })
+    }
 
-        assertEquals(
-            listOf(
-                EtaLines("Now", null),
-                EtaLines("1 min", null),
-                EtaLines("4 min", null),
-                EtaLines("09:05", null),
-                EtaLines("~4 min", null),
-                EtaLines("09:05", "Scheduled"),
-                EtaLines("4 min", "+3 min late"),
-                EtaLines("4 min", "1 min early"),
-                EtaLines("4 min", "Cancelled"),
-            ),
-            shown,
-        )
+    @Test
+    @Config(qualifiers = "es")
+    fun lb011_eachEtaCaseShowsItsValueAndSecondaryLine_inSpanish() {
+        assertEquals(everyCase.map { it.spanish }, everyCase.map { resources.etaLines(it.eta) })
     }
 
     @Test
     @Config(qualifiers = "en")
     fun lb011_eachEtaCaseIsSpoken() {
-        assertEquals(everyCase.map { it.second }, everyCase.map { (eta, _) -> resources.etaSpoken(eta) })
+        assertEquals(everyCase.map { it.englishSpoken }, everyCase.map { resources.etaSpoken(it.eta) })
     }
 
     @Test
     @Config(qualifiers = "es")
-    fun lb011_etasAreSpokenInSpanish() {
-        assertEquals("llega ahora", resources.etaSpoken(eta(EtaDisplay.Now)))
-        assertEquals("en 1 minuto", resources.etaSpoken(eta(EtaDisplay.Minutes(1))))
-        assertEquals(
-            "aproximadamente en 4 minutos, 3 minutos tarde",
-            resources.etaSpoken(eta(EtaDisplay.Minutes(4), lowConfidence = true, delay = EtaDelay.Late(3))),
-        )
-        assertEquals("programado a las 09:05", resources.etaSpoken(eta(EtaDisplay.ClockTime(9, 5), scheduled = true)))
+    fun lb011_eachEtaCaseIsSpoken_inSpanish() {
+        assertEquals(everyCase.map { it.spanishSpoken }, everyCase.map { resources.etaSpoken(it.eta) })
     }
 
     @Test
@@ -92,6 +81,25 @@ class EtaTextTest {
         compose.setContent { LogroBusTheme { style = etaStyle } }
 
         assertEquals("tnum", style?.fontFeatureSettings)
+    }
+
+    @Test
+    fun lb011_nowPulsesWithAnimationsOn_andHoldsStillWithThemOff() {
+        assertEquals(0.8f, nowAlpha(pulse = 0.8f, animationsEnabled = true))
+        assertEquals(1f, nowAlpha(pulse = 0.8f, animationsEnabled = false))
+    }
+
+    @Test
+    fun lb011_thePulseKeepsNowReadable() {
+        // NFR-A11Y-06: at its faintest, "Now" still reaches 4.5:1 on the surfaces a row sits on.
+        val faintest =
+            listOf(Tokens.lightColors, Tokens.darkColors).flatMap { scheme ->
+                listOf(scheme.surface, scheme.surfaceContainerHighest).map { background ->
+                    val text = scheme.onSurface.copy(alpha = PULSE_MIN_ALPHA).compositeOver(background)
+                    contrastRatio(text.toArgb().toLong() and 0xFFFFFFFF, background.toArgb().toLong() and 0xFFFFFFFF)
+                }
+            }
+        assertTrue("$faintest", faintest.all { it >= MINIMUM_CONTRAST })
     }
 
     @Test
@@ -115,13 +123,24 @@ class EtaTextTest {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.End,
                 ) {
-                    everyCase.forEach { (eta, _) -> EtaText(eta) }
+                    everyCase.forEach { EtaText(it.eta) }
                 }
             }
         }
     }
 
+    /** An ETA with what it shows and says in English and Spanish. */
+    private data class Case(
+        val eta: EtaUi,
+        val english: EtaLines,
+        val englishSpoken: String,
+        val spanish: EtaLines,
+        val spanishSpoken: String,
+    )
+
     private companion object {
+        const val MINIMUM_CONTRAST = 4.5
+
         fun eta(
             display: EtaDisplay,
             lowConfidence: Boolean = false,
@@ -130,18 +149,93 @@ class EtaTextTest {
             cancelled: Boolean = false,
         ) = EtaUi(display, lowConfidence, scheduled, delay, cancelled)
 
-        // Every case of spec §5.7 that shows, with its English spoken label.
+        val minutes = EtaDisplay.Minutes(4)
+        val clock = EtaDisplay.ClockTime(9, 5)
+
+        // Every case of spec §5.7 that shows, and the combinations EtaUi allows. The screen and TalkBack always agree.
         val everyCase =
             listOf(
-                eta(EtaDisplay.Now) to "arriving now",
-                eta(EtaDisplay.Minutes(1)) to "in 1 minute",
-                eta(EtaDisplay.Minutes(4)) to "in 4 minutes",
-                eta(EtaDisplay.ClockTime(9, 5)) to "at 09:05",
-                eta(EtaDisplay.Minutes(4), lowConfidence = true) to "approximately in 4 minutes",
-                eta(EtaDisplay.ClockTime(9, 5), scheduled = true) to "scheduled at 09:05",
-                eta(EtaDisplay.Minutes(4), delay = EtaDelay.Late(3)) to "in 4 minutes, 3 minutes late",
-                eta(EtaDisplay.Minutes(4), delay = EtaDelay.Early(1)) to "in 4 minutes, 1 minute early",
-                eta(EtaDisplay.Minutes(4), cancelled = true) to "cancelled",
+                Case(
+                    eta(EtaDisplay.Now),
+                    EtaLines("Now", null),
+                    "arriving now",
+                    EtaLines("Ahora", null),
+                    "llega ahora",
+                ),
+                Case(
+                    eta(EtaDisplay.Minutes(1)),
+                    EtaLines("1 min", null),
+                    "in 1 minute",
+                    EtaLines("1 min", null),
+                    "en 1 minuto",
+                ),
+                Case(eta(minutes), EtaLines("4 min", null), "in 4 minutes", EtaLines("4 min", null), "en 4 minutos"),
+                Case(eta(clock), EtaLines("09:05", null), "at 09:05", EtaLines("09:05", null), "a las 09:05"),
+                // A Búho time: "a la una", in the singular.
+                Case(
+                    eta(EtaDisplay.ClockTime(1, 5)),
+                    EtaLines("01:05", null),
+                    "at 01:05",
+                    EtaLines("01:05", null),
+                    "a la 01:05",
+                ),
+                Case(
+                    eta(minutes, lowConfidence = true),
+                    EtaLines("~4 min", null),
+                    "approximately in 4 minutes",
+                    EtaLines("~4 min", null),
+                    "aproximadamente en 4 minutos",
+                ),
+                Case(
+                    eta(EtaDisplay.Now, lowConfidence = true),
+                    EtaLines("~Now", null),
+                    "arriving now, approximately",
+                    EtaLines("~Ahora", null),
+                    "llega ahora, aproximadamente",
+                ),
+                Case(
+                    eta(clock, scheduled = true),
+                    EtaLines("09:05", "Scheduled"),
+                    "scheduled at 09:05",
+                    EtaLines("09:05", "Programado"),
+                    "programado a las 09:05",
+                ),
+                Case(
+                    eta(minutes, scheduled = true),
+                    EtaLines("4 min", "Scheduled"),
+                    "in 4 minutes, scheduled",
+                    EtaLines("4 min", "Programado"),
+                    "en 4 minutos, programado",
+                ),
+                // Scheduled hides the delay, on screen and in speech.
+                Case(
+                    eta(clock, scheduled = true, delay = EtaDelay.Late(3)),
+                    EtaLines("09:05", "Scheduled"),
+                    "scheduled at 09:05",
+                    EtaLines("09:05", "Programado"),
+                    "programado a las 09:05",
+                ),
+                Case(
+                    eta(minutes, delay = EtaDelay.Late(3)),
+                    EtaLines("4 min", "+3 min late"),
+                    "in 4 minutes, 3 minutes late",
+                    EtaLines("4 min", "+3 min tarde"),
+                    "en 4 minutos, 3 minutos tarde",
+                ),
+                Case(
+                    eta(minutes, delay = EtaDelay.Early(1)),
+                    EtaLines("4 min", "1 min early"),
+                    "in 4 minutes, 1 minute early",
+                    EtaLines("4 min", "1 min antes"),
+                    "en 4 minutos, 1 minuto antes",
+                ),
+                Case(
+                    eta(minutes, cancelled = true),
+                    EtaLines("4 min", "Cancelled"),
+                    "cancelled",
+                    EtaLines("4 min", "Cancelado"),
+                    "cancelado",
+                ),
             )
     }
 }
