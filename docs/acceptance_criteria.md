@@ -181,6 +181,13 @@ Done when:
 - `SharedDependencies.preview` provides scripted fakes, used by SwiftUI previews and Swift ViewModel tests.
 - The Kotlin and SKIE versions in the catalog are a pair documented as compatible.
 
+Part 1 (2026-10-27, the graph of the shared core), also done when:
+- The graph resolves every core service on the Android host and the iOS simulator, with one `ServerCorrectedClock` serving as the `AppClock`, and a second definition of any type fails at start.
+- `[Android]` `LogroBusApplication` starts the graph at launch; `[iOS]` `LogroBusApp.init` does, and `SharedDependencies.isReady` says so.
+- The app shells pass their version, for the `User-Agent`, and their build type: release builds log errors only, whatever the shared binary's build.
+- Stopping the graph cancels its application scope and closes the database.
+- SKIE exports `TopLevelDestination` as a Swift enum, so the tab labels switch over it without a default.
+
 ### LB-011 Design system foundations
 Refs: NFR-MNT-04, NFR-PLAT-01, NFR-A11Y-06, OQ-18, `design_guidelines.md` §4–6
 
