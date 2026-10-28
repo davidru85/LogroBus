@@ -116,6 +116,9 @@ object Tokens {
     /** A line badge's corners: an identity element that never morphs (design_guidelines.md §4). */
     val lineBadgeCorner = 6.dp
 
+    /** Keeps a line badge's code off its edges when the font grows. */
+    val lineBadgeVerticalPadding = 2.dp
+
     /** The spacing scale and the screen margin (design_guidelines.md §6.1). */
     object Spacing {
         val xs = 4.dp

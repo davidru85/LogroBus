@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.android.core.designsystem
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -103,7 +104,8 @@ class EtaTextTest {
     }
 
     @Test
-    @Config(qualifiers = "en", sdk = [SCREENSHOT_SDK])
+    // A tall window, so every case fits at 200 %.
+    @Config(qualifiers = "en-w360dp-h1600dp", sdk = [SCREENSHOT_SDK])
     fun lb011_everyEtaCase_screenshots() {
         captureRoboImage("src/test/screenshots/EtaText_light.png") { EveryEta(darkTheme = false) }
         captureRoboImage("src/test/screenshots/EtaText_dark.png") { EveryEta(darkTheme = true) }
@@ -117,7 +119,7 @@ class EtaTextTest {
     @Composable
     private fun EveryEta(darkTheme: Boolean) {
         LogroBusTheme(darkTheme) {
-            Surface {
+            Surface(Modifier.fillMaxSize()) {
                 Column(
                     Modifier.padding(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
