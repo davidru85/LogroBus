@@ -30,9 +30,10 @@ private fun androidModule(
     debug: Boolean,
 ) = module {
     single { appLogger(debug) }
-    // Created at start, on the main thread that starts Koin.
+    // Created at start, on the main thread that starts Koin, as ProcessLifecycleOwner needs (LB-004).
     single<AppLifecycle>(createdAtStart = true) { ProcessAppLifecycle() }
-    single<LocationProvider>(createdAtStart = true) { fusedLocationProvider(context, get()) }
+    // Lazy: it takes its updates on the main looper whichever thread creates it, so it can wait for Near Me.
+    single<LocationProvider> { fusedLocationProvider(context, get()) }
     single { clientIdentity(appVersion) }
     single<SqlDriver> { logroBusDriver(context) } onClose { it?.close() }
 }
