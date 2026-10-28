@@ -32,9 +32,15 @@ private val APPLICATION_SCOPE = named("application")
  */
 internal fun coreModules(platform: Module): List<Module> = listOf(platform, coreModule)
 
-/** Starts the graph of [modules] for the process (ADR-0014). */
+/**
+ * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of
+ * quietly replacing the first: a replaced AppClock, say, would be one the source client never corrects.
+ */
 internal fun startGraph(modules: List<Module>) {
-    startKoin { modules(modules) }
+    startKoin {
+        allowOverride(false)
+        modules(modules)
+    }
 }
 
 private val coreModule =
