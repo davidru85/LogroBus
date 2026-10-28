@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- About data (LB-404, design_guidelines.md §9, keys about.*). Spanish (es-ES) is the default language. -->
+    <string name="about_last_sync_title">Última sincronización</string>
+    <string name="about_last_sync_never">Aún no se ha sincronizado</string>
+    <string name="about_dataset_lines">Líneas</string>
+    <string name="about_dataset_stops">Paradas</string>
+</resources>

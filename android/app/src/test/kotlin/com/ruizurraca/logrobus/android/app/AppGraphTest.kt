@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.android.app
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.android.feature.settings.AboutDataViewModel
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.umbrella.initKoin
 import org.junit.Assert.assertNotNull
@@ -23,5 +24,10 @@ class AppGraphTest {
         assertThrows(KoinApplicationAlreadyStartedException::class.java) {
             initKoin(application, appVersion = "1.2.0", debug = true)
         }
+    }
+
+    @Test
+    fun lb010_theAppGraphGivesEachScreenItsViewModel() {
+        assertNotNull(GlobalContext.get().getOrNull<AboutDataViewModel>())
     }
 }
