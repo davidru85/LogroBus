@@ -33,6 +33,7 @@ class LineBadgeTest {
     val compose = createComposeRule()
 
     @Test
+    @Config(qualifiers = "es")
     fun lb011_aLineBadgeSaysItsLine_neverItsColour() {
         compose.setContent { LogroBusTheme { LineBadge("3", 0xFFC100FB, 0xFF000000) } }
 

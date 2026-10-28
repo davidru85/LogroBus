@@ -1,9 +1,13 @@
 package com.ruizurraca.logrobus.android.core.designsystem
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /**
  * Every brand value of the Android app (NFR-MNT-04, design_guidelines.md §4 and §6.1). Until OQ-18's designs
@@ -98,4 +102,27 @@ object Tokens {
             surfaceContainerHigh = Color(0xFF2A2A2A),
             surfaceContainerHighest = Color(0xFF353535),
         )
+
+    /** Material's type scale, emphasized styles included, on the system font until OQ-18. */
+    val typography = Typography()
+
+    /** Cards use 12 dp corners (spec §7.5). */
+    val shapes = Shapes(medium = RoundedCornerShape(12.dp))
+
+    /** A line badge's corners: an identity element that never morphs (design_guidelines.md §4). */
+    val lineBadgeCorner = 6.dp
+
+    /** The spacing scale and the screen margin (design_guidelines.md §6.1). */
+    object Spacing {
+        val xs = 4.dp
+        val s = 8.dp
+        val m = 12.dp
+        val l = 16.dp
+        val xl = 24.dp
+        val xxl = 32.dp
+        val screenMargin = 16.dp
+    }
+
+    /** The smallest touch target (NFR-A11Y-04). */
+    val minTouchTarget = 48.dp
 }
