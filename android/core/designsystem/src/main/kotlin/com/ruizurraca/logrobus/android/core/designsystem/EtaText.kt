@@ -17,17 +17,18 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import com.ruizurraca.logrobus.core.presentation.EtaDelay
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.core.presentation.EtaUi
@@ -42,26 +43,32 @@ fun EtaText(
     eta: EtaUi,
     modifier: Modifier = Modifier,
 ) {
-    val resources = LocalContext.current.resources
-    val lines = resources.etaLines(eta)
-    val spoken = resources.etaSpoken(eta)
+    val resources = LocalResources.current
+    val lines = remember(eta, resources) { resources.etaLines(eta) }
+    val spoken = remember(eta, resources) { resources.etaSpoken(eta) }
     val secondary = MaterialTheme.colorScheme.onSurfaceVariant
-    val alpha = if (eta.display == EtaDisplay.Now && !eta.cancelled) nowPulseAlpha() else 1f
+    val pulse = if (eta.display == EtaDisplay.Now && !eta.cancelled) rememberNowPulse() else null
     Column(modifier.clearAndSetSemantics { contentDescription = spoken }, horizontalAlignment = Alignment.End) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 lines.value,
-                Modifier.graphicsLayer { this.alpha = alpha },
+                // Read while drawing, so the pulse redraws the text without recomposing the row.
+                Modifier.graphicsLayer {
+                    alpha = pulse?.let { nowAlpha(it.value, ValueAnimator.areAnimatorsEnabled()) } ?: 1f
+                },
                 color = if (eta.scheduled || eta.cancelled) secondary else LocalContentColor.current,
                 style = etaStyle,
                 textDecoration = if (eta.cancelled) TextDecoration.LineThrough else null,
             )
-            // DD-09: a low-confidence ETA is marked, never hidden.
+            // DD-09: a low-confidence ETA is marked, never hidden. The icon grows with the text.
             if (eta.lowConfidence) {
                 Icon(
                     painterResource(R.drawable.ic_eta_low_confidence),
                     contentDescription = null,
-                    modifier = Modifier.padding(start = Tokens.Spacing.xs).size(LOW_CONFIDENCE_ICON.dp),
+                    modifier =
+                        Modifier
+                            .padding(start = Tokens.Spacing.xs)
+                            .size(with(LocalDensity.current) { etaStyle.fontSize.toDp() }),
                     tint = secondary,
                 )
             }
@@ -70,23 +77,24 @@ fun EtaText(
     }
 }
 
-/** "Now" pulses gently, and holds still when the system's animations are off (design_guidelines.md §6.3). */
+/**
+ * "Now" pulses gently (design_guidelines.md §6.3). A tween rather than the effects spring of §4, because a spring
+ * cannot repeat.
+ */
 @Composable
-private fun nowPulseAlpha(): Float {
-    val pulse by rememberInfiniteTransition(label = "now").animateFloat(
+private fun rememberNowPulse(): State<Float> =
+    rememberInfiniteTransition(label = "now").animateFloat(
         initialValue = 1f,
         targetValue = PULSE_MIN_ALPHA,
         animationSpec = infiniteRepeatable(tween(PULSE_MILLIS), RepeatMode.Reverse),
         label = "alpha",
     )
-    return if (ValueAnimator.areAnimatorsEnabled()) pulse else 1f
-}
 
 /** The alpha of "Now" for a [pulse] value: the pulse while animations are on, still at 1 when they are off. */
 internal fun nowAlpha(
     pulse: Float,
     animationsEnabled: Boolean,
-): Float = pulse
+): Float = if (animationsEnabled) pulse else 1f
 
 /** What an ETA shows: its value, and the secondary line under it, if any. */
 internal data class EtaLines(
@@ -107,16 +115,20 @@ internal fun Resources.etaLines(eta: EtaUi): EtaLines {
             eta.scheduled -> getString(R.string.eta_scheduled)
             else -> eta.delay?.let(::delayText)
         }
-    return EtaLines(if (eta.lowConfidence) "~$value" else value, secondary)
+    return EtaLines(if (eta.lowConfidence) getString(R.string.eta_approximate, value) else value, secondary)
 }
 
-/** What TalkBack says for an ETA, without the line. */
+/**
+ * What TalkBack says for an ETA, without the line. It says what the screen shows: the time, then the secondary line's
+ * qualifier, with the same precedence as [etaLines].
+ */
 internal fun Resources.etaSpoken(eta: EtaUi): String {
     if (eta.cancelled) return getString(R.string.eta_cancelled_spoken)
+    val display = eta.display
     val time =
-        when (val display = eta.display) {
+        when (display) {
             EtaDisplay.Now -> {
-                getString(R.string.eta_now_spoken)
+                getString(if (eta.lowConfidence) R.string.eta_now_approximately_spoken else R.string.eta_now_spoken)
             }
 
             is EtaDisplay.Minutes -> {
@@ -124,23 +136,42 @@ internal fun Resources.etaSpoken(eta: EtaUi): String {
             }
 
             is EtaDisplay.ClockTime -> {
-                getString(if (eta.scheduled) R.string.eta_scheduled_spoken else R.string.eta_clock_spoken, display.text)
+                val clock = if (eta.scheduled) R.plurals.eta_scheduled_spoken else R.plurals.eta_clock_spoken
+                getQuantityString(clock, display.hour, display.text)
             }
         }
-    val approximate = if (eta.lowConfidence) getString(R.string.eta_approximately_spoken, time) else time
-    val delay =
-        when (val delay = eta.delay) {
-            is EtaDelay.Late -> getQuantityString(R.plurals.eta_late_spoken, delay.minutes, delay.minutes)
-            is EtaDelay.Early -> getQuantityString(R.plurals.eta_early_spoken, delay.minutes, delay.minutes)
-            null -> null
+    val approximate =
+        if (eta.lowConfidence && display != EtaDisplay.Now) getString(R.string.eta_approximately_spoken, time) else time
+    val qualifier =
+        when {
+            // A scheduled clock time already says "scheduled at".
+            eta.scheduled -> {
+                if (display is EtaDisplay.ClockTime) {
+                    null
+                } else {
+                    getString(
+                        R.string.eta_scheduled_short_spoken,
+                    )
+                }
+            }
+
+            else -> {
+                eta.delay?.let(::delaySpoken)
+            }
         }
-    return listOfNotNull(approximate, delay).joinToString(", ")
+    return qualifier?.let { getString(R.string.eta_spoken_join, approximate, it) } ?: approximate
 }
 
 private fun Resources.delayText(delay: EtaDelay): String =
     when (delay) {
         is EtaDelay.Late -> getString(R.string.eta_late, delay.minutes)
         is EtaDelay.Early -> getString(R.string.eta_early, delay.minutes)
+    }
+
+private fun Resources.delaySpoken(delay: EtaDelay): String =
+    when (delay) {
+        is EtaDelay.Late -> getQuantityString(R.plurals.eta_late_spoken, delay.minutes, delay.minutes)
+        is EtaDelay.Early -> getQuantityString(R.plurals.eta_early_spoken, delay.minutes, delay.minutes)
     }
 
 // Spec §5.7: HH:mm on the Madrid clock, the same digits in every locale.
@@ -155,6 +186,6 @@ private val EtaDisplay.ClockTime.text: String
 internal val etaStyle: TextStyle
     @Composable get() = MaterialTheme.typography.titleMediumEmphasized.copy(fontFeatureSettings = "tnum")
 
-private const val LOW_CONFIDENCE_ICON = 16
-internal const val PULSE_MIN_ALPHA = 0.55f
+// The pulse's faintest alpha keeps "Now" at 4.5:1 or more on every surface (lb011_thePulseKeepsNowReadable).
+internal const val PULSE_MIN_ALPHA = 0.7f
 private const val PULSE_MILLIS = 900
