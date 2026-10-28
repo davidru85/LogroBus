@@ -32,6 +32,7 @@
 | `ForbiddenImport` | `kotlinx.coroutines.GlobalScope` | Structured concurrency |
 | Complexity | `LongMethod` 60, `CyclomaticComplexMethod` 15, `LargeClass` 600 | Keep units small |
 | `MagicNumber` | Enabled except in tests (including `androidHostTest`); design tokens and fixture builders suppress it at the declaration, with a comment | Thresholds come from named constants or remote config |
+| `UnusedPrivateFunction` | Ignores `@Preview` functions and Compose's multipreviews (`@PreviewLightDark`, `@PreviewFontScale`, `@PreviewScreenSizes`, `@PreviewDynamicColors`) | Android Studio renders the private previews of each UX state; no code calls them |
 
 ### 2.2 Conventions
 

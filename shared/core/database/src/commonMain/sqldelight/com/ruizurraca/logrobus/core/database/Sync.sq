@@ -24,3 +24,6 @@ INSERT OR REPLACE INTO sync_state (dataset, last_success, content_hash) VALUES (
 
 syncState:
 SELECT * FROM sync_state WHERE dataset = ?;
+
+lastSuccesses:
+SELECT dataset, last_success FROM sync_state WHERE last_success IS NOT NULL;

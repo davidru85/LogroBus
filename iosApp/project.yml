@@ -84,3 +84,5 @@ schemes:
       targets:
         - iosAppTests
         - iosAppUITests
+        # The Swift ViewModel tests of the LogroBusUI package (architecture.md §5.2).
+        - package: LogroBusUI/FeatureSettingsTests

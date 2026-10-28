@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.app
 
 import android.app.Application
+import com.ruizurraca.logrobus.android.feature.settings.settingsUiModule
 import com.ruizurraca.logrobus.umbrella.initKoin
 
 /**
@@ -10,7 +11,13 @@ import com.ruizurraca.logrobus.umbrella.initKoin
 open class LogroBusApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // The version for the User-Agent (spec §8.7), and the build type for the log level (security_privacy.md §4).
-        initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG)
+        // The version for the User-Agent (spec §8.7), the build type for the log level (security_privacy.md §4), and
+        // the ViewModels of each feature module.
+        initKoin(
+            this,
+            appVersion = BuildConfig.VERSION_NAME,
+            debug = BuildConfig.DEBUG,
+            uiModules = listOf(settingsUiModule),
+        )
     }
 }

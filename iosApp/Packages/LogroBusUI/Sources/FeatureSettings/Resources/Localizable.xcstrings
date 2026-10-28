@@ -1,0 +1,150 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "about.dataset.lines": {
+      "comment": "About data: the lines dataset, with its patterns and shapes (LB-404).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas"
+          }
+        }
+      }
+    },
+    "about.dataset.stops": {
+      "comment": "About data: the stops dataset (LB-404).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paradas"
+          }
+        }
+      }
+    },
+    "about.last_sync.never": {
+      "comment": "About data: a dataset that has never synced (LB-404).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not synced yet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no se ha sincronizado"
+          }
+        }
+      }
+    },
+    "about.last_sync.title": {
+      "comment": "About data: the section with each dataset's last successful sync (FR-SET-03).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last sync"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última sincronización"
+          }
+        }
+      }
+    },
+    "error.data": {
+      "comment": "Error state: data that could not be read (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The data couldn’t be read."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se han podido leer los datos."
+          }
+        }
+      }
+    },
+    "error.network": {
+      "comment": "Error state: no connection (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No connection. Check your network."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay conexión. Comprueba tu red."
+          }
+        }
+      }
+    },
+    "error.retry": {
+      "comment": "Error state: the action that reads again (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        }
+      }
+    },
+    "error.server": {
+      "comment": "Error state: the source failed (FR-ERR-05).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service isn’t responding. Try again later."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servicio no responde. Inténtalo más tarde."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

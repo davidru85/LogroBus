@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- About data (LB-404, design_guidelines.md §9, keys about.*). -->
+    <string name="about_last_sync_title">Last sync</string>
+    <string name="about_last_sync_never">Not synced yet</string>
+    <string name="about_dataset_lines">Lines</string>
+    <string name="about_dataset_stops">Stops</string>
+
+    <!-- FR-ERR-05: the Error state's reason and action (design_guidelines.md §7 and §9, keys error.*). -->
+    <string name="error_network">No connection. Check your network.</string>
+    <string name="error_server">The service isn’t responding. Try again later.</string>
+    <string name="error_data">The data couldn’t be read.</string>
+    <string name="error_retry">Retry</string>
+</resources>

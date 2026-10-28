@@ -322,4 +322,12 @@ Settings → ETA format switches between minutes and clock time (FR-SET-01).
 | `plan.origin.current` | Mi ubicación | My location |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
+| `about.last_sync.title` | Última sincronización | Last sync |
+| `about.last_sync.never` | Aún no se ha sincronizado | Not synced yet |
+| `about.dataset.lines` | Líneas | Lines |
+| `about.dataset.stops` | Paradas | Stops |
+| `error.network` | No hay conexión. Comprueba tu red. | No connection. Check your network. |
+| `error.server` | El servicio no responde. Inténtalo más tarde. | The service isn’t responding. Try again later. |
+| `error.data` | No se han podido leer los datos. | The data couldn’t be read. |
+| `error.retry` | Reintentar | Retry |
 | `offline.banner` (v1.0) | Sin conexión. Mostrando datos guardados. | You are offline. Showing saved data. |
