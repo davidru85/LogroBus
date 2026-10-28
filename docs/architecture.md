@@ -297,7 +297,7 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 ### 5.1 Android
 
 - `:android:app`:
-  - `LogroBusApplication` calls `initKoin { androidContext(this) }` and registers the platform implementations (location, telemetry).
+  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG)` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. Telemetry joins it with LB-409. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
   - A single activity draws edge-to-edge. `NavigationSuiteScaffold` holds the three tabs, and each tab keeps a Navigation 3 back stack of `@Serializable` `NavKey`s defined in `:android:core:navigation` (ADR-0005).
 - `:android:feature:<x>`:
   - Each screen is an `XRoute` (wiring), a stateless `XScreen(UiState, onEvent)` and an `XViewModel : androidx.lifecycle.ViewModel`.
@@ -317,9 +317,9 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - After a Kotlin change, rerun the script. Swift Package Manager resolves binary targets before any build phase runs, so a build phase cannot refresh the framework.
     - The fallback, feature folders inside the app target, was not needed.
   - The Xcode project is generated from `iosApp/project.yml` by XcodeGen and is never committed. The same script writes `Configuration/Version.xcconfig` from `version.properties`.
-  - `SharedDependencies` exists from LB-001. It exposes only the start destination until LB-010 adds the use cases and SKIE.
+  - `SharedDependencies` exists from LB-001. It exposes the start destination and `isReady`, whether the graph has started. LB-010 part 2 adds the use cases. SKIE is applied (LB-010 part 1).
 - **Composition root.**
-  - `LogroBusApp.init` calls `KoinKt.doInitKoin(...)` and passes the Swift implementations of the platform contracts (telemetry once chosen).
+  - `LogroBusApp.init` calls `doInitKoin(appVersion:debug:)`, a Swift global function through SKIE, with `CFBundleShortVersionString` and `#if DEBUG`, on the main actor. The iOS module of the graph creates `NotificationAppLifecycle` and Core Location there. Swift implementations of platform contracts, such as telemetry once chosen, will be passed the same way.
   - Swift obtains use cases from the Kotlin `SharedDependencies` factory object. Koin generics are not used from Swift.
 - **Swift ViewModels:** one `@MainActor @Observable final class XViewModel` per screen, in its `Feature<X>` target:
 
@@ -387,10 +387,11 @@ flowchart TD
 
 | Concern | Approach |
 | --- | --- |
+| Dependency injection | Koin (ADR-0014). `:shared:umbrella` holds the graph of the shared core, one instance of each service per process: one `ServerCorrectedClock` (also the `AppClock`), the source client, the polling engine on an application scope, and the database. `startGraph` refuses a second definition of any type, and stopping the graph cancels its scope and closes the database. The app shells pass the version and the build type (LB-010) |
 | Configuration | `RemoteConfig` in `:shared:core:config` with compiled defaults (NFR-REL-05). Backend deferred (OQ-16) |
 | Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
 | Settings | Multiplatform Settings (DataStore, `NSUserDefaults`), ADR-0018 |
-| Logging | The `Logger` interface (`:shared:core:common`): `ConsoleLogger` from the debug level in debug builds; errors only in release (`security_privacy.md` §4), or `NoOpLogger`. Never logs coordinates or free text |
+| Logging | The `Logger` interface (`:shared:core:common`): `ConsoleLogger` from the debug level in debug builds; errors only in release (`security_privacy.md` §4), or `NoOpLogger`. The app's build type decides, not the shared binary's (LB-010). Never logs coordinates or free text |
 | Localisation | Android `values/` (es-ES, the default) and `values-en/`; iOS `Localizable.xcstrings` with Spanish as the development language |
 | Security | HTTPS only, no pinning (spec §8.7), no secrets (`security_privacy.md`) |
 | Visual design | `design_guidelines.md` and a neutral placeholder theme until the Figma designs arrive near the end of the MVP (LB-413) |

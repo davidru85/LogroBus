@@ -2,6 +2,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     id("logrobus.kmp.library")
+    // Flows as AsyncSequence, sealed classes and enums as Swift enums, suspend functions as async (ADR-0004).
+    alias(libs.plugins.skie)
 }
 
 // The single Kotlin artefact consumed by iOS (ADR-0004, ADR-0007, ADR-0010): a static
@@ -23,6 +25,9 @@ kotlin {
         )
     val xcFramework = XCFramework("Shared")
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        // SQLDelight's native driver calls the system SQLite, which SQLiter's cinterop does not link (ADR-0013). This
+        // covers the test binaries; for the static framework, the app links it through LogroBusUI's Package.swift.
+        target.binaries.all { linkerOpts("-lsqlite3") }
         target.binaries.framework {
             baseName = "Shared"
             isStatic = true
@@ -41,6 +46,10 @@ kotlin {
             implementation(projects.shared.core.database)
             implementation(projects.shared.core.location)
             implementation(projects.shared.core.polling)
+            implementation(libs.koin.core)
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.robolectric)
         }
     }
 }
