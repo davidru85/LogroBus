@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(projects.shared.feature.settings)
+    implementation(projects.android.core.designsystem)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
