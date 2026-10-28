@@ -50,4 +50,4 @@ private val coreModule =
 internal fun appLogger(
     debug: Boolean,
     output: (String) -> Unit = ::println,
-): Logger = ConsoleLogger(minLevel = LogLevel.Debug, output = output)
+): Logger = ConsoleLogger(minLevel = if (debug) LogLevel.Debug else LogLevel.Error, output = output)
