@@ -68,7 +68,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
 | Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
 | iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, boots the iPhone 17e simulator (iOS 26.5) while `xcodebuild build-for-testing` runs, then runs `test-without-building` (Xcode 26.6), printing each phase's time (§5) | macOS | < 10 min (measured exception, §5) | Active, through the gate |
-| iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | LB-011 (snapshots), LB-101 (ViewModel tests). Until then, the iosApp scheme runs the package's ViewModel tests (`FeatureSettingsTests`, LB-010), so the "iOS build and tests" job does |
+| iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | Not yet a job of their own. The iosApp scheme runs the package's tests, so the "iOS build and tests" job does: `FeatureSettingsTests` (LB-010), `DesignSystemTests` and the app-hosted `GlassSnapshotTests` (LB-011). A separate job would rebuild the framework on another macOS runner while that job is already over its budget; the owner decides with the iOS budget (LB-101 adds the ViewModel matrix) |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
 
@@ -153,7 +153,10 @@ Because `main` is protected, path-filtered workflows need a small always-running
     The floors are constraints, so a newer version from AGP always wins. **On every AGP upgrade:**
     - drop the floors that AGP has caught up with;
     - query the advisories for every resolved coordinate, as the PR #12 log entry describes.
-  - The iOS package has no external Swift dependencies yet. When it gets one, commit `Package.resolved` so that GitHub can read it (LB-013).
+  - The first external Swift dependency is swift-snapshot-testing (LB-011, tests only). `iosApp/Package.resolved` pins it and its transitive packages.
+    - `scripts/ios/generate-project.sh` copies the file into the generated workspace, and `scripts/ios/test.sh` builds with `-onlyUsePackageVersionsFromResolvedFile`.
+    - After a deliberate update, copy the generated file back into `iosApp/`.
+    - An architecture test keeps the version pinned in `Package.swift` and in `project.yml` the same.
 - Dependabot keeps the actions updated weekly. The `gradle` and `swift` ecosystems are added after LB-001.
 
 ## 7. CD
