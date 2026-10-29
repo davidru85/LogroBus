@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The window theme, shown before Compose draws (LB-011). Its light and dark variants follow the system, as
+        LogroBusTheme does; the brand colours live in the design system's Tokens, not here.
+    -->
+    <style name="Theme.LogroBus" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>

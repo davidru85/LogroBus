@@ -19,6 +19,76 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-28: LB-011, part 1: the shared contrast rule and the Android design system
+
+**Done**
+- **Merge:** PR #27 (LB-010 part 2) was merged with a merge commit (`401ae0f`). Its CI was green, with the iOS job at about 14 min.
+- **Split:** LB-011 is in two parts. Part 1 covers shared code and Android; part 2 covers iOS.
+- **Dependencies:**
+  - Roborazzi 1.77.0 (Apache-2.0), for tests only.
+  - Compose Material 3 is pinned at 1.5.0-beta02 over the BOM's 1.4.0, in which the expressive components and emphasized type are internal. ADR-0005 has a dated note.
+- **Shared:**
+  - `contrastRatio` and `onColorFor` (WCAG 2.2) in `:shared:core:common`. All 13 current line colours reach at least 4.5:1; line 3's purple is the closest, at 4.66:1 in black.
+  - `EtaUi`, `EtaDisplay` and `EtaDelay` in `:shared:core:presentation`.
+- **`:android:core:designsystem`:**
+  - `Tokens`: the neutral placeholder schemes, a warning colour (`StatusColors`), type, shapes, spacing and touch target.
+  - `LogroBusTheme`: `MaterialExpressiveTheme` with the expressive motion scheme.
+  - `LineBadge`.
+  - `EtaText`: lines and spoken labels from resources, the "Now" pulse, the low-confidence icon.
+  - Previews, and Roborazzi references in light, dark and at 200 % font.
+- **App and About data:**
+  - The app draws on `LogroBusTheme`, its bars follow dark mode, and its window theme has a night variant.
+  - About data uses the theme and the spacing tokens, with screenshots of its four states.
+- **Checks:**
+  - An architecture test keeps `ExperimentalMaterial3ExpressiveApi` inside the design system; a mutation check confirmed it fails elsewhere.
+  - Another requires the `android-screenshots` CI job to list every module with reference images. That job runs `verifyRoborazziDebug` per module behind the Kotlin gate.
+- **Screenshot tests run on SDK 36.** On SDK 37, the target, Robolectric 4.17 drew only the first capture of a test run, and later ones came out as the bare window background with the right size. A probe found SDK 34, 35 and 36 correct.
+- **Reviews** (code-reviewer and android-ui-reviewer subagents; no blockers):
+  - **Fixed, with TDD:**
+    - The "Now" pulse dropped to 3.6:1.
+    - Nothing tested the pulse's reduced-motion hold.
+    - TalkBack and the screen disagreed for some `EtaUi` combinations.
+    - Spanish said "a las 01:05" and was barely tested.
+    - There was no warning colour token.
+    - The window theme stayed light in dark mode.
+  - **Fixed in the green and refactor commits:**
+    - `LocalContext.resources` raised a lint warning.
+    - The pulse recomposed the row every frame.
+    - The icon did not grow at 200 %.
+    - The 200 % EtaText image was cut off.
+    - The dark references were half light.
+    - The previews were missing.
+    - The motion scheme was implicit.
+    - `BLACK` and `WHITE` were public.
+    - A comment on the API 26 scrim was wrong.
+
+**Decisions**
+- The expressive component wrappers (`LbLoadingIndicator`, `LbButtonGroup`) are built with the first screen that needs each; no screen does yet.
+- The window themes set no colour, so the brand colours live only in `Tokens`.
+- `SCREENSHOT_SDK` is defined once per module until an Android test-fixtures module exists.
+
+**Process slips** (recorded here, since history is not rewritten):
+- `82b53e0` was committed with detekt and Kover failing: a chained command committed regardless. `760b2a7` fixed it, and every commit now follows its checks with `&&`.
+- `343b00e`, a green commit, is typed `ci:` without a scope.
+- Three commits do more than their phase:
+  - `c1d6ef1` (red) also pins Material 3;
+  - `15f17af` (green) also edits `TokensTest`;
+  - `05ca286` (green) fixes its red test's locale.
+- A command with `rm -rf` was denied by the settings; it was split and rerun without it.
+
+**Open / next**
+- **Part 2 (iOS):**
+  - `DesignSystem` tokens, `LineBadge`, `EtaText`, the `adaptiveGlass` helpers and glass button styles;
+  - swift-snapshot-testing and its CI job.
+  - The iOS 18 fallback needs an iOS 18 runtime, which this machine lacks. The proposal is to force the fallback path in iOS 26 snapshots and leave real iOS 18 runs to the nightly (LB-412). Owner decision.
+- **The CI job's first run:** the references were recorded on macOS and are verified on Linux. If anti-aliasing differs, record them on Linux or set a small threshold, and document the choice in `testing_strategy.md` §4.6.
+- **Still pending owner decisions:**
+  - the deny-list patterns (`--force-with-lease`, `+branch`, `--no-verify origin main`);
+  - OQ-11 and OQ-16;
+  - the iOS CI budget, the iOS connect timeout, and the foreground-fetch floor.
+
+---
+
 ## 2026-10-28: LB-010, part 2: the ViewModel conventions, on About data
 
 **Done**

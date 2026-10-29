@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.architecture
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -204,6 +205,62 @@ class ArchitectureRulesTest {
         assertEquals(
             "$root.android.feature.lines",
             ArchitectureRules.expectedNamespace("android/feature/lines/src/test/kotlin/A.kt"),
+        )
+    }
+
+    @Test
+    fun lb011_expressiveApisAreFlaggedOutsideTheDesignSystem() {
+        val optIn = "@OptIn(ExperimentalMaterial3ExpressiveApi::class)\nfun Screen() {}"
+        val import = "import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi"
+        val feature = "com.ruizurraca.logrobus.android.feature.lines"
+
+        assertTrue(ArchitectureRules.usesExpressiveApiOutsideDesignSystem(feature, optIn))
+        assertTrue(ArchitectureRules.usesExpressiveApiOutsideDesignSystem(feature, import))
+        assertTrue(ArchitectureRules.usesExpressiveApiOutsideDesignSystem("com.ruizurraca.logrobus.android.app", optIn))
+    }
+
+    @Test
+    fun lb011_expressiveApisAreAllowedInTheDesignSystemOnly() {
+        val optIn = "@OptIn(ExperimentalMaterial3ExpressiveApi::class)"
+        val designSystem = "com.ruizurraca.logrobus.android.core.designsystem"
+
+        assertFalse(ArchitectureRules.usesExpressiveApiOutsideDesignSystem(designSystem, optIn))
+        assertFalse(ArchitectureRules.usesExpressiveApiOutsideDesignSystem("$designSystem.component", optIn))
+        // A package that only starts with the same letters is not the design system.
+        assertTrue(ArchitectureRules.usesExpressiveApiOutsideDesignSystem("${designSystem}extra", optIn))
+        assertFalse(
+            ArchitectureRules.usesExpressiveApiOutsideDesignSystem("com.ruizurraca.logrobus.android.app", "fun A() {}"),
+        )
+    }
+
+    @Test
+    fun lb011_aJobsMatrixModulesAreReadFromThatJobOnly() {
+        val workflow =
+            """
+            jobs:
+              unit-tests:
+                strategy:
+                  matrix:
+                    module:
+                      - ":android:app"
+                      - ":android:core:designsystem"
+              screenshots:
+                strategy:
+                  matrix:
+                    module:
+                      - ":android:core:designsystem"
+                      - :android:feature:settings
+                steps:
+                  - run: ./gradlew "${'$'}MODULE:verifyRoborazziDebug"
+            """.trimIndent()
+
+        assertEquals(
+            setOf(":android:core:designsystem", ":android:feature:settings"),
+            ArchitectureRules.jobMatrixModules(workflow, "screenshots"),
+        )
+        assertEquals(
+            setOf(":android:app", ":android:core:designsystem"),
+            ArchitectureRules.jobMatrixModules(workflow, "unit-tests"),
         )
     }
 }

@@ -15,6 +15,7 @@ The brief asks for Kotlin, Jetpack Compose and Material 3 Expressive. The app ha
 
 - **Theme:** `MaterialExpressiveTheme` with a fixed brand colour scheme for light and dark, `MotionScheme.expressive()`, expressive typography and the shape scale. Dynamic colour is not used in v1.
 - **Experimental APIs:** `@OptIn(ExperimentalMaterial3ExpressiveApi::class)` appears only in the wrappers of the `designsystem` package. Feature code uses the wrappers. The Compose Material 3 version is pinned in the version catalog and upgraded deliberately.
+  - *Update, 2026-10-28 (LB-011):* the pin is 1.5.0-beta02, over the Compose BOM's 1.4.0, in which the expressive components and emphasized type are internal. It moves to 1.5.0 when that is stable. An architecture test keeps the opt-in inside the design system.
 - **Navigation:** Jetpack Navigation 3. The app holds one back stack of `@Serializable` `NavKey`s per tab. Switching tabs keeps each tab's stack, and re-selecting a tab pops it to its root.
 - **Adaptive layout:** `NavigationSuiteScaffold` shows a navigation bar on compact widths and a navigation rail on medium and expanded widths.
 - **Maps:** MapLibre Native through `maplibre-compose`.

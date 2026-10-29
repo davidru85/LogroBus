@@ -172,6 +172,37 @@ jobs:
           MODULE: ${{ matrix.module }}
         run: ./gradlew "$MODULE:ciUnitTest"
 
+  android-screenshots:
+    # GitHub appends the matrix value: "Android screenshots (:android:core:designsystem)".
+    name: Android screenshots
+    needs: changes
+    if: ${{ needs.changes.outputs.kotlin == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      # Must list exactly the Android modules with reference images under src/test/screenshots
+      # (lb011_kotlinWorkflowVerifiesTheScreenshotsOfEveryModuleThatHasThem).
+      matrix:
+        module:
+          - ":android:core:designsystem"
+          - ":android:feature:settings"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/gradle-setup
+      - name: Compare with the reference images (Roborazzi)
+        env:
+          MODULE: ${{ matrix.module }}
+        run: ./gradlew "$MODULE:verifyRoborazziDebug"
+      # The actual and diff images of a failed comparison, to see what changed.
+      - name: Upload the comparison images
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-${{ strategy.job-index }}
+          path: android/**/build/outputs/roborazzi
+          if-no-files-found: ignore
+
   android-build:
     name: Android build
     needs: changes
@@ -247,7 +278,7 @@ jobs:
 
   ci-gate:
     name: Kotlin gate
-    needs: [changes, build-logic, ktlint, detekt, coverage, architecture, shared-unit-tests, android-unit-tests, android-build, android-lint, dependency-graph, dependency-review]
+    needs: [changes, build-logic, ktlint, detekt, coverage, architecture, shared-unit-tests, android-unit-tests, android-screenshots, android-build, android-lint, dependency-graph, dependency-review]
     if: ${{ always() && !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 3

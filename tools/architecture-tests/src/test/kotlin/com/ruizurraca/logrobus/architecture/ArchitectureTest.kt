@@ -261,6 +261,33 @@ class ArchitectureTest {
         assertEquals(emptyList<String>(), offenders)
     }
 
+    @Test
+    fun lb011_kotlinWorkflowVerifiesTheScreenshotsOfEveryModuleThatHasThem() {
+        // A module's reference images are checked only if its module is in the screenshot job (docs/ci_cd.md §3).
+        val withScreenshots =
+            androidModules.filter { module ->
+                File(root, module.removePrefix(":").replace(':', '/') + "/src/test/screenshots")
+                    .listFiles { file -> file.extension == "png" }
+                    .orEmpty()
+                    .isNotEmpty()
+            }
+        val workflow = File(root, ".github/workflows/kotlin-checks.yml").readText()
+        assertEquals(
+            withScreenshots.toSortedSet(),
+            ArchitectureRules.jobMatrixModules(workflow, job = "android-screenshots").toSortedSet(),
+        )
+    }
+
+    @Test
+    fun lb011_expressiveApisStayInTheDesignSystem() {
+        // ADR-0005: an expressive API change then touches one package.
+        val offenders =
+            androidFiles()
+                .filter { ArchitectureRules.usesExpressiveApiOutsideDesignSystem(it.packagee?.name, it.text) }
+                .map { it.relativePath() }
+        assertEquals(emptyList<String>(), offenders)
+    }
+
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
 
