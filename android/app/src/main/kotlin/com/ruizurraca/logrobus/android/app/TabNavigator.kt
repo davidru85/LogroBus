@@ -48,8 +48,8 @@ internal class TabNavigator(
         get() = listOf(TopLevelDestination.start, selected).distinct()
 
     /**
-     * Selects [destination]. Re-selecting the selected tab pops it to its root, or, at the root, asks the root to scroll
-     * to its top (FR-NAV-03).
+     * Selects [destination]. Re-selecting the selected tab pops it to its root, or, at the root, asks the root to
+     * scroll to its top (FR-NAV-03).
      */
     fun select(destination: TopLevelDestination) {
         val stack = stack(destination)
