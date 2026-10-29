@@ -7,7 +7,7 @@ public struct EtaText: View {
     private let eta: EtaUi
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.locale) private var locale
-    @State private var dimmed = false
+    @Environment(\.etaPulse) private var pulseAllowed
 
     public init(eta: EtaUi) {
         self.eta = eta
@@ -15,6 +15,7 @@ public struct EtaText: View {
 
     public var body: some View {
         let bundle = Bundle.designSystem(for: locale)
+        let muted = eta.scheduled || eta.cancelled
         let lines = EtaStrings.lines(eta, bundle: bundle, locale: locale)
         VStack(alignment: .trailing, spacing: 2) {
             HStack(spacing: Tokens.Spacing.xSmall) {
@@ -23,8 +24,9 @@ public struct EtaText: View {
                     .fixedSize(horizontal: true, vertical: false)
                     .font(.headline.monospacedDigit())
                     .strikethrough(eta.cancelled)
-                    .foregroundStyle(eta.scheduled || eta.cancelled ? Tokens.Colors.secondaryText : Color.primary)
-                    .opacity(isNow ? EtaStrings.nowOpacity(dimmed: dimmed, reduceMotion: reduceMotion) : 1)
+                    .foregroundStyle(muted ? Tokens.Colors.secondaryText : Tokens.Colors.onSurface)
+                    // Keyed on the state, so a row that turns into "Now" starts pulsing, and one that stops, stops.
+                    .modifier(NowPulse(active: pulseAllowed && EtaStrings.pulses(eta, reduceMotion: reduceMotion)))
                 // DD-09: a low-confidence ETA is marked, never hidden. The symbol scales with the text.
                 if eta.lowConfidence {
                     Image(systemName: "info.circle")
@@ -41,14 +43,28 @@ public struct EtaText: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(EtaStrings.spoken(eta, bundle: bundle, locale: locale))
-        .onAppear {
-            guard isNow else { return }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { dimmed = true }
-        }
     }
+}
 
-    private var isNow: Bool {
-        eta.display is EtaDisplayNow && !eta.cancelled
+extension EnvironmentValues {
+    /// Off in snapshot tests, so the pulse cannot catch "Now" mid-fade.
+    @Entry var etaPulse = true
+}
+
+/// "Now" fades to ``EtaStrings/pulseMinOpacity`` and back while it is active (design_guidelines.md §6.3).
+private struct NowPulse: ViewModifier {
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        if active {
+            content.phaseAnimator([1, EtaStrings.pulseMinOpacity]) { view, opacity in
+                view.opacity(opacity)
+            } animation: { _ in
+                .easeInOut(duration: 0.9)
+            }
+        } else {
+            content
+        }
     }
 }
 
@@ -108,14 +124,9 @@ enum EtaStrings {
         return String(localized: "eta.spoken_join \(approximate) \(qualifier)", bundle: bundle, locale: locale)
     }
 
-    /// The opacity of "Now" while it pulses: still at 1 when Reduce Motion is on.
-    static func nowOpacity(dimmed: Bool, reduceMotion: Bool) -> Double {
-        dimmed && !reduceMotion ? pulseMinOpacity : 1
-    }
-
     /// Whether an ETA pulses: a live "Now", whenever it becomes one, unless Reduce Motion is on.
     static func pulses(_ eta: EtaUi, reduceMotion: Bool) -> Bool {
-        false
+        eta.display is EtaDisplayNow && !eta.cancelled && !reduceMotion
     }
 
     private static func timeSpoken(

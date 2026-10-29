@@ -73,6 +73,7 @@ private struct CurrentLineBadges: View {
                 }
             }
         }
+        .fixedSize()
     }
 }
 
@@ -84,7 +85,8 @@ private struct EveryEta: View {
             }
         }
         .fixedSize()
-        // Spanish, the app's default language, whatever the simulator's.
+        // Spanish, the app's default language, whatever the simulator's; no pulse, which could catch "Now" mid-fade.
         .environment(\.locale, Locale(identifier: "es"))
+        .environment(\.etaPulse, false)
     }
 }
