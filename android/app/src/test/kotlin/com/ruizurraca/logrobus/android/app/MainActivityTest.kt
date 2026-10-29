@@ -88,8 +88,9 @@ class MainActivityTest {
     @Test
     @Config(qualifiers = "night")
     fun lb011_theStartScreenDrawsOnTheThemesSurface() {
+        // The middle of the tab's content: since LB-012 the bottom edge is the navigation bar, on its own container.
         compose.onRoot().captureToImage().toPixelMap().let { pixels ->
-            assertEquals(Tokens.darkColors.surface, pixels[pixels.width / 2, pixels.height - 1])
+            assertEquals(Tokens.darkColors.surface, pixels[pixels.width / 2, pixels.height / 2])
         }
     }
 }

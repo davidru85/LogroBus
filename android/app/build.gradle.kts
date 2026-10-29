@@ -17,6 +17,7 @@ dependencies {
     implementation(projects.android.feature.settings)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material3.adaptive.navigation.suite)
     implementation(libs.compose.ui)
 
     testImplementation(libs.junit4)
