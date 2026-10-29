@@ -31,6 +31,7 @@ public enum Tokens {
         public static let accent = Color(light: light.accent, dark: dark.accent)
         /// Text on the accent: white on the dark light-mode accent, dark blue on the light dark-mode one.
         public static let onAccent = Color(light: light.onAccent, dark: dark.onAccent)
+        public static let onSurface = Color(light: light.onSurface, dark: dark.onSurface)
         public static let secondaryText = Color(light: light.secondaryText, dark: dark.secondaryText)
         public static let warning = Color(light: light.warning, dark: dark.warning)
     }

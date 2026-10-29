@@ -60,10 +60,12 @@ public struct LineBadge: View {
             .fontWeight(.bold)
             .foregroundStyle(Color(argb: onColor))
             .lineLimit(1)
-            .fixedSize()
             .padding(.horizontal, size.padding)
             .padding(.vertical, 2)
             .frame(minWidth: size.minWidth, minHeight: size.minHeight)
+            // After the minimum frame: the colour is always the bigger of the minimum and the code, whatever the
+            // row offers, so the code never spills out of it.
+            .fixedSize()
             .background(Color(argb: color), in: RoundedRectangle(cornerRadius: Tokens.lineBadgeCornerRadius))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Self.spokenLabel(code: code, bundle: .designSystem(for: locale), locale: locale))
