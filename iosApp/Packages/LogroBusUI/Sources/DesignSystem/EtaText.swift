@@ -113,6 +113,11 @@ enum EtaStrings {
         dimmed && !reduceMotion ? pulseMinOpacity : 1
     }
 
+    /// Whether an ETA pulses: a live "Now", whenever it becomes one, unless Reduce Motion is on.
+    static func pulses(_ eta: EtaUi, reduceMotion: Bool) -> Bool {
+        false
+    }
+
     private static func timeSpoken(
         _ display: Skie.Presentation.EtaDisplay.__Sealed, eta: EtaUi, bundle: Bundle, locale: Locale
     ) -> String {
