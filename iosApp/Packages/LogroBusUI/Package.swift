@@ -30,7 +30,7 @@ let package = Package(
     targets: [
         // Built by Gradle and copied here by scripts/ios/generate-project.sh; never committed.
         .binaryTarget(name: "Shared", path: "Frameworks/Shared.xcframework"),
-        .target(name: "DesignSystem"),
+        .target(name: "DesignSystem", dependencies: ["Shared"], linkerSettings: linksShared),
         .target(name: "MapUI", dependencies: ["DesignSystem"]),
         .target(name: "FeatureLines", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
         .target(name: "FeatureStops", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: linksShared),
@@ -44,4 +44,15 @@ let package = Package(
 // scripts/ios/test.sh does too. Kept apart from the list above, which holds one target per line.
 package.targets.append(
     .testTarget(name: "FeatureSettingsTests", dependencies: ["FeatureSettings", "Shared"], linkerSettings: linksShared)
+)
+
+// The design system's tests, with snapshots (LB-011, testing_strategy.md §4.6). The iosApp scheme runs them too.
+package.dependencies.append(.package(url: "https://github.com/pointfreeco/swift-snapshot-testing", exact: "1.19.7"))
+package.targets.append(
+    .testTarget(
+        name: "DesignSystemTests",
+        dependencies: ["DesignSystem", "Shared", .product(name: "SnapshotTesting", package: "swift-snapshot-testing")],
+        exclude: ["__Snapshots__"],
+        linkerSettings: linksShared
+    )
 )
