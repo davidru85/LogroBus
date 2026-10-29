@@ -4,6 +4,8 @@ package com.ruizurraca.logrobus.architecture
 object ArchitectureRules {
     private const val ROOT_PACKAGE = "com.ruizurraca.logrobus"
     private const val UMBRELLA_PACKAGE = "$ROOT_PACKAGE.umbrella"
+    private const val DESIGN_SYSTEM_PACKAGE = "$ROOT_PACKAGE.android.core.designsystem"
+    private const val EXPRESSIVE_API = "ExperimentalMaterial3ExpressiveApi"
 
     private val includeCall = Regex("""\binclude\s*\(([^)]*)\)""")
     private val quoted = Regex(""""([^"]+)"""")
@@ -66,6 +68,16 @@ object ArchitectureRules {
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
+    /** Whether a file outside the Android design system uses Material 3's experimental expressive APIs (ADR-0005). */
+    fun usesExpressiveApiOutsideDesignSystem(
+        packageName: String?,
+        source: String,
+    ): Boolean {
+        val own = packageName.orEmpty()
+        val inDesignSystem = own == DESIGN_SYSTEM_PACKAGE || own.startsWith("$DESIGN_SYSTEM_PACKAGE.")
+        return !inDesignSystem && EXPRESSIVE_API in source
+    }
+
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
         swiftTarget
@@ -86,6 +98,12 @@ object ArchitectureRules {
     /** Gradle module paths listed as items of a workflow matrix, such as `- ":shared:core:common"`. */
     fun workflowMatrixModules(workflow: String): Set<String> =
         matrixModuleItem.findAll(workflow).map { it.groupValues[1] }.toSet()
+
+    /** Gradle module paths listed in [job]'s matrix only, not in the other jobs of the workflow. */
+    fun jobMatrixModules(
+        workflow: String,
+        job: String,
+    ): Set<String> = workflowMatrixModules(jobBodies(workflow)[job].orEmpty())
 
     /**
      * Jobs of a GitHub Actions workflow that its [gate] job does not list in `needs`. The gate is the one required

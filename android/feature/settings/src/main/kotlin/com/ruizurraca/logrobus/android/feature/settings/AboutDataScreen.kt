@@ -33,8 +33,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataEvent
@@ -121,8 +121,8 @@ private fun ErrorMessage(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.fillMaxSize().padding(ErrorPadding),
-        verticalArrangement = Arrangement.spacedBy(ErrorPadding, Alignment.CenterVertically),
+        modifier.fillMaxSize().padding(Tokens.Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xl, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringResource(reason.messageRes), textAlign = TextAlign.Center)
@@ -190,8 +190,5 @@ private fun rememberDateTimeFormat(): DateTimeFormat {
     }
 }
 
-// Placeholder sizes until LB-011's design tokens.
+// A placeholder spans this share of its row: long enough to read as text, short enough not to look like content.
 private const val PLACEHOLDER_WIDTH = 0.4f
-
-@Suppress("MagicNumber") // A design value: LB-011 replaces it with a token.
-private val ErrorPadding = 24.dp

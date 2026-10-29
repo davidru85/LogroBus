@@ -189,7 +189,14 @@ Results                                   Itinerary detail
 - Wrap the app in `MaterialExpressiveTheme` with a fixed brand `ColorScheme` for light and dark, `MotionScheme.expressive()`, the expressive typography and the shape scale.
 - **Until OQ-18 is decided, the brand palette is a neutral placeholder** (greys plus one accessible accent). It is defined as tokens in one place (NFR-MNT-04) and replaced by the Figma designs in LB-413, near the end of the MVP.
 - Dynamic colour is not used in v1, so brand surfaces stay predictable next to the data-driven line colours.
-- Expressive APIs are experimental. Opt in only inside `designsystem/` wrappers, such as `LbButtonGroup` and `LbLoadingIndicator`.
+- Expressive APIs are experimental. Opt in only inside `designsystem/` wrappers, such as `LbButtonGroup` and `LbLoadingIndicator`. An architecture test enforces this (`lb011_expressiveApisStayInTheDesignSystem`).
+  - Compose Material 3 is pinned at 1.5.0-beta02, over the BOM's 1.4.0, whose expressive components and emphasized type are internal (ADR-0005). Move to 1.5.0 when it is stable.
+  - Each wrapper is built with the first screen that needs it.
+- **As built (LB-011 part 1):** `:android:core:designsystem` holds:
+  - `Tokens`: the light and dark schemes, the type scale, the shapes, the spacing scale and the touch target. The placeholder palette is greys plus a muted blue accent (#2F5D8A, #A7C8EC in dark). A test checks that every text colour reaches 4.5:1 and that every surface is grey.
+  - `LogroBusTheme`, over `MaterialExpressiveTheme`.
+  - `LineBadge`.
+  - `EtaText`.
 
 | Need | Component |
 | --- | --- |
@@ -250,11 +257,14 @@ The MVP is **iPhone only** (NFR-PLAT-03): no iPad layouts.
 | Line badge | At least 32 × 24, radius 6, bold label, fill = line colour, text = `onColor` (≥ 4.5:1) |
 | ETA text | Title medium, emphasized or semibold, tabular figures |
 | Secondary ETA text (delay, early, scheduled) | Body small, secondary colour |
-| Freshness, stale | Warning colour, "Actualizado hace N s" ("Updated N s ago") |
+| Freshness, stale | Warning colour, "Actualizado hace N s" ("Updated N s ago"). Placeholder warning: #8A5300 in light, #F2B861 in dark (`StatusColors`, LB-011), at least 4.5:1 on every surface |
 
 ### 6.2 Line badge
 
 `LineBadge(code, color, onColor, size = Regular | Small | Large)` is the only way a line is shown, in lists, chips, map markers, itinerary legs and notifications. Its accessibility label is "Línea 3" / "Line B1", never the colour name.
+
+- **Sizes:** Small, Regular and Large (32 × 24, 40 × 28 and 48 × 32 at minimum). The badge grows with the font scale rather than truncate.
+- **Text colour:** `onColor` is whichever of black and white contrasts more with the line colour (`onColorFor` in `:shared:core:common`, WCAG 2.2). All 13 current lines reach at least 4.5:1; line 3's purple is the closest, at 4.66:1 in black.
 
 ### 6.3 ETA presentation (spec §5.7)
 
@@ -270,6 +280,12 @@ The MVP is **iPhone only** (NFR-PLAT-03): no iPad layouts.
 | Expired data (over 120 s) | All ETAs as clock times + "Toca para actualizar" ("Tap to refresh") | none |
 
 Settings → ETA format switches between minutes and clock time (FR-SET-01).
+
+As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minutes`, `ClockTime`), `lowConfidence`, `scheduled`, an `EtaDelay` and `cancelled`, and each platform's `EtaText` draws and speaks it.
+- The spoken label leaves out the line, which the row's `LineBadge` says, for example "approximately in 4 minutes, 3 minutes late".
+- It says what the screen shows, with the same precedence: cancelled, then scheduled (which hides a delay), then the delay.
+- "Now" pulses down to 70 % opacity, which keeps it at 4.5:1 on every surface, and holds still when the system's animations are off.
+- Clock times show as HH:mm with the same digits in every locale.
 
 ### 6.4 Map styling (spec §7.4)
 
@@ -322,6 +338,15 @@ Settings → ETA format switches between minutes and clock time (FR-SET-01).
 | `plan.origin.current` | Mi ubicación | My location |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
+| `line.badge` (spoken) | Línea %s | Line %s |
+| `eta.now` | Ahora | Now |
+| `eta.minutes` | %d min | %d min |
+| `eta.scheduled` | Programado | Scheduled |
+| `eta.cancelled` | Cancelado | Cancelled |
+| `eta.late` / `eta.early` | +%d min tarde / %d min antes | +%d min late / %d min early |
+| `eta.approximate` | ~%s | ~%s |
+| `eta.*_spoken` | llega ahora (, aproximadamente); en %d minuto(s); a la / a las %s (by the hour); programado a la / a las %s; programado; aproximadamente %s; %d minuto(s) tarde / antes; cancelado | arriving now (, approximately); in %d minute(s); at %s; scheduled at %s; scheduled; approximately %s; %d minute(s) late / early; cancelled |
+| `eta.spoken_join` | %s, %s | %s, %s |
 | `about.last_sync.title` | Última sincronización | Last sync |
 | `about.last_sync.never` | Aún no se ha sincronizado | Not synced yet |
 | `about.dataset.lines` | Líneas | Lines |
