@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.android.app
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
@@ -15,3 +16,20 @@ internal val TopLevelDestination.labelRes: Int
             TopLevelDestination.NEAR_ME -> R.string.tab_near_me
             TopLevelDestination.PLANNER -> R.string.tab_directions
         }
+
+/** The tab icon (design_guidelines.md §2.1): outlined, and filled while selected, as Material 3 navigation items. */
+@DrawableRes
+internal fun TopLevelDestination.iconRes(selected: Boolean): Int =
+    when (this) {
+        TopLevelDestination.LINES -> {
+            if (selected) R.drawable.ic_tab_lines_selected else R.drawable.ic_tab_lines
+        }
+
+        TopLevelDestination.NEAR_ME -> {
+            if (selected) R.drawable.ic_tab_near_me_selected else R.drawable.ic_tab_near_me
+        }
+
+        TopLevelDestination.PLANNER -> {
+            if (selected) R.drawable.ic_tab_directions_selected else R.drawable.ic_tab_directions
+        }
+    }
