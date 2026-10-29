@@ -19,8 +19,8 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 /**
- * LB-012: each tab keeps its own back stack, and re-selecting a tab pops it to its root (FR-NAV-03). Each tab root opens
- * More, with Settings and About data (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
+ * LB-012: each tab keeps its own back stack, and re-selecting a tab pops it to its root (FR-NAV-03). Each tab root
+ * opens More, with Settings and About data (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "en")

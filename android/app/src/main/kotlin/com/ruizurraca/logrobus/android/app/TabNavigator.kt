@@ -30,7 +30,7 @@ internal class TabNavigator(
 
     fun stack(destination: TopLevelDestination): NavBackStack<NavKey> = stacks.getValue(destination)
 
-    /** The tabs whose stacks are shown: the start tab's under the selected one, so back from another root lands on it. */
+    /** The tabs whose stacks are shown: the start tab's under the selected one, so back from another root returns. */
     val shownTabs: List<TopLevelDestination>
         get() = listOf(TopLevelDestination.start, selected).distinct()
 
