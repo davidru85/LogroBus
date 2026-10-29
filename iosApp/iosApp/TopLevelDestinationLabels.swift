@@ -11,4 +11,13 @@ extension TopLevelDestination {
         case .planner: "tab.directions"
         }
     }
+
+    /// The tab icon (design_guidelines.md §2.1), an SF Symbol.
+    var systemImage: String {
+        switch self {
+        case .lines: "bus"
+        case .nearMe: "location.circle"
+        case .planner: "arrow.triangle.turn.up.right.diamond"
+        }
+    }
 }
