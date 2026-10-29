@@ -78,6 +78,23 @@ object ArchitectureRules {
         return !inDesignSystem && EXPRESSIVE_API in source
     }
 
+    /** The dependencies a Swift package manifest declares for [target], as listed in its `.target(...)` line. */
+    @Suppress("UnusedParameter") // Stub: the rule comes next.
+    fun swiftTargetDependencies(
+        manifest: String,
+        target: String,
+    ): List<String> = emptyList()
+
+    /**
+     * Remote Swift packages that the package manifest and the XcodeGen spec pin to different exact versions. Two exact
+     * requirements for one package fail resolution, so they must move together.
+     */
+    @Suppress("UnusedParameter") // Stub: the rule comes next.
+    fun swiftPackageVersionMismatches(
+        manifest: String,
+        projectSpec: String,
+    ): List<String> = emptyList()
+
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
         swiftTarget
