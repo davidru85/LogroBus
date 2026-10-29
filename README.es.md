@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); el sistema de diseño de Android está listo (LB-011, parte 1). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); el sistema de diseño está listo en las dos plataformas (LB-011). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -103,6 +103,12 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **29-10-2026:**
+  - Completada LB-011. La parte 2 da a la app de iPhone el mismo sistema de diseño.
+    - Los mismos colores provisionales, insignias de línea y tiempos de llegada que en Android, con las mismas palabras, que VoiceOver lee en español o inglés.
+    - Los botones flotantes del mapa usan Liquid Glass en iOS 26, y un material translúcido en versiones anteriores.
+    - Las capturas en modo claro, oscuro y con texto muy grande protegen cada pieza, también el cristal.
+  - El arnés de agentes deja que Claude Code abra pull requests sin pedir permiso cada vez, como decidió el propietario. El merge sigue siendo cosa del propietario.
 - **28-10-2026:**
   - LB-011, parte 1: la app de Android tiene su sistema de diseño.
     - Un aspecto neutro provisional en modo claro y oscuro, hasta que lleguen los diseños definitivos. Todos los textos se leen con facilidad.

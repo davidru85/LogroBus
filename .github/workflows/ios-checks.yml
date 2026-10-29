@@ -86,6 +86,16 @@ jobs:
         run: brew install xcodegen
       - name: Generate the project and run the iOS tests
         run: scripts/ios/test.sh
+      # The actual images of failed snapshots, and the test results with their attachments, to see what changed.
+      - name: Upload the snapshot failures
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-snapshot-failures
+          path: |
+            build/snapshot-artifacts
+            build/ios-derived-data/Logs/Test
+          if-no-files-found: ignore
 
   ci-gate:
     name: iOS gate

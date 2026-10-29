@@ -109,7 +109,15 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
   - **SDK 36:** screenshot tests run on `SCREENSHOT_SDK` (36) through `@Config(sdk = …)`. On SDK 37, the target, Robolectric 4.17 drew only the first capture of a test run, and later ones came out as the bare window background. The module's other tests keep the target SDK.
   - A screen's states run as a parameterised test (`ParameterizedRobolectricTestRunner`), one capture per test, from a compose rule; a component's variants may share one test.
   - 200 % font: wrap the content in `LocalDensity provides Density(density, fontScale = 2f)`.
-- **iOS:** swift-snapshot-testing on the pinned CI simulator, with references under `__Snapshots__/`. A reduced set also runs nightly on an iOS 18 simulator to cover the fallback appearance without Liquid Glass (NFR-PLAT-01).
+- **iOS:** swift-snapshot-testing (1.19.7) on the pinned CI simulator, with references under each test target's `__Snapshots__/`. A reduced set also runs nightly on an iOS 18 simulator to cover the fallback appearance without Liquid Glass (NFR-PLAT-01).
+  - **As built (LB-011 part 2):**
+    - Components snapshot in their package test target (`DesignSystemTests`), with Swift Testing, in light, dark and `accessibility3` text (200 % or more), at a fixed 3× scale. `SizeTests` measure touch targets and badge sizes with `UIHostingController.sizeThatFits`.
+    - Glass and materials are composited by the system, so their snapshots draw from a key window. Only the app-hosted bundle has one (`iosAppTests/GlassSnapshotTests`): a package test crashes there, and layer rendering draws Liquid Glass blank.
+  - A missing reference is recorded, and that run fails. Run `scripts/ios/test.sh` again, look at every recorded image, then commit it.
+  - Component snapshots use a precision of 0.9995 and a perceptual precision of 0.98. The perceptual precision absorbs anti-aliasing between Xcode versions, while a lost icon or strikethrough still fails. Glass, composited on the host's GPU, uses 0.99, and renders in 8-bit sRGB (`displayGamut: .SRGB`). In 16-bit Display P3 images from a key window, low-order noise between machines failed CI's comparison, although the images matched to the eye.
+  - On CI, a failed snapshot's actual image is uploaded with the test results (`TEST_RUNNER_SNAPSHOT_ARTIFACTS`). This machine has only Xcode 27.1, so a mismatch on CI's Xcode 26.6 is fixed from that artifact.
+  - Words follow SwiftUI's environment locale, so snapshots set it (Spanish), whatever the simulator's language.
+  - **The iOS 18 fallback:** the glass snapshots force it on iOS 26 through `glassRendering = .fallback`. Real iOS 18 runs wait for the nightly (LB-412).
 - Each screen needs these variants: light, dark, 200 % font, and every UX state.
 
 ### 4.7 Maestro flows

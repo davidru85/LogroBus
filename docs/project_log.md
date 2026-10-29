@@ -19,6 +19,65 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-29: LB-011, part 2: the iOS design system
+
+**Done**
+- **CI of PR #28 (part 1):** the first run failed in "iOS build and tests". The simulator disappeared before the tests ran ("Unable to find a device matching the provided destination"), after a clean build. A rerun of the failed jobs passed: 52 checks, with the iOS job at 12.8 min. The Android screenshots recorded on macOS passed on Linux at once.
+- **Dependency:** swift-snapshot-testing 1.19.7 (MIT, test-only), named in AGENTS.md §9. `iosApp/Package.resolved` pins it and its transitive packages.
+- **`DesignSystem`** (it now depends on `Shared`, and only on it, which an architecture test checks):
+  - `Tokens`: Android's palette as ARGB values, dynamic colours, `Typography`, spacing, radii and the 44 pt target.
+  - `LineBadge`: VoiceOver says "Línea 3", and the badge always holds its code.
+  - `EtaText`: Android's 13 cases in both languages, "a la 01:05" through an hour-keyed substitution, and the "Now" pulse through `phaseAnimator`.
+  - `adaptiveGlass(in:)` and `AdaptiveGlassContainer`.
+  - The two button styles, at least 44 pt, with a material fallback.
+  - `GlassRendering`, which forces the fallback on iOS 26.
+  - Words follow SwiftUI's environment locale.
+- **Snapshots:**
+  - the components in `DesignSystemTests`;
+  - the glass in `iosAppTests/GlassSnapshotTests`, which needs the app's key window: a package test crashed there, and layer rendering drew Liquid Glass blank.
+- **CI:** the iOS build-and-tests job runs them through the scheme, and uploads failed snapshots with the test results.
+- **The first recordings exposed defects, fixed:**
+  - the prominent button's white label on the light dark-mode accent;
+  - an ETA truncated to "…";
+  - words in the simulator's language rather than the view's.
+- **Reviews** (ios-ui-reviewer and code-reviewer subagents):
+  - **Fixed:**
+    - the plain glass button's `.bordered` fallback was 1.3–1.6:1 (blocker);
+    - buttons were 35 pt tall;
+    - badges were smaller than their code at 200 %;
+    - "Now" never pulsed when a row turned into it;
+    - EtaText drew `Color.primary` rather than the measured `onSurface`.
+  - **Tightened:**
+    - snapshot precision and 200 % (`accessibility3`), with a regression snapshot for truncation;
+    - the glass snapshots gained Increase Contrast, 200 % and disabled cases, at a tenth of the size;
+    - type tokens, a bundle cache, verbatim preview text and dark glass previews;
+    - Swift packages pinned, and their two pins checked equal.
+- **Tests:** 53 architecture tests (the body of `14ec80c` says 55), and every iOS test on the iPhone 17e (iOS 26.5). `run-all.sh` passes.
+
+**Decisions**
+- The snapshot tests run inside the existing iOS job, not one of their own as the criterion says. A separate job would rebuild the framework on a second macOS runner, while the job is already over its 10-minute budget. Owner decision, with the iOS budget.
+- iOS 18 is covered by forcing the fallback on iOS 26. Real iOS 18 runs wait for the nightly (LB-412), because no iOS 18 runtime is installed. Owner decision.
+- The glass buttons are taller than Android's 48 dp controls, because the 44 pt minimum sits inside the system's own padding.
+
+**Process slips:**
+- `c349aab` brought the snapshot tests, `Bundle.designSystem(for:)` and three fixes as one green commit, without a red one.
+- `566eb8e` (green) brought the two button styles, which no red test covered.
+- `b7847e9` (red) added the snapshot dependency before anything used it.
+- `2525019` is typed refactor but adds previews.
+- `14ec80c` counts 55 architecture tests; there are 53.
+
+**CI of PR #29:**
+- **First run:** Xcode 26.6 rejected the `Package.resolved` written by Xcode 27.1 as out of date, because the `originHash` differs. `-onlyUsePackageVersionsFromResolvedFile` made that an error. `5c69080` drops the flag; the file is still copied into place, and its pins hold.
+- **Second run:** the component snapshots passed. 6 of 10 glass snapshots failed on pixel match (0.164 against 0.99), although the uploaded images matched the references to the eye, with 0.0007 % of pixels 1 apart in the high byte. They were 16-bit Display P3. `7316ec4` renders the glass in 8-bit sRGB, like the components.
+- **Third run:** 52 checks passed. The iOS job took about 21 min, up from 12.8–17.5, because it now resolves and builds swift-snapshot-testing.
+
+**Open / next**
+- PR #28's merge. This branch then merges `main`, and PR #29 shows part 2 only.
+- The iOS job's time, for the owner's budget decision.
+- **LB-012:** the app shell, the next story.
+
+---
+
 ## 2026-10-28: LB-011, part 1: the shared contrast rule and the Android design system
 
 **Done**

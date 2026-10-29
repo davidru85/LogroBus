@@ -59,7 +59,11 @@ fi
 echo "TIME: waited $((SECONDS - phase_start)) s more for the simulator to boot"
 
 phase_start=$SECONDS
-xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "$destination" \
+# A failed snapshot writes its actual image here, which CI uploads (TEST_RUNNER_ variables reach the tests).
+rm -rf build/snapshot-artifacts
+mkdir -p build/snapshot-artifacts
+TEST_RUNNER_SNAPSHOT_ARTIFACTS="$root/build/snapshot-artifacts" \
+  xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "$destination" \
   -derivedDataPath "$derived_data" -quiet test-without-building
 echo "TIME: tests ran in $((SECONDS - phase_start)) s"
 echo "OK:   iOS tests passed on $simulator, iOS $os ($udid)"

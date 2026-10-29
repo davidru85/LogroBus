@@ -1,0 +1,94 @@
+import SwiftUI
+import UIKit
+
+/// Every brand value of the iOS app (NFR-MNT-04, design_guidelines.md §5 and §6.1), the same as Android's `Tokens`.
+/// Until OQ-18's designs arrive (LB-413), the palette is a neutral placeholder: greys plus one accessible accent.
+/// It is defined here and nowhere else.
+public enum Tokens {
+    /// One scheme's colours, as opaque ARGB values, so tests can measure them and views can draw them.
+    public struct Palette: Sendable {
+        public let accent: Int64
+        public let onAccent: Int64
+        public let surface: Int64
+        public let onSurface: Int64
+        public let surfaceContainer: Int64
+        public let secondaryText: Int64
+        /// Text that warns, such as "Actualizado hace N s" on stale data (spec §7.3).
+        public let warning: Int64
+    }
+
+    public static let light = Palette(
+        accent: 0xFF2F5D8A, onAccent: 0xFFFFFFFF, surface: 0xFFFCFCFC, onSurface: 0xFF1B1B1B,
+        surfaceContainer: 0xFFF0F0F0, secondaryText: 0xFF464646, warning: 0xFF8A5300
+    )
+    public static let dark = Palette(
+        accent: 0xFFA7C8EC, onAccent: 0xFF0E2F4D, surface: 0xFF121212, onSurface: 0xFFE3E3E3,
+        surfaceContainer: 0xFF1F1F1F, secondaryText: 0xFFC6C6C6, warning: 0xFFF2B861
+    )
+
+    /// The colours that follow light and dark mode.
+    public enum Colors {
+        public static let accent = Color(light: light.accent, dark: dark.accent)
+        /// Text on the accent: white on the dark light-mode accent, dark blue on the light dark-mode one.
+        public static let onAccent = Color(light: light.onAccent, dark: dark.onAccent)
+        public static let onSurface = Color(light: light.onSurface, dark: dark.onSurface)
+        public static let secondaryText = Color(light: light.secondaryText, dark: dark.secondaryText)
+        public static let warning = Color(light: light.warning, dark: dark.warning)
+    }
+
+    /// The spacing scale and the screen margin (design_guidelines.md §6.1).
+    public enum Spacing {
+        public static let xSmall: CGFloat = 4
+        public static let small: CGFloat = 8
+        public static let medium: CGFloat = 12
+        public static let large: CGFloat = 16
+        public static let xLarge: CGFloat = 24
+        public static let xxLarge: CGFloat = 32
+        public static let screenMargin: CGFloat = 16
+    }
+
+    /// Cards use 12 pt corners (spec §7.5).
+    public static let cardCornerRadius: CGFloat = 12
+    /// A line badge's corners: an identity element that never morphs.
+    public static let lineBadgeCornerRadius: CGFloat = 6
+    /// The smallest touch target (spec §7.5, AGENTS.md §7).
+    public static let minTouchTarget: CGFloat = 44
+
+    /// The text styles of the components (design_guidelines.md §6.1), on the system font until OQ-18. They scale with
+    /// Dynamic Type.
+    public enum Typography {
+        /// An ETA's value: emphasized, with tabular figures, so digits do not shift as they tick.
+        public static let etaValue = Font.headline.monospacedDigit()
+        /// An ETA's secondary line, such as "Programado" or "+3 min tarde".
+        public static let etaSecondary = Font.caption
+        /// The code of a Small, Regular and Large line badge.
+        public static let lineBadgeSmall = Font.caption.bold()
+        public static let lineBadgeRegular = Font.subheadline.bold()
+        public static let lineBadgeLarge = Font.body.bold()
+    }
+}
+
+public extension Color {
+    /// A colour from an ARGB value, alpha included, as the shared code sends line colours.
+    init(argb: Int64) {
+        self.init(uiColor: UIColor(argb: argb))
+    }
+
+    /// A colour that follows light and dark mode.
+    init(light: Int64, dark: Int64) {
+        self.init(uiColor: UIColor { traits in
+            UIColor(argb: traits.userInterfaceStyle == .dark ? dark : light)
+        })
+    }
+}
+
+extension UIColor {
+    convenience init(argb: Int64) {
+        self.init(
+            red: CGFloat((argb >> 16) & 0xFF) / 255,
+            green: CGFloat((argb >> 8) & 0xFF) / 255,
+            blue: CGFloat(argb & 0xFF) / 255,
+            alpha: CGFloat((argb >> 24) & 0xFF) / 255
+        )
+    }
+}

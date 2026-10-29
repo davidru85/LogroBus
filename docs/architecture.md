@@ -132,6 +132,7 @@ flowchart TB
 | `:android:core:*` | `:shared:core:*`, other `:android:core:*` modules | Domain, data and feature modules |
 | `:android:feature:<x>` | `:shared:feature:<x>`, domain modules, `:shared:core:*`, `:android:core:*` | Other Android or shared feature modules, data modules |
 | `:android:app` | Everything Android, `:shared:umbrella` | none |
+| iOS `DesignSystem` | `Shared` (XCFramework), for `EtaUi` and the shared contrast rule (LB-011) | `MapUI`, `Feature*` targets |
 | iOS `Feature<X>` | `Shared` (XCFramework), `DesignSystem`, `MapUI` | Other `Feature*` targets |
 
 `ModuleRules` (build-logic) enforces the rules between modules: every shared module fails configuration on a forbidden dependency. Konsist tests in `:tools:architecture-tests` enforce the package layering inside shared feature modules (`domain`, `data`, `presentation`) and forbid imports across features.

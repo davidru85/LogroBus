@@ -223,6 +223,16 @@ Part 1 (2026-10-28, shared and Android), also done when:
 - `[Android]` The app and About data draw on `LogroBusTheme`, in light and dark. About data's four states have screenshots.
 - The expressive wrappers (`LbLoadingIndicator`, `LbButtonGroup`) are built with the first screen that needs each; no screen does yet.
 
+Part 2 (2026-10-29, iOS), also done when:
+- `[iOS]` `Tokens` are Android's palette, as ARGB values. Every text colour reaches 4.5:1, measured with the shared `contrastRatio`, and every surface is grey.
+- `[iOS]` `LineBadge` says "Línea 3" / "Line 3". `EtaText` shows and speaks Android's 13 cases in Spanish and English, with "a la 01:05". "Now" stays at 4.5:1 at its faintest and holds still with Reduce Motion.
+- `[iOS]` The components' words follow SwiftUI's environment locale.
+- `[iOS]` `adaptiveGlass` and the glass button styles are snapshot as Liquid Glass and as the fallback. Each is captured in light, dark, Increase Contrast and 200 % text, and with the primary action disabled.
+  - The fallback is forced on the iOS 26 simulator through `glassRendering`; real iOS 18 runs come with the nightly (LB-412).
+  - Reduce Transparency, which no trait sets, is checked by hand.
+- `[iOS]` The glass buttons are at least 44 × 44 pt. A line badge always holds its code, at 200 % too. An ETA in a narrow row overflows rather than truncates.
+- `[iOS]` The snapshot tests run in the iOS build-and-tests job, through the iosApp scheme, rather than a job of their own, pending the owner's decision on the iOS CI budget.
+
 ### LB-012 App shell
 Refs: FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005
 
