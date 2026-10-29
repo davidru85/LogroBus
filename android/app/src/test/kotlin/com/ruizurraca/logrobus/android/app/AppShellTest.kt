@@ -73,6 +73,16 @@ class AppShellTest {
     }
 
     @Test
+    @Config(qualifiers = "en-w891dp-h411dp")
+    fun lb012_aWideButShortWindowShowsANavigationRail() {
+        // FR-NAV-05 goes by width alone: a phone in landscape is wider than medium, so it gets the rail too.
+        val bounds = tabBounds("Lines", "Near me", "Directions")
+
+        assertTrue("one column", bounds.all { it.left == bounds.first().left })
+        assertTrue("at the start", bounds.first().right < rootBounds().width / 2)
+    }
+
+    @Test
     @Config(qualifiers = "es-w320dp-h470dp", fontScale = 2f)
     fun lb012_atTwiceTheFontSizeEveryTabLabelFitsItsTab() {
         // NFR-A11Y-03 on a small phone: no label draws outside its own space, over the next tab.
