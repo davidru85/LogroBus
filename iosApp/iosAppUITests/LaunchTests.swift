@@ -18,7 +18,8 @@ final class LaunchTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
         app.launch()
-        // TODO(LB-012): with the tab shell, assert app.tabBars.buttons[label].isSelected instead.
-        XCTAssertTrue(app.staticTexts[label].waitForExistence(timeout: 10), "\"\(label)\" is shown")
+        let tab = app.tabBars.buttons[label]
+        XCTAssertTrue(tab.waitForExistence(timeout: 10), "the \"\(label)\" tab is shown")
+        XCTAssertTrue(tab.isSelected, "the \"\(label)\" tab is selected")
     }
 }
