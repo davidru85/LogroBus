@@ -154,7 +154,8 @@ Because `main` is protected, path-filtered workflows need a small always-running
     - drop the floors that AGP has caught up with;
     - query the advisories for every resolved coordinate, as the PR #12 log entry describes.
   - The first external Swift dependency is swift-snapshot-testing (LB-011, tests only). `iosApp/Package.resolved` pins it and its transitive packages.
-    - `scripts/ios/generate-project.sh` copies the file into the generated workspace, and `scripts/ios/test.sh` builds with `-onlyUsePackageVersionsFromResolvedFile`.
+    - `scripts/ios/generate-project.sh` copies the file into the generated workspace, and Xcode keeps those versions while they satisfy the requirements.
+    - Builds do not pass `-onlyUsePackageVersionsFromResolvedFile`. The file's `originHash` differs between Xcode versions, and with that flag CI's Xcode 26.6 rejected a file written by Xcode 27.1 as out of date.
     - After a deliberate update, copy the generated file back into `iosApp/`.
     - An architecture test keeps the version pinned in `Package.swift` and in `project.yml` the same.
 - Dependabot keeps the actions updated weekly. The `gradle` and `swift` ecosystems are added after LB-001.
