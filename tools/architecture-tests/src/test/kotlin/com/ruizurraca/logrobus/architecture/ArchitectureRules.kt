@@ -16,6 +16,9 @@ object ArchitectureRules {
             Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
         )
     private val swiftTarget = Regex("""\.target\(\s*name:\s*"(\w+)"(?:\s*,\s*dependencies:\s*\[([^\]]*)])?""")
+    private val swiftPackageExact =
+        Regex("""\.package\(\s*url:\s*"[^"]*/([\w.-]+?)(?:\.git)?"\s*,\s*exact:\s*"([^"]+)"""")
+    private val xcodegenPackageExact = Regex("""url:\s*\S*/([\w.-]+?)(?:\.git)?\s*\n\s*exactVersion:\s*"?([\w.-]+)"?""")
     private val jobName = Regex("""^ {4}name:\s*(.*\$\{\{.*)$""", RegexOption.MULTILINE)
     private val matrixModuleItem = Regex("""^\s*-\s*"?(:[\w-]+(?::[\w-]+)+)"?\s*$""", RegexOption.MULTILINE)
     private val jobsHeader = Regex("""^jobs:\s*$""", RegexOption.MULTILINE)
@@ -79,21 +82,34 @@ object ArchitectureRules {
     }
 
     /** The dependencies a Swift package manifest declares for [target], as listed in its `.target(...)` line. */
-    @Suppress("UnusedParameter") // Stub: the rule comes next.
     fun swiftTargetDependencies(
         manifest: String,
         target: String,
-    ): List<String> = emptyList()
+    ): List<String> {
+        val dependencies =
+            swiftTarget
+                .findAll(
+                    manifest,
+                ).firstOrNull { it.groupValues[1] == target }
+                ?.groupValues
+                ?.get(2)
+        return quoted.findAll(dependencies.orEmpty()).map { it.groupValues[1] }.toList()
+    }
 
     /**
      * Remote Swift packages that the package manifest and the XcodeGen spec pin to different exact versions. Two exact
      * requirements for one package fail resolution, so they must move together.
      */
-    @Suppress("UnusedParameter") // Stub: the rule comes next.
     fun swiftPackageVersionMismatches(
         manifest: String,
         projectSpec: String,
-    ): List<String> = emptyList()
+    ): List<String> {
+        val inManifest = swiftPackageExact.findAll(manifest).associate { it.groupValues[1] to it.groupValues[2] }
+        val inProject = xcodegenPackageExact.findAll(projectSpec).associate { it.groupValues[1] to it.groupValues[2] }
+        return inManifest.keys
+            .filter { it in inProject && inManifest[it] != inProject[it] }
+            .map { "$it: ${inManifest[it]} in Package.swift, ${inProject[it]} in project.yml" }
+    }
 
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
