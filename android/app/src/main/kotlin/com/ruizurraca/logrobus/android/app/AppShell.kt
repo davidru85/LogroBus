@@ -1,6 +1,9 @@
 package com.ruizurraca.logrobus.android.app
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
@@ -9,8 +12,11 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -18,6 +24,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.navigation.AboutDataKey
 import com.ruizurraca.logrobus.android.core.navigation.LinesKey
 import com.ruizurraca.logrobus.android.core.navigation.LocalScrollToTopRequests
@@ -45,7 +52,7 @@ internal fun AppShell(modifier: Modifier = Modifier) {
                     selected = isSelected,
                     onClick = { navigator.select(destination) },
                     icon = { Icon(painterResource(destination.iconRes(isSelected)), contentDescription = null) },
-                    label = { Text(stringResource(destination.labelRes)) },
+                    label = { TabLabel(stringResource(destination.labelRes)) },
                     navigationSuiteType = navigationSuiteType,
                 )
             }
@@ -71,6 +78,24 @@ internal fun AppShell(modifier: Modifier = Modifier) {
             onBack = navigator::goBack,
         )
     }
+}
+
+/**
+ * A tab label on one line, which shrinks to fit its tab but never below its size at 100 % font. The bar's height is
+ * fixed, so at 200 % a label that wrapped would draw over its neighbours (NFR-A11Y-03).
+ */
+@Composable
+private fun TabLabel(text: String) {
+    val size = LocalTextStyle.current.fontSize
+    val smallest = size / LocalDensity.current.fontScale.coerceAtLeast(1f)
+    Text(
+        text = text,
+        // Keeps a gap between neighbouring labels that fill their tabs.
+        modifier = Modifier.padding(horizontal = Tokens.Spacing.xs),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = smallest, maxFontSize = size, stepSize = LABEL_STEP),
+    )
 }
 
 /**
@@ -105,3 +130,6 @@ private fun screens(
         entry<AboutDataKey>(onTab) { AboutDataRoute(onBack = navigator::goBack) }
     }
 }
+
+// Fine enough that a shrunk label loses no more than it must.
+private val LABEL_STEP = 0.5.sp

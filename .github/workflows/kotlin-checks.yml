@@ -185,6 +185,7 @@ jobs:
       # (lb011_kotlinWorkflowVerifiesTheScreenshotsOfEveryModuleThatHasThem).
       matrix:
         module:
+          - ":android:app"
           - ":android:core:designsystem"
           - ":android:feature:settings"
     steps:
