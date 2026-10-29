@@ -4,10 +4,10 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
-/**
- * The tab label of each destination (design_guidelines.md §2.1, keys `tab.*` in §9). Shared code carries the
- * destination; Android supplies the localised words (AGENTS.md §5, rule 4).
- */
+// Android's resources for each top-level destination. Shared code carries the destination; Android supplies the words
+// and the icons (AGENTS.md §5, rule 4).
+
+/** The tab label of each destination (design_guidelines.md §2.1, keys `tab.*` in §9). */
 @get:StringRes
 internal val TopLevelDestination.labelRes: Int
     get() =

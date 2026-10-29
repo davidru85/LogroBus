@@ -1,5 +1,9 @@
 package com.ruizurraca.logrobus.android.feature.settings
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -25,5 +29,13 @@ fun SettingsScreen(
                 navigationIcon = { UpButton(onClick = onBack) },
             )
         },
-    ) {}
+    ) { padding ->
+        // Empty until the content lands; the padding keeps it clear of the bars meanwhile.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .consumeWindowInsets(padding),
+        )
+    }
 }

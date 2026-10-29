@@ -58,7 +58,10 @@ fun AboutDataRoute(
     AboutDataScreen(state, viewModel::onEvent, onBack, modifier)
 }
 
-/** Renders [state] under its top app bar and sends [onEvent]. The data source, disclaimer and attributions come with LB-404. */
+/**
+ * Renders [state] under its top app bar and sends [onEvent]. The data source, disclaimer and attributions come with
+ * LB-404.
+ */
 @Composable
 fun AboutDataScreen(
     state: AboutDataUiState,

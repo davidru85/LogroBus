@@ -7,7 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 
-/** The toolbar action of every tab root that opens More (FR-NAV-04), with a settings-style icon (design_guidelines.md §2.1). */
+/**
+ * The toolbar action of every tab root, which opens More (FR-NAV-04), with a settings-style icon
+ * (design_guidelines.md §2.1).
+ */
 @Composable
 fun MoreActionButton(
     onClick: () -> Unit,
