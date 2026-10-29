@@ -2,17 +2,21 @@ package com.ruizurraca.logrobus.android.app
 
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -68,6 +72,16 @@ class AppShellTest {
         assertTrue("at the start", bounds.first().right < rootBounds().width / 2)
     }
 
+    @Test
+    @Config(qualifiers = "es-w320dp-h470dp", fontScale = 2f)
+    fun lb012_atTwiceTheFontSizeEveryTabLabelFitsItsTab() {
+        // NFR-A11Y-03 on a small phone: no label draws outside its own space, over the next tab.
+        listOf("Líneas", "Cerca de mí", "Cómo llegar").forEach { label ->
+            val layout = labelLayout(label)
+            assertFalse("\"$label\" overflows its tab: ${layout.size}", layout.hasVisualOverflow)
+        }
+    }
+
     private fun assertTabsInOrder(vararg labels: String) {
         val bounds = tabBounds(*labels)
         assertEquals("the labels, in order", bounds.sortedBy { it.left + it.top }, bounds)
@@ -78,6 +92,13 @@ class AppShellTest {
     private fun tabBounds(vararg labels: String): List<Rect> = labels.map { tab(it).fetchSemanticsNode().boundsInRoot }
 
     private fun tab(label: String): SemanticsNodeInteraction = compose.onNode(hasText(label) and isTab)
+
+    private fun labelLayout(label: String): TextLayoutResult {
+        val text = compose.onNode(hasText(label) and hasAnyAncestor(isTab), useUnmergedTree = true).fetchSemanticsNode()
+        val layouts = mutableListOf<TextLayoutResult>()
+        text.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        return layouts.single()
+    }
 
     private fun rootBounds(): Rect = compose.onRoot().fetchSemanticsNode().boundsInRoot
 
