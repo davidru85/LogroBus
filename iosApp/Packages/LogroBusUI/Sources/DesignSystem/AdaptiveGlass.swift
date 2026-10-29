@@ -53,7 +53,8 @@ public struct AdaptiveGlassButtonStyle: PrimitiveButtonStyle {
 }
 
 /// `.glassProminent` on iOS 26 and later; a prominent bordered button before (ADR-0003). For the one primary
-/// action of a screen, such as "Buscar rutas", tinted with the accent.
+/// action of a screen, such as "Buscar rutas", tinted with the accent. Its label is onAccent, not the system's white,
+/// which would fall below 4.5:1 on the light dark-mode accent.
 public struct AdaptiveGlassProminentButtonStyle: PrimitiveButtonStyle {
     @Environment(\.glassRendering) private var rendering
 
@@ -61,9 +62,15 @@ public struct AdaptiveGlassProminentButtonStyle: PrimitiveButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         if #available(iOS 26, *), rendering.usesLiquidGlass(systemHasGlass: true) {
-            Button(configuration).buttonStyle(.glassProminent).tint(Tokens.Colors.accent)
+            Button(configuration)
+                .buttonStyle(.glassProminent)
+                .tint(Tokens.Colors.accent)
+                .foregroundStyle(Tokens.Colors.onAccent)
         } else {
-            Button(configuration).buttonStyle(.borderedProminent).tint(Tokens.Colors.accent)
+            Button(configuration)
+                .buttonStyle(.borderedProminent)
+                .tint(Tokens.Colors.accent)
+                .foregroundStyle(Tokens.Colors.onAccent)
         }
     }
 }

@@ -44,6 +44,7 @@ public struct LineBadge: View {
     private let color: Int64
     private let onColor: Int64
     private let size: LineBadgeSize
+    @Environment(\.locale) private var locale
 
     public init(code: String, color: Int64, onColor: Int64, size: LineBadgeSize = .regular) {
         self.code = code
@@ -65,7 +66,7 @@ public struct LineBadge: View {
             .frame(minWidth: size.minWidth, minHeight: size.minHeight)
             .background(Color(argb: color), in: RoundedRectangle(cornerRadius: Tokens.lineBadgeCornerRadius))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Self.spokenLabel(code: code))
+            .accessibilityLabel(Self.spokenLabel(code: code, bundle: .designSystem(for: locale), locale: locale))
     }
 
     /// What VoiceOver says: the line, never its colour.
