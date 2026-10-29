@@ -106,6 +106,7 @@ You will need:
     - The same placeholder colours, line badges and arrival times as Android, with the same words, read aloud by VoiceOver in Spanish or English.
     - Floating map buttons use Liquid Glass on iOS 26, and a frosted material on older versions.
     - Screenshots in light, dark and extra-large text guard each piece, glass included.
+  - The agent harness lets Claude Code open pull requests without asking each time, as the owner decided. Merging stays with the owner.
 - **2026-10-28:**
   - LB-011, part 1: the Android app has its design system.
     - A neutral placeholder look in light and dark mode, until the final designs arrive. Every text colour is easy to read.
