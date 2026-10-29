@@ -32,20 +32,31 @@ internal class TabNavigator(
 
     fun stack(destination: TopLevelDestination): NavBackStack<NavKey> = stacks.getValue(destination)
 
-    private val noRequests = MutableSharedFlow<Unit>()
+    // Requests made while no root listens are dropped: a root that comes back later must not jump to its top.
+    private val scrollToTop =
+        TopLevelDestination.entries.associateWith {
+            MutableSharedFlow<Unit>(
+                extraBufferCapacity = 1,
+            )
+        }
 
-    fun scrollToTopRequests(destination: TopLevelDestination): Flow<Unit> = noRequests
+    /** The re-selections of [destination] at its root, which ask its root to scroll to its top (FR-NAV-03). */
+    fun scrollToTopRequests(destination: TopLevelDestination): Flow<Unit> = scrollToTop.getValue(destination)
 
     /** The tabs whose stacks are shown: the start tab's under the selected one, so back from another root returns. */
     val shownTabs: List<TopLevelDestination>
         get() = listOf(TopLevelDestination.start, selected).distinct()
 
-    /** Selects [destination]. Re-selecting the selected tab pops it to its root (FR-NAV-03). */
+    /**
+     * Selects [destination]. Re-selecting the selected tab pops it to its root, or, at the root, asks the root to scroll
+     * to its top (FR-NAV-03).
+     */
     fun select(destination: TopLevelDestination) {
-        if (destination == selected) {
-            stack(destination).popToRoot()
-        } else {
-            selected = destination
+        val stack = stack(destination)
+        when {
+            destination != selected -> selected = destination
+            stack.size > 1 -> stack.popToRoot()
+            else -> scrollToTop.getValue(destination).tryEmit(Unit)
         }
     }
 
