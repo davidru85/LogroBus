@@ -66,6 +66,7 @@ compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 # NavigationSuiteScaffold (ADR-0005), released with Material 3 and pinned with it.
 compose-material3-adaptive-navigation-suite = { module = "androidx.compose.material3:material3-adaptive-navigation-suite", version.ref = "compose-material3" }
+compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }

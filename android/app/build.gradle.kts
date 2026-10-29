@@ -24,6 +24,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
     // To read and stop the graph that the Application starts (ADR-0014).
     testImplementation(libs.koin.core)
     testImplementation(libs.robolectric)

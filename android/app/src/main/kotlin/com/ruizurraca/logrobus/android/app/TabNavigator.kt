@@ -15,6 +15,8 @@ import com.ruizurraca.logrobus.android.core.navigation.LinesKey
 import com.ruizurraca.logrobus.android.core.navigation.NearMeKey
 import com.ruizurraca.logrobus.android.core.navigation.PlannerKey
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
  * The selected tab and one back stack per tab (FR-NAV-03, ADR-0005). Every stack starts at its tab's root and never
@@ -29,6 +31,10 @@ internal class TabNavigator(
         private set
 
     fun stack(destination: TopLevelDestination): NavBackStack<NavKey> = stacks.getValue(destination)
+
+    private val noRequests = MutableSharedFlow<Unit>()
+
+    fun scrollToTopRequests(destination: TopLevelDestination): Flow<Unit> = noRequests
 
     /** The tabs whose stacks are shown: the start tab's under the selected one, so back from another root returns. */
     val shownTabs: List<TopLevelDestination>
