@@ -66,9 +66,14 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - `2525019` is typed refactor but adds previews.
 - `14ec80c` counts 55 architecture tests; there are 53.
 
+**CI of PR #29:**
+- **First run:** Xcode 26.6 rejected the `Package.resolved` written by Xcode 27.1 as out of date, because the `originHash` differs. `-onlyUsePackageVersionsFromResolvedFile` made that an error. `5c69080` drops the flag; the file is still copied into place, and its pins hold.
+- **Second run:** the component snapshots passed. 6 of 10 glass snapshots failed on pixel match (0.164 against 0.99), although the uploaded images matched the references to the eye, with 0.0007 % of pixels 1 apart in the high byte. They were 16-bit Display P3. `7316ec4` renders the glass in 8-bit sRGB, like the components.
+- **Third run:** 52 checks passed. The iOS job took about 21 min, up from 12.8–17.5, because it now resolves and builds swift-snapshot-testing.
+
 **Open / next**
-- PR #28's merge, then this branch merges `main` and opens its PR.
-- Watch the first CI run of these snapshots on Xcode 26.6. If they differ, re-record from the uploaded artifacts.
+- PR #28's merge. This branch then merges `main`, and PR #29 shows part 2 only.
+- The iOS job's time, for the owner's budget decision.
 - **LB-012:** the app shell, the next story.
 
 ---
