@@ -30,13 +30,15 @@ private struct EtasPreview: View {
 
 private struct GlassPreview: View {
     var body: some View {
-        HStack(spacing: Tokens.Spacing.medium) {
-            Image(systemName: "location.fill")
-                .accessibilityLabel("Recenter")
-                .frame(width: Tokens.minTouchTarget, height: Tokens.minTouchTarget)
-                .adaptiveGlass(in: Circle())
-            Button("Buscar rutas") {}
-                .buttonStyle(AdaptiveGlassProminentButtonStyle())
+        AdaptiveGlassContainer(spacing: Tokens.Spacing.medium) {
+            HStack(spacing: Tokens.Spacing.medium) {
+                Image(systemName: "location.fill")
+                    .accessibilityLabel(Text(verbatim: "Recenter"))
+                    .frame(width: Tokens.minTouchTarget, height: Tokens.minTouchTarget)
+                    .adaptiveGlass(in: Circle())
+                Button {} label: { Text(verbatim: "Buscar rutas") }
+                    .buttonStyle(AdaptiveGlassProminentButtonStyle())
+            }
         }
         .padding()
         .background(LinearGradient(colors: [.green, .cyan, .purple], startPoint: .leading, endPoint: .trailing))
@@ -48,4 +50,8 @@ private struct GlassPreview: View {
 #Preview("ETAs") { EtasPreview() }
 #Preview("ETAs, dark") { EtasPreview().preferredColorScheme(.dark) }
 #Preview("Glass") { GlassPreview() }
+#Preview("Glass, dark") { GlassPreview().preferredColorScheme(.dark) }
 #Preview("Glass, iOS 18 fallback") { GlassPreview().environment(\.glassRendering, .fallback) }
+#Preview("Glass, iOS 18 fallback, dark") {
+    GlassPreview().environment(\.glassRendering, .fallback).preferredColorScheme(.dark)
+}

@@ -18,9 +18,19 @@ struct SnapshotTests {
     func lb011_everyEtaCase(appearance: Appearance) {
         assertSnapshot(of: appearance.apply(to: EveryEta()), as: appearance.strategy, named: appearance.name)
     }
+
+    @Test
+    func lb011_anEtaInANarrowRowIsNeverTruncated() {
+        // design_guidelines.md §8: a row narrower than the ETA lets it overflow; it never shows "…".
+        let narrow = EtaText(eta: EtaCase.eta(EtaDisplayMinutes(minutes: 4), delay: EtaDelayLate(minutes: 3)))
+            .frame(width: 24)
+            .environment(\.locale, Locale(identifier: "es"))
+            .padding(.horizontal, 64)
+        assertSnapshot(of: Appearance.light.apply(to: narrow), as: Appearance.light.strategy)
+    }
 }
 
-/// Light, dark, and about 200 % text (`accessibility2`, 33 pt body text).
+/// Light, dark, and 200 % text or more (`accessibility3`: 40 pt body text, against 17 pt).
 enum Appearance: CaseIterable, Sendable {
     case light, dark, largeText
 
@@ -33,19 +43,23 @@ enum Appearance: CaseIterable, Sendable {
     }
 
     @MainActor var strategy: Snapshotting<AnyView, UIImage> {
-        // A little tolerance: the reference machine and CI may run different Xcode versions.
+        // Every pixel must match to the eye: the perceptual precision absorbs anti-aliasing between Xcode versions,
+        // while a lost icon or strikethrough still fails. A fixed scale keeps sizes the same on any simulator.
         .image(
-            precision: 0.99,
+            precision: 0.9995,
             perceptualPrecision: 0.98,
             layout: .sizeThatFits,
-            traits: UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light)
+            traits: UITraitCollection(traitsFrom: [
+                UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light),
+                UITraitCollection(displayScale: 3)
+            ])
         )
     }
 
     @MainActor func apply(to view: some View) -> AnyView {
         AnyView(
             view
-                .environment(\.dynamicTypeSize, self == .largeText ? .accessibility2 : .large)
+                .environment(\.dynamicTypeSize, self == .largeText ? .accessibility3 : .large)
                 .padding(Tokens.Spacing.small)
                 .background(Color(uiColor: .systemBackground))
         )

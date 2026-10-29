@@ -22,7 +22,7 @@ public struct EtaText: View {
                 // Never truncated (design_guidelines.md §8): the row gives way, not the ETA.
                 Text(lines.value)
                     .fixedSize(horizontal: true, vertical: false)
-                    .font(.headline.monospacedDigit())
+                    .font(Tokens.Typography.etaValue)
                     .strikethrough(eta.cancelled)
                     .foregroundStyle(muted ? Tokens.Colors.secondaryText : Tokens.Colors.onSurface)
                     // Keyed on the state, so a row that turns into "Now" starts pulsing, and one that stops, stops.
@@ -37,7 +37,7 @@ public struct EtaText: View {
             if let secondary = lines.secondary {
                 Text(secondary)
                     .fixedSize(horizontal: true, vertical: false)
-                    .font(.caption)
+                    .font(Tokens.Typography.etaSecondary)
                     .foregroundStyle(Tokens.Colors.secondaryText)
             }
         }

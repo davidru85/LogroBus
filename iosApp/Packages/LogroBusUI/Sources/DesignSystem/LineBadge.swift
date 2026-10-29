@@ -30,9 +30,9 @@ public enum LineBadgeSize: CaseIterable, Sendable {
 
     var font: Font {
         switch self {
-        case .small: .caption
-        case .regular: .subheadline
-        case .large: .body
+        case .small: Tokens.Typography.lineBadgeSmall
+        case .regular: Tokens.Typography.lineBadgeRegular
+        case .large: Tokens.Typography.lineBadgeLarge
         }
     }
 }
@@ -57,7 +57,6 @@ public struct LineBadge: View {
         // It grows with Dynamic Type rather than truncate; the code never wraps.
         Text(code)
             .font(size.font)
-            .fontWeight(.bold)
             .foregroundStyle(Color(argb: onColor))
             .lineLimit(1)
             .padding(.horizontal, size.padding)

@@ -16,7 +16,7 @@ public struct AdaptiveGlassProminentButtonStyle: PrimitiveButtonStyle {
         }
         .tint(Tokens.Colors.accent)
         .foregroundStyle(isEnabled ? AnyShapeStyle(Tokens.Colors.onAccent) : AnyShapeStyle(.secondary))
-        if #available(iOS 26, *), rendering.usesLiquidGlass(systemHasGlass: true) {
+        if #available(iOS 26, *), rendering.usesLiquidGlass {
             button.buttonStyle(.glassProminent)
         } else {
             button.buttonStyle(.borderedProminent)

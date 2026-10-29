@@ -26,7 +26,7 @@ struct SizeTests {
         // At 200 % text, in a row that offers little height, the colour still holds the whole code.
         let badge = LineBadge(code: "B1", color: 0xFFFD_0200, onColor: 0xFF00_0000, size: size)
             .environment(\.dynamicTypeSize, .accessibility3)
-        let code = Text(verbatim: "B1").font(size.font).fontWeight(.bold)
+        let code = Text(verbatim: "B1").font(size.font)
             .environment(\.dynamicTypeSize, .accessibility3)
 
         let badgeSize = fittingSize(badge, in: CGSize(width: 1000, height: 10))
