@@ -48,7 +48,10 @@ enum GlassLook: CaseIterable, CustomStringConvertible, Sendable {
         UITraitCollection(traitsFrom: [
             UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light),
             UITraitCollection(accessibilityContrast: self == .highContrast ? .high : .normal),
-            UITraitCollection(displayScale: 3)
+            UITraitCollection(displayScale: 3),
+            // 8-bit sRGB, like the component snapshots. In wide-gamut 16-bit images, low-order noise between machines
+            // failed CI's comparison although the images matched to the eye.
+            UITraitCollection(displayGamut: .SRGB)
         ])
     }
 }
