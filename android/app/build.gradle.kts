@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.material3.adaptive.navigation.suite)
     implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
@@ -41,5 +42,6 @@ dependencies {
     testImplementation(libs.androidx.test.espresso.core)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
+    debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 }
