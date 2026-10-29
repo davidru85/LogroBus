@@ -108,6 +108,7 @@ La documentación técnica está en inglés.
     - Los mismos colores provisionales, insignias de línea y tiempos de llegada que en Android, con las mismas palabras, que VoiceOver lee en español o inglés.
     - Los botones flotantes del mapa usan Liquid Glass en iOS 26, y un material translúcido en versiones anteriores.
     - Las capturas en modo claro, oscuro y con texto muy grande protegen cada pieza, también el cristal.
+  - El arnés de agentes deja que Claude Code abra pull requests sin pedir permiso cada vez, como decidió el propietario. El merge sigue siendo cosa del propietario.
 - **28-10-2026:**
   - LB-011, parte 1: la app de Android tiene su sistema de diseño.
     - Un aspecto neutro provisional en modo claro y oscuro, hasta que lleguen los diseños definitivos. Todos los textos se leen con facilidad.
