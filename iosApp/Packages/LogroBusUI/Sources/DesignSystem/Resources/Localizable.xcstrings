@@ -1,0 +1,464 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "eta.approximate %@": {
+      "comment": "A low-confidence ETA (DD-09).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~%@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~%@"
+          }
+        }
+      }
+    },
+    "eta.approximately_spoken %@": {
+      "comment": "VoiceOver: a low-confidence ETA.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "approximately %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "aproximadamente %@"
+          }
+        }
+      }
+    },
+    "eta.cancelled": {
+      "comment": "Secondary line of a cancelled arrival.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelled"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelado"
+          }
+        }
+      }
+    },
+    "eta.cancelled_spoken": {
+      "comment": "VoiceOver: a cancelled arrival.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cancelled"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cancelado"
+          }
+        }
+      }
+    },
+    "eta.clock_spoken %lld %@": {
+      "comment": "VoiceOver: an ETA as a clock time. The first argument is the hour, the second the time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "at %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a la"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a las"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "eta.early %lld": {
+      "comment": "Secondary line of an early arrival.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min early"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min antes"
+          }
+        }
+      }
+    },
+    "eta.early_spoken %lld": {
+      "comment": "VoiceOver: an early arrival.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minute early"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutes early"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minuto antes"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutos antes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "eta.late %lld": {
+      "comment": "Secondary line of a late arrival.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld min late"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld min tarde"
+          }
+        }
+      }
+    },
+    "eta.late_spoken %lld": {
+      "comment": "VoiceOver: a late arrival.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minute late"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutes late"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minuto tarde"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld minutos tarde"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "eta.minutes %lld": {
+      "comment": "ETA in minutes (spec §5.7).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "eta.minutes_spoken %lld": {
+      "comment": "VoiceOver: an ETA in minutes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld minute"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %lld minutes"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %lld minuto"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %lld minutos"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "eta.now": {
+      "comment": "ETA under a minute away (spec §5.7).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora"
+          }
+        }
+      }
+    },
+    "eta.now_approximately_spoken": {
+      "comment": "VoiceOver: a low-confidence ETA under a minute away.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "arriving now, approximately"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "llega ahora, aproximadamente"
+          }
+        }
+      }
+    },
+    "eta.now_spoken": {
+      "comment": "VoiceOver: an ETA under a minute away.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "arriving now"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "llega ahora"
+          }
+        }
+      }
+    },
+    "eta.scheduled": {
+      "comment": "Secondary line of a scheduled ETA.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scheduled"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Programado"
+          }
+        }
+      }
+    },
+    "eta.scheduled_short_spoken": {
+      "comment": "VoiceOver: a scheduled ETA shown in minutes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "scheduled"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "programado"
+          }
+        }
+      }
+    },
+    "eta.scheduled_spoken %lld %@": {
+      "comment": "VoiceOver: a scheduled ETA. The first argument is the hour, the second the time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "scheduled at %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "programado %#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a la"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a las"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "eta.spoken_join %@ %@": {
+      "comment": "VoiceOver: the time, then what the secondary line says.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "line.badge %@": {
+      "comment": "VoiceOver's label of a line badge: the line, never its colour (design_guidelines.md §6.2).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Línea %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
