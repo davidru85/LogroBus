@@ -73,6 +73,24 @@
         }
       }
     },
+    "about.title": {
+      "comment": "About data's screen title (LB-012, design_guidelines.md §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About data"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sobre los datos"
+          }
+        }
+      }
+    },
     "error.data": {
       "comment": "Error state: data that could not be read (FR-ERR-05).",
       "extractionState": "manual",
@@ -141,6 +159,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "El servicio no responde. Inténtalo más tarde."
+          }
+        }
+      }
+    },
+    "settings.title": {
+      "comment": "Settings' screen title (LB-012, design_guidelines.md §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
           }
         }
       }

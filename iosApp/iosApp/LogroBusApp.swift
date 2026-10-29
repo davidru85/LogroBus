@@ -18,7 +18,7 @@ struct LogroBusApp: App {
 
     var body: some Scene {
         WindowGroup {
-            StartDestinationPlaceholder()
+            AppShell()
         }
     }
 }

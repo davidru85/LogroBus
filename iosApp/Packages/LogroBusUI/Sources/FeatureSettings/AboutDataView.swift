@@ -1,8 +1,8 @@
 import Shared
 import SwiftUI
 
-/// About data (LB-404): so far, the last successful sync of each dataset (FR-SET-03). More opens it once the app shell
-/// lands (LB-012); the data source, disclaimer and attributions come with LB-404.
+/// About data (LB-404), opened from More (LB-012): so far, the last successful sync of each dataset (FR-SET-03). The
+/// data source, disclaimer and attributions come with LB-404.
 public struct AboutDataView: View {
     @State private var viewModel: AboutDataViewModel
     @Environment(\.locale) private var locale
@@ -13,6 +13,7 @@ public struct AboutDataView: View {
 
     public var body: some View {
         content
+            .navigationTitle(Text("about.title", bundle: .module))
             // Cancelled when the screen leaves, which stops the use case's collection; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }
