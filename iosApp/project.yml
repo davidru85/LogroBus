@@ -18,6 +18,10 @@ settings:
 packages:
   LogroBusUI:
     path: Packages/LogroBusUI
+  # The glass snapshots run hosted by the app, which has a key window (LB-011). Same version as LogroBusUI's tests.
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    exactVersion: 1.19.7
 targets:
   iosApp:
     type: application
@@ -53,8 +57,11 @@ targets:
     platform: iOS
     sources:
       - path: iosAppTests
+        excludes:
+          - "__Snapshots__"
     dependencies:
       - target: iosApp
+      - package: SnapshotTesting
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ruizurraca.logrobus.tests

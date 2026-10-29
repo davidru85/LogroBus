@@ -6,6 +6,7 @@ import SwiftUI
 public struct EtaText: View {
     private let eta: EtaUi
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.locale) private var locale
     @State private var dimmed = false
 
     public init(eta: EtaUi) {
@@ -13,10 +14,13 @@ public struct EtaText: View {
     }
 
     public var body: some View {
-        let lines = EtaStrings.lines(eta)
+        let bundle = Bundle.designSystem(for: locale)
+        let lines = EtaStrings.lines(eta, bundle: bundle, locale: locale)
         VStack(alignment: .trailing, spacing: 2) {
             HStack(spacing: Tokens.Spacing.xSmall) {
+                // Never truncated (design_guidelines.md §8): the row gives way, not the ETA.
                 Text(lines.value)
+                    .fixedSize(horizontal: true, vertical: false)
                     .font(.headline.monospacedDigit())
                     .strikethrough(eta.cancelled)
                     .foregroundStyle(eta.scheduled || eta.cancelled ? Tokens.Colors.secondaryText : Color.primary)
@@ -30,12 +34,13 @@ public struct EtaText: View {
             }
             if let secondary = lines.secondary {
                 Text(secondary)
+                    .fixedSize(horizontal: true, vertical: false)
                     .font(.caption)
                     .foregroundStyle(Tokens.Colors.secondaryText)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(EtaStrings.spoken(eta))
+        .accessibilityLabel(EtaStrings.spoken(eta, bundle: bundle, locale: locale))
         .onAppear {
             guard isNow else { return }
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { dimmed = true }
