@@ -49,15 +49,18 @@ enum ShellLook: CaseIterable, CustomStringConvertible, Sendable {
         }
     }
 
-    /// A whole iPhone screen at a fixed 3× scale, with the component snapshots' precision.
+    /// A whole iPhone screen at a fixed 3× scale. The navigation bar's back button is Liquid Glass, which layer
+    /// rendering draws blank, so these draw from the key window with the glass snapshots' precision and colour space.
     @MainActor var strategy: Snapshotting<AnyView, UIImage> {
         .image(
-            precision: 0.9995,
+            drawHierarchyInKeyWindow: true,
+            precision: 0.99,
             perceptualPrecision: 0.98,
             layout: .device(config: .iPhone13),
             traits: UITraitCollection(traitsFrom: [
                 UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light),
-                UITraitCollection(displayScale: 3)
+                UITraitCollection(displayScale: 3),
+                UITraitCollection(displayGamut: .SRGB)
             ])
         )
     }
