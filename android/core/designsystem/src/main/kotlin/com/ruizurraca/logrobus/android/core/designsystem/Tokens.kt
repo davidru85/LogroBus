@@ -130,6 +130,6 @@ object Tokens {
         val screenMargin = 16.dp
     }
 
-    /** The smallest touch target (NFR-A11Y-04). */
+    /** The smallest touch target (spec §7.5, AGENTS.md §7). */
     val minTouchTarget = 48.dp
 }

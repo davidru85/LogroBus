@@ -11,7 +11,7 @@ public struct AdaptiveGlassButtonStyle: PrimitiveButtonStyle {
         let button = Button(role: configuration.role, action: configuration.trigger) {
             configuration.label.frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
         }
-        if #available(iOS 26, *), rendering.usesLiquidGlass(systemHasGlass: true) {
+        if #available(iOS 26, *), rendering.usesLiquidGlass {
             button.buttonStyle(.glass)
         } else {
             button.buttonStyle(MaterialButtonStyle())

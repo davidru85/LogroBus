@@ -51,12 +51,25 @@ public enum Tokens {
     public static let cardCornerRadius: CGFloat = 12
     /// A line badge's corners: an identity element that never morphs.
     public static let lineBadgeCornerRadius: CGFloat = 6
-    /// The smallest touch target (NFR-A11Y-04).
+    /// The smallest touch target (spec §7.5, AGENTS.md §7).
     public static let minTouchTarget: CGFloat = 44
+
+    /// The text styles of the components (design_guidelines.md §6.1), on the system font until OQ-18. They scale with
+    /// Dynamic Type.
+    public enum Typography {
+        /// An ETA's value: emphasized, with tabular figures, so digits do not shift as they tick.
+        public static let etaValue = Font.headline.monospacedDigit()
+        /// An ETA's secondary line, such as "Programado" or "+3 min tarde".
+        public static let etaSecondary = Font.caption
+        /// The code of a Small, Regular and Large line badge.
+        public static let lineBadgeSmall = Font.caption.bold()
+        public static let lineBadgeRegular = Font.subheadline.bold()
+        public static let lineBadgeLarge = Font.body.bold()
+    }
 }
 
 public extension Color {
-    /// An opaque colour from an ARGB value, as the shared code sends line colours.
+    /// A colour from an ARGB value, alpha included, as the shared code sends line colours.
     init(argb: Int64) {
         self.init(uiColor: UIColor(argb: argb))
     }
