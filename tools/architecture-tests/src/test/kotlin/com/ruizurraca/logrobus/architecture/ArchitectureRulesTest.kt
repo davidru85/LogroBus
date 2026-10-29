@@ -263,4 +263,39 @@ class ArchitectureRulesTest {
             ArchitectureRules.jobMatrixModules(workflow, "unit-tests"),
         )
     }
+
+    @Test
+    fun lb011_aSwiftTargetsDependenciesAreReadFromItsLine() {
+        val manifest =
+            """
+            .target(name: "DesignSystem", dependencies: ["Shared"], linkerSettings: linksShared),
+            .target(name: "MapUI", dependencies: ["DesignSystem"]),
+            .target(name: "FeatureLines", dependencies: ["DesignSystem", "MapUI", "Shared"], linkerSettings: x)
+            """.trimIndent()
+
+        assertEquals(listOf("Shared"), ArchitectureRules.swiftTargetDependencies(manifest, "DesignSystem"))
+        assertEquals(
+            listOf("DesignSystem", "MapUI", "Shared"),
+            ArchitectureRules.swiftTargetDependencies(manifest, "FeatureLines"),
+        )
+    }
+
+    @Test
+    fun lb011_swiftPackagesPinnedTwiceMustAgree() {
+        val manifest =
+            """package.dependencies.append(.package(url: "https://github.com/pointfreeco/swift-snapshot-testing", exact: "1.19.7"))"""
+        val agreeing =
+            """
+            packages:
+              SnapshotTesting:
+                url: https://github.com/pointfreeco/swift-snapshot-testing
+                exactVersion: 1.19.7
+            """.trimIndent()
+
+        assertEquals(emptyList<String>(), ArchitectureRules.swiftPackageVersionMismatches(manifest, agreeing))
+        assertEquals(
+            listOf("swift-snapshot-testing: 1.19.7 in Package.swift, 1.20.0 in project.yml"),
+            ArchitectureRules.swiftPackageVersionMismatches(manifest, agreeing.replace("1.19.7", "1.20.0")),
+        )
+    }
 }
