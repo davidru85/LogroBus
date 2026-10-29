@@ -53,7 +53,7 @@ class AboutDataRouteTest {
 
     @Test
     fun lb010_theRouteShowsTheStateOfItsViewModelFromTheGraph() {
-        compose.setContent { AboutDataRoute() }
+        compose.setContent { AboutDataRoute(onBack = {}) }
 
         compose.onNodeWithText(compose.activity.getString(R.string.about_dataset_lines)).assertExists()
         compose.onNodeWithText(compose.activity.getString(R.string.about_dataset_stops)).assertExists()

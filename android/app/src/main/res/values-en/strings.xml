@@ -4,4 +4,9 @@
     <string name="tab_lines">Lines</string>
     <string name="tab_near_me">Near me</string>
     <string name="tab_directions">Directions</string>
+
+    <!-- More (LB-012, FR-NAV-04, design_guidelines.md §9, keys more.*): its title and its entries. -->
+    <string name="more_title">More</string>
+    <string name="more_settings">Settings</string>
+    <string name="more_about_data">About data</string>
 </resources>

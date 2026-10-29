@@ -30,23 +30,23 @@ private fun PreviewTheme(content: @Composable () -> Unit) {
 @PreviewLightDark
 @Composable
 private fun AboutDataLoadingPreview() {
-    PreviewTheme { AboutDataScreen(AboutDataPreviewData.loading, onEvent = {}) }
+    PreviewTheme { AboutDataScreen(AboutDataPreviewData.loading, onEvent = {}, onBack = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun AboutDataSyncedPreview() {
-    PreviewTheme { AboutDataScreen(AboutDataPreviewData.synced, onEvent = {}) }
+    PreviewTheme { AboutDataScreen(AboutDataPreviewData.synced, onEvent = {}, onBack = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun AboutDataNeverSyncedPreview() {
-    PreviewTheme { AboutDataScreen(AboutDataPreviewData.neverSynced, onEvent = {}) }
+    PreviewTheme { AboutDataScreen(AboutDataPreviewData.neverSynced, onEvent = {}, onBack = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun AboutDataErrorPreview() {
-    PreviewTheme { AboutDataScreen(AboutDataPreviewData.error, onEvent = {}) }
+    PreviewTheme { AboutDataScreen(AboutDataPreviewData.error, onEvent = {}, onBack = {}) }
 }
