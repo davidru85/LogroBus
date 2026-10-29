@@ -45,7 +45,7 @@ class AboutDataScreenTest {
 
     @Test
     fun lb010_theFirstLoadShowsTheLayoutWithPlaceholders_notASpinner() {
-        compose.setContent { AboutDataScreen(AboutDataUiState.Loading, onEvent = {}) }
+        compose.setContent { AboutDataScreen(AboutDataUiState.Loading, onEvent = {}, onBack = {}) }
 
         compose.onNodeWithText(context.getString(R.string.about_dataset_lines)).assertExists()
         compose.onNodeWithText(context.getString(R.string.about_dataset_stops)).assertExists()
@@ -55,7 +55,9 @@ class AboutDataScreenTest {
     @Test
     fun lb010_anErrorShowsItsReason_andRetrySendsTheEvent() {
         val events = mutableListOf<AboutDataEvent>()
-        compose.setContent { AboutDataScreen(AboutDataUiState.Error(ErrorReason.DATA), onEvent = { events += it }) }
+        compose.setContent {
+            AboutDataScreen(AboutDataUiState.Error(ErrorReason.DATA), onEvent = { events += it }, onBack = {})
+        }
 
         compose.onNodeWithText(context.getString(R.string.error_data)).assertExists()
         compose.onNodeWithText(context.getString(R.string.error_retry)).performClick()
@@ -69,7 +71,7 @@ class AboutDataScreenTest {
         val deviceZone = TimeZone.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
         try {
-            compose.setContent { AboutDataScreen(synced, onEvent = {}) }
+            compose.setContent { AboutDataScreen(synced, onEvent = {}, onBack = {}) }
 
             // 09:30 UTC is 10:30 in Madrid (CET); New York would say 05:30.
             compose.onNodeWithText("10:30", substring = true).assertExists()
@@ -83,7 +85,7 @@ class AboutDataScreenTest {
     fun lb405_timesFollowTheDevicesTwentyFourHourSetting() {
         Settings.System.putString(context.contentResolver, Settings.System.TIME_12_24, "24")
 
-        compose.setContent { AboutDataScreen(synced, onEvent = {}) }
+        compose.setContent { AboutDataScreen(synced, onEvent = {}, onBack = {}) }
 
         compose.onNodeWithText("10:30", substring = true).assertExists()
         compose.onNodeWithText("AM", substring = true).assertDoesNotExist()

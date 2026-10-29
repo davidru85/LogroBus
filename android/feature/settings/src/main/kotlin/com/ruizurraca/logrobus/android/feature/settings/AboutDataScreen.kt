@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +19,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -35,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
+import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataEvent
@@ -43,22 +47,40 @@ import com.ruizurraca.logrobus.feature.settings.presentation.LastSyncUi
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import org.koin.androidx.compose.koinViewModel
 
-/**
- * About data with its ViewModel from the graph (ADR-0014). More opens it once the app shell lands (LB-012), whose
- * scaffold passes its insets through [modifier].
- */
+/** About data with its ViewModel from the graph (ADR-0014), opened from More (LB-012). [onBack] leaves it. */
 @Composable
 fun AboutDataRoute(
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AboutDataViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AboutDataScreen(state, viewModel::onEvent, modifier)
+    AboutDataScreen(state, viewModel::onEvent, onBack, modifier)
 }
 
-/** Renders [state] and sends [onEvent]. The data source, disclaimer and attributions come with LB-404. */
+/** Renders [state] under its top app bar and sends [onEvent]. The data source, disclaimer and attributions come with LB-404. */
 @Composable
 fun AboutDataScreen(
+    state: AboutDataUiState,
+    onEvent: (AboutDataEvent) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.about_title)) },
+                navigationIcon = { UpButton(onClick = onBack) },
+            )
+        },
+    ) { padding ->
+        AboutDataContent(state, onEvent, Modifier.padding(padding).consumeWindowInsets(padding))
+    }
+}
+
+@Composable
+private fun AboutDataContent(
     state: AboutDataUiState,
     onEvent: (AboutDataEvent) -> Unit,
     modifier: Modifier = Modifier,

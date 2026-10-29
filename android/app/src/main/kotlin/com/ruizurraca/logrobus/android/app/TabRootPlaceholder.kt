@@ -6,16 +6,23 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
-/** The root of a tab until its feature lands (LB-101, LB-201, LB-301): its top app bar alone. */
+/** The root of a tab until its feature lands (LB-101, LB-201, LB-301): its top app bar, with the More action. */
 @Composable
 internal fun TabRootPlaceholder(
     destination: TopLevelDestination,
+    onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text(stringResource(destination.labelRes)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(destination.labelRes)) },
+                actions = { MoreActionButton(onClick = onOpenMore) },
+            )
+        },
     ) {}
 }

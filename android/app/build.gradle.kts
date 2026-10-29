@@ -14,11 +14,14 @@ android {
 dependencies {
     implementation(projects.shared.umbrella)
     implementation(projects.android.core.designsystem)
+    implementation(projects.android.core.navigation)
     implementation(projects.android.feature.settings)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.material3)
     implementation(libs.compose.material3.adaptive.navigation.suite)
     implementation(libs.compose.ui)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     testImplementation(libs.junit4)
     // To read and stop the graph that the Application starts (ADR-0014).

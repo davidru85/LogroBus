@@ -112,7 +112,9 @@ class TabNavigationTest {
 
     private fun tab(label: String): SemanticsNodeInteraction = compose.onNode(hasText(label) and isTab)
 
+    /** System back, once the last action has recomposed, as a user's back always comes after the screen updates. */
     private fun back() {
+        compose.waitForIdle()
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.waitForIdle()
     }
