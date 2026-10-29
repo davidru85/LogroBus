@@ -220,6 +220,17 @@ Results                                   Itinerary detail
 
 Liquid Glass is the navigation and control layer that floats above content. Content itself (lists, cards, ETAs, line badges, the map) stays solid and legible underneath.
 
+**As built (LB-011 part 2):** `DesignSystem` holds:
+- `Tokens`, with Android's palette as ARGB values, the dynamic `Tokens.Colors`, the spacing, the radii and the 44 pt target;
+- `LineBadge` and `EtaText`, whose words follow SwiftUI's environment locale;
+- `adaptiveGlass(in:)` and `AdaptiveGlassContainer`;
+- the button styles, at least 44 × 44 pt:
+  - `AdaptiveGlassButtonStyle`, whose fallback is a capsule of `.regularMaterial` with a primary label;
+  - `AdaptiveGlassProminentButtonStyle`, whose enabled label is `onAccent`;
+- `Tokens.Typography`.
+
+`GlassRendering` in the environment forces the iOS 18–25 fallback, for snapshots and previews.
+
 **System first.** These pick up Liquid Glass automatically when built with the iOS 26 SDK and run on iOS 26 or later:
 
 | Need | Component |
