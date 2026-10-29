@@ -19,6 +19,22 @@ public enum LineBadgeSize: CaseIterable, Sendable {
         case .large: 32
         }
     }
+
+    var padding: CGFloat {
+        switch self {
+        case .small: 4
+        case .regular: 6
+        case .large: 8
+        }
+    }
+
+    var font: Font {
+        switch self {
+        case .small: .caption
+        case .regular: .subheadline
+        case .large: .body
+        }
+    }
 }
 
 /// The only way a line is shown (design_guidelines.md §6.2): its code in `onColor` on its `color`, both opaque ARGB
@@ -37,11 +53,23 @@ public struct LineBadge: View {
     }
 
     public var body: some View {
-        EmptyView()
+        // It grows with Dynamic Type rather than truncate; the code never wraps.
+        Text(code)
+            .font(size.font)
+            .fontWeight(.bold)
+            .foregroundStyle(Color(argb: onColor))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, size.padding)
+            .padding(.vertical, 2)
+            .frame(minWidth: size.minWidth, minHeight: size.minHeight)
+            .background(Color(argb: color), in: RoundedRectangle(cornerRadius: Tokens.lineBadgeCornerRadius))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Self.spokenLabel(code: code))
     }
 
     /// What VoiceOver says: the line, never its colour.
     static func spokenLabel(code: String, bundle: Bundle = .module, locale: Locale = .current) -> String {
-        ""
+        String(localized: "line.badge \(code)", bundle: bundle, locale: locale)
     }
 }

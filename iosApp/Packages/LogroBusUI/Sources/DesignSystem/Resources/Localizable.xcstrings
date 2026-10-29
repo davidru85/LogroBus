@@ -80,7 +80,29 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "at %2$@"
+            "value": "%#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
@@ -390,7 +412,29 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "scheduled at %2$@"
+            "value": "scheduled %#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "es": {
