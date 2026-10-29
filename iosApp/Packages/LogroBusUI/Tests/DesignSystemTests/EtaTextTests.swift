@@ -35,10 +35,12 @@ struct EtaTextTests {
     }
 
     @Test
-    func lb011_nowPulses_andHoldsStillWithReduceMotion() {
-        #expect(EtaStrings.nowOpacity(dimmed: true, reduceMotion: false) == EtaStrings.pulseMinOpacity)
-        #expect(EtaStrings.nowOpacity(dimmed: true, reduceMotion: true) == 1)
-        #expect(EtaStrings.nowOpacity(dimmed: false, reduceMotion: false) == 1)
+    func lb011_onlyALiveNowPulses_andNotWithReduceMotion() {
+        let now = EtaCase.eta(EtaDisplayNow.shared)
+        #expect(EtaStrings.pulses(now, reduceMotion: false))
+        #expect(!EtaStrings.pulses(now, reduceMotion: true))
+        #expect(!EtaStrings.pulses(EtaCase.eta(EtaDisplayNow.shared, cancelled: true), reduceMotion: false))
+        #expect(!EtaStrings.pulses(EtaCase.eta(EtaDisplayMinutes(minutes: 1)), reduceMotion: false))
     }
 
     @Test
