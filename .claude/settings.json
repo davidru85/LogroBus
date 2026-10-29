@@ -15,13 +15,13 @@
       "Bash(git fetch *)",
       "Bash(git switch *)",
       "Bash(git push *)",
+      "Bash(gh pr create *)",
       "Bash(gh pr view *)",
       "Bash(gh pr diff *)",
       "Bash(gh pr checks *)",
       "Bash(gh pr list *)"
     ],
     "ask": [
-      "Bash(gh pr create *)",
       "Bash(gh pr merge *)",
       "Bash(git reset --hard *)",
       "Bash(scripts/record-fixtures.sh *)",
