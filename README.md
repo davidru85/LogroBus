@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the Android design system is in place (LB-011, part 1). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the design system is in place on both platforms (LB-011). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -101,6 +101,12 @@ You will need:
 
 ### Recent changes
 
+- **2026-10-29:**
+  - LB-011 is done. Part 2 gives the iPhone app the same design system.
+    - The same placeholder colours, line badges and arrival times as Android, with the same words, read aloud by VoiceOver in Spanish or English.
+    - Floating map buttons use Liquid Glass on iOS 26, and a frosted material on older versions.
+    - Screenshots in light, dark and extra-large text guard each piece, glass included.
+  - The agent harness lets Claude Code open pull requests without asking each time, as the owner decided. Merging stays with the owner.
 - **2026-10-28:**
   - LB-011, part 1: the Android app has its design system.
     - A neutral placeholder look in light and dark mode, until the final designs arrive. Every text colour is easy to read.

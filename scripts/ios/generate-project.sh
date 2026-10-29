@@ -60,4 +60,11 @@ EOF
 
 echo "== Xcode project (XcodeGen) =="
 xcodegen generate --spec iosApp/project.yml --quiet
+# The Swift packages' pinned versions, committed in iosApp/Package.resolved, go where Xcode reads them, so every build
+# keeps the same versions (ci_cd.md §6). After a deliberate update, copy the generated file back. Builds do not pass
+# -onlyUsePackageVersionsFromResolvedFile: the file's originHash differs between Xcode versions, and that flag then
+# rejects the file as out of date.
+resolved_dir=iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+mkdir -p "$resolved_dir"
+cp iosApp/Package.resolved "$resolved_dir/Package.resolved"
 echo "OK:   iosApp/iosApp.xcodeproj generated (version $version_name, $configuration Shared framework)"

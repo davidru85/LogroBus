@@ -279,6 +279,20 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb011_theIosDesignSystemDependsOnSharedOnly() {
+        // Like :android:core:designsystem, it draws shared models and never reaches maps or features (ADR-0007).
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
+        assertEquals(listOf("Shared"), ArchitectureRules.swiftTargetDependencies(manifest, "DesignSystem"))
+    }
+
+    @Test
+    fun lb011_swiftPackagesPinnedInBothThePackageAndTheProjectAgree() {
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
+        val projectSpec = File(root, "iosApp/project.yml").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.swiftPackageVersionMismatches(manifest, projectSpec))
+    }
+
+    @Test
     fun lb011_expressiveApisStayInTheDesignSystem() {
         // ADR-0005: an expressive API change then touches one package.
         val offenders =
