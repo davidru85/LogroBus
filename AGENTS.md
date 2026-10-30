@@ -245,7 +245,13 @@ Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, 
 
 **After opening the pull request (owner rule, 2026-10-25):**
 - The owner approves and merges without saying so in the conversation.
-- The agent that opened the pull request watches it until it is merged or closed. For example, it polls `gh pr view <number> --json state,reviewDecision` in the background, a few minutes apart. An agent that starts a session while its pull request is open does the same.
+- The agent that opened the pull request watches it until it is merged or closed, with `scripts/agent/watch-pr.sh <number>` in the background, which polls a few minutes apart. An agent that starts a session while its pull request is open does the same.
+- **Failing checks (owner rule, 2026-10-30):** the agent fixes them on its own, without waiting for the owner, so that the pull request reaches review green. The watch reports them as `CHECKS_FAILED`.
+  - Read the failed job's log (`gh run view <run> --log-failed`) and find the cause before acting.
+  - **A fault in the branch:** fix it there like any other change (a regression test for a bug, the TDD commits, `scripts/checks/run-all.sh`), push, and watch the new run.
+  - **A runner flake,** a failure outside the change such as a simulator that vanishes: rerun the failed jobs once (`gh run rerun <run> --failed`). If the same flake has happened before, also make the pipeline resilient to it.
+  - Record each fix in the pull request description and in `docs/project_log.md`.
+  - Never make a check pass by weakening, skipping or disabling it. Stop and report instead when the fix needs an owner decision (the list below), touches `main` or its protection, or the same check still fails after three attempts.
 - **Merged:**
   - sync `main` (`git checkout main && git pull --ff-only`);
   - tell the owner in one line that the merge was detected;

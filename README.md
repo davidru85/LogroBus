@@ -102,6 +102,8 @@ You will need:
 ### Recent changes
 
 - **2026-10-30:**
+  - Workflow: the AI agent now fixes the failing CI checks of its own pull request, without waiting for the owner, so that each pull request reaches review green. It fixes a fault in the branch, or reruns a failure of the CI machine once, and it never weakens a check. The rule is in `AGENTS.md`, and `scripts/agent/watch-pr.sh` reports failed checks along with merges and comments.
+    - The iOS tests now retry once when the CI simulator vanishes before they run, a fault of the CI machine seen three times.
   - LB-008, part 1: the engine that keeps the lines and stops on the device up to date.
     - The first screen that needs them downloads them, and they are refreshed once they are a day old. There is no built-in copy (ADR-0008), so without a connection that first screen will show an error with Retry.
     - A download that looks broken, with fewer than 5 lines or 100 stops, or one that fails halfway, changes nothing: the previous lines and stops stay. An identical download is not written again, unless the app has changed how it reads it.
@@ -217,7 +219,7 @@ You will need:
 
 ## Contributing
 
-Read [AGENTS.md](AGENTS.md) before you start. Code and documentation are written in technical English (see the language policy in AGENTS.md). Work on a branch and open a pull request using one of the templates; nobody pushes to `main`. CI runs the policy, Kotlin and iOS checks on every pull request, and they must pass before merging. Run `scripts/checks/run-all.sh` first and paste its summary into the pull request: it runs the same checks locally, plus any check that has no CI job yet. Every pull request must update this README and its Spanish version, [README.es.md](README.es.md), before it is merged.
+Read [AGENTS.md](AGENTS.md) before you start. Code and documentation are written in technical English (see the language policy in AGENTS.md). Work on a branch and open a pull request using one of the templates; nobody pushes to `main`. CI runs the policy, Kotlin and iOS checks on every pull request, and they must pass before merging. An AI agent fixes the failing checks of the pull requests it opens before they reach review. Run `scripts/checks/run-all.sh` first and paste its summary into the pull request: it runs the same checks locally, plus any check that has no CI job yet. Every pull request must update this README and its Spanish version, [README.es.md](README.es.md), before it is merged.
 
 ## Data and disclaimer
 

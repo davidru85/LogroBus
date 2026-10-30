@@ -55,6 +55,10 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Left:**
     - the normaliser contract has no place yet for the `DataQualityReport`'s dropped counts; LB-006 adds them with the report;
     - "concurrent readers never see a partial dataset" rests on the one transaction (one notification, full rollback), not on a concurrent reader.
+- **CI of PR #33:** the run on `d2fffea`, a docs-only commit, failed in "iOS build and tests". After a clean build, `xcodebuild test-without-building` found no simulator ("Unable to find a device matching the provided destination specifier", exit code 70), as on PRs #21 and #28; the same code had passed on `1c91632`. Following the owner's new rule (below):
+  - the failed jobs were rerun once;
+  - since the flake had happened twice before, `scripts/ios/test.sh` now waits up to 2 minutes for a vanished simulator, boots it and retries the tests once (LB-002). Any other failure fails at once. A fake `xcodebuild` checked both paths locally;
+  - `scripts/agent/watch-pr.sh` watches a pull request and also reports failed checks (LB-016). It was checked against a fake `gh` and against the merged PR #32.
 - **Deviations** (`testing_strategy.md` §7.1):
   - `c41eec9`, the first red commit, was made before ktlint had run. The lint command named a task that does not exist, and piping it into `tail` hid the failure. ktlint then passed on that commit. Gradle output is no longer piped before its exit code is checked.
   - `c5f30b9`, a green commit, does not say "refactor not needed". The next commit, `850e704`, adds a domain test only because Kover measures each module by its own tests; its scope is `data` for a domain change.
@@ -62,6 +66,8 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - Other guards that passed at once are named in their commits: the failure paths in `673e9d0`, four TTL cases in `1855d7d`, the one-notification test in `b752043`, two missing-sync cases in `d896d31`, and `e7e9a0d`.
 
 **Decisions**
+- **Owner (2026-10-30): agents fix the failing checks of their pull requests** without waiting for the owner, so that a pull request reaches review green. Recorded in `AGENTS.md` §10, `playbooks/finish-story.md` step 9, `engineering_workflow.md` §5 and `agent_harness.md`.
+  - **Agent, for the owner to confirm, the limits of the rule:** read the log before acting; fix a fault on the branch with the usual protocol; rerun a runner flake once, and make a recurring one harmless; never weaken, skip or disable a check; stop and report when the fix needs an owner decision, touches `main` or its protection, or the same check still fails after three attempts.
 - **Owner (2026-10-30):** the `AGENTS.md` §11 amendment made with LB-017 is confirmed. Until LB-409 lets the user consent, tests verify the analytics events instead of the debug view. The alternative, a debug-only way to grant consent, is not needed.
 - **LB-008 in two parts,** like LB-005: the engine and its rules now, against injected seams; the source, the normaliser, Koin and the triggers in part 2.
 - **The content hash is over the normaliser's fingerprint and the re-encoded JSON,** not the raw bytes of spec §8.5. `SourceClient` returns decoded JSON, and encoding it again keeps key order.

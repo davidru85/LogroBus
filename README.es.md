@@ -104,6 +104,8 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **30-10-2026:**
+  - Flujo de trabajo: el agente de IA corrige ahora él mismo los checks de CI que fallan en su pull request, sin esperar al propietario, para que cada pull request llegue a revisión en verde. Corrige el fallo en la rama, o relanza una vez un fallo de la máquina de CI, y nunca debilita un check. La regla está en `AGENTS.md`, y `scripts/agent/watch-pr.sh` avisa de los checks fallidos además de las fusiones y los comentarios.
+    - Los tests de iOS se reintentan una vez cuando el simulador de CI desaparece antes de ejecutarlos, un fallo de la máquina de CI visto tres veces.
   - LB-008, parte 1: el motor que mantiene al día las líneas y paradas guardadas en el dispositivo.
     - La primera pantalla que las necesita las descarga, y se actualizan cuando tienen más de un día. La app no incluye una copia propia (ADR-0008), así que sin conexión esa primera pantalla mostrará un error con «Reintentar».
     - Una descarga que parece rota, con menos de 5 líneas o 100 paradas, o una que falla a medias, no cambia nada: se conservan las líneas y paradas anteriores. Una descarga idéntica no se vuelve a escribir, salvo que la app haya cambiado su forma de leerla.
@@ -219,7 +221,7 @@ La documentación técnica está en inglés.
 
 ## Cómo contribuir
 
-Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas, de Kotlin y de iOS en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
+Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas, de Kotlin y de iOS en cada pull request, y deben pasar antes de fusionarla. Un agente de IA corrige las comprobaciones que fallan en las pull requests que abre antes de que lleguen a revisión. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
 
 ## Datos y aviso legal
 

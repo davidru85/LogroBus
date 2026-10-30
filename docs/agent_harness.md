@@ -41,6 +41,8 @@ LogroBus is built with several AI coding agents (Claude Code and others, such as
 - After editing a file, optionally: `scripts/agent/post-edit.sh <file>`.
 - Before finishing: `scripts/checks/run-all.sh`.
 
+Every agent, with hooks or without, watches the pull request it opens with `scripts/agent/watch-pr.sh <number>` in the background, and acts on what it reports: a merge, a close, changes requested, new comments or failed checks (`AGENTS.md` §10, `playbooks/finish-story.md` step 9).
+
 ## 4. Claude Code adapter
 
 ### 4.1 Permissions (`.claude/settings.json`)
