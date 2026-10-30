@@ -98,6 +98,9 @@ internal fun navigationSuiteType(adaptiveInfo: WindowAdaptiveInfo): NavigationSu
         NavigationSuiteType.ShortNavigationBarCompact
     }
 
+internal val NavigationSuiteType.shrinksTabLabels: Boolean
+    get() = true
+
 /**
  * A tab label on one line, which shrinks to fit its tab but never below its size at 100 % font. The bar's height is
  * fixed, so at 200 % a label that wrapped would draw over its neighbours (NFR-A11Y-03).
