@@ -38,7 +38,7 @@
 
 - In shared modules, visibility is `internal` by default. Only what other modules or Swift need is `public`.
 - Prefer immutable data: `val`, `data class`, and read-only collections across layers.
-- Model errors with `AppResult` and `AppError`. Never use exceptions for expected failures. Catch exceptions only at the network and database boundaries, and in `PollingEngine`, which turns whatever a `fetch` throws into a failure of that key alone (NFR-REL-02).
+- Model errors with `AppResult` and `AppError`. Never use exceptions for expected failures. Catch exceptions only at the network and database boundaries, in `PollingEngine`, which turns whatever a `fetch` throws into a failure of that key alone, and in the static sync, which turns whatever the database or the normaliser throws into a failed sync that keeps the cache (NFR-REL-02, NFR-REL-03).
 - Coroutines: inject `AppDispatchers`; ViewModels use `viewModelScope`; repositories expose `Flow` and `suspend` functions; never use `runBlocking` outside tests.
 - Name test functions in `lowerCamelCase` with underscores between clauses: `dd05_reinterpretsWallClockInMadrid_duringCest`. Do not use backtick names with spaces.
 - The package layout mirrors the modules, `com.ruizurraca.logrobus.<area>.<layer>`. For example: `com.ruizurraca.logrobus.feature.nearme.presentation`, `com.ruizurraca.logrobus.transit.data`, and on Android `com.ruizurraca.logrobus.android.feature.nearme`.

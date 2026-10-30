@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source (LB-005, in progress) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device is built, and waits for the source's data formats (LB-008, in progress); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -102,6 +102,11 @@ You will need:
 ### Recent changes
 
 - **2026-10-30:**
+  - LB-008, part 1: the engine that keeps the lines and stops on the device up to date.
+    - The first screen that needs them downloads them, and they are refreshed once they are a day old. There is no built-in copy (ADR-0008), so without a connection that first screen will show an error with Retry.
+    - A download that looks broken, with fewer than 5 lines or 100 stops, or one that fails halfway, changes nothing: the previous lines and stops stay. An identical download is not written again, unless the app has changed how it reads it.
+    - Each refresh counts how many times in a row a saved stop has been missing, so that a stop that is no longer served can be marked later.
+    - It is not switched on yet: it starts working once the app can read the source's lines and stops (LB-005, LB-006).
   - LB-017 is done. Both apps have their telemetry contracts, ready for the analytics and crash-reporting vendor that is still to be chosen.
     - Analytics events carry only ids, counts, yes-or-no values and fixed categories, never what you type or where you are. A build check rejects anything else.
     - Nothing is sent without your consent, asked separately for analytics and for crash reports. Until the consent screen arrives, nothing is sent at all.

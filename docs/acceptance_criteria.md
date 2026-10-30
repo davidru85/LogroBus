@@ -149,10 +149,27 @@ Done when:
 - On first use with an empty cache and network available, lines, stops and shapes are downloaded, normalised and stored in one transaction. With no network, the requesting screen gets a `Network` error, and a later Retry succeeds once connectivity returns.
 - No seed data is bundled or imported in the MVP (ADR-0008).
 - A payload with fewer than 5 lines or 100 stops is rejected, and the previous cache is kept intact.
-- An unchanged payload (same SHA-256) writes nothing apart from `sync_state.last_success`.
+- An unchanged payload (same SHA-256) is neither normalised nor written: only `sync_state.last_success` and `favourite.missing_syncs` change. Amended in LB-008 part 1: FR-FAV-04 counts daily syncs, so a source that stops changing must still count a missing stop.
 - An exception injected mid-write rolls back the transaction; concurrent readers never see a partial dataset.
 - A failed background refresh shows no UI error and is retried at the next trigger. The TTL for lines and stops is 24 h.
 - `favourite.missing_syncs` increases with every sync in which a saved stop is absent, and resets when the stop reappears.
+
+Part 1 (2026-10-30), the engine with the source and the normaliser injected, done with this evidence (`StaticSyncEngineTest`, on the Android host and the iOS simulator, unless named otherwise):
+- First use and Retry: `lb008_theFirstSyncStoresTheLinesPatternsShapesAndStopsItDownloads`, `lb008_storedStopsCanBeSearchedByName`, `lb008_withNoNetworkTheFirstSyncFailsWithNetworkAndStoresNothing`, `lb008_aRetrySucceedsOnceTheNetworkIsBack`.
+- No seed: `lb008_aNewDatabaseHasNoLinesOrStops`, and `ArchitectureTest.lb008_noModuleBundlesSeedData` (mutation-checked) with its predicate's tests.
+- Validation: `lb008_aPayloadWithFewerThanFiveLinesIsRejectedAndTheCacheKept`, `…OneHundredStops…`, `dd10_provisionalStopsDoNotCountTowardsTheHundred`, `lb008_aRejectedPayloadIsLoggedWithItsCounts`.
+- Unchanged payload: `lb008_anUnchangedPayloadWritesNothingButTheTimeOfTheSync`, `lb008_whenOneDatasetChangesBothAreStored`; the hash, `ContentHashTest`.
+- Atomic replace: `lb008_aWriteThatFailsHalfwayRollsBackAndKeepsTheCache`, `lb008_observersHearOfTheNewCatalogueOnceItIsWhole`, `lb008_whatLeavesThePayloadLeavesTheCacheAndTheSearch`. "Concurrent readers never see a partial dataset" rests on the one transaction those tests prove; part 2 adds no reader of its own.
+- TTL and retries: `lb008_withinTwentyFourHoursOfTheLastSuccessNothingIsDownloaded`, `lb008_twentyFourHoursAfterTheLastSuccessTheSyncDownloadsAgain`, `lb008_aDatasetThatNeverSyncedMakesTheCacheStale`, `lb008_aFailedRefreshIsRetriedAtTheNextTrigger`.
+- Missing syncs: `lb008_aSavedStopMissingFromASyncCountsOneMoreMissingSync`, `lb008_aSavedStopThatReappearsStartsAgainFromZero`, `lb008_anUnchangedPayloadStillCountsMissingStops`, `lb008_aFailedSyncCountsNoMissingSync`, `lb008_onlySavedStopsAreCounted`.
+- Added from the part 1 reviews:
+  - A changed normaliser fingerprint (a new normaliser, new DD-11 overrides) renormalises an unchanged payload (`lb008_aChangedNormaliserRenormalisesAnUnchangedPayload`).
+  - A last success in the future makes the cache stale (`lb008_aLastSuccessInTheFutureIsStale`).
+  - A saved stop that is only provisional (DD-10) counts as served (`dd10_aSavedStopThatIsOnlyProvisionalIsStillServed`), and a pattern stop with no stop rejects the catalogue (`dd10_aPatternStopWithNoStopIsRejectedAndTheCacheKept`).
+  - A database that cannot be read, or a normaliser that throws, fails with `Data` and keeps the cache; two syncs at once share one download (`lb008_aDatabaseThatCannotBeReadFailsWithData`, `lb008_aNormaliserThatThrowsFailsWithDataAndKeepsTheCache`, `lb008_twoSyncsAtOnceShareOneDownload`).
+  - A rejected or rolled-back sync counts no missing stop; the stored keys of directions and line kinds never change (`CatalogueKeysTest`).
+
+Part 2 is left: the real source on `SourceClient` (API-01, API-02) and LB-006's normaliser with its fingerprint; the Koin `single`; the app-start trigger and the daily background job; and, at screen level, the `Network` error with Retry and the silent background refresh.
 
 ### LB-009 `PollingEngine`
 Refs: spec §8.6, FR-ERR-03, NFR-PERF-07
@@ -680,6 +697,7 @@ Refs: FR-FAV-03, FR-FAV-04
 - **Given** a backup restore onto a new device (`[Android]` Auto Backup, `[iOS]` iCloud or device backup), **when** the app opens, **then** favourites and places are restored.
 - **Given** a saved stop that has been missing from API-02 for 7 consecutive daily syncs, **when** "My stops" renders, **then** it shows "No longer served" and stays until the user deletes it.
 - **Given** that stop reappears in a later sync, **when** "My stops" renders, **then** the "No longer served" label is gone.
+- A provisional stop made up from a pattern that API-02 lacks (DD-10), such as 384, is still served, so it never counts as missing (LB-008 part 1; for the owner to confirm).
 
 ### LB-408 Server clock offset
 Refs: FR-ERR-06, spec §8.6

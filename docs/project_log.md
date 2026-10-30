@@ -19,6 +19,75 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-30: LB-008, part 1: the static sync engine
+
+**Done**
+- **Merges:** the owner merged PR #31 (commit identity) and PR #32 (LB-017), and `main` was synced. The web merge of #31 carried the owner's gmail as its author.
+- **LB-008 split in two.** Part 1 is the engine. Part 2 wires it to the real source and normaliser, which wait for LB-005's services and LB-006's mappers, and so for LB-003's fixtures (OQ-11).
+- **`:shared:transit:domain`:** `StaticSyncEngine.syncIfStale()`, and `Direction` and `LineKind` from spec §5.1.
+- **`:shared:transit:data`:**
+  - `DefaultStaticSyncEngine`, with a `StaticSource` and a `StaticNormaliser` injected, and the `StaticCatalogue` it stores;
+  - the database keys of directions and line kinds;
+  - SHA-256 from each platform, `MessageDigest` on Android and CommonCrypto on iOS, so no dependency is added.
+- **The engine** (`architecture.md` §4.4, as built):
+  - It downloads lines and stops together, on first use and once they are 24 h old by `AppClock`.
+  - It skips the write of an unchanged payload, rejects a suspicious one, and replaces everything in one transaction, `sync_state` and the saved stops' missing syncs included.
+  - It turns any failure into `Failure(Data)` with the cache intact, and runs one sync at a time.
+- **`:shared:core:database`:** the replace queries in `Line.sq` and `Stop.sq`, `updateMissingSyncs` in `Favourite.sq`, and `FavouriteTypes.STOP`.
+- **Architecture test:** no module bundles seed data (ADR-0008).
+- **Tests:** 32 engine tests, plus the hash, the stored keys and the domain enums, on the Android host and the iOS simulator; the seed rule and its predicate in `:tools:architecture-tests`.
+- **Reviews** (the code-reviewer and data-rules-reviewer subagents; no blockers, changes asked). Fixed:
+  - **The content hash** covered only the bodies, so new DD-11 name overrides or a fixed normaliser would never reach the cache while the source stayed the same. The normaliser now has a `fingerprint`, folded into the hash.
+  - **A last success in the future** kept the cache fresh: `ServerCorrectedClock` has no offset before the first response, so a slow device clock could skip every sync. It now counts as stale.
+  - **DD-10:**
+    - a saved stop that is only provisional counted as missing, and would have ended up "No longer served" although buses still call there; it now counts as served;
+    - a pattern stop with no stop now rejects the catalogue.
+  - **Types:** a stop's lines are a `Set` and a line's patterns a `Map` by direction, so a repeated item from the source can no longer break a primary key on every sync.
+  - **Smaller fixes:**
+    - lines and stops download at once;
+    - only the caller's cancellation propagates;
+    - the query is named `updateMissingSyncs`, and `ref_id`'s canonical form is documented (DD-01);
+    - the stored keys are pinned;
+    - a failed sync is shown to count no missing stop;
+    - the seed check also catches lines or stops JSON in assets or resources;
+    - the DD-10 tests are named `dd10_`.
+  - **Docs:** the hash's deviation from spec §8.5, the amended unchanged-payload criterion, and the static sync as a `code_style.md` §2.2 catch boundary.
+  - **Left:**
+    - the normaliser contract has no place yet for the `DataQualityReport`'s dropped counts; LB-006 adds them with the report;
+    - "concurrent readers never see a partial dataset" rests on the one transaction (one notification, full rollback), not on a concurrent reader.
+- **Deviations** (`testing_strategy.md` §7.1):
+  - `c41eec9`, the first red commit, was made before ktlint had run. The lint command named a task that does not exist, and piping it into `tail` hid the failure. ktlint then passed on that commit. Gradle output is no longer piped before its exit code is checked.
+  - `c5f30b9`, a green commit, does not say "refactor not needed". The next commit, `850e704`, adds a domain test only because Kover measures each module by its own tests; its scope is `data` for a domain change.
+  - `850e704` and `c206c9a` have no `TDD:` line. Both are guards that passed at once, as their bodies say.
+  - Other guards that passed at once are named in their commits: the failure paths in `673e9d0`, four TTL cases in `1855d7d`, the one-notification test in `b752043`, two missing-sync cases in `d896d31`, and `e7e9a0d`.
+
+**Decisions**
+- **LB-008 in two parts,** like LB-005: the engine and its rules now, against injected seams; the source, the normaliser, Koin and the triggers in part 2.
+- **The content hash is over the normaliser's fingerprint and the re-encoded JSON,** not the raw bytes of spec §8.5. `SourceClient` returns decoded JSON, and encoding it again keeps key order.
+- **An unchanged payload still counts missing stops.** FR-FAV-04 counts 7 consecutive daily syncs, and a source that stops changing must still reach "No longer served". The LB-008 criterion is amended.
+- **A provisional saved stop counts as served.** FR-FAV-04 says "disappears from API-02". A stop made up from a pattern (DD-10), such as 384, was never in API-02, but buses call there. **For the owner to confirm.**
+- **The sync stores a `StaticCatalogue` shaped like the tables,** not domain entities. The mappers of LB-006 produce it.
+- **Stored values:**
+  - directions: `outbound`, `inbound`;
+  - line kinds: `day`, `night`;
+  - a saved stop's `favourite.type` is `stop`, and its `ref_id` is the canonical decimal id.
+
+**Open / next**
+- **LB-008 part 2:**
+  - a `StaticSource` on `SourceClient` for API-01 and API-02;
+  - LB-006's normaliser, with a fingerprint of its version and the name overrides;
+  - the Koin `single`;
+  - the app-start trigger;
+  - the daily background job: WorkManager, a new dependency for an ADR, and `BGAppRefreshTask`;
+  - the screen-level Retry.
+- **LB-006:** drop repeated lines and stops, make provisional stops for pattern stops, count drops in the `DataQualityReport`.
+- **Favourites:** store a saved stop under `FavouriteTypes.STOP` with its canonical id.
+- **Next story:**
+  - LB-006 part 1: the DD rules that need no DTO shapes, such as stop ids, directions, the DD-05 time fix, colours and empty strings;
+  - LB-013 still waits for OQ-10, and LB-003 for OQ-11.
+
+---
+
 ## 2026-10-30: LB-017: telemetry contracts
 
 **Done**
