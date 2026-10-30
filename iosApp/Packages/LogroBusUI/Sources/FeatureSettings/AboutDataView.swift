@@ -98,38 +98,55 @@ extension MadridDateTime {
     }
 }
 
+// Inside a NavigationStack, as More pushes it, so the previews show its title (LB-012).
 #Preview("Synced") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+    }
 }
 
 #Preview("Synced, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+            .preferredColorScheme(.dark)
+    }
 }
 
 #Preview("Never synced") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+    }
 }
 
 #Preview("Never synced, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+            .preferredColorScheme(.dark)
+    }
 }
 
 #Preview("Loading") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+    }
 }
 
 #Preview("Loading, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+            .preferredColorScheme(.dark)
+    }
 }
 
 #Preview("Error") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+    }
 }
 
 #Preview("Error, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+            .preferredColorScheme(.dark)
+    }
 }
