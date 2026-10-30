@@ -40,7 +40,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-014 | Write ADRs for the remaining spec §8.3 choices (Ktor, SQLDelight, Koin, kotlinx-datetime, Coil, MapLibre, Firebase, Multiplatform Settings). Done: ADR-0012 to ADR-0018 (PR #19), accepted by the owner on 2026-10-26. Left: the analytics and crash backend ADR, which waits for OQ-16 | NFR-MNT-03 | P1 | blocked (OQ-16) |
 | LB-015 | Remote config backend: decide (OQ-16) and implement behind the `RemoteConfig` interface | Spec §8.9, NFR-REL-05 | P1 | deferred (OQ-16: decide before the beta) |
 | LB-016 | Multi-agent harness and local quality gates: agent adapters, playbooks, `scripts/checks`, git hooks, Claude Code settings, hooks, reviewer agents and skills, PR templates, policy CI workflow (inactive while the repository is private) | NFR-MNT-05, ADR-0006 | P0 | done |
-| LB-017 | Telemetry contracts: `AnalyticsTracker` with a typed `AnalyticsEvent` catalogue, `CrashReporter`, `ConsentStore`, consent-gated wrappers, no-op and logging implementations, platform injection points | ADR-0009, NFR-OBS-03, NFR-PRIV-02 | P1 | todo |
+| LB-017 | Telemetry contracts: `AnalyticsTracker` with a typed `AnalyticsEvent` catalogue, `CrashReporter`, `ConsentStore`, consent-gated wrappers, no-op and logging implementations, platform injection points | ADR-0009, NFR-OBS-03, NFR-PRIV-02 | P1 | in-progress |
 
 ## E1 Lines (M1)
 
