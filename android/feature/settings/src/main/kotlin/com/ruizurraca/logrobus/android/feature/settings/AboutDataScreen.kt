@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -79,7 +80,7 @@ fun AboutDataScreen(
             )
         },
     ) { padding ->
-        AboutDataContent(state, onEvent, Modifier.padding(padding).consumeWindowInsets(padding))
+        AboutDataContent(state, onEvent, contentPadding = padding)
     }
 }
 
@@ -87,20 +88,24 @@ fun AboutDataScreen(
 private fun AboutDataContent(
     state: AboutDataUiState,
     onEvent: (AboutDataEvent) -> Unit,
-    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
     when (state) {
         // Spec §7.3: the final layout with placeholders, never a lone spinner.
         AboutDataUiState.Loading -> {
-            LastSyncs(StaticDataset.entries.map { LastSyncUi(it, null) }, loading = true, modifier)
+            LastSyncs(StaticDataset.entries.map { LastSyncUi(it, null) }, loading = true, contentPadding)
         }
 
         is AboutDataUiState.Content -> {
-            LastSyncs(state.lastSyncs, loading = false, modifier)
+            LastSyncs(state.lastSyncs, loading = false, contentPadding)
         }
 
         is AboutDataUiState.Error -> {
-            ErrorMessage(state.reason, onRetry = { onEvent(AboutDataEvent.Retry) }, modifier)
+            ErrorMessage(
+                state.reason,
+                onRetry = { onEvent(AboutDataEvent.Retry) },
+                Modifier.padding(contentPadding).consumeWindowInsets(contentPadding),
+            )
         }
     }
 }
@@ -109,10 +114,17 @@ private fun AboutDataContent(
 private fun LastSyncs(
     lastSyncs: List<LastSyncUi>,
     loading: Boolean,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val format = rememberDateTimeFormat()
-    Column(modifier.verticalScroll(rememberScrollState())) {
+    // The padding goes inside the scroll, so the rows scroll behind the system bars rather than stop above them.
+    Column(
+        modifier
+            .consumeWindowInsets(contentPadding)
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding),
+    ) {
         ListItem(
             headlineContent = {
                 Text(
