@@ -7,6 +7,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -99,6 +100,28 @@ class TabNavigationTest {
         aboutData().assertIsDisplayed()
     }
 
+    @Test
+    fun lb012_everyScreenTitleIsAHeading() {
+        // TalkBack's heading navigation reaches each screen's title, as VoiceOver does on iOS.
+        heading("Lines").assertIsDisplayed()
+        moreAction().performClick()
+        heading("More").assertIsDisplayed()
+        compose.onNodeWithText("Settings").performClick()
+        heading("Settings").assertIsDisplayed()
+        back()
+        compose.onNodeWithText("About data").performClick()
+        heading("About data").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_theUpButtonGoesBackToThePreviousScreen() {
+        openAboutDataInLines()
+
+        compose.onNodeWithContentDescription("Back").performClick()
+
+        compose.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
     private fun openAboutDataInLines() {
         moreAction().performClick()
         compose.onNodeWithText("About data").performClick()
@@ -107,6 +130,8 @@ class TabNavigationTest {
 
     /** About data's own content, which neither More nor a tab root shows. */
     private fun aboutData(): SemanticsNodeInteraction = compose.onNodeWithText("Last sync")
+
+    private fun heading(title: String): SemanticsNodeInteraction = compose.onNode(hasText(title) and isHeading())
 
     private fun moreAction(): SemanticsNodeInteraction = compose.onNodeWithContentDescription("More")
 
