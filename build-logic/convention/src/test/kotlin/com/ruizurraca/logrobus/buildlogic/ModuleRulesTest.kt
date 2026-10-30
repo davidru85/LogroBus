@@ -198,4 +198,47 @@ class ModuleRulesTest {
         assertTrue(":shared:feature:stops" in message, message)
         assertTrue("ADR-0007" in message, message)
     }
+
+    @Test
+    fun lb017_noModuleButTheAndroidAppMayUseAVendorTelemetrySdk() {
+        // ADR-0009: the vendor implementations are classes in the app module, so no shared module, Android core or
+        // Android feature ever references a vendor SDK.
+        val vendors =
+            listOf(
+                "com.google.firebase:firebase-analytics",
+                "com.google.firebase:firebase-crashlytics",
+                "com.google.android.gms:play-services-measurement-api",
+                "io.sentry:sentry-kotlin-multiplatform",
+                "com.bugsnag:bugsnag-android",
+                "com.datadoghq:dd-sdk-android-rum",
+                "com.amplitude:analytics-android",
+                "com.mixpanel.android:mixpanel-android",
+            )
+        val modules =
+            listOf(
+                ":shared:core:telemetry",
+                ":shared:core:common",
+                ":shared:transit:data",
+                ":shared:feature:lines",
+                ":shared:umbrella",
+                ":android:core:designsystem",
+                ":android:feature:lines",
+            )
+
+        modules.forEach { from -> assertEquals(vendors.size, violations(from, external = vendors).size, from) }
+    }
+
+    @Test
+    fun lb017_theAndroidAppMayUseAVendorTelemetrySdk() {
+        val firebase = listOf("com.google.firebase:firebase-analytics", "com.google.firebase:firebase-crashlytics")
+
+        assertEquals(emptyList<String>(), violations(":android:app", external = firebase))
+    }
+
+    @Test
+    fun lb017_googlePlayServicesLocationIsNotAVendorTelemetrySdk() {
+        val location = listOf("com.google.android.gms:play-services-location")
+
+        assertEquals(emptyList<String>(), violations(":shared:core:location", external = location))
+    }
 }
