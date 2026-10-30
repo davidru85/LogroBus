@@ -16,6 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 /** Spec §8.5, architecture.md §4.4, ADR-0008: the static sync of lines and stops. */
@@ -132,6 +133,109 @@ class StaticSyncEngineTest {
 
             assertTrue(logger.entries.any { it.level == LogLevel.Warn && "4 lines and 98 stops" in it.message })
         }
+
+    @Test
+    fun lb008_withinTwentyFourHoursOfTheLastSuccessNothingIsDownloaded() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            now += 24.hours - 1.minutes
+
+            assertEquals(AppResult.Success(Unit), engine.syncIfStale())
+
+            assertEquals(2, source.requests)
+        }
+
+    @Test
+    fun lb008_twentyFourHoursAfterTheLastSuccessTheSyncDownloadsAgain() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            now += 24.hours
+            publish(version = 2)
+
+            assertEquals(AppResult.Success(Unit), engine.syncIfStale())
+
+            assertEquals(catalogue(version = 2), driver.storedCatalogue())
+        }
+
+    @Test
+    fun lb008_aDatasetThatNeverSyncedMakesTheCacheStale() =
+        runTest {
+            database.syncQueries.recordSync(StaticDataset.LINES.key, now, "a hash")
+
+            engine().syncIfStale()
+
+            assertEquals(2, source.requests)
+        }
+
+    @Test
+    fun lb008_aFailedRefreshIsRetriedAtTheNextTrigger() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            now += 25.hours
+            source.lines = AppResult.Failure(AppError.Server(503))
+            engine.syncIfStale()
+
+            now += 1.minutes
+            publish(version = 2)
+
+            assertEquals(AppResult.Success(Unit), engine.syncIfStale())
+            assertEquals(catalogue(version = 2), driver.storedCatalogue())
+        }
+
+    @Test
+    fun lb008_anUnchangedPayloadWritesNothingButTheTimeOfTheSync() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            val firstSync = database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne()
+            driver.execute(null, "UPDATE line SET display_name = 'edited' WHERE id = 1", 0)
+            now += 25.hours
+            normaliser.result = AppResult.Success(catalogue(version = 2))
+
+            assertEquals(AppResult.Success(Unit), engine.syncIfStale())
+
+            // The row edited above is still edited: nothing was replaced, and nothing was normalised.
+            assertEquals(
+                listOf("edited"),
+                driver.select("SELECT display_name FROM line WHERE id = 1") { it.getString(0) },
+            )
+            assertEquals(1, normaliser.calls)
+            assertEquals(
+                firstSync.copy(last_success = now),
+                database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne(),
+            )
+            assertEquals(
+                now,
+                database.syncQueries
+                    .syncState(StaticDataset.STOPS.key)
+                    .executeAsOne()
+                    .last_success,
+            )
+        }
+
+    @Test
+    fun lb008_whenOneDatasetChangesBothAreStored() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            now += 25.hours
+            source.stops = AppResult.Success(body("stops", 2))
+            normaliser.result = AppResult.Success(catalogue(version = 2))
+
+            engine.syncIfStale()
+
+            assertEquals(catalogue(version = 2), driver.storedCatalogue())
+        }
+
+    /** The source and the normaliser answer with [version] from now on. */
+    private fun publish(version: Int) {
+        source.lines = AppResult.Success(body("lines", version))
+        source.stops = AppResult.Success(body("stops", version))
+        normaliser.result = AppResult.Success(catalogue(version))
+    }
 
     /** After a first sync, a refresh 25 h later normalises to [rejected], which must change nothing. */
     private suspend fun TestScope.assertRejectedAndCacheKept(rejected: StaticCatalogue) {
