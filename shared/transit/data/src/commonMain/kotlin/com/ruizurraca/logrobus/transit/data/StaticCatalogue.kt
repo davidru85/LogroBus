@@ -16,7 +16,13 @@ internal interface StaticSource {
  * Turns the static payloads into the catalogue to store, fixing the source's quirks (spec §5.3 to §5.6). Line and stop
  * ids are unique in the result: a duplicate fails the write, and the sync with it.
  */
-internal fun interface StaticNormaliser {
+internal interface StaticNormaliser {
+    /**
+     * Changes whenever the same payloads would normalise differently: a new version of the normaliser, or new name
+     * overrides from remote config (DD-11). The sync renormalises an unchanged payload when it changes.
+     */
+    val fingerprint: String
+
     fun normalise(
         lines: JsonElement,
         stops: JsonElement,

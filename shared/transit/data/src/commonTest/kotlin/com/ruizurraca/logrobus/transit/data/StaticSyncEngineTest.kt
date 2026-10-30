@@ -34,19 +34,17 @@ class StaticSyncEngineTest {
     private val normaliser = FakeNormaliser()
     private var now = Instant.parse("2026-10-30T08:00:00Z")
 
-    private fun TestScope.engine(
-        normaliser: StaticNormaliser = this@StaticSyncEngineTest.normaliser,
-        database: LogroBusDatabase = this@StaticSyncEngineTest.database,
-    ) = StandardTestDispatcher(testScheduler).let { dispatcher ->
-        DefaultStaticSyncEngine(
-            source = source,
-            normaliser = normaliser,
-            database = database,
-            clock = AppClock { now },
-            dispatchers = AppDispatchers(main = dispatcher, default = dispatcher, io = dispatcher),
-            logger = logger,
-        )
-    }
+    private fun TestScope.engine(database: LogroBusDatabase = this@StaticSyncEngineTest.database) =
+        StandardTestDispatcher(testScheduler).let { dispatcher ->
+            DefaultStaticSyncEngine(
+                source = source,
+                normaliser = normaliser,
+                database = database,
+                clock = AppClock { now },
+                dispatchers = AppDispatchers(main = dispatcher, default = dispatcher, io = dispatcher),
+                logger = logger,
+            )
+        }
 
     @AfterTest
     fun closeDatabase() = driver.close()
@@ -74,14 +72,36 @@ class StaticSyncEngineTest {
         }
 
     @Test
-    fun lb008_aSuccessfulSyncRecordsWhenEachDatasetSyncedAndTheHashOfItsBody() =
+    fun lb008_aSuccessfulSyncRecordsWhenEachDatasetSyncedAndTheHashOfItsContent() =
         runTest {
             engine().syncIfStale()
 
+            // The content: the normaliser's fingerprint, then the body as decoded and encoded again.
             val lines = database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne()
             val stops = database.syncQueries.syncState(StaticDataset.STOPS.key).executeAsOne()
-            assertEquals(now to sha256Hex(body("lines", 1).toString()), lines.last_success to lines.content_hash)
-            assertEquals(now to sha256Hex(body("stops", 1).toString()), stops.last_success to stops.content_hash)
+            assertEquals(
+                now to sha256Hex("normaliser 1\n${body("lines", 1)}"),
+                lines.last_success to lines.content_hash,
+            )
+            assertEquals(
+                now to sha256Hex("normaliser 1\n${body("stops", 1)}"),
+                stops.last_success to stops.content_hash,
+            )
+        }
+
+    @Test
+    fun lb008_aChangedNormaliserRenormalisesAnUnchangedPayload() =
+        runTest {
+            // DD-11: new name overrides, or a normaliser fixed in an app update, change what the same payload stores.
+            val engine = engine()
+            engine.syncIfStale()
+            now += 25.hours
+            normaliser.fingerprint = "normaliser 2"
+            normaliser.result = AppResult.Success(catalogue(version = 2))
+
+            engine.syncIfStale()
+
+            assertEquals(catalogue(version = 2), driver.storedCatalogue())
         }
 
     @Test
@@ -398,7 +418,9 @@ class StaticSyncEngineTest {
             now += 25.hours
             publish(version = 2)
 
-            val result = engine(normaliser = { _, _ -> error("A bug in the normaliser") }).syncIfStale()
+            normaliser.failure = IllegalStateException("A bug in the normaliser")
+
+            val result = engine().syncIfStale()
 
             assertEquals(AppResult.Failure(AppError.Data), result)
             assertEquals(catalogue(), driver.storedCatalogue())

@@ -41,10 +41,12 @@ internal class FakeStaticSource(
     }
 }
 
-/** Answers with [result], counting the calls. */
+/** Answers with [result], or throws [failure], counting the calls. */
 internal class FakeNormaliser(
     var result: AppResult<StaticCatalogue> = AppResult.Success(catalogue()),
 ) : StaticNormaliser {
+    override var fingerprint = "normaliser 1"
+    var failure: Exception? = null
     var calls = 0
         private set
 
@@ -53,6 +55,7 @@ internal class FakeNormaliser(
         stops: JsonElement,
     ): AppResult<StaticCatalogue> {
         calls++
+        failure?.let { throw it }
         return result
     }
 }
