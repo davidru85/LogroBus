@@ -13,6 +13,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 
 /**
@@ -30,7 +31,7 @@ internal fun MoreScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.more_title)) },
+                title = { ScreenTitle(stringResource(R.string.more_title)) },
                 navigationIcon = { UpButton(onClick = onBack) },
             )
         },
