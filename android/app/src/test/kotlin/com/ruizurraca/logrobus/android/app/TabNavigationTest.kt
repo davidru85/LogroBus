@@ -122,6 +122,19 @@ class TabNavigationTest {
     }
 
     @Test
+    fun lb012_aTabSwitchSettlesOnTheMotionSchemesEffectsSpring() {
+        // design_guidelines.md §4: screens change on the expressive motion scheme's effects spring, which settles well
+        // before the library's 700 ms fade; until then both screens are in the semantics tree.
+        compose.mainClock.autoAdvance = false
+        tab("Near me").performClick()
+
+        compose.mainClock.advanceTimeBy(SETTLED_MILLIS)
+
+        heading("Lines").assertDoesNotExist()
+        heading("Near me").assertIsDisplayed()
+    }
+
+    @Test
     fun lb012_theUpButtonGoesBackToThePreviousScreen() {
         openAboutDataInLines()
 
@@ -153,4 +166,8 @@ class TabNavigationTest {
     }
 
     private val isTab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+
+    private companion object {
+        const val SETTLED_MILLIS = 400L
+    }
 }
