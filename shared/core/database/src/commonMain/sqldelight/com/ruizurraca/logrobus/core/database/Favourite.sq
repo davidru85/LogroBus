@@ -32,7 +32,7 @@ CREATE TABLE plan_recent (
 -- FR-FAV-04: after each successful static sync, a saved stop that is no longer in the catalogue has one more missing
 -- sync, and one that is back starts from zero. A provisional stop made up from a pattern (DD-10) is still served, so it
 -- counts as there.
-countMissingStops:
+updateMissingSyncs:
 UPDATE favourite
 SET missing_syncs = CASE
   WHEN ref_id IN (SELECT CAST(id AS TEXT) FROM stop) THEN 0

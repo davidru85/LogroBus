@@ -404,28 +404,6 @@ class StaticSyncEngineTest {
             assertEquals(mapOf("101" to 0L), missingSyncs("line"))
         }
 
-    private fun save(
-        type: String,
-        refId: String,
-    ) {
-        driver.execute(
-            identifier = null,
-            sql = "INSERT INTO favourite (id, type, ref_id, position, created_at) VALUES (?, ?, ?, 0, 0)",
-            parameters = 3,
-        ) {
-            bindString(0, "$type $refId")
-            bindString(1, type)
-            bindString(2, refId)
-        }
-    }
-
-    private fun missingSyncs(type: String): Map<String, Long> =
-        driver
-            .select("SELECT ref_id, missing_syncs, type FROM favourite") {
-                Triple(it.getString(0)!!, it.getLong(1)!!, it.getString(2))
-            }.filter { it.third == type }
-            .associate { it.first to it.second }
-
     @Test
     fun lb008_aDatabaseThatCannotBeReadFailsWithData() =
         runTest {
@@ -509,4 +487,26 @@ class StaticSyncEngineTest {
     }
 
     private val nothing = StaticCatalogue(emptyList(), emptyList())
+
+    private fun save(
+        type: String,
+        refId: String,
+    ) {
+        driver.execute(
+            identifier = null,
+            sql = "INSERT INTO favourite (id, type, ref_id, position, created_at) VALUES (?, ?, ?, 0, 0)",
+            parameters = 3,
+        ) {
+            bindString(0, "$type $refId")
+            bindString(1, type)
+            bindString(2, refId)
+        }
+    }
+
+    private fun missingSyncs(type: String): Map<String, Long> =
+        driver
+            .select("SELECT ref_id, missing_syncs, type FROM favourite") {
+                Triple(it.getString(0)!!, it.getLong(1)!!, it.getString(2))
+            }.filter { it.third == type }
+            .associate { it.first to it.second }
 }

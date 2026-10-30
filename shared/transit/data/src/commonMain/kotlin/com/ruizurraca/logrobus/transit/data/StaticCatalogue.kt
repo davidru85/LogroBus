@@ -13,8 +13,11 @@ internal interface StaticSource {
 }
 
 /**
- * Turns the static payloads into the catalogue to store, fixing the source's quirks (spec §5.3 to §5.6). Line and stop
- * ids are unique in the result: a duplicate fails the write, and the sync with it.
+ * Turns the static payloads into the catalogue to store, fixing the source's quirks (spec §5.3 to §5.6):
+ * - Line and stop ids are unique in the result. The normaliser drops a repeated item and logs it (AGENTS.md §5.9): a
+ *   duplicate would fail the write, and every sync of the same payload with it.
+ * - Every pattern stop has a stop, a provisional one where API-02 lacks it (DD-10). The sync rejects a catalogue where
+ *   one does not.
  */
 internal interface StaticNormaliser {
     /**
@@ -46,11 +49,11 @@ internal data class CatalogueLine(
     val onColor: Long,
     val kind: LineKind,
     val isOperational: Boolean,
-    val patterns: List<CataloguePattern>,
+    /** At most one pattern per direction, as the database keys them. */
+    val patterns: Map<Direction, CataloguePattern>,
 )
 
 internal data class CataloguePattern(
-    val direction: Direction,
     val headsign: String,
     /** An encoded polyline, precision 6. */
     val shapePolyline: String,
@@ -72,5 +75,5 @@ internal data class CatalogueStop(
     val isOperational: Boolean,
     val isProvisional: Boolean,
     /** The lines API-02 says serve the stop. */
-    val lineIds: List<Int>,
+    val lineIds: Set<Int>,
 )

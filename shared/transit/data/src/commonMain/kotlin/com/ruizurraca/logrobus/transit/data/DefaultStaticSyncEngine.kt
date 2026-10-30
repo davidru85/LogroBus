@@ -12,15 +12,21 @@ import com.ruizurraca.logrobus.core.database.Sync_state
 import com.ruizurraca.logrobus.core.database.searchableName
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
-/** The static sync of architecture.md §4.4. */
+/**
+ * The static sync of architecture.md §4.4. Its mutex runs one sync at a time per instance, so the app keeps one per
+ * process (a Koin `single`, LB-008 part 2).
+ */
 internal class DefaultStaticSyncEngine(
     private val source: StaticSource,
     private val normaliser: StaticNormaliser,
@@ -37,9 +43,14 @@ internal class DefaultStaticSyncEngine(
     private suspend fun sync(): AppResult<Unit> {
         val synced = withContext(dispatchers.io) { StaticDataset.entries.associateWith(::syncState) }
         if (synced.values.all { it.isFresh() }) return AppResult.Success(Unit)
-        return source.lines().then { lines ->
-            // Hashing and normalising the payloads is CPU work, kept off the caller's thread, which may be the UI's.
-            source.stops().then { stops -> withContext(dispatchers.default) { update(synced, lines, stops) } }
+        return coroutineScope {
+            // Both at once: on first use, a screen waits for them.
+            val lines = async { source.lines() }
+            val stops = async { source.stops() }
+            lines.await().then { lines ->
+                // Hashing and normalising the payloads is CPU work, kept off the caller's thread, maybe the UI's.
+                stops.await().then { stops -> withContext(dispatchers.default) { update(synced, lines, stops) } }
+            }
         }
     }
 
@@ -87,7 +98,7 @@ internal class DefaultStaticSyncEngine(
         val stopIds = catalogue.stops.mapTo(HashSet()) { it.id }
         val unlinked =
             catalogue.lines.sumOf { line ->
-                line.patterns.sumOf { it.stops.count { s -> s.stopId !in stopIds } }
+                line.patterns.values.sumOf { it.stops.count { s -> s.stopId !in stopIds } }
             }
         if (lines >= FEWEST_LINES && stops >= FEWEST_STOPS && unlinked == 0) return AppResult.Success(catalogue)
         logger.warn(
@@ -111,7 +122,7 @@ internal class DefaultStaticSyncEngine(
             database.transaction {
                 catalogue?.let(::replace)
                 hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
-                database.favouriteQueries.countMissingStops(FavouriteTypes.STOP)
+                database.favouriteQueries.updateMissingSyncs(FavouriteTypes.STOP)
             }
         }
         return AppResult.Success(Unit)
@@ -120,15 +131,14 @@ internal class DefaultStaticSyncEngine(
     /**
      * The database and normaliser boundary (code_style.md §2.2, NFR-REL-02): whatever [block] throws, a database that
      * cannot be read or written or a normaliser bug, fails this sync alone and leaves the cache as it was. Only the
-     * caller's own cancellation propagates.
+     * caller's own cancellation propagates: a stray cancellation from inside, such as a timeout, fails the sync too.
      */
     @Suppress("TooGenericExceptionCaught") // On purpose: see above.
     private suspend fun failingAsData(block: suspend () -> AppResult<Unit>): AppResult<Unit> =
         try {
             block()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
         } catch (failure: Exception) {
+            currentCoroutineContext().ensureActive()
             logger.warn(TAG, "The static sync failed; the previous catalogue is kept", failure)
             AppResult.Failure(AppError.Data)
         }
@@ -149,12 +159,12 @@ internal class DefaultStaticSyncEngine(
                     kind = line.kind.key,
                     operational = line.isOperational,
                 )
-                line.patterns.forEach { pattern ->
-                    insertPattern(line.id.toLong(), pattern.direction.key, pattern.headsign, pattern.shapePolyline)
+                line.patterns.forEach { (direction, pattern) ->
+                    insertPattern(line.id.toLong(), direction.key, pattern.headsign, pattern.shapePolyline)
                     pattern.stops.forEachIndexed { seq, stop ->
                         insertPatternStop(
                             line_id = line.id.toLong(),
-                            direction = pattern.direction.key,
+                            direction = direction.key,
                             seq = seq.toLong(),
                             stop_id = stop.stopId.toLong(),
                             shape_index = stop.shapeIndex.toLong(),

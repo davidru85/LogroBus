@@ -62,7 +62,7 @@ internal class FakeNormaliser(
 
 /**
  * A catalogue of [lineCount] lines and [stopCount] stops, every value marked with [version]. Each stop is served by
- * one line, in both directions, and sorted as [storedCatalogue] reads them back.
+ * one line, in both directions, and listed in the order [storedCatalogue] reads them back.
  */
 internal fun catalogue(
     version: Int = 1,
@@ -79,7 +79,7 @@ internal fun catalogue(
                 lng = -2.44 - id / 10_000.0,
                 isOperational = id % 7 != 0,
                 isProvisional = false,
-                lineIds = listOf(lineOf(id)),
+                lineIds = setOf(lineOf(id)),
             )
         }
     val lines =
@@ -95,10 +95,9 @@ internal fun catalogue(
                 kind = if (id % 2 == 0) LineKind.NIGHT else LineKind.DAY,
                 isOperational = true,
                 patterns =
-                    Direction.entries.map { direction ->
+                    Direction.entries.associateWith { direction ->
                         val ordered = if (direction == Direction.OUTBOUND) served else served.reversed()
                         CataloguePattern(
-                            direction = direction,
                             headsign = "Avenida de Colón ${ordered.last()} v$version",
                             shapePolyline = "shape $id $direction v$version",
                             stops = ordered.mapIndexed { index, stopId -> CataloguePatternStop(stopId, index * 3) },
@@ -118,8 +117,8 @@ internal fun SqlDriver.storedCatalogue(): StaticCatalogue {
     val patterns =
         select("SELECT line_id, direction, headsign, shape_polyline FROM pattern") {
             val key = it.int(0) to direction(it.getString(1)!!)
-            it.int(0) to CataloguePattern(key.second, it.getString(2)!!, it.getString(3)!!, patternStops[key].orEmpty())
-        }.groupBy({ it.first }, { it.second })
+            key to CataloguePattern(it.getString(2)!!, it.getString(3)!!, patternStops[key].orEmpty())
+        }.groupBy({ it.first.first }, { it.first.second to it.second })
     val lines =
         select("SELECT id, code, raw_name, display_name, color, on_color, kind, operational FROM line ORDER BY id") {
             CatalogueLine(
@@ -131,7 +130,7 @@ internal fun SqlDriver.storedCatalogue(): StaticCatalogue {
                 onColor = it.getLong(5)!!,
                 kind = LineKind.entries.single { kind -> kind.key == it.getString(6) },
                 isOperational = it.getBoolean(7)!!,
-                patterns = patterns[it.int(0)].orEmpty().sortedBy { pattern -> pattern.direction },
+                patterns = patterns[it.int(0)].orEmpty().toMap(),
             )
         }
     val stopLines =
@@ -146,7 +145,7 @@ internal fun SqlDriver.storedCatalogue(): StaticCatalogue {
                 lng = it.getDouble(3)!!,
                 isOperational = it.getBoolean(4)!!,
                 isProvisional = it.getBoolean(5)!!,
-                lineIds = stopLines[it.int(0)].orEmpty(),
+                lineIds = stopLines[it.int(0)].orEmpty().toSet(),
             )
         }
     return StaticCatalogue(lines, stops)
