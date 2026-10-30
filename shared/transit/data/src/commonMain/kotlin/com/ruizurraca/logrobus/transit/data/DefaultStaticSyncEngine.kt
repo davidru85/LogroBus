@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 
 /** The static sync of architecture.md §4.4. */
@@ -70,10 +71,11 @@ internal class DefaultStaticSyncEngine(
     private fun syncState(dataset: StaticDataset): Sync_state? =
         database.syncQueries.syncState(dataset.key).executeAsOneOrNull()
 
-    // Spec §8.5: lines and stops stay fresh for 24 h after their last success.
+    // Spec §8.5: lines and stops stay fresh for 24 h after their last success. One in the future means the clock moved
+    // back, so it proves nothing about the cache's age.
     private fun Sync_state?.isFresh(): Boolean {
-        val lastSuccess = this?.last_success ?: return false
-        return clock.now() - lastSuccess < TTL
+        val age = clock.now() - (this?.last_success ?: return false)
+        return age >= Duration.ZERO && age < TTL
     }
 
     // Spec §8.5: too few lines or stops means a broken payload, not a smaller network. Provisional stops (DD-10) come
