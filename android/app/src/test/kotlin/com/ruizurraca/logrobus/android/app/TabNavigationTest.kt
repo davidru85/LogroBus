@@ -114,6 +114,14 @@ class TabNavigationTest {
     }
 
     @Test
+    fun lb012_theHowToGetThereRootHasItsScreenTitle() {
+        // design_guidelines.md §2.1: the tab says "Directions"; its screen says "How to get there" (plan.title).
+        tab("Directions").performClick()
+
+        heading("How to get there").assertIsDisplayed()
+    }
+
+    @Test
     fun lb012_theUpButtonGoesBackToThePreviousScreen() {
         openAboutDataInLines()
 

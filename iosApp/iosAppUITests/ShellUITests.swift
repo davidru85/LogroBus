@@ -17,9 +17,10 @@ final class ShellUITests: XCTestCase {
     func test_lb012_eachTabRootOpensMore_withSettingsAndAboutData() {
         let app = launch()
 
-        for tab in ["Lines", "Near me", "Directions"] {
+        // design_guidelines.md §2.1: the How to Get There tab says "Directions"; its screen says "How to get there".
+        for (tab, title) in [("Lines", "Lines"), ("Near me", "Near me"), ("Directions", "How to get there")] {
             app.tabBars.buttons[tab].tap()
-            app.navigationBars[tab].buttons["More"].tap()
+            app.navigationBars[title].buttons["More"].tap()
 
             XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5), "More lists Settings, from \(tab)")
             XCTAssertTrue(app.buttons["About data"].exists, "More lists About data, from \(tab)")
