@@ -49,3 +49,7 @@ private struct TabStack: View {
         }
     }
 }
+
+#Preview {
+    AppShell()
+}

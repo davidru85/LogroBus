@@ -19,7 +19,7 @@ final class TabRouter {
     /// How many times each tab has been re-selected at its root. A scrolling root scrolls to its top on every change.
     private(set) var scrollToTopRequests: [TopLevelDestination: Int] = [:]
 
-    /// Selects [destination]. Re-selecting the selected tab pops it to its root, or, at its root, asks the root to
+    /// Selects `destination`. Re-selecting the selected tab pops it to its root, or, at its root, asks the root to
     /// scroll to its top.
     func select(_ destination: TopLevelDestination) {
         if destination != selection {
