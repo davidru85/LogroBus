@@ -324,6 +324,9 @@ class ArchitectureRulesTest {
                 "iosApp/iosApp/Resources/catalogue.sqlite",
                 "shared/core/database/src/commonMain/resources/Seed-lines.json",
                 "iosApp/iosApp/stops.sqlite3",
+                "android/app/src/main/assets/stops.json",
+                "iosApp/iosApp/Resources/lines-2026-10-22.json",
+                "shared/transit/data/src/commonMain/resources/stops.json",
             )
         assertEquals(seeds, seeds.filter(ArchitectureRules::isSeedData))
     }
@@ -337,6 +340,8 @@ class ArchitectureRulesTest {
                 "shared/core/database/src/commonMain/sqldelight/com/ruizurraca/logrobus/core/database/Stop.sq",
                 "iosApp/iosAppTests/__Snapshots__/LineBadgeTests/dark.png",
                 "android/core/designsystem/src/test/screenshots/seedling.png",
+                "shared/transit/data/src/commonTest/resources/stops.json",
+                "android/app/src/main/assets/stopsign.json",
             )
         assertEquals(emptyList<String>(), others.filter(ArchitectureRules::isSeedData))
     }
