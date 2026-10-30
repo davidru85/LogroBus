@@ -37,7 +37,9 @@ class AboutDataScreenshotTest(
             val density = LocalDensity.current
             val fontScale = if (variant == FONT_SCALE_2) 2f else density.fontScale
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
-                LogroBusTheme(darkTheme = variant == DARK) { Surface { AboutDataScreen(uiState, onEvent = {}) } }
+                LogroBusTheme(
+                    darkTheme = variant == DARK,
+                ) { Surface { AboutDataScreen(uiState, onEvent = {}, onBack = {}) } }
             }
         }
 

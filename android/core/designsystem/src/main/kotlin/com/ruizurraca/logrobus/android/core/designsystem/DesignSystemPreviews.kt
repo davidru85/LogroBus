@@ -68,6 +68,19 @@ private fun EtaTextPreview() {
     }
 }
 
+@PreviewLightDark
+@Composable
+private fun TopAppBarActionsPreview() {
+    LogroBusTheme {
+        Surface {
+            Row {
+                UpButton(onClick = {})
+                MoreActionButton(onClick = {})
+            }
+        }
+    }
+}
+
 // Line B1's red and its onColor (spec §3).
 private const val PREVIEW_RED = 0xFFFD0200
 private const val PREVIEW_ON_RED = 0xFF000000

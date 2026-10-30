@@ -3,10 +3,13 @@ package com.ruizurraca.logrobus.android.app
 import android.app.Activity
 import android.util.TypedValue
 import androidx.compose.ui.graphics.toPixelMap
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.core.view.WindowCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -33,13 +36,13 @@ class MainActivityTest {
     @Test
     @Config(qualifiers = "en")
     fun lb001_appLaunchesOnTheLinesTab() {
-        compose.onNodeWithText("Lines").assertIsDisplayed()
+        compose.onNode(hasText("Lines") and isTab).assertIsSelected()
     }
 
     @Test
     @Config(qualifiers = "es")
     fun lb001_appLaunchesOnTheLinesTab_inSpanish() {
-        compose.onNodeWithText("Líneas").assertIsDisplayed()
+        compose.onNode(hasText("Líneas") and isTab).assertIsSelected()
     }
 
     @Test
@@ -74,6 +77,8 @@ class MainActivityTest {
         assertTrue("the window theme is light", compose.activity.isLightTheme())
     }
 
+    private val isTab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+
     private fun Activity.isLightTheme(): Boolean {
         val value = TypedValue()
         theme.resolveAttribute(android.R.attr.isLightTheme, value, true)
@@ -83,8 +88,9 @@ class MainActivityTest {
     @Test
     @Config(qualifiers = "night")
     fun lb011_theStartScreenDrawsOnTheThemesSurface() {
+        // The middle of the tab's content: since LB-012 the bottom edge is the navigation bar, on its own container.
         compose.onRoot().captureToImage().toPixelMap().let { pixels ->
-            assertEquals(Tokens.darkColors.surface, pixels[pixels.width / 2, pixels.height - 1])
+            assertEquals(Tokens.darkColors.surface, pixels[pixels.width / 2, pixels.height / 2])
         }
     }
 }

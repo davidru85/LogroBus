@@ -7,4 +7,12 @@
     <string name="tab_lines">Líneas</string>
     <string name="tab_near_me">Cerca de mí</string>
     <string name="tab_directions">Cómo llegar</string>
+
+    <!-- The title of the How to Get There root (design_guidelines.md §9, key plan.title). -->
+    <string name="plan_title">Cómo llegar</string>
+
+    <!-- More (LB-012, FR-NAV-04, design_guidelines.md §9, keys more.*): its title and its entries. -->
+    <string name="more_title">Más</string>
+    <string name="more_settings">Ajustes</string>
+    <string name="more_about_data">Sobre los datos</string>
 </resources>

@@ -73,7 +73,7 @@ LogroBus/
 │   ├── core/
 │   │   ├── designsystem/            # MaterialExpressiveTheme, tokens, LineBadge, EtaText (LB-011); expressive wrappers as screens need them
 │   │   ├── map/                     # MapLibre composables, layers, markers
-│   │   └── navigation/              # NavKeys and entry-point contracts shared by features and the app
+│   │   └── navigation/              # @Serializable NavKeys, and ScrollToTopOnReselect for tab roots (LB-012)
 │   └── feature/
 │       ├── lines/  stops/  nearme/  planner/  settings/   # Compose screens + Android ViewModels
 ├── iosApp/
@@ -310,6 +310,13 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 - `:android:app`:
   - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG, uiModules = listOf(settingsUiModule))` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. Telemetry joins it with LB-409. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
   - A single activity draws edge-to-edge. `NavigationSuiteScaffold` holds the three tabs, and each tab keeps a Navigation 3 back stack of `@Serializable` `NavKey`s defined in `:android:core:navigation` (ADR-0005).
+  - **As built (LB-012):**
+    - `AppShell` chooses the `NavigationSuiteType` by width alone, as FR-NAV-05 says: a short navigation bar on compact widths, and a collapsed wide rail from the medium width up. Material's recommended type would keep a bar on a short window, such as a phone in landscape.
+    - In the bar, a tab label is one line that shrinks to fit its tab at large font sizes, never below its size at 100 %. In the rail, it keeps its size and wraps.
+    - `TabNavigator` holds the selected tab and one `NavBackStack` per tab, all saved across recreation and process death. It selects tabs, opens keys on the selected tab, pops a re-selected tab to its root, or asks a root to scroll to its top. On back, it pops the selected tab; at the root of another tab it returns to Lines.
+    - `NavDisplay` shows the Lines stack under the selected one, so back from another tab's root has its predictive animation. Every screen change cross-fades on the motion scheme's effects spring (`ScreenTransitions` in the design system). Each tab decorates its entries with its own saveable-state and ViewModel decorators, so a popped screen's ViewModel is cleared. Each content key carries the tab, because More or About data can be on two stacks at once.
+    - The shell resolves every key to its screen (`entryProvider`). A tab root receives the More action as `onOpenMore`, and its tab's re-selections through `LocalScrollToTopRequests`; a root with a list calls `ScrollToTopOnReselect(listState)`.
+    - Until LB-101, LB-201 and LB-301, the tab roots are placeholders: a top app bar with the More action. Every top app bar's title is a `ScreenTitle`, a heading for TalkBack.
 - `:android:feature:<x>`:
   - Each screen is an `XRoute` (wiring), a stateless `XScreen(UiState, onEvent)` and an `XViewModel : androidx.lifecycle.ViewModel`.
   - The ViewModel injects shared use cases (`koinViewModel()`), collects their flows in `viewModelScope`, maps them with the shared mappers and exposes `StateFlow<XUiState>`.
@@ -378,6 +385,11 @@ public final class AboutDataViewModel {
   - The `iosApp` scheme runs them, so `scripts/ios/test.sh` does too, until LB-101's matrix job.
   - A cancellation test cancels `observe()`, as `.task {}` does, and waits for `activeCollections` to fall back to 0.
 - **The view, as built:** Loading is the final list over sample content with `.redacted(reason: .placeholder)`, Error is a `ContentUnavailableView` with the reason and Retry, and times follow SwiftUI's environment locale.
+- **The shell, as built (LB-012):**
+  - `AppShell`, in the app target, is a `TabView` with one `Tab` per `TopLevelDestination` and a `NavigationStack` per tab.
+  - `TabRouter` (`@MainActor @Observable`) holds the selection and one `[Route]` path per tab. The `TabView`'s selection setter also runs when the selected tab is tapped again. The router then pops that tab to its root or, at the root, counts a request to scroll to the top. The shell hands the count to the root as the `scrollToTopRequests` environment value of `DesignSystem`.
+    - The system pops a re-selected tab's stack by itself, after the setter, so the two agree. It does not scroll a root to its top, so the count is needed (checked on iOS 26.5 and 27.0; iOS 18 waits for LB-412).
+  - The shell adds the More toolbar action to every tab root and resolves the routes: `MoreView` (app target), `SettingsView` and `AboutDataView` (`FeatureSettings`).
 - **Maps:** MapLibre Native iOS (Swift package) wrapped in `MapUI`. Floating controls use the `DesignSystem` glass helpers.
 - **Platform:** iPhone only in the MVP (NFR-PLAT-03), with an iOS 18 deployment target and Liquid Glass on iOS 26 or later (ADR-0003).
 - **Location and lifecycle:** Core Location (`coreLocationProvider`, in `:shared:core:location`), on the main thread. `AppLifecycle` follows the `UIApplication` enter-background and enter-foreground notifications (`NotificationAppLifecycle`).
@@ -412,6 +424,7 @@ flowchart TD
 - The app shell owns navigation on both platforms. Feature modules expose entry points but never navigate into another feature directly. They emit an effect, such as `NavigateToPlanner(destination)`, which the shell resolves.
 - Stop detail belongs to the `stops` feature, and appears both as the Near Me sheet and as a pushed screen (FR-NAV-07).
 - The app always opens on Lines (FR-NAV-02). Deep links (v1.0, LB-603) open their target tab.
+- More, and the screens it opens, are pushed onto the selected tab's stack, so each tab keeps its own (LB-012). On Android, back at the root of Near Me or How to Get There returns to Lines, and at the root of Lines it leaves the app.
 
 ## 7. Cross-cutting concerns
 

@@ -104,11 +104,14 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
 ### 4.6 Screenshots
 
 - **Android:** Roborazzi (1.77.0) on the JVM, with Robolectric's native graphics.
-  - Reference images live under each module's `src/test/screenshots/` (`android/core/designsystem/…`, `android/feature/<x>/…`).
+  - Reference images live under each module's `src/test/screenshots/` (`android/app/…` since LB-012, `android/core/designsystem/…`, `android/feature/<x>/…`).
   - Verification runs on every PR, in the `android-screenshots` job. Recording is an explicit task (`recordRoborazziDebug`); look at every recorded image before committing it.
   - **SDK 36:** screenshot tests run on `SCREENSHOT_SDK` (36) through `@Config(sdk = …)`. On SDK 37, the target, Robolectric 4.17 drew only the first capture of a test run, and later ones came out as the bare window background. The module's other tests keep the target SDK.
   - A screen's states run as a parameterised test (`ParameterizedRobolectricTestRunner`), one capture per test, from a compose rule; a component's variants may share one test.
-  - 200 % font: wrap the content in `LocalDensity provides Density(density, fontScale = 2f)`.
+  - 200 % font: wrap the content in `LocalDensity provides Density(density, fontScale = 2f)`. A test that launches the activity uses `@Config(fontScale = 2f)` instead.
+  - A window class is a class-level qualifier, such as `w720dp-h540dp` for the rail (LB-012), because a parameterised test cannot change its qualifiers per case.
+  - Record only after the red commit is made: `git add -A` after a recording carries the images into it, as it did once in LB-012.
+  - For a `Text` with `autoSize`, the `GetTextLayoutResult` semantics action reports a probe layout, not the drawn one. Check the drawn size with a screenshot instead (LB-012).
 - **iOS:** swift-snapshot-testing (1.19.7) on the pinned CI simulator, with references under each test target's `__Snapshots__/`. A reduced set also runs nightly on an iOS 18 simulator to cover the fallback appearance without Liquid Glass (NFR-PLAT-01).
   - **As built (LB-011 part 2):**
     - Components snapshot in their package test target (`DesignSystemTests`), with Swift Testing, in light, dark and `accessibility3` text (200 % or more), at a fixed 3× scale. `SizeTests` measure touch targets and badge sizes with `UIHostingController.sizeThatFits`.
@@ -117,6 +120,9 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
   - Component snapshots use a precision of 0.9995 and a perceptual precision of 0.98. The perceptual precision absorbs anti-aliasing between Xcode versions, while a lost icon or strikethrough still fails. Glass, composited on the host's GPU, uses 0.99, and renders in 8-bit sRGB (`displayGamut: .SRGB`). In 16-bit Display P3 images from a key window, low-order noise between machines failed CI's comparison, although the images matched to the eye.
   - On CI, a failed snapshot's actual image is uploaded with the test results (`TEST_RUNNER_SNAPSHOT_ARTIFACTS`). This machine has only Xcode 27.1, so a mismatch on CI's Xcode 26.6 is fixed from that artifact.
   - Words follow SwiftUI's environment locale, so snapshots set it (Spanish), whatever the simulator's language.
+  - **As built (LB-012):** the app's and the features' strings follow the process language, not the environment locale. The `iosApp` scheme therefore runs its tests in Spanish (`language: es`, `region: ES` in `project.yml`). The UI tests set their language in their launch arguments.
+    - Screen snapshots (`iosAppTests/ShellSnapshotTests`) take a whole iPhone screen at 3×.
+    - They take each screen as the root of its stack, where there is no Liquid Glass back button. They can then render by layers, at the component precision of 0.9995. At 0.99, a whole title on a full screen could vanish unnoticed.
   - **The iOS 18 fallback:** the glass snapshots force it on iOS 26 through `glassRendering = .fallback`. Real iOS 18 runs wait for the nightly (LB-412).
 - Each screen needs these variants: light, dark, 200 % font, and every UX state.
 

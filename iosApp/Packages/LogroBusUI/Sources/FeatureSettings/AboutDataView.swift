@@ -1,8 +1,8 @@
 import Shared
 import SwiftUI
 
-/// About data (LB-404): so far, the last successful sync of each dataset (FR-SET-03). More opens it once the app shell
-/// lands (LB-012); the data source, disclaimer and attributions come with LB-404.
+/// About data (LB-404), opened from More (LB-012): so far, the last successful sync of each dataset (FR-SET-03). The
+/// data source, disclaimer and attributions come with LB-404.
 public struct AboutDataView: View {
     @State private var viewModel: AboutDataViewModel
     @Environment(\.locale) private var locale
@@ -13,6 +13,7 @@ public struct AboutDataView: View {
 
     public var body: some View {
         content
+            .navigationTitle(Text("about.title", bundle: .module))
             // Cancelled when the screen leaves, which stops the use case's collection; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }
@@ -97,38 +98,55 @@ extension MadridDateTime {
     }
 }
 
+// Inside a NavigationStack, as More pushes it, so the previews show its title (LB-012).
 #Preview("Synced") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+    }
 }
 
 #Preview("Synced, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview()))
+            .preferredColorScheme(.dark)
+    }
 }
 
 #Preview("Never synced") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+    }
 }
 
 #Preview("Never synced, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+            .preferredColorScheme(.dark)
+    }
 }
 
 #Preview("Loading") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+    }
 }
 
 #Preview("Loading, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().loading()))
+            .preferredColorScheme(.dark)
+    }
 }
 
 #Preview("Error") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+    }
 }
 
 #Preview("Error, dark") {
-    AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AboutDataView(viewModel: AboutDataViewModel(useCases: SharedDependencies.shared.preview().failing()))
+            .preferredColorScheme(.dark)
+    }
 }

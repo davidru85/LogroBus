@@ -19,6 +19,76 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-30: LB-012: the app shell, with three tabs
+
+**Done**
+- **Merges:** the owner merged PR #28 and PR #29 (LB-011 parts 1 and 2), and `main` was synced.
+- **Android:**
+  - `AppShell`: `NavigationSuiteScaffold` with the three tabs, a short bar on compact widths and a collapsed wide rail from the medium width up, whatever the height (FR-NAV-05).
+  - `TabNavigator`: one Navigation 3 back stack of `@Serializable` keys per tab (`:android:core:navigation`), saved across recreation and process death.
+    - Re-selecting a tab pops it to its root or, at the root, asks the root to scroll to its top (`LocalScrollToTopRequests`, `ScrollToTopOnReselect`).
+    - Back at the root of Near Me or How to Get There returns to Lines.
+  - `NavDisplay`:
+    - each tab has its own saveable-state and ViewModel decorators, and content keys that carry the tab;
+    - screens cross-fade on the motion scheme's effects spring.
+  - More, Settings (a titled placeholder until LB-403) and About data, which gains its top app bar.
+  - The design system gains `MoreActionButton`, `UpButton`, `ScreenTitle` (a heading) and `ScreenTransitions`.
+  - Tab labels: in the bar, one line that shrinks to fit at large font sizes; in the rail, full size and wrapping.
+  - New dependencies, all AndroidX: navigation3-runtime and -ui 1.2.0, lifecycle-viewmodel-navigation3 2.11.0, and material3-adaptive-navigation-suite at Material 3's pin.
+- **iOS:**
+  - `AppShell`: a `TabView` with one `NavigationStack` per tab.
+  - `TabRouter` keeps the paths. The selection setter, which also runs on a re-tap, pops a tab or counts a scroll-to-top request (`scrollToTopRequests` in `DesignSystem`).
+  - The More toolbar action, `MoreView`, `SettingsView`, and About data's title.
+  - The scheme runs the tests in Spanish, because the app's strings follow the process language.
+- **Shared:** `plan.title` ("How to get there") titles the planner root on both platforms.
+- **Tests:**
+  - Android: `AppShellTest`, `TabNavigationTest`, `TabNavigatorTest`, `TabLabelTest`, `ScrollToTopOnReselectTest`, `TopAppBarActionsTest`, and screenshots of the shell (bar and rail), More and Settings.
+  - iOS: `TabRouterTests`, `ShellUITests`, `LaunchTests`, and snapshots of More and Settings.
+- **The first recordings exposed a defect, fixed:** at 200 % on a 320 dp phone, "Cerca de mí" drew over "Cómo llegar".
+- **Reviews** (code-reviewer, android-ui-reviewer, ios-ui-reviewer subagents):
+  - **Fixed:**
+    - a comment that failed detekt (blocker);
+    - a bar instead of the rail on short wide windows;
+    - screen titles that were not headings;
+    - navigation3-ui's 700 ms fade;
+    - rail labels that shrank;
+    - the planner root's title;
+    - iOS screen snapshots at 0.99, which could lose a whole title;
+    - scroll padding outside the scroll;
+    - previews.
+  - **Guards added:** per-tab content keys (mutation-checked), the up button, the Spanish tab order on iOS.
+  - **Left:**
+    - the whole scroll-to-top path, which the first scrolling root tests end to end (now an LB-101 criterion);
+    - bar labels that shrink each to its own size at 200 %;
+    - the TalkBack and VoiceOver passes on a device.
+
+**Decisions** (taken while the owner was away; listed in the PR)
+- More, and what it opens, are pushed onto the selected tab's stack, rather than shown as a sheet.
+- Settings is a titled placeholder until LB-403. There is no onboarding placeholder, because FR-NAV-06 is LB-410's.
+- Android back at the root of another tab returns to Lines, as Material recommends for a start destination.
+- The rail follows FR-NAV-05's width rule rather than Material's recommended type.
+- One cross-fade for every screen change, until a screen needs another motion.
+- The iOS hosted tests run in Spanish (scheme `language: es`, `region: ES`).
+
+**Process deviations**
+- **Commit contents:**
+  - `553b50b` (red) carried the first Roborazzi recordings, staged with `git add -A` after recording; `8e2cdca` replaced the faulty ones.
+  - `e3c9a23` said "refactor not needed" without running `run-all.sh`, and a 121-character comment failed detekt; fixed in `fea76e2`.
+  - `TopAppBarActionsTest` (`395fea9`) was written after the buttons it tests (`98e25f9`), and passed at once.
+- **Commit types:**
+  - `a5fee8c` and `14a22a7` are snapshot changes typed `test(ios)`;
+  - `8412595`, `325deb1` and `cda07f4` span both platforms and have no scope. AGENTS.md §12 now lists a `shell` scope for such changes, which the PR's title uses.
+- **Build:** a stale incremental compile reran an old `MainActivityTest` and showed a false green. Every run since uses `--no-configuration-cache --no-watch-fs`.
+
+**Open / next**
+- **Owner:**
+  - the TalkBack and VoiceOver passes;
+  - accepting ADR-0005, still Proposed, which LB-011 and LB-012 build on;
+  - the earlier decisions still pending (iOS 18 runtime, iOS CI budget, Material 3 beta pin, OQ-11, OQ-16).
+- **Next story:** LB-017, telemetry contracts with no-op and logging implementations, which OQ-16 does not block. LB-013 waits for the owner on the tile provider's terms (OQ-10).
+
+---
+
 ## 2026-10-29: LB-011, part 2: the iOS design system
 
 **Done**

@@ -1,6 +1,96 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "more.about_data": {
+      "comment": "More: the entry that opens About data.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About data"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sobre los datos"
+          }
+        }
+      }
+    },
+    "more.action": {
+      "comment": "The toolbar action of every tab root, which opens More; VoiceOver says it (FR-NAV-04, design_guidelines.md §2.1).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más"
+          }
+        }
+      }
+    },
+    "more.settings": {
+      "comment": "More: the entry that opens Settings.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustes"
+          }
+        }
+      }
+    },
+    "more.title": {
+      "comment": "More's screen title (FR-NAV-04, design_guidelines.md §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Más"
+          }
+        }
+      }
+    },
+    "plan.title": {
+      "comment": "The title of the How to Get There root; its tab says tab.directions (design_guidelines.md §2.1 and §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to get there"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo llegar"
+          }
+        }
+      }
+    },
     "tab.directions": {
       "comment": "Tab label: How to Get There; the screen title is plan.title (design_guidelines.md §2.1).",
       "extractionState": "manual",

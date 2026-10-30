@@ -88,6 +88,10 @@ schemes:
         iosAppTests: [test]
         iosAppUITests: [test]
     test:
+      # The app's strings follow the process language, so the hosted snapshots run in Spanish, the source language,
+      # whatever the simulator's language. The UI tests choose theirs in their launch arguments.
+      language: es
+      region: ES
       targets:
         - iosAppTests
         - iosAppUITests

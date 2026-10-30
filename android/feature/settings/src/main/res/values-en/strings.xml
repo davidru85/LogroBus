@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Screen titles (LB-012, design_guidelines.md §9, keys settings.title and about.title). -->
+    <string name="settings_title">Settings</string>
+    <string name="about_title">About data</string>
+
     <!-- About data (LB-404, design_guidelines.md §9, keys about.*). -->
     <string name="about_last_sync_title">Last sync</string>
     <string name="about_last_sync_never">Not synced yet</string>

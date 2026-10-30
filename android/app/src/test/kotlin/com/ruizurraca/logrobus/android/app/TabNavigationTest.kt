@@ -1,0 +1,173 @@
+package com.ruizurraca.logrobus.android.app
+
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+
+/**
+ * LB-012: each tab keeps its own back stack, and re-selecting a tab pops it to its root (FR-NAV-03). Each tab root
+ * opens More, with Settings and About data (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
+ */
+@RunWith(AndroidJUnit4::class)
+@Config(qualifiers = "en")
+class TabNavigationTest {
+    @get:Rule
+    val compose = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun lb012_eachTabRootOpensMore_withSettingsAndAboutData() {
+        listOf("Lines", "Near me", "Directions").forEach { label ->
+            tab(label).performClick()
+            moreAction().performClick()
+
+            compose.onNodeWithText("Settings").assertIsDisplayed()
+            compose.onNodeWithText("About data").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun lb012_switchingTabsKeepsEachTabsScreen() {
+        openAboutDataInLines()
+
+        tab("Near me").performClick()
+        moreAction().assertIsDisplayed()
+        tab("Lines").performClick()
+
+        aboutData().assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_reselectingATabPopsItToItsRoot() {
+        openAboutDataInLines()
+
+        tab("Lines").performClick()
+
+        moreAction().assertIsDisplayed()
+        aboutData().assertDoesNotExist()
+    }
+
+    @Test
+    fun lb012_backWalksBackThroughTheTabsStack() {
+        openAboutDataInLines()
+
+        back()
+        compose.onNodeWithText("Settings").assertIsDisplayed()
+        back()
+        moreAction().assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_backAtTheRootOfAnotherTabReturnsToLines() {
+        tab("Directions").performClick()
+
+        back()
+
+        tab("Lines").assertIsSelected()
+        assertTrue("the app is still open", !compose.activity.isFinishing)
+    }
+
+    @Test
+    fun lb012_backAtTheRootOfLinesLeavesTheApp() {
+        back()
+
+        assertTrue("the activity finishes", compose.activity.isFinishing)
+    }
+
+    @Test
+    fun lb012_theBackStacksSurviveRecreation() {
+        openAboutDataInLines()
+        tab("Near me").performClick()
+
+        compose.activityRule.scenario.recreate()
+
+        tab("Near me").assertIsSelected()
+        tab("Lines").performClick()
+        aboutData().assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_everyScreenTitleIsAHeading() {
+        // TalkBack's heading navigation reaches each screen's title, as VoiceOver does on iOS.
+        heading("Lines").assertIsDisplayed()
+        moreAction().performClick()
+        heading("More").assertIsDisplayed()
+        compose.onNodeWithText("Settings").performClick()
+        heading("Settings").assertIsDisplayed()
+        back()
+        compose.onNodeWithText("About data").performClick()
+        heading("About data").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_theHowToGetThereRootHasItsScreenTitle() {
+        // design_guidelines.md §2.1: the tab says "Directions"; its screen says "How to get there" (plan.title).
+        tab("Directions").performClick()
+
+        heading("How to get there").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_aTabSwitchSettlesOnTheMotionSchemesEffectsSpring() {
+        // design_guidelines.md §4: screens change on the expressive motion scheme's effects spring, which settles well
+        // before the library's 700 ms fade; until then both screens are in the semantics tree.
+        compose.mainClock.autoAdvance = false
+        tab("Near me").performClick()
+
+        compose.mainClock.advanceTimeBy(SETTLED_MILLIS)
+
+        heading("Lines").assertDoesNotExist()
+        heading("Near me").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb012_theUpButtonGoesBackToThePreviousScreen() {
+        openAboutDataInLines()
+
+        compose.onNodeWithContentDescription("Back").performClick()
+
+        compose.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
+    private fun openAboutDataInLines() {
+        moreAction().performClick()
+        compose.onNodeWithText("About data").performClick()
+        aboutData().assertIsDisplayed()
+    }
+
+    /** About data's own content, which neither More nor a tab root shows. */
+    private fun aboutData(): SemanticsNodeInteraction = compose.onNodeWithText("Last sync")
+
+    private fun heading(title: String): SemanticsNodeInteraction = compose.onNode(hasText(title) and isHeading())
+
+    private fun moreAction(): SemanticsNodeInteraction = compose.onNodeWithContentDescription("More")
+
+    private fun tab(label: String): SemanticsNodeInteraction = compose.onNode(hasText(label) and isTab)
+
+    /** System back, once the last action has recomposed, as a user's back always comes after the screen updates. */
+    private fun back() {
+        compose.waitForIdle()
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+    }
+
+    private val isTab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+
+    private companion object {
+        const val SETTLED_MILLIS = 400L
+    }
+}

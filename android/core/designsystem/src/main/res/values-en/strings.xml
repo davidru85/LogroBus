@@ -39,4 +39,8 @@
     <string name="eta_cancelled_spoken">cancelled</string>
     <!-- The time, then what the secondary line says: "in 4 minutes, 3 minutes late". -->
     <string name="eta_spoken_join">%1$s, %2$s</string>
+
+    <!-- Top app bar actions (LB-012, design_guidelines.md §9, keys action.*): what TalkBack says for each icon. -->
+    <string name="action_more">More</string>
+    <string name="action_navigate_up">Back</string>
 </resources>
