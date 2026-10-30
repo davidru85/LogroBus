@@ -282,6 +282,7 @@ class StaticSyncEngineTest {
     fun lb008_aWriteThatFailsHalfwayRollsBackAndKeepsTheCache() =
         runTest {
             val engine = engine()
+            save(FavouriteTypes.STOP, "999")
             engine.syncIfStale()
             val firstSync = database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne()
             now += 25.hours
@@ -294,6 +295,7 @@ class StaticSyncEngineTest {
 
             assertEquals(catalogue(), driver.storedCatalogue())
             assertEquals(firstSync, database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne())
+            assertEquals(mapOf("999" to 1L), missingSyncs(FavouriteTypes.STOP))
             assertTrue(logger.entries.any { it.level == LogLevel.Warn && it.tag == "StaticSync" })
         }
 
@@ -472,6 +474,7 @@ class StaticSyncEngineTest {
     /** After a first sync, a refresh 25 h later normalises to [rejected], which must change nothing. */
     private suspend fun TestScope.assertRejectedAndCacheKept(rejected: StaticCatalogue) {
         val engine = engine()
+        save(FavouriteTypes.STOP, "999")
         engine.syncIfStale()
         val firstSync = database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne()
         now += 25.hours
@@ -484,6 +487,8 @@ class StaticSyncEngineTest {
         assertEquals(catalogue(), driver.storedCatalogue())
         // A rejected payload's hash is not kept either: the same payload must be checked again next time.
         assertEquals(firstSync, database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne())
+        // Nor is it a sync that lacked the saved stop.
+        assertEquals(mapOf("999" to 1L), missingSyncs(FavouriteTypes.STOP))
     }
 
     private val nothing = StaticCatalogue(emptyList(), emptyList())
