@@ -43,6 +43,7 @@ The owner wants metrics (likely Firebase Analytics) and crash reporting (likely 
   - Android: a Kotlin class in the app module.
   - iOS: a Swift class conforming to the exported Kotlin protocol.
   Either is injected into Koin at startup. No vendor SDK is referenced from shared code.
+  - *Update, 2026-10-30 (LB-017):* as built, the enums of the snippet above are nested in their events, and the properties renamed to match: `rejectionReason: PlanRejection?` is `rejection: PlanResult.Rejection?`, and `type: FavouriteType` is `kind: FavouriteAdd.Kind`. That is because a core module cannot use the planner and favourites domains and nested names cannot clash in Swift. `Breadcrumb` is a sealed type whose first case is `ScreenView(Breadcrumb.Screen)`, and `recordNonFatal` takes a `CrashArea`. The injection point is a `PlatformTelemetry(analytics, crashReporter)` passed to `initKoin` on both platforms, and the gates wrap it as they wrap the build's implementations. A Konsist rule allows only ids, counts, flags and telemetry enums in events and breadcrumbs, a SwiftLint rule stops Swift from adding any, and `ModuleRules` rejects vendor SDKs outside `:android:app`. The crash gate strips every error message before a reporter sees it (`RedactedThrowable`), and the gates swallow vendor failures. They cannot reach what a vendor SDK collects by itself: LB-409 turns that collection off and ties it to consent (`architecture.md` §4.7).
 
 ## Consequences
 

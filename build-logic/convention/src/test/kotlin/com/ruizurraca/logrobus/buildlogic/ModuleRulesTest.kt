@@ -198,4 +198,76 @@ class ModuleRulesTest {
         assertTrue(":shared:feature:stops" in message, message)
         assertTrue("ADR-0007" in message, message)
     }
+
+    @Test
+    fun lb017_noModuleButTheAndroidAppMayUseAVendorTelemetrySdk() {
+        // ADR-0009: the vendor implementations are classes in the app module, so no shared module, Android core,
+        // Android feature or tool ever references a vendor SDK, whether native or a Kotlin Multiplatform wrapper.
+        val vendors =
+            listOf(
+                "com.google.firebase:firebase-analytics",
+                "com.google.firebase:firebase-crashlytics",
+                "com.google.android.gms:play-services-measurement-api",
+                "com.google.android.gms:play-services-analytics",
+                "dev.gitlive:firebase-crashlytics",
+                "dev.gitlive:firebase-analytics",
+                "co.touchlab.crashkios:crashlytics",
+                "co.touchlab.crashkios:bugsnag",
+                "co.touchlab:kermit-crashlytics",
+                "co.touchlab:kermit-bugsnag",
+                "io.sentry:sentry-kotlin-multiplatform",
+                "com.bugsnag:bugsnag-android",
+                "com.datadoghq:dd-sdk-android-rum",
+                "com.amplitude:analytics-android",
+                "com.mixpanel.android:mixpanel-android",
+                "com.posthog:posthog-android",
+            )
+        val modules =
+            listOf(
+                ":shared:core:telemetry",
+                ":shared:core:common",
+                ":shared:core:testing",
+                ":shared:transit:domain",
+                ":shared:transit:data",
+                ":shared:feature:lines",
+                ":shared:umbrella",
+                ":android:core:designsystem",
+                ":android:feature:lines",
+                ":tools:architecture-tests",
+            )
+
+        modules.forEach { from -> assertEquals(vendors.size, violations(from, external = vendors).size, from) }
+    }
+
+    @Test
+    fun lb017_theVendorRuleNamesItsDecision() {
+        val gitLive = listOf("dev.gitlive:firebase-crashlytics")
+
+        val message = violations(":shared:core:telemetry", external = gitLive).single()
+
+        assertTrue("dev.gitlive:firebase-crashlytics" in message, message)
+        assertTrue("ADR-0009" in message, message)
+    }
+
+    @Test
+    fun lb017_kermitAndSkieAreNotVendorSdks() {
+        // Only Kermit's vendor writers are; Kermit itself and SKIE share the co.touchlab group.
+        val touchlab = listOf("co.touchlab:kermit", "co.touchlab.skie:configuration-annotations")
+
+        assertEquals(emptyList<String>(), violations(":shared:core:common", external = touchlab))
+    }
+
+    @Test
+    fun lb017_theAndroidAppMayUseAVendorTelemetrySdk() {
+        val firebase = listOf("com.google.firebase:firebase-analytics", "com.google.firebase:firebase-crashlytics")
+
+        assertEquals(emptyList<String>(), violations(":android:app", external = firebase))
+    }
+
+    @Test
+    fun lb017_googlePlayServicesLocationIsNotAVendorTelemetrySdk() {
+        val location = listOf("com.google.android.gms:play-services-location")
+
+        assertEquals(emptyList<String>(), violations(":shared:core:location", external = location))
+    }
 }

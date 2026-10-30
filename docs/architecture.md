@@ -303,12 +303,23 @@ These contracts are defined in ADR-0009:
 
 Consent-gated wrappers live in shared code. In the MVP, release builds use no-op implementations and debug builds use logging ones. Vendor implementations (likely Firebase Analytics and Crashlytics) are native per platform and injected at start-up once OQ-16 is decided.
 
+**As built (LB-017):**
+- `AnalyticsEvent` and `Breadcrumb` are sealed types whose properties are ids, counts, flags and enums nested in them (`PlanResult.Rejection`, `FavouriteAdd.Kind`, `Breadcrumb.Screen`), so they cannot clash in Swift with domain types. A Konsist rule rejects any other property type, at any depth under either root, and the SwiftLint rule `swift_telemetry_payload` stops Swift from adopting either protocol.
+- `CrashReporter.recordNonFatal(error, area)` takes a `CrashArea`. The crash gate passes the error on as a `RedactedThrowable`: each error of the chain with its class name and stack frames, and no messages, which can quote a URL or a payload. On Android it adopts the original stack trace, which vendors read from the Throwable; Kotlin/Native cannot set a stack, so a Swift vendor reads `frames`.
+- Implementations are called from any thread, on the caller's, and must be thread-safe and non-blocking. The gates swallow any exception a vendor throws, so telemetry never breaks the caller.
+- `TelemetryConsent` holds one `ConsentDecision` per kind of telemetry (`UNDECIDED`, `GRANTED`, `DENIED`), as NFR-PRIV-03's granular toggles need. `MemoryConsentStore` starts undecided and forgets on restart; LB-409 replaces it with a persisted store.
+- `ConsentGatedAnalyticsTracker` and `ConsentGatedCrashReporter` read their kind of consent on every call. Nothing is queued, so a withdrawal takes effect at once.
+- `NoOp*` are objects. `Logging*` print through the `Logger` at tag `Telemetry`.
+- `:shared:umbrella` binds them in `telemetryModule(debug, platform)`: one `MemoryConsentStore`, then the platform's own implementations from `PlatformTelemetry` where given, otherwise logging in debug builds and no-op in release builds, each behind its gate.
+- `ModuleRules` rejects vendor analytics and crash-reporting SDKs, native or Kotlin Multiplatform wrappers, in every module but `:android:app`, and detekt forbids their imports. On iOS, an architecture test keeps them out of LogroBusUI's `Package.swift`; the app target may link one.
+- The gates cover every call made through the contracts, not what a vendor SDK collects by itself. LB-409 ships the SDKs with automatic collection off and ties it to consent.
+
 ## 5. Platform presentation layers
 
 ### 5.1 Android
 
 - `:android:app`:
-  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG, uiModules = listOf(settingsUiModule))` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. Telemetry joins it with LB-409. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
+  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG, uiModules = listOf(settingsUiModule))` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. `initKoin` also takes a `PlatformTelemetry`, where LB-409 will pass the vendor's tracker and reporter (§4.7); until then the default leaves the build's telemetry. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
   - A single activity draws edge-to-edge. `NavigationSuiteScaffold` holds the three tabs, and each tab keeps a Navigation 3 back stack of `@Serializable` `NavKey`s defined in `:android:core:navigation` (ADR-0005).
   - **As built (LB-012):**
     - `AppShell` chooses the `NavigationSuiteType` by width alone, as FR-NAV-05 says: a short navigation bar on compact widths, and a collapsed wide rail from the medium width up. Material's recommended type would keep a bar on a short window, such as a phone in landscape.
@@ -346,7 +357,7 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - By default every dataset synced at 10:30 in Madrid; `loading()` and `neverSynced()` change the script.
     - `activeCollections` counts the collections running, for cancellation tests.
 - **Composition root.**
-  - `LogroBusApp.init` calls `doInitKoin(appVersion:debug:)`, a Swift global function through SKIE, with `CFBundleShortVersionString` and `#if DEBUG`, on the main actor. The iOS module of the graph creates `NotificationAppLifecycle` and Core Location there. Swift implementations of platform contracts, such as telemetry once chosen, will be passed the same way.
+  - `LogroBusApp.init` calls `doInitKoin(appVersion:debug:telemetry:)`, a Swift global function through SKIE, with `CFBundleShortVersionString`, `#if DEBUG` and a `PlatformTelemetry`, on the main actor. The iOS module of the graph creates `NotificationAppLifecycle` and Core Location there. Swift implementations of platform contracts are passed the same way: LB-409's vendor telemetry, as Swift classes conforming to `AnalyticsTracker` and `CrashReporter` (subclasses of `NSObject`), goes in `PlatformTelemetry`, which passes `nil` until then (§4.7).
   - Swift obtains use cases from the Kotlin `SharedDependencies` factory object. Koin generics are not used from Swift.
 - **Swift ViewModels:** one `@MainActor @Observable final class XViewModel` per screen, in its `Feature<X>` target. As built in LB-010 part 2:
 

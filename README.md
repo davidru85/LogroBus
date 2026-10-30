@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the design system is in place on both platforms (LB-011). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009) the client that talks to the source (LB-005, in progress) the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -102,6 +102,11 @@ You will need:
 ### Recent changes
 
 - **2026-10-30:**
+  - LB-017 is done. Both apps have their telemetry contracts, ready for the analytics and crash-reporting vendor that is still to be chosen.
+    - Analytics events carry only ids, counts, yes-or-no values and fixed categories, never what you type or where you are. A build check rejects anything else.
+    - Nothing is sent without your consent, asked separately for analytics and for crash reports. Until the consent screen arrives, nothing is sent at all.
+    - Crash reports keep each error's type and where it happened, never its message, which could quote a search or a position.
+    - Release builds have no telemetry yet. Debug builds will print it to the developer console once you can give consent; until then, tests check it. Only the app itself may add a vendor's library, on Android and on iOS, and each app hands its own telemetry to the shared code at launch.
   - Every commit now has one identity, `David Ruiz <davidru85@gmail.com>`, and no co-author lines, as the owner decided. The rule is in `AGENTS.md`, the git hooks and the local checks enforce it, and the setup script sets it for each clone. The owner rewrote the existing history to match.
   - LB-012 is done. Both apps open on their three tabs: Lines, Near me and Directions.
     - Each tab remembers where you were. Open About data from Lines, switch to Near me and back, and it is still there. Tapping the tab again takes it back to its start.

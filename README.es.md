@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); el sistema de diseño está listo en las dos plataformas (LB-011). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); el sistema de diseño está listo en las dos plataformas (LB-011); las dos apps se abren en sus tres pestañas (LB-012); y los contratos de telemetría esperan a un proveedor, sin enviar nada sin consentimiento (LB-017). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -104,6 +104,11 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **30-10-2026:**
+  - Completada LB-017. Las dos apps tienen sus contratos de telemetría, listos para el proveedor de analítica e informes de fallos que falta elegir.
+    - Los eventos de analítica solo llevan identificadores, recuentos, valores de sí o no y categorías fijas, nunca lo que escribes ni dónde estás. Una comprobación de la compilación rechaza cualquier otra cosa.
+    - No se envía nada sin tu consentimiento, que se pide por separado para la analítica y para los informes de fallos. Hasta que llegue la pantalla de consentimiento, no se envía nada en absoluto.
+    - Los informes de fallos conservan el tipo de cada error y dónde ocurrió, nunca su mensaje, que podría citar una búsqueda o una posición.
+    - Las compilaciones de publicación aún no tienen telemetría. Las de depuración la mostrarán en la consola de desarrollo cuando puedas dar tu consentimiento; hasta entonces, la comprueban los tests. Solo la propia app puede añadir la biblioteca de un proveedor, en Android y en iOS, y cada app entrega su propia telemetría al código compartido al arrancar.
   - Todos los commits tienen ahora una sola identidad, `David Ruiz <davidru85@gmail.com>`, y ninguna línea de coautoría, como decidió el propietario. La regla está en `AGENTS.md`, los hooks de git y las comprobaciones locales la hacen cumplir, y el script de configuración la fija en cada clon. El propietario reescribió la historia existente para ajustarla.
   - Completada LB-012. Las dos apps se abren en sus tres pestañas: Líneas, Cerca de mí y Cómo llegar.
     - Cada pestaña recuerda dónde estabas. Abre «Sobre los datos» desde Líneas, cambia a Cerca de mí y vuelve, y sigue ahí. Al volver a tocar la pestaña, vuelve a su inicio.

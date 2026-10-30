@@ -11,8 +11,9 @@ import com.ruizurraca.logrobus.umbrella.initKoin
 open class LogroBusApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // The version for the User-Agent (spec §8.7), the build type for the log level (security_privacy.md §4), and
-        // the ViewModels of each feature module.
+        // The version for the User-Agent (spec §8.7), the build type for the log level and the telemetry
+        // (security_privacy.md §4, ADR-0009), and the ViewModels of each feature module. LB-409 passes the vendor's
+        // analytics tracker and crash reporter here too, as `telemetry = PlatformTelemetry(…)`.
         initKoin(
             this,
             appVersion = BuildConfig.VERSION_NAME,

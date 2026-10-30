@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.architecture
 
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
+import com.lemonappdev.konsist.api.declaration.KoPropertyDeclaration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -293,6 +294,13 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb017_theSwiftPackageHasNoVendorTelemetrySdk() {
+        // ADR-0009: as on Android, only the app may link a vendor SDK; the design system and features never do.
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.vendorTelemetryPackages(manifest))
+    }
+
+    @Test
     fun lb011_expressiveApisStayInTheDesignSystem() {
         // ADR-0005: an expressive API change then touches one package.
         val offenders =
@@ -301,6 +309,123 @@ class ArchitectureTest {
                 .map { it.relativePath() }
         assertEquals(emptyList<String>(), offenders)
     }
+
+    @Test
+    fun lb017_analyticsEventsAndBreadcrumbsCarryNoFreeTextOrCoordinates() {
+        // ADR-0009: only ids, counts, flags and enums, so no event or breadcrumb can carry what a user typed or where
+        // they are (NFR-OBS-03, NFR-PRIV-02). Every type under the two roots counts, intermediate ones and the roots
+        // included, and each property is keyed by its type's full name, so no two can hide each other.
+        val properties =
+            telemetryPayloads()
+                .flatMap { payload -> payload.properties.map { (name, type) -> "${payload.name}.$name" to type } }
+                .toMap()
+        val telemetryEnums =
+            Konsist
+                .scopeFromProject()
+                .classes()
+                .filter { it.hasEnumModifier && it.resideInPackage("$TELEMETRY_PACKAGE..") }
+                .map { it.name }
+                .toSet()
+
+        assertEquals(emptyList<String>(), ArchitectureRules.forbiddenTelemetryProperties(properties, telemetryEnums))
+    }
+
+    @Test
+    fun lb017_theAnalyticsCatalogueHasTheMvpEventsOfNfrObs03() {
+        // app_open, stop_view, line_view, plan_request, plan_result and favourite_add; widget_add and notice_open
+        // arrive with their features in v1.0. The concrete events count, at any depth under AnalyticsEvent.
+        val events = telemetryPayloads().filter { it.isConcrete && "AnalyticsEvent" in it.ancestors }
+
+        assertEquals(
+            sortedSetOf("AppOpen", "FavouriteAdd", "LineView", "PlanRequest", "PlanResult", "StopView"),
+            events.map { it.name.substringAfterLast('.') }.toSortedSet(),
+        )
+    }
+
+    /**
+     * An analytics event or crash breadcrumb, or a type between one and its root: its full name, all its ancestors,
+     * whether it can be instantiated, and its properties' declared types.
+     */
+    private data class TelemetryPayload(
+        val name: String,
+        val ancestors: Set<String>,
+        val isConcrete: Boolean,
+        val properties: Map<String, String>,
+    )
+
+    /** A type of the telemetry package as declared: its direct parents by simple name. */
+    private data class TelemetryType(
+        val name: String,
+        val parents: List<String>,
+        val isConcrete: Boolean,
+        val properties: Map<String, String>,
+    )
+
+    /**
+     * Every class, object and interface under `AnalyticsEvent` or `Breadcrumb`, the two sealed telemetry roots, directly
+     * or through intermediate types, and the roots themselves. Both roots are sealed, so every such type lives in the
+     * telemetry package. Ancestors are followed here by simple name, because Konsist does not resolve the parents of
+     * nested types; two types sharing a simple name share their parents, which can only widen the check.
+     */
+    private fun telemetryPayloads(): List<TelemetryPayload> {
+        val scope = Konsist.scopeFromProject()
+        val classes =
+            scope.classes().map { declaration ->
+                // Constructor properties are listed with the declared ones, or as `val` parameters, by Konsist version.
+                val inConstructor =
+                    declaration.primaryConstructor
+                        ?.parameters
+                        .orEmpty()
+                        .filter { it.isVal || it.isVar }
+                        .associate { it.name to it.type.text }
+                TelemetryType(
+                    declaration.fullyQualifiedName ?: declaration.name,
+                    declaration.parents().map { it.name.substringAfterLast('.') },
+                    isConcrete = !declaration.hasAbstractModifier && !declaration.hasSealedModifier,
+                    inConstructor + declaration.properties(includeNested = false).associate { it.name to it.typeText },
+                )
+            }
+        val objects =
+            scope.objects().map { declaration ->
+                TelemetryType(
+                    declaration.fullyQualifiedName ?: declaration.name,
+                    declaration.parents().map { it.name.substringAfterLast('.') },
+                    isConcrete = true,
+                    declaration.properties(includeNested = false).associate { it.name to it.typeText },
+                )
+            }
+        val interfaces =
+            scope.interfaces().map { declaration ->
+                TelemetryType(
+                    declaration.fullyQualifiedName ?: declaration.name,
+                    declaration.parents().map { it.name.substringAfterLast('.') },
+                    isConcrete = false,
+                    declaration.properties(includeNested = false).associate { it.name to it.typeText },
+                )
+            }
+        val types = (classes + objects + interfaces).filter { it.name.startsWith("$TELEMETRY_PACKAGE.") }
+        val parentsBySimpleName =
+            types
+                .groupBy { it.name.substringAfterLast('.') }
+                .mapValues { (_, sameName) -> sameName.flatMap { it.parents }.toSet() }
+
+        fun ancestorsOf(type: TelemetryType): Set<String> {
+            val found = mutableSetOf(type.name.substringAfterLast('.'))
+            var frontier = type.parents.toSet()
+            while (frontier.isNotEmpty()) {
+                val next = frontier - found
+                found += next
+                frontier = next.flatMap { parentsBySimpleName[it].orEmpty() }.toSet()
+            }
+            return found
+        }
+        return types
+            .map { TelemetryPayload(it.name, ancestorsOf(it), it.isConcrete, it.properties) }
+            .filter { payload -> payload.ancestors.any { it in TELEMETRY_PAYLOADS } }
+    }
+
+    private val KoPropertyDeclaration.typeText: String
+        get() = type?.text.orEmpty()
 
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
@@ -317,3 +442,6 @@ class ArchitectureTest {
     private fun File.isBuildLogicSource(): Boolean =
         name.endsWith(".kt") && relativePath().let { it.startsWith("build-logic/") && "/src/main/" in it }
 }
+
+private const val TELEMETRY_PACKAGE = "com.ruizurraca.logrobus.core.telemetry"
+private val TELEMETRY_PAYLOADS = setOf("AnalyticsEvent", "Breadcrumb")

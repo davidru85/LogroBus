@@ -36,6 +36,21 @@ class AndroidGraphTest {
     }
 
     @Test
+    fun lb017_initKoinTakesTheAppsOwnTelemetry() {
+        // The injection point for the vendor implementations of LB-409, in the app module (ADR-0009).
+        val native = RecordingTelemetry()
+
+        initKoin(
+            RuntimeEnvironment.getApplication(),
+            appVersion = "1.2.0",
+            debug = false,
+            telemetry = PlatformTelemetry(analytics = native, crashReporter = native),
+        )
+
+        assertTheGraphUsesTheNativeTelemetry(KoinPlatform.getKoin(), native)
+    }
+
+    @Test
     fun lb010_theGraphGivesSwiftEveryUseCase() {
         initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
 

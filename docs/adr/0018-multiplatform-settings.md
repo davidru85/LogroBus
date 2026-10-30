@@ -22,6 +22,7 @@ Favourites and saved places are relational and live in SQLDelight (ADR-0013). Th
 - **Storage:** DataStore on Android and `NSUserDefaults` on iOS (`architecture.md` §7).
 - **Values:** only non-sensitive ones. No secrets or tokens (`security_privacy.md`), and no coordinates or free text.
 - **No dependency yet.** The library enters the version catalog with the first story that persists a setting, likely LB-017.
+  - *Update, 2026-10-30 (LB-017):* LB-017 persists nothing. Its `ConsentStore` is held in memory and starts undecided, because no screen can record consent before LB-409's dialog and toggles. The first story that persists a setting is therefore LB-409 or LB-410 (onboarding), whichever comes first.
 
 ## Consequences
 

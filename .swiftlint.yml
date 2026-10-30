@@ -71,3 +71,12 @@ custom_rules:
     excluded: ".*/DesignSystem/.*"
     message: "Use AdaptiveGlassButtonStyle or AdaptiveGlassProminentButtonStyle from DesignSystem (ADR-0003)."
     severity: error
+  swift_telemetry_payload:
+    name: "Telemetry payload declared in Swift"
+    regex: '\b(class|struct|enum|actor|extension|protocol)\s+[\w.]+(\s*<[^>{]*>)?\s*:[^{]*\b(AnalyticsEvent|Breadcrumb)\b'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+      - string
+    message: "AnalyticsEvent and Breadcrumb are sealed in Kotlin: Swift must not add events or breadcrumbs, which could carry free text (ADR-0009, NFR-PRIV-02)."
+    severity: error
