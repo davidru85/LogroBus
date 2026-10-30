@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
@@ -73,7 +74,7 @@ fun AboutDataScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.about_title)) },
+                title = { ScreenTitle(stringResource(R.string.about_title)) },
                 navigationIcon = { UpButton(onClick = onBack) },
             )
         },
