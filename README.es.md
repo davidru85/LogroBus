@@ -104,6 +104,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **30-10-2026:**
+  - Todos los commits tienen ahora una sola identidad, `David Ruiz <davidru85@gmail.com>`, y ninguna línea de coautoría, como decidió el propietario. La regla está en `AGENTS.md`, los hooks de git y las comprobaciones locales la hacen cumplir, y el script de configuración la fija en cada clon. El propietario reescribió la historia existente para ajustarla.
   - Completada LB-012. Las dos apps se abren en sus tres pestañas: Líneas, Cerca de mí y Cómo llegar.
     - Cada pestaña recuerda dónde estabas. Abre «Sobre los datos» desde Líneas, cambia a Cerca de mí y vuelve, y sigue ahí. Al volver a tocar la pestaña, vuelve a su inicio.
     - Un botón de ajustes en cada pestaña abre Más, con Ajustes (vacío hasta que lleguen sus opciones) y «Sobre los datos», que ya se puede abrir.
