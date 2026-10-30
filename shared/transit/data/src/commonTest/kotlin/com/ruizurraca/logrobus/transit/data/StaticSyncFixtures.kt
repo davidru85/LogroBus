@@ -6,6 +6,7 @@ import app.cash.sqldelight.db.SqlDriver
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.LineKind
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -19,16 +20,18 @@ internal fun body(
     version: Int,
 ): JsonElement = JsonPrimitive("$dataset v$version")
 
-/** The source, answering with [lines] and [stops], and counting the requests. */
+/** The source, answering with [lines] and [stops], and counting the requests. While [gate] is open, lines wait. */
 internal class FakeStaticSource(
     var lines: AppResult<JsonElement> = AppResult.Success(body("lines", 1)),
     var stops: AppResult<JsonElement> = AppResult.Success(body("stops", 1)),
 ) : StaticSource {
     var requests = 0
         private set
+    var gate: CompletableDeferred<Unit>? = null
 
     override suspend fun lines(): AppResult<JsonElement> {
         requests++
+        gate?.await()
         return lines
     }
 

@@ -6,11 +6,16 @@ import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
 import com.ruizurraca.logrobus.core.database.FavouriteTypes
+import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.database.searchStops
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -29,15 +34,19 @@ class StaticSyncEngineTest {
     private val normaliser = FakeNormaliser()
     private var now = Instant.parse("2026-10-30T08:00:00Z")
 
-    private fun TestScope.engine() =
+    private fun TestScope.engine(
+        normaliser: StaticNormaliser = this@StaticSyncEngineTest.normaliser,
+        database: LogroBusDatabase = this@StaticSyncEngineTest.database,
+    ) = StandardTestDispatcher(testScheduler).let { dispatcher ->
         DefaultStaticSyncEngine(
             source = source,
             normaliser = normaliser,
             database = database,
             clock = AppClock { now },
-            dispatchers = AppDispatchers(StandardTestDispatcher(testScheduler)),
+            dispatchers = AppDispatchers(main = dispatcher, default = dispatcher, io = dispatcher),
             logger = logger,
         )
+    }
 
     @AfterTest
     fun closeDatabase() = driver.close()
@@ -367,6 +376,47 @@ class StaticSyncEngineTest {
                 Triple(it.getString(0)!!, it.getLong(1)!!, it.getString(2))
             }.filter { it.third == type }
             .associate { it.first to it.second }
+
+    @Test
+    fun lb008_aDatabaseThatCannotBeReadFailsWithData() =
+        runTest {
+            val closed = testDriver().also { it.close() }
+
+            assertEquals(AppResult.Failure(AppError.Data), engine(database = logroBusDatabase(closed)).syncIfStale())
+        }
+
+    @Test
+    fun lb008_aNormaliserThatThrowsFailsWithDataAndKeepsTheCache() =
+        runTest {
+            engine().syncIfStale()
+            now += 25.hours
+            publish(version = 2)
+
+            val result = engine(normaliser = { _, _ -> error("A bug in the normaliser") }).syncIfStale()
+
+            assertEquals(AppResult.Failure(AppError.Data), result)
+            assertEquals(catalogue(), driver.storedCatalogue())
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class) // advanceUntilIdle
+    @Test
+    fun lb008_twoSyncsAtOnceShareOneDownload() =
+        runTest {
+            // App start and the first screen can both ask for the catalogue before it is there.
+            val engine = engine()
+            source.gate = CompletableDeferred()
+            val first = async { engine.syncIfStale() }
+            val second = async { engine.syncIfStale() }
+            advanceUntilIdle()
+
+            source.gate?.complete(Unit)
+
+            assertEquals(
+                listOf(AppResult.Success(Unit), AppResult.Success(Unit)),
+                listOf(first.await(), second.await()),
+            )
+            assertEquals(2, source.requests)
+        }
 
     /** The source and the normaliser answer with [version] from now on. */
     private fun publish(version: Int) {
