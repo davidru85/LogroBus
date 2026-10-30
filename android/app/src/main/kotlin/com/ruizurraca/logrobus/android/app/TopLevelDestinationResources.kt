@@ -17,6 +17,19 @@ internal val TopLevelDestination.labelRes: Int
             TopLevelDestination.PLANNER -> R.string.tab_directions
         }
 
+/**
+ * The title of each tab's root screen (design_guidelines.md §2.1): the tab label, except How to Get There, whose short
+ * label "Directions" reads "How to get there" as a title (`plan.title` in §9).
+ */
+@get:StringRes
+internal val TopLevelDestination.titleRes: Int
+    get() =
+        when (this) {
+            TopLevelDestination.LINES -> R.string.tab_lines
+            TopLevelDestination.NEAR_ME -> R.string.tab_near_me
+            TopLevelDestination.PLANNER -> R.string.plan_title
+        }
+
 /** The tab icon (design_guidelines.md §2.1): outlined, and filled while selected, as Material 3 navigation items. */
 @DrawableRes
 internal fun TopLevelDestination.iconRes(selected: Boolean): Int =

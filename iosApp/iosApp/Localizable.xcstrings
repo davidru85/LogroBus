@@ -73,6 +73,24 @@
         }
       }
     },
+    "plan.title": {
+      "comment": "The title of the How to Get There root; its tab says tab.directions (design_guidelines.md §2.1 and §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to get there"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo llegar"
+          }
+        }
+      }
+    },
     "tab.directions": {
       "comment": "Tab label: How to Get There; the screen title is plan.title (design_guidelines.md §2.1).",
       "extractionState": "manual",

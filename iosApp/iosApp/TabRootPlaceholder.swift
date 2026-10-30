@@ -7,7 +7,7 @@ struct TabRootPlaceholder: View {
 
     var body: some View {
         Color.clear
-            .navigationTitle(Text(destination.label))
+            .navigationTitle(Text(destination.title))
     }
 }
 

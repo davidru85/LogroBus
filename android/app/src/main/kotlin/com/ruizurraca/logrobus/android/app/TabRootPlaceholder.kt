@@ -24,7 +24,7 @@ internal fun TabRootPlaceholder(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { ScreenTitle(stringResource(destination.labelRes)) },
+                title = { ScreenTitle(stringResource(destination.titleRes)) },
                 actions = { MoreActionButton(onClick = onOpenMore) },
             )
         },
