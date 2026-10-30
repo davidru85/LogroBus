@@ -33,9 +33,26 @@ struct TelemetryTests {
 
         consent.update(consent: TelemetryConsent(analytics: .undecided, crashReports: .granted))
         reporter.breadcrumb(crumb: crumb)
-        reporter.recordNonFatal(error: KotlinIllegalStateException(), area: .network)
+        reporter.recordNonFatal(error: KotlinIllegalStateException(message: "q=Calle Portales"), area: .network)
 
         #expect(native.reports == ["breadcrumb ScreenView(screen=NEAR_ME)", "non-fatal in NETWORK"])
+        // NFR-PRIV-02: a Swift vendor gets the error's type and frames, never its message.
+        let error = native.errors.first as? RedactedThrowable
+        #expect(error?.type.hasSuffix("IllegalStateException") == true)
+        #expect(error?.frames.isEmpty == false)
+        #expect(error?.message?.contains("Calle") == false)
+    }
+
+    @Test
+    func lb017_swiftTelemetryGoesToInitKoinInPlatformTelemetry() {
+        // The shape LogroBusApp passes to doInitKoin, with LB-409's vendor implementations in place of nil.
+        let tracker = RecordingTracker()
+        let reporter = RecordingReporter()
+
+        let telemetry = PlatformTelemetry(analytics: tracker, crashReporter: reporter)
+
+        #expect(telemetry.analytics === tracker)
+        #expect(telemetry.crashReporter === reporter)
     }
 }
 
@@ -50,9 +67,11 @@ private final class RecordingTracker: NSObject, AnalyticsTracker {
 
 private final class RecordingReporter: NSObject, CrashReporter {
     private(set) var reports: [String] = []
+    private(set) var errors: [KotlinThrowable] = []
 
     func recordNonFatal(error: KotlinThrowable, area: CrashArea) {
         reports.append("non-fatal in \(area.name)")
+        errors.append(error)
     }
 
     func breadcrumb(crumb: any Breadcrumb) {
