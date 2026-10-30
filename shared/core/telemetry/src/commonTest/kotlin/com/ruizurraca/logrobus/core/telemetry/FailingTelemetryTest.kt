@@ -26,13 +26,13 @@ class FailingTelemetryTest {
     }
 
     private object FailingTelemetry : AnalyticsTracker, CrashReporter {
-        override fun track(event: AnalyticsEvent) = throw IllegalStateException("not initialised")
+        override fun track(event: AnalyticsEvent) = error("not initialised")
 
         override fun recordNonFatal(
             error: Throwable,
             area: CrashArea,
-        ) = throw IllegalStateException("not initialised")
+        ) = error("not initialised")
 
-        override fun breadcrumb(crumb: Breadcrumb) = throw IllegalStateException("not initialised")
+        override fun breadcrumb(crumb: Breadcrumb) = error("not initialised")
     }
 }

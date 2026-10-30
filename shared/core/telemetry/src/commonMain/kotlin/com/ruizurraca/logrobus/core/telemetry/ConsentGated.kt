@@ -9,7 +9,7 @@ class ConsentGatedAnalyticsTracker(
     private val consentStore: ConsentStore,
 ) : AnalyticsTracker {
     override fun track(event: AnalyticsEvent) {
-        if (consentStore.consent.value.analytics == ConsentDecision.GRANTED) delegate.track(event)
+        if (consentStore.consent.value.analytics == ConsentDecision.GRANTED) withoutFailing { delegate.track(event) }
     }
 }
 
@@ -25,12 +25,25 @@ class ConsentGatedCrashReporter(
         error: Throwable,
         area: CrashArea,
     ) {
-        if (granted()) delegate.recordNonFatal(error.redacted(), area)
+        if (granted()) withoutFailing { delegate.recordNonFatal(error.redacted(), area) }
     }
 
     override fun breadcrumb(crumb: Breadcrumb) {
-        if (granted()) delegate.breadcrumb(crumb)
+        if (granted()) withoutFailing { delegate.breadcrumb(crumb) }
     }
 
     private fun granted(): Boolean = consentStore.consent.value.crashReports == ConsentDecision.GRANTED
+}
+
+/**
+ * Runs a vendor call and drops whatever it throws: telemetry must never break the app, and a vendor that fails, say
+ * because it was not initialised, would turn an error the caller has handled into a crash.
+ */
+@Suppress("TooGenericExceptionCaught", "SwallowedException") // On purpose: see above.
+private inline fun withoutFailing(call: () -> Unit) {
+    try {
+        call()
+    } catch (e: Exception) {
+        // Nothing to report it to: the reporter is what failed.
+    }
 }
