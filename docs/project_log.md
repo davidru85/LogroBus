@@ -30,10 +30,11 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The history rewrite (owner decisions, 2026-10-30):**
   - Every commit on `main` and on the open branches was rebuilt with the same tree, parents, dates and message, but with this author and committer and without the co-author trailer, and re-signed with the owner's SSH key. That covers the 28 web merges committed by GitHub and the one Dependabot commit too.
   - It was checked on a scratch clone first: the same 462 commits and 33 merges, identical trees and dates, and every commit signed.
-  - The owner lifted `main`'s protection, force-pushed with `--force-with-lease` and reapplied the protection with `scripts/github/protect-main.sh`. This is a one-off exception to "no force pushes" (`engineering_workflow.md` §1.1).
+  - The owner lifted `main`'s protection, force-pushed with `--force-with-lease` (`main` went from `3c9026a` to `83f3858`) and reapplied the protection with `scripts/github/protect-main.sh`, which left it exactly as before. This is a one-off exception to "no force pushes" (`engineering_workflow.md` §1.1).
+  - Locally, the open branches were moved to their rewritten commits, and the 22 stale branches, all merged before the rewrite, were deleted.
 
 **Decisions**
-- **Merges on the web:** GitHub stays the committer of the merge commits it creates, the only exception to the rule. The owner set the GitHub commit email to `davidru85@gmail.com`, so their author matches.
+- **Merges on the web:** GitHub stays the committer of the merge commits it creates, the only exception to the rule. Their author is the owner's GitHub commit email: with "Keep my email addresses private" turned off and `davidru85@gmail.com` as the primary email, or that address chosen in the merge box, it matches.
 - **Pull request descriptions** keep the "Generated with Claude Code" line; only commit trailers go.
 
 **Open / next**
