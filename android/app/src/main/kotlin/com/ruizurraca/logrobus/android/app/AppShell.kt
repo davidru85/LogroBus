@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -55,7 +56,7 @@ internal fun AppShell(modifier: Modifier = Modifier) {
                     selected = isSelected,
                     onClick = { navigator.select(destination) },
                     icon = { Icon(painterResource(destination.iconRes(isSelected)), contentDescription = null) },
-                    label = { TabLabel(stringResource(destination.labelRes)) },
+                    label = { TabLabel(stringResource(destination.labelRes), navigationSuiteType.shrinksTabLabels) },
                     navigationSuiteType = navigationSuiteType,
                 )
             }
@@ -98,25 +99,34 @@ internal fun navigationSuiteType(adaptiveInfo: WindowAdaptiveInfo): NavigationSu
         NavigationSuiteType.ShortNavigationBarCompact
     }
 
+/** A bar's height is fixed, so its labels shrink to fit; a rail's items grow downwards, so its labels wrap instead. */
 internal val NavigationSuiteType.shrinksTabLabels: Boolean
-    get() = true
+    get() = this in BARS
 
 /**
- * A tab label on one line, which shrinks to fit its tab but never below its size at 100 % font. The bar's height is
- * fixed, so at 200 % a label that wrapped would draw over its neighbours (NFR-A11Y-03).
+ * A tab label. In a bar, one line that shrinks to fit its tab but never below its size at 100 % font: the bar's height
+ * is fixed, so at 200 % a label that wrapped would draw over its neighbours (NFR-A11Y-03). In a rail, up to two lines
+ * at full size.
  */
 @Composable
-private fun TabLabel(text: String) {
-    val size = LocalTextStyle.current.fontSize
-    val smallest = size / LocalDensity.current.fontScale.coerceAtLeast(1f)
-    Text(
-        text = text,
-        // Keeps a gap between neighbouring labels that fill their tabs.
-        modifier = Modifier.padding(horizontal = Tokens.Spacing.xs),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        autoSize = TextAutoSize.StepBased(minFontSize = smallest, maxFontSize = size, stepSize = LABEL_STEP),
-    )
+private fun TabLabel(
+    text: String,
+    shrinkToFit: Boolean,
+) {
+    if (shrinkToFit) {
+        val size = LocalTextStyle.current.fontSize
+        val smallest = size / LocalDensity.current.fontScale.coerceAtLeast(1f)
+        Text(
+            text = text,
+            // Keeps a gap between neighbouring labels that fill their tabs.
+            modifier = Modifier.padding(horizontal = Tokens.Spacing.xs),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            autoSize = TextAutoSize.StepBased(minFontSize = smallest, maxFontSize = size, stepSize = LABEL_STEP),
+        )
+    } else {
+        Text(text = text, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
 }
 
 /**
@@ -154,3 +164,10 @@ private fun screens(
 
 // Fine enough that a shrunk label loses no more than it must.
 private val LABEL_STEP = 0.5.sp
+
+private val BARS =
+    setOf(
+        NavigationSuiteType.ShortNavigationBarCompact,
+        NavigationSuiteType.ShortNavigationBarMedium,
+        NavigationSuiteType.NavigationBar,
+    )
