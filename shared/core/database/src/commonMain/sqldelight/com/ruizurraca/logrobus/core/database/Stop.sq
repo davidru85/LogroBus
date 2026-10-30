@@ -55,3 +55,17 @@ SELECT *
 FROM stop
 WHERE id = :id OR id IN (SELECT docid FROM stop_fts WHERE stop_fts MATCH :match)
 ORDER BY id = :id DESC, normalized_name, id;
+
+-- LB-008: the static sync replaces the catalogue in one transaction (architecture.md §4.4). The triggers above keep
+-- stop_fts in step.
+deleteStops:
+DELETE FROM stop;
+
+deleteStopLines:
+DELETE FROM stop_line;
+
+insertStop:
+INSERT INTO stop (id, name, lat, lng, operational, provisional, normalized_name) VALUES (?, ?, ?, ?, ?, ?, ?);
+
+insertStopLine:
+INSERT INTO stop_line (stop_id, line_id) VALUES (?, ?);

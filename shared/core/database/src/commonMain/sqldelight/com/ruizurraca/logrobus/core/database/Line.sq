@@ -32,3 +32,23 @@ CREATE TABLE pattern_stop (
 
 -- The patterns that serve a stop, for its headsigns in search results (DD-16) and direction inference (DD-04).
 CREATE INDEX pattern_stop_by_stop ON pattern_stop (stop_id);
+
+-- LB-008: the static sync replaces the catalogue in one transaction (architecture.md §4.4).
+deleteLines:
+DELETE FROM line;
+
+deletePatterns:
+DELETE FROM pattern;
+
+deletePatternStops:
+DELETE FROM pattern_stop;
+
+insertLine:
+INSERT INTO line (id, code, raw_name, display_name, color, on_color, kind, operational)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertPattern:
+INSERT INTO pattern (line_id, direction, headsign, shape_polyline) VALUES (?, ?, ?, ?);
+
+insertPatternStop:
+INSERT INTO pattern_stop (line_id, direction, seq, stop_id, shape_index) VALUES (?, ?, ?, ?, ?);
