@@ -19,7 +19,10 @@ object NoOpCrashReporter : CrashReporter {
     override fun breadcrumb(crumb: Breadcrumb) = Unit
 }
 
-/** Debug builds (ADR-0009): prints each event to the console, where it can be checked while developing. */
+/**
+ * Debug builds (ADR-0009): prints each event to the console. Behind the consent gate, nothing prints until the user
+ * consents, which only LB-409 lets them do; until then, tests check the events.
+ */
 class LoggingAnalyticsTracker(
     private val logger: Logger,
 ) : AnalyticsTracker {
