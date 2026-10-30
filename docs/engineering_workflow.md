@@ -27,6 +27,7 @@ The repository has been public since 2026-10-23 (LB-415, OQ-20). `main` is prote
 | Frozen spec, doc links | The `.githooks/pre-push` hook (blocking) |
 | README parity | `scripts/checks/run-all.sh` before opening or updating a PR (blocking; its output is pasted into the PR) and the Claude Code Stop hook. The pre-push hook only warns, because TDD pushes after every cycle (`testing_strategy.md` §7.1) |
 | No secrets | The `.githooks/pre-commit` hook |
+| Commit identity and no co-authors (`AGENTS.md` §12) | `scripts/checks/check-commit-identity.sh`, in the `.githooks/pre-commit` (the identity to be used), `commit-msg` (no `Co-Authored-By` trailer) and `pre-push` (every pushed commit) hooks, and in `scripts/checks/run-all.sh`. `scripts/bootstrap.sh` sets the identity, and `.claude/settings.json` turns off Claude Code's commit attribution |
 
 Every developer and agent environment must run `scripts/bootstrap.sh` once, to install the hooks. The same policy gates also run in CI (`policy-checks.yml`).
 
@@ -44,7 +45,7 @@ Every developer and agent environment must run `scripts/bootstrap.sh` once, to i
 - Code changes end the subject with the story id: `feat(near-me): stop sheet arrivals [LB-205]`.
 - **TDD commits (mandatory):** each cycle produces a red commit (`test(…)`), a green commit (`feat(…)` or `fix(…)`) and a refactor commit (`refactor(…)`), followed by a push. Each commit body names its phase: `TDD: red`, `TDD: green` or `TDD: refactor`. See `testing_strategy.md` §7.1.
 - Subjects are imperative, in technical English, and at most 100 characters.
-- Commits made with an AI agent carry the agent's attribution trailer when the agent provides one.
+- **Commit identity (owner rule, 2026-10-30):** every commit is authored and committed as `David Ruiz <davidru85@gmail.com>`, and no commit message has a `Co-Authored-By` trailer, an agent's included. The only other committer allowed is `GitHub <noreply@github.com>`, on the merge commits GitHub creates when a PR is merged on the web (`AGENTS.md` §12).
 
 ## 3. Pull requests
 
@@ -111,7 +112,10 @@ See `AGENTS.md` §11. The CI checks are authoritative for the gates they run. Th
 - **Licence allow-list for code shipped in the apps:** Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, Zlib. Anything else (MPL, LGPL, GPL, AGPL, or a custom licence) needs the owner's approval. The project itself grants no licence (OQ-21).
   - Approved exceptions: Google Play services Location (`play-services-location`, Android Software Development Kit License), 2026-10-26.
 - Dependabot opens weekly update PRs (`ci_cd.md` §6). Kotlin upgrades wait for a compatible SKIE release (ADR-0004).
-- **Dependabot PRs follow the README rule, with no exception** (owner decision, 2026-10-22). Before merging, add a commit to the Dependabot branch that updates both READMEs ("Recent changes") and the project log. Once someone else has pushed to its branch, Dependabot stops rebasing it, so resolve conflicts by merging `main` into the branch. Never rewrite its history.
+- **Dependabot PRs follow the README rule and the commit identity rule, with no exception** (owner decisions, 2026-10-22 and 2026-10-30). Dependabot's commit has a bot as its author, so it is never merged as it is:
+  1. Branch from `main` (`chore/deps-<name>`), and replay the update there as your own commit: `git cherry-pick -x <sha>`, then `git commit --amend --reset-author --no-edit`.
+  2. Add the commit that updates both READMEs ("Recent changes") and the project log.
+  3. Open a PR from that branch, and close Dependabot's PR with a link to it.
 - Do not add analytics, advertising, attribution or fingerprinting SDKs without an ADR and the owner's approval (`security_privacy.md`).
 
 ## 10. Decisions and open questions

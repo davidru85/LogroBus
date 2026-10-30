@@ -107,6 +107,7 @@ You will need:
     - Nothing is sent without your consent, asked separately for analytics and for crash reports. Until the consent screen arrives, nothing is sent at all.
     - Crash reports keep each error's type and where it happened, never its message, which could quote a search or a position.
     - Release builds have no telemetry yet. Debug builds will print it to the developer console once you can give consent; until then, tests check it. Only the app itself may add a vendor's library, on Android and on iOS, and each app hands its own telemetry to the shared code at launch.
+  - Every commit now has one identity, `David Ruiz <davidru85@gmail.com>`, and no co-author lines, as the owner decided. The rule is in `AGENTS.md`, the git hooks and the local checks enforce it, and the setup script sets it for each clone. The owner rewrote the existing history to match.
   - LB-012 is done. Both apps open on their three tabs: Lines, Near me and Directions.
     - Each tab remembers where you were. Open About data from Lines, switch to Near me and back, and it is still there. Tapping the tab again takes it back to its start.
     - A settings button on every tab opens More, with Settings (empty until its options arrive) and About data, which is now reachable.

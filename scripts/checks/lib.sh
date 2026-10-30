@@ -9,6 +9,10 @@ LB_REPO_ROOT="$(git rev-parse --show-toplevel)"
 LB_SPEC_FILE="logrono-bus-app-functional-spec.md"
 LB_CONVENTIONAL_RE='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?!?: [^ ].*$'
 LB_TITLE_MAX=100
+# Owner rule (AGENTS.md §12): the one identity of every commit, author and committer.
+LB_COMMIT_NAME="David Ruiz"
+LB_COMMIT_EMAIL="davidru85@gmail.com"
+LB_COMMIT_IDENTITY="$LB_COMMIT_NAME <$LB_COMMIT_EMAIL>"
 
 lb_fail() { printf 'FAIL: %s\n' "$*" >&2; }
 lb_warn() { printf 'WARN: %s\n' "$*" >&2; }

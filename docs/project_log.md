@@ -22,7 +22,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 ## 2026-10-30: LB-017: telemetry contracts
 
 **Done**
-- **Merges:** the owner merged PR #30 (LB-012), and `main` was synced.
+- **Merges:** the owner merged PR #30 (LB-012), and `main` was synced. PR #31 (commit identity) was merged while this branch was open; `main` was merged into it, keeping both log and README entries.
 - **`:shared:core:telemetry`:**
   - `AnalyticsEvent`: the six MVP events of NFR-OBS-03, with ids, counts, flags and nested enums only.
   - `CrashReporter`, with `CrashArea` and `Breadcrumb` (`ScreenView`).
@@ -73,6 +73,31 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - LB-409 (blocked by OQ-16) adds the consent dialog, the Settings toggles, a persisted `ConsentStore` and the vendor implementations.
 - Feature stories call `AnalyticsTracker.track` from their ViewModels; a recording double can join `:shared:core:testing` when the first one needs it.
 - **Next story:** LB-013 waits for the owner on the tile provider's terms (OQ-10). The remaining M0 work is LB-003 (fixtures, OQ-11) and LB-005 part 2.
+
+---
+
+## 2026-10-30: One commit identity, and the history rewritten to match
+
+**Done**
+- **The rule (owner, 2026-10-30):** every commit is authored and committed as `David Ruiz <davidru85@gmail.com>`, with no `Co-Authored-By` trailer, an agent's included (`AGENTS.md` §12, `engineering_workflow.md` §2).
+  - Enforced by `scripts/checks/check-commit-identity.sh`, in the `pre-commit`, `commit-msg` and `pre-push` hooks and in `run-all.sh`. Its negative cases fail as they should: another author email, a co-author trailer, the old history, a non-merge commit by GitHub and a bot author. A merge commit with GitHub as committer passes.
+  - `scripts/bootstrap.sh` sets the identity for the clone. `.claude/settings.json` turns off Claude Code's commit attribution.
+  - Dependabot's commits are replayed as our own on a branch of ours (`engineering_workflow.md` §9).
+- **Why:** the clone's local `user.email` was the GitHub noreply address, so 407 of the 462 commits on `main` carried it. Claude's co-author trailer was on 431.
+- **The history rewrite (owner decisions, 2026-10-30):**
+  - Every commit on `main` and on the open branches was rebuilt with the same tree, parents, dates and message, but with this author and committer and without the co-author trailer, and re-signed with the owner's SSH key. That covers the 28 web merges committed by GitHub and the one Dependabot commit too.
+  - It was checked on a scratch clone first: the same 462 commits and 33 merges, identical trees and dates, and every commit signed.
+  - The owner lifted `main`'s protection, force-pushed with `--force-with-lease` (`main` went from `3c9026a` to `83f3858`) and reapplied the protection with `scripts/github/protect-main.sh`, which left it exactly as before. This is a one-off exception to "no force pushes" (`engineering_workflow.md` §1.1).
+  - Locally, the open branches were moved to their rewritten commits, and the 22 stale branches, all merged before the rewrite, were deleted.
+
+**Decisions**
+- **Merges on the web:** GitHub stays the committer of the merge commits it creates, the only exception to the rule. Their author is the owner's GitHub commit email: with "Keep my email addresses private" turned off and `davidru85@gmail.com` as the primary email, or that address chosen in the merge box, it matches.
+- **Pull request descriptions** keep the "Generated with Claude Code" line; only commit trailers go.
+
+**Open / next**
+- The 30 closed pull requests keep their original commits, under read-only `refs/pull/*` refs, so the old identity is still visible there. Only GitHub Support can purge them.
+- Commit hashes quoted in older log entries and pull request descriptions name the commits before the rewrite. They still open from their pull requests.
+- Any other clone must be cloned again.
 
 ---
 

@@ -109,6 +109,7 @@ La documentación técnica está en inglés.
     - No se envía nada sin tu consentimiento, que se pide por separado para la analítica y para los informes de fallos. Hasta que llegue la pantalla de consentimiento, no se envía nada en absoluto.
     - Los informes de fallos conservan el tipo de cada error y dónde ocurrió, nunca su mensaje, que podría citar una búsqueda o una posición.
     - Las compilaciones de publicación aún no tienen telemetría. Las de depuración la mostrarán en la consola de desarrollo cuando puedas dar tu consentimiento; hasta entonces, la comprueban los tests. Solo la propia app puede añadir la biblioteca de un proveedor, en Android y en iOS, y cada app entrega su propia telemetría al código compartido al arrancar.
+  - Todos los commits tienen ahora una sola identidad, `David Ruiz <davidru85@gmail.com>`, y ninguna línea de coautoría, como decidió el propietario. La regla está en `AGENTS.md`, los hooks de git y las comprobaciones locales la hacen cumplir, y el script de configuración la fija en cada clon. El propietario reescribió la historia existente para ajustarla.
   - Completada LB-012. Las dos apps se abren en sus tres pestañas: Líneas, Cerca de mí y Cómo llegar.
     - Cada pestaña recuerda dónde estabas. Abre «Sobre los datos» desde Líneas, cambia a Cerca de mí y vuelve, y sigue ahí. Al volver a tocar la pestaña, vuelve a su inicio.
     - Un botón de ajustes en cada pestaña abre Más, con Ajustes (vacío hasta que lleguen sus opciones) y «Sobre los datos», que ya se puede abrir.

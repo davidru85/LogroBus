@@ -16,6 +16,10 @@ export LB_INCLUDE_WORKTREE=1
 echo "== Documentation and policy =="
 "$dir/run-docs-checks.sh" "$base" || status=1
 "$dir/check-secrets.sh" --all || status=1
+"$dir/check-commit-identity.sh" --current || status=1
+if git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
+  "$dir/check-commit-identity.sh" "$base..HEAD" || status=1
+fi
 
 echo "== Shell scripts =="
 if command -v shellcheck >/dev/null 2>&1; then

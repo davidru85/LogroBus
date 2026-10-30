@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Git pre-commit hook: blocks signing material and credential-like content.
+# Git pre-commit hook: blocks signing material and credential-like content, and
+# commits under any identity but the owner's (AGENTS.md §12).
 # Installed by scripts/bootstrap.sh (core.hooksPath=.githooks).
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
 "$root/scripts/checks/check-secrets.sh" --staged
+"$root/scripts/checks/check-commit-identity.sh" --current >/dev/null

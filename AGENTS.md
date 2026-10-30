@@ -281,6 +281,12 @@ A story is done when all of these hold (spec §10.6, plus the docs):
 
 - Use Conventional Commits with the story id, for example `feat(near-me): stop sheet arrivals [LB-205]`. Scopes: `lines`, `near-me`, `planner`, `shared`, `data`, `network`, `db`, `android`, `ios`, `shell` (the app shells of both platforms: tabs, navigation, More), `design`, `docs`, `backlog`, `build`, `build-logic`, `architecture`, `harness`, `ci`.
 - Branch names follow `feat/LB-205-stop-sheet` or `fix/LB-xxx-short-name`, one story per branch.
+- **Commit identity (owner rule, 2026-10-30):** every commit is authored and committed as `David Ruiz <davidru85@gmail.com>`, whoever makes it, human or agent.
+  - `scripts/bootstrap.sh` sets it for the clone (`user.name`, `user.email`). Check it with `git var GIT_AUTHOR_IDENT` before committing.
+  - Commit messages have no `Co-Authored-By` trailers, an agent's included. A pull request description may still say an agent generated it.
+  - **One exception:** the merge commits that GitHub creates when the owner merges a pull request on the web have `GitHub <noreply@github.com>` as committer. Their author is the owner's GitHub commit email, which is set to the same address.
+  - Commits by bots, such as Dependabot's, are never merged as they are: replay them as your own (`docs/engineering_workflow.md` §9).
+  - The git hooks and `scripts/checks/run-all.sh` enforce it (`scripts/checks/check-commit-identity.sh`).
 - **README rule (mandatory):** every merged PR must leave `README.md` (English) and `README.es.md` (Spanish) up to date. The README changes therefore go inside the PR itself, before it is merged:
   - At minimum, add an entry under "Recent changes" / "Cambios recientes" and refresh "Project status" / "Estado del proyecto".
   - Also update every other section the PR affects (features, stack, structure, getting started).

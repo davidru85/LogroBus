@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Git pre-push hook (docs/engineering_workflow.md §1.1):
 # - rejects pushes to main unless LOGROBUS_ALLOW_MAIN_PUSH=1 (owner emergencies only);
+# - checks the identity of every pushed commit (blocking, AGENTS.md §12);
 # - runs the frozen-spec and doc-link gates (blocking);
 # - reports README parity as a warning only: TDD pushes after every cycle
 #   (docs/testing_strategy.md §7.1); run-all.sh enforces parity before the PR.
@@ -12,15 +13,24 @@ set -uo pipefail
 root="$(git rev-parse --show-toplevel)"
 checks="$root/scripts/checks"
 
-while read -r _local_ref _local_sha remote_ref _remote_sha; do
+zero="0000000000000000000000000000000000000000"
+status=0
+while read -r _local_ref local_sha remote_ref remote_sha; do
   if [ "$remote_ref" = "refs/heads/main" ] && [ "${LOGROBUS_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
     echo "pre-push: direct pushes to main are not allowed. Push a branch and open a pull request." >&2
     echo "pre-push: owner emergency bypass: LOGROBUS_ALLOW_MAIN_PUSH=1 git push ... (log it in docs/project_log.md)." >&2
     exit 1
   fi
+  [ "$local_sha" = "$zero" ] && continue
+  # The commits this push adds: since the remote's tip, or since main for a new branch.
+  if [ "$remote_sha" != "$zero" ] && git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+    range="$remote_sha..$local_sha"
+  else
+    range="origin/main..$local_sha"
+  fi
+  "$checks/check-commit-identity.sh" "$range" >/dev/null || status=1
 done
 
-status=0
 "$checks/check-spec-frozen.sh" origin/main || status=1
 "$checks/check-doc-links.sh" || status=1
 if ! "$checks/check-readme-parity.sh" origin/main >/dev/null 2>&1; then

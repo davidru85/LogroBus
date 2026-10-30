@@ -51,6 +51,8 @@ LogroBus is built with several AI coding agents (Claude Code and others, such as
 | `ask` | `gh pr merge`, `git reset --hard`, `scripts/record-fixtures.sh` (calls the live source), `scripts/bootstrap.sh`, `scripts/github/*` (repository administration) | Outward-facing or hard-to-reverse actions |
 | `deny` | Editing the functional spec; reading `local.properties`, keystores, `.p12`, `.p8` and `.env`; pushing to `main`; force pushes; `rm -rf` | Frozen baseline, secrets, branch policy |
 
+`attribution.commit` is empty, so Claude Code adds no `Co-Authored-By` trailer to commits (owner rule, 2026-10-30, `AGENTS.md` §12). Pull request descriptions keep its default line.
+
 Personal overrides go in `.claude/settings.local.json`, which is gitignored and must never relax the deny list.
 
 ### 4.2 Hooks
