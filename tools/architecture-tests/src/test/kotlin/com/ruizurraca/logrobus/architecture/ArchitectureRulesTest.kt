@@ -298,4 +298,43 @@ class ArchitectureRulesTest {
             ArchitectureRules.swiftPackageVersionMismatches(manifest, agreeing.replace("1.19.7", "1.20.0")),
         )
     }
+
+    @Test
+    fun lb017_telemetryPropertiesMayBeIdsCountsFlagsAndTelemetryEnums() {
+        val properties =
+            mapOf(
+                "StopView.stopId" to "Int",
+                "Sample.total" to "kotlin.Long",
+                "PlanRequest.originIsCurrentLocation" to "Boolean",
+                "PlanResult.rejection" to "Rejection?",
+                "FavouriteAdd.kind" to "AnalyticsEvent.FavouriteAdd.Kind",
+            )
+
+        assertEquals(
+            emptyList<String>(),
+            ArchitectureRules.forbiddenTelemetryProperties(properties, telemetryEnums = setOf("Rejection", "Kind")),
+        )
+    }
+
+    @Test
+    fun lb017_freeTextAndCoordinatesAreFlaggedInTelemetry() {
+        // ADR-0009, NFR-OBS-03, NFR-PRIV-02: no free text and no coordinates, whatever their type.
+        val properties =
+            mapOf(
+                "Search.query" to "String",
+                "Search.typed" to "String?",
+                "Search.chars" to "CharSequence",
+                "Near.latitude" to "Double",
+                "Near.longitude" to "Float?",
+                "Near.point" to "GeoPoint",
+                "Near.position" to "LatLng",
+                "Near.stops" to "List<Int>",
+                "Other.reason" to "Reason",
+            )
+
+        assertEquals(
+            properties.map { (name, type) -> "$name: $type" },
+            ArchitectureRules.forbiddenTelemetryProperties(properties, telemetryEnums = setOf("Rejection")),
+        )
+    }
 }

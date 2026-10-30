@@ -71,6 +71,11 @@ object ArchitectureRules {
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
+    fun forbiddenTelemetryProperties(
+        properties: Map<String, String>,
+        telemetryEnums: Set<String>,
+    ): List<String> = emptyList()
+
     /** Whether a file outside the Android design system uses Material 3's experimental expressive APIs (ADR-0005). */
     fun usesExpressiveApiOutsideDesignSystem(
         packageName: String?,

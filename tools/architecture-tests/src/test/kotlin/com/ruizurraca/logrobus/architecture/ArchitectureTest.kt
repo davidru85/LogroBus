@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.architecture
 
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
+import com.lemonappdev.konsist.api.declaration.KoPropertyDeclaration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -302,6 +303,76 @@ class ArchitectureTest {
         assertEquals(emptyList<String>(), offenders)
     }
 
+    @Test
+    fun lb017_analyticsEventsAndBreadcrumbsCarryNoFreeTextOrCoordinates() {
+        // ADR-0009: only ids, counts, flags and enums, so no event or breadcrumb can carry what a user typed or where
+        // they are (NFR-OBS-03, NFR-PRIV-02).
+        val properties =
+            telemetryPayloads()
+                .flatMap { payload -> payload.properties.map { (name, type) -> "${payload.name}.$name" to type } }
+                .toMap()
+        val telemetryEnums =
+            Konsist
+                .scopeFromProject()
+                .classes()
+                .filter { it.hasEnumModifier && it.resideInPackage("$TELEMETRY_PACKAGE..") }
+                .map { it.name }
+                .toSet()
+
+        assertEquals(emptyList<String>(), ArchitectureRules.forbiddenTelemetryProperties(properties, telemetryEnums))
+    }
+
+    @Test
+    fun lb017_theAnalyticsCatalogueHasTheMvpEventsOfNfrObs03() {
+        // app_open, stop_view, line_view, plan_request, plan_result and favourite_add; widget_add and notice_open
+        // arrive with their features in v1.0.
+        val events = telemetryPayloads().filter { "AnalyticsEvent" in it.parents }
+
+        assertEquals(
+            sortedSetOf("AppOpen", "FavouriteAdd", "LineView", "PlanRequest", "PlanResult", "StopView"),
+            events.map { it.name }.toSortedSet(),
+        )
+    }
+
+    /** An analytics event or crash breadcrumb: its name, its direct parents and its properties' declared types. */
+    private data class TelemetryPayload(
+        val name: String,
+        val parents: List<String>,
+        val properties: Map<String, String>,
+    )
+
+    /** Every class or object that implements `AnalyticsEvent` or `Breadcrumb`, the two sealed telemetry payloads. */
+    private fun telemetryPayloads(): List<TelemetryPayload> {
+        val scope = Konsist.scopeFromProject()
+        val classes =
+            scope.classes().map { declaration ->
+                // Constructor properties are listed with the declared ones, or as `val` parameters, by Konsist version.
+                val inConstructor =
+                    declaration.primaryConstructor
+                        ?.parameters
+                        .orEmpty()
+                        .filter { it.isVal || it.isVar }
+                        .associate { it.name to it.type.text }
+                TelemetryPayload(
+                    declaration.name,
+                    declaration.parents().map { it.name },
+                    inConstructor + declaration.properties(includeNested = false).associate { it.name to it.typeText },
+                )
+            }
+        val objects =
+            scope.objects().map { declaration ->
+                TelemetryPayload(
+                    declaration.name,
+                    declaration.parents().map { it.name },
+                    declaration.properties(includeNested = false).associate { it.name to it.typeText },
+                )
+            }
+        return (classes + objects).filter { payload -> payload.parents.any { it in TELEMETRY_PAYLOADS } }
+    }
+
+    private val KoPropertyDeclaration.typeText: String
+        get() = type?.text.orEmpty()
+
     private fun sharedFiles(): List<KoFileDeclaration> =
         Konsist.scopeFromProject().files.filter { it.relativePath().startsWith("shared/") }
 
@@ -317,3 +388,6 @@ class ArchitectureTest {
     private fun File.isBuildLogicSource(): Boolean =
         name.endsWith(".kt") && relativePath().let { it.startsWith("build-logic/") && "/src/main/" in it }
 }
+
+private const val TELEMETRY_PACKAGE = "com.ruizurraca.logrobus.core.telemetry"
+private val TELEMETRY_PAYLOADS = setOf("AnalyticsEvent", "Breadcrumb")
