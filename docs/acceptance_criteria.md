@@ -243,6 +243,29 @@ Refs: FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005
 - **Given** TalkBack or VoiceOver, **when** focus reaches the tab bar, **then** each tab announces its label and selected state. `[manual: TalkBack, VoiceOver]`
 - **Given** a deep link that targets another tab (LB-603, v1.0), **when** the app is launched from it, **then** that tab opens instead of Lines. This criterion is verified when LB-603 lands.
 
+Done (2026-10-30), with tests `lb012_…`:
+- Both platforms open on Lines, with the three tabs in order and the labels in Spanish and English (`AppShellTest`, `ShellUITests`, `LaunchTests`).
+  - Each tab root's title is its label, except How to Get There, whose screen is titled "How to get there" (`plan.title`).
+- "Two screens deep in Lines" is Lines, More and About data. Lines keeps that screen while another tab shows, and re-selecting Lines pops it to its root (`TabNavigationTest`, `ShellUITests`).
+  - On iOS the system pops a re-selected tab by itself, after the router, so the UI test shows the behaviour rather than the router's part.
+- Re-selecting a tab at its root asks the root to scroll to its top. The parts are tested: the requests (`TabNavigatorTest`, `TabRouterTests`) and the Android scrolling helper (`ScrollToTopOnReselectTest`).
+  - On Android, a root with a list calls `ScrollToTopOnReselect`; on iOS, it watches the `scrollToTopRequests` environment value.
+  - The placeholder roots do not scroll, so nothing tests the whole path yet. The first scrolling roots verify it end to end: see LB-101's criteria.
+- Every tab root's More action opens More, which lists Settings and About data. Settings is a titled placeholder until LB-403.
+- `[Android]` A window of medium width or wider shows a rail, whatever its height, and a compact one a bar (`AppShellTest`).
+  - At 200 % font on a 320 dp phone, every bar label fits its tab. Rail labels keep their full size and wrap (`TabLabelTest`).
+  - Each tab has the tab role and its selected state, the automated half of the TalkBack criterion. Screen titles are headings.
+- `[Android]` Back walks back through the selected tab's stack, as does a screen's up button. At the root of Near Me or How to Get There, back returns to Lines; at the root of Lines, it leaves the app. The stacks survive the activity's recreation.
+  - Screens change on the expressive motion scheme's effects spring.
+  - A screen on two tabs keeps a separate state and ViewModel on each.
+- Screenshots and snapshots, in light, dark and 200 % (Spanish):
+  - on Android, the shell as a bar and as a rail, More and Settings;
+  - on iOS, More and Settings.
+- Not done here:
+  - **Owner, on a device:** the TalkBack and VoiceOver passes.
+  - **LB-603:** the deep-link criterion.
+- No onboarding placeholder: FR-NAV-06 belongs to LB-410, and the shell opens straight on Lines. FR-NAV-07 (one stop detail screen) is LB-205's.
+
 ### LB-013 Map foundation
 Refs: spec §7.4, OQ-10, NFR-PRIV-05, NFR-PERF-04
 
@@ -302,6 +325,7 @@ Refs: FR-LINE-01, FR-LINE-02, DD-08, NFR-A11Y-02
 - **Given** 200 % font, **when** the list renders, **then** no line code is truncated, and display names wrap rather than clip.
 - **Given** a first launch with no network, **when** Lines opens, **then** the error state shows the network reason and Retry, and Retry loads the list once connectivity returns (ADR-0008).
 - **Given** the first Swift ViewModel, `LinesViewModel`, **when** a pull request changes it, **then** CI runs its tests in the `iOS ViewModel and snapshot tests` job, behind the iOS gate (moved from LB-002).
+- **Given** the list scrolled down, **when** the user re-selects the Lines tab, **then** the list scrolls to its top, end to end through the shell, on both platforms (FR-NAV-03, moved from LB-012).
 
 ### LB-102 Lines search
 Refs: FR-LINE-03, FR-LINE-16, NFR-I18N-03
@@ -616,7 +640,7 @@ Done early, with LB-010 part 2 (2026-10-28): the last successful sync of each da
 - `ObserveLastSyncs` lists every static dataset in order (spec §8.5: lines and stops), with its last successful sync or none.
 - A row without a success counts as never synced, and rows of v1.0 datasets are ignored.
 - Keeping an earlier success through a failed sync is LB-008's part (`architecture.md` §4.4).
-- The screen is not yet reachable: More arrives with LB-012.
+- More → About data opens it since LB-012, with its title and an up button.
 
 ### LB-405 Localisation
 Refs: NFR-I18N-01 to 03

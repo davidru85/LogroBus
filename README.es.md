@@ -103,6 +103,13 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **30-10-2026:**
+  - Completada LB-012. Las dos apps se abren en sus tres pestañas: Líneas, Cerca de mí y Cómo llegar.
+    - Cada pestaña recuerda dónde estabas. Abre «Sobre los datos» desde Líneas, cambia a Cerca de mí y vuelve, y sigue ahí. Al volver a tocar la pestaña, vuelve a su inicio.
+    - Un botón de ajustes en cada pestaña abre Más, con Ajustes (vacío hasta que lleguen sus opciones) y «Sobre los datos», que ya se puede abrir.
+    - En Android, las pestañas pasan de la barra inferior a un riel lateral en tabletas, plegables y móviles en horizontal, y Atrás desde Cerca de mí o Cómo llegar vuelve a Líneas. Los nombres de las pestañas se siguen leyendo con los tamaños de texto más grandes, y los lectores de pantalla pueden saltar entre los títulos de pantalla.
+    - Las capturas en modo claro, oscuro y con texto muy grande protegen las pestañas y las pantallas nuevas en las dos plataformas.
+    - Las pantallas de las pestañas son provisionales hasta que llegue cada sección.
 - **29-10-2026:**
   - Completada LB-011. La parte 2 da a la app de iPhone el mismo sistema de diseño.
     - Los mismos colores provisionales, insignias de línea y tiempos de llegada que en Android, con las mismas palabras, que VoiceOver lee en español o inglés.

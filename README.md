@@ -101,6 +101,13 @@ You will need:
 
 ### Recent changes
 
+- **2026-10-30:**
+  - LB-012 is done. Both apps open on their three tabs: Lines, Near me and Directions.
+    - Each tab remembers where you were. Open About data from Lines, switch to Near me and back, and it is still there. Tapping the tab again takes it back to its start.
+    - A settings button on every tab opens More, with Settings (empty until its options arrive) and About data, which is now reachable.
+    - On Android, the tabs move from the bottom bar to a side rail on tablets, foldables and phones in landscape, and Back from Near me or Directions returns to Lines. The tab names stay readable at the largest text sizes, and screen readers can jump between screen titles.
+    - Screenshots in light, dark and extra-large text guard the tabs and the new screens on both platforms.
+    - The tab screens are placeholders until each section arrives.
 - **2026-10-29:**
   - LB-011 is done. Part 2 gives the iPhone app the same design system.
     - The same placeholder colours, line badges and arrival times as Android, with the same words, read aloud by VoiceOver in Spanish or English.
