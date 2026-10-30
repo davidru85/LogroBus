@@ -28,6 +28,7 @@ object ArchitectureRules {
     private val featurePackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\.feature\.(\w+)""")
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
+    private val telemetryValueTypes = setOf("Int", "Long", "Boolean")
     private val platform =
         listOf(
             "java.",
@@ -71,10 +72,20 @@ object ArchitectureRules {
     fun forbiddenPresentationImports(imports: List<String>): List<String> =
         imports.filter { imported -> infrastructure.any(imported::startsWith) || dataPackage.containsMatchIn(imported) }
 
+    /**
+     * Properties of analytics events and crash breadcrumbs that are not ids, counts, flags or telemetry enums, as
+     * `Type.property: DeclaredType`. Allowing only those types keeps out free text and coordinates, whatever type they
+     * come in (ADR-0009, NFR-OBS-03, NFR-PRIV-02). [telemetryEnums] are the simple names of the telemetry enums.
+     */
     fun forbiddenTelemetryProperties(
         properties: Map<String, String>,
         telemetryEnums: Set<String>,
-    ): List<String> = emptyList()
+    ): List<String> {
+        val allowed = telemetryValueTypes + telemetryEnums
+        return properties
+            .filterValues { type -> type.trim().removeSuffix("?").substringAfterLast('.') !in allowed }
+            .map { (name, type) -> "$name: $type" }
+    }
 
     /** Whether a file outside the Android design system uses Material 3's experimental expressive APIs (ADR-0005). */
     fun usesExpressiveApiOutsideDesignSystem(
