@@ -11,6 +11,8 @@ object ArchitectureRules {
 
     private val seedName = Regex("^seed(?![a-z])")
 
+    private val catalogueJson = Regex("^(lines|stops)(?![a-z]).*\\.json$")
+
     private val includeCall = Regex("""\binclude\s*\(([^)]*)\)""")
     private val quoted = Regex(""""([^"]+)"""")
     private val versionPatterns =
@@ -161,13 +163,18 @@ object ArchitectureRules {
             .toList()
 
     /**
-     * Whether the file at [relativePath] looks like bundled seed data: a database file, or a file named "seed" as a
-     * word ("seed.json", "Seed-lines.json", not "seedling.png"). The MVP downloads lines and stops on first use and
-     * bundles none (ADR-0008); a seed bundle is v1.0's offline mode.
+     * Whether the file at [relativePath] looks like bundled seed data: a database file, a file named "seed" as a word
+     * ("seed.json", "Seed-lines.json", not "seedling.png"), or a lines or stops JSON file in an assets or resources
+     * folder outside the tests. The MVP downloads lines and stops on first use and bundles none (ADR-0008); a seed
+     * bundle is v1.0's offline mode.
      */
     fun isSeedData(relativePath: String): Boolean {
+        val folders = relativePath.lowercase().split('/').dropLast(1)
         val name = relativePath.substringAfterLast('/').lowercase()
-        return name.substringAfterLast('.', "") in databaseExtensions || seedName.containsMatchIn(name)
+        val bundled = folders.any { it == "assets" || it == "resources" } && folders.none { it.contains("test") }
+        return name.substringAfterLast('.', "") in databaseExtensions ||
+            seedName.containsMatchIn(name) ||
+            (bundled && catalogueJson.matches(name))
     }
 
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
