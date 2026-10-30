@@ -6,6 +6,7 @@ import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.warn
+import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.Sync_state
 import com.ruizurraca.logrobus.core.database.searchableName
@@ -67,8 +68,9 @@ internal class DefaultStaticSyncEngine(
     }
 
     /**
-     * Replaces the cache with [catalogue], if there is one, and records the sync with each dataset's hash, in one
-     * transaction (NFR-REL-03). If any write fails, the transaction rolls back and the cache is as it was.
+     * Replaces the cache with [catalogue], if there is one, records the sync with each dataset's hash and counts the
+     * saved stops it lacks, in one transaction (NFR-REL-03). If any write fails, the transaction rolls back and the
+     * cache is as it was.
      */
     @Suppress("TooGenericExceptionCaught") // The database boundary (code_style.md §2.2): a failure is a value.
     private suspend fun store(
@@ -81,6 +83,7 @@ internal class DefaultStaticSyncEngine(
                 database.transaction {
                     catalogue?.let(::replace)
                     hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
+                    database.favouriteQueries.countMissingStops(FavouriteTypes.STOP)
                 }
             }
             AppResult.Success(Unit)
