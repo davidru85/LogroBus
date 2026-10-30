@@ -19,6 +19,41 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-30: LB-017: telemetry contracts
+
+**Done**
+- **Merges:** the owner merged PR #30 (LB-012), and `main` was synced.
+- **`:shared:core:telemetry`:**
+  - `AnalyticsEvent`: the six MVP events of NFR-OBS-03, with ids, counts, flags and nested enums only.
+  - `CrashReporter`, with `CrashArea` and `Breadcrumb` (`ScreenView`).
+  - `TelemetryConsent`, one `ConsentDecision` per kind of telemetry, and `MemoryConsentStore`, which starts undecided.
+  - `ConsentGatedAnalyticsTracker` and `ConsentGatedCrashReporter`, which read their kind of consent on every call and keep nothing.
+  - `NoOp*` objects for release builds, and `Logging*` for debug builds, printing through the `Logger`.
+- **`:shared:umbrella`:** `telemetryModule(debug, platform)` binds one consent store and the gated telemetry. `initKoin` takes a `PlatformTelemetry` on Android (default empty) and iOS (`LogroBusApp` passes one with `nil`s).
+- **Rules:**
+  - a Konsist rule allows only `Int`, `Long`, `Boolean` and telemetry enums in events and breadcrumbs, and pins the catalogue to the MVP events;
+  - `ModuleRules` rejects vendor telemetry SDKs in every module but `:android:app`.
+- **Tests:**
+  - telemetry: gates, logging and graph, on the Android host and the iOS simulator;
+  - `AndroidGraphTest` and `IosGraphTest` with a recording double passed to `initKoin`;
+  - two Swift tests with Swift doubles behind the shared gates;
+  - `ModuleRulesTest`, `ArchitectureTest` and `ArchitectureRulesTest`.
+  - All 46 iOS tests pass on the iPhone 17e (iOS 26.5).
+
+**Decisions**
+- **Consent in memory until LB-409.** No screen can record consent before the consent dialog and toggles, so LB-017 adds no persistence and no Multiplatform Settings dependency (ADR-0018 update). The consequence: until LB-409, even debug builds print no telemetry in the running app. Events are checked in tests.
+- **The logging implementations are gated too.** Debug builds use the same consent path as release builds, so the gate is exercised whatever the build.
+- **Nested enums** (`PlanResult.Rejection`, `FavouriteAdd.Kind`, `Breadcrumb.Screen`) instead of ADR-0009's `PlanRejection` and `FavouriteType`: a core module cannot use the planner and favourites domains, and nested names cannot clash in Swift (ADR-0009 update).
+- **`PlatformTelemetry`** is the one injection point, instead of two `initKoin` parameters. Android's `initKoin` would have had six, over detekt's limit, and Swift reads one named object.
+- **The vendor-SDK rule** matches by group (Firebase, Crashlytics, Sentry, Bugsnag, Datadog, Amplitude, Mixpanel, Segment, New Relic, Embrace, Instabug, AppsFlyer, Adjust). It matches by artifact for Google Play services, whose group also holds the allowed Location library.
+
+**Open / next**
+- LB-409 (blocked by OQ-16) adds the consent dialog, the Settings toggles, a persisted `ConsentStore` and the vendor implementations.
+- Feature stories call `AnalyticsTracker.track` from their ViewModels; a recording double can join `:shared:core:testing` when the first one needs it.
+- **Next story:** LB-013 waits for the owner on the tile provider's terms (OQ-10). The remaining M0 work is LB-003 (fixtures, OQ-11) and LB-005 part 2.
+
+---
+
 ## 2026-10-30: LB-012: the app shell, with three tabs
 
 **Done**

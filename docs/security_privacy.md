@@ -24,7 +24,7 @@ LogroBus has no accounts, no project-owned servers and no advertising. This docu
 | Address search text | User | No | Yes, in geocoder requests | CartoCiudad (IGN) | Address suggestions |
 | Favourites, saved places, recent searches, settings | User | On-device database and settings | Only through the user's own OS backup (Android Auto Backup, iCloud) | The user's Google or Apple account | Persistence (FR-FAV-03) |
 | IP address and `User-Agent` | Inherent to HTTPS | No | Yes | BFF, CartoCiudad, map tile provider | Network transport |
-| Analytics events and crash reports | Telemetry contracts (ADR-0009): typed events with ids and enums only, consent-gated; no-op until the vendor is chosen | none | Only with consent, once a vendor is active (likely Firebase Analytics and Crashlytics, OQ-16) | Vendor to be confirmed | Stability and product metrics |
+| Analytics events and crash reports | Telemetry contracts (ADR-0009, LB-017): typed events and breadcrumbs with ids, counts, flags and enums only (a Konsist rule), consent-gated per kind and opt-in; no-op in release builds and console logging in debug builds until the vendor is chosen | none | Only with consent, once a vendor is active (likely Firebase Analytics and Crashlytics, OQ-16) | Vendor to be confirmed | Stability and product metrics |
 
 The project collects **no** device identifiers, advertising ids, contacts, photos or account data.
 

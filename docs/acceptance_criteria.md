@@ -314,6 +314,16 @@ Done when:
 - Release builds bind the no-op implementations, and debug builds bind the logging ones. No vendor SDK appears in any shared module's dependencies.
 - `[Android]` and `[iOS]` each have a documented injection point (Koin start-up parameter) that accepts a native implementation, proven with a test double.
 
+Done (2026-10-30), with tests `lb017_…`:
+- `AnalyticsEvent` has the six MVP events of NFR-OBS-03: `AppOpen`, `StopView`, `LineView`, `PlanRequest`, `PlanResult` and `FavouriteAdd`. `widget_add` and `notice_open` come with their features in v1.0.
+  - The Konsist rule allows only `Int`, `Long`, `Boolean` and telemetry enums in an event or breadcrumb, in the constructor or the body, so free text and coordinates fail whatever their type (`ArchitectureTest`, `ArchitectureRulesTest`). Mutation-checked with a `String` and a `Double` latitude.
+  - A second rule pins the catalogue to the MVP events.
+- The gates forward nothing before the user decides, after a refusal or a withdrawal, or on consent to the other kind of telemetry, and nothing dropped is sent later (`ConsentGatedAnalyticsTrackerTest`, `ConsentGatedCrashReporterTest`, on the Android host and the iOS simulator).
+- With a logger that prints every level, a release graph prints no telemetry and a debug graph prints it, only after consent (`TelemetryGraphTest`). The logging reporter prints an error's types, never its message (`LoggingTelemetryTest`).
+  - No module but `:android:app` may declare a vendor telemetry SDK: `ModuleRules` fails the build when one is declared (`ModuleRulesTest`).
+- The injection point is `initKoin(…, telemetry = PlatformTelemetry(analytics, crashReporter))` on Android and `doInitKoin(appVersion:debug:telemetry:)` on iOS, documented on both functions and at both call sites. A recording double passed there receives telemetry only after consent (`AndroidGraphTest`, `IosGraphTest`). Swift classes conforming to the exported protocols work behind the shared gates (`TelemetryTests`, iOS).
+- Until LB-409, consent lives in memory and starts undecided, so the debug logs show no telemetry in the running app. Events are checked in tests.
+
 ## E1 Lines
 
 ### LB-101 Lines list
