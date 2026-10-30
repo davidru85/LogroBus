@@ -151,7 +151,7 @@ class StaticSyncEngineTest {
         }
 
     @Test
-    fun lb008_provisionalStopsDoNotCountTowardsTheHundred() =
+    fun dd10_provisionalStopsDoNotCountTowardsTheHundred() =
         runTest {
             // DD-10: a provisional stop is made up from a pattern, not delivered by API-02.
             val payload = catalogue(version = 2, stopCount = FEWEST_STOPS + 2)
@@ -359,9 +359,10 @@ class StaticSyncEngineTest {
         }
 
     @Test
-    fun lb008_aSavedStopThatIsOnlyProvisionalIsMissing() =
+    fun dd10_aSavedStopThatIsOnlyProvisionalIsStillServed() =
         runTest {
-            // DD-10: a provisional stop is made up from a pattern, so API-02 no longer delivers it.
+            // A provisional stop is made up from a pattern that API-02 lacks, such as 384: buses still call there,
+            // so it must not end up "No longer served" (FR-FAV-04).
             val payload = catalogue(stopCount = FEWEST_STOPS + 1)
             normaliser.result =
                 AppResult.Success(payload.copy(stops = payload.stops.map { it.copy(isProvisional = it.id == 5) }))
@@ -369,7 +370,17 @@ class StaticSyncEngineTest {
 
             engine().syncIfStale()
 
-            assertEquals(mapOf("5" to 1L), missingSyncs(FavouriteTypes.STOP))
+            assertEquals(mapOf("5" to 0L), missingSyncs(FavouriteTypes.STOP))
+        }
+
+    @Test
+    fun dd10_aPatternStopWithNoStopIsRejectedAndTheCacheKept() =
+        runTest {
+            // The normaliser makes a provisional stop for every pattern stop that API-02 lacks; one it missed would
+            // leave the pattern pointing at nothing. One stop over the hundred, so the threshold does not reject it.
+            val payload = catalogue(version = 2, stopCount = FEWEST_STOPS + 1)
+
+            assertRejectedAndCacheKept(payload.copy(stops = payload.stops.filter { it.id != 42 }))
         }
 
     @Test
