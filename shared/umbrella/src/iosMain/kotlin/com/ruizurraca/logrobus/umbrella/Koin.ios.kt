@@ -20,7 +20,7 @@ fun initKoin(
     appVersion: String,
     debug: Boolean,
 ) {
-    startGraph(sharedModules(iosModule(appVersion, debug)))
+    startGraph(sharedModules(iosModule(appVersion, debug), telemetryModule(debug)))
 }
 
 private fun iosModule(

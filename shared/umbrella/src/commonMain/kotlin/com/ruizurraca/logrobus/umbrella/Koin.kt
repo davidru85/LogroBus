@@ -34,10 +34,13 @@ internal val APPLICATION_SCOPE = named("application")
 /**
  * The shared graph (ADR-0014): the core, with one instance of each service for the whole process, then one module per
  * data and feature module. [platform] provides what only a platform can create: the [Logger], the app lifecycle, the
- * location provider, the client identity for the `User-Agent` and the SQLite driver.
+ * location provider, the client identity for the `User-Agent` and the SQLite driver. [telemetry] binds the telemetry
+ * contracts for the build (ADR-0009).
  */
-internal fun sharedModules(platform: Module): List<Module> =
-    listOf(platform, coreModule, transitDataModule, settingsModule)
+internal fun sharedModules(
+    platform: Module,
+    telemetry: Module,
+): List<Module> = listOf(platform, telemetry, coreModule, transitDataModule, settingsModule)
 
 /**
  * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of

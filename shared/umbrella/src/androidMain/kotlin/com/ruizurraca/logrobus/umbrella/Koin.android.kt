@@ -23,7 +23,9 @@ fun initKoin(
     debug: Boolean,
     uiModules: List<Module> = emptyList(),
 ) {
-    startGraph(sharedModules(androidModule(context.applicationContext, appVersion, debug)) + uiModules)
+    startGraph(
+        sharedModules(androidModule(context.applicationContext, appVersion, debug), telemetryModule(debug)) + uiModules,
+    )
 }
 
 private fun androidModule(
