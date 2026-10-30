@@ -133,7 +133,7 @@ private fun TabLabel(
  * The screen of each key on [tab]'s stack. The content key carries the tab, because More, Settings and About data
  * can be on two stacks at once and must not share their state.
  */
-private fun screens(
+internal fun screens(
     tab: TopLevelDestination,
     navigator: TabNavigator,
 ): (NavKey) -> NavEntry<NavKey> {

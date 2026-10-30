@@ -6,11 +6,12 @@ final class ShellUITests: XCTestCase {
 
     @MainActor
     func test_lb012_theTabsAreInOrder_withLinesSelected() {
-        let tabs = launch().tabBars.buttons
+        assertTabs(["Lines", "Near me", "Directions"], in: launch())
+    }
 
-        XCTAssertTrue(tabs["Lines"].waitForExistence(timeout: 10))
-        XCTAssertEqual((0..<tabs.count).map { tabs.element(boundBy: $0).label }, ["Lines", "Near me", "Directions"])
-        XCTAssertTrue(tabs["Lines"].isSelected)
+    @MainActor
+    func test_lb012_theTabsAreInOrder_withLinesSelected_inSpanish() {
+        assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: launch(language: "es", region: "es_ES"))
     }
 
     @MainActor
@@ -44,9 +45,17 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
-    private func launch() -> XCUIApplication {
+    private func assertTabs(_ labels: [String], in app: XCUIApplication) {
+        let tabs = app.tabBars.buttons
+        XCTAssertTrue(tabs[labels[0]].waitForExistence(timeout: 10))
+        XCTAssertEqual((0..<tabs.count).map { tabs.element(boundBy: $0).label }, labels)
+        XCTAssertTrue(tabs[labels[0]].isSelected)
+    }
+
+    @MainActor
+    private func launch(language: String = "en", region: String = "en_GB") -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_GB"]
+        app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
         app.launch()
         return app
     }

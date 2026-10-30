@@ -48,6 +48,15 @@ class TabNavigatorTest {
         }
 
     @Test
+    fun lb012_aScreenOnTwoTabsHasTwoContentKeys() {
+        // The decorators key a screen's saved state and ViewModels by its content key, and both tabs' entries are in
+        // one NavDisplay, so About data on Lines and on Near Me must not share one.
+        val keys = TopLevelDestination.entries.map { screens(it, navigator)(AboutDataKey).contentKey }
+
+        assertEquals(keys.distinct(), keys)
+    }
+
+    @Test
     fun lb012_selectingAnotherTabAsksNoTabToScroll() =
         runTest {
             turbineScope {
