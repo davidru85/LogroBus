@@ -27,6 +27,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
+import com.ruizurraca.logrobus.android.core.designsystem.rememberScreenTransitions
 import com.ruizurraca.logrobus.android.core.navigation.AboutDataKey
 import com.ruizurraca.logrobus.android.core.navigation.LinesKey
 import com.ruizurraca.logrobus.android.core.navigation.LocalScrollToTopRequests
@@ -75,8 +76,12 @@ internal fun AppShell(modifier: Modifier = Modifier) {
                     entryProvider = screens(tab, navigator),
                 )
             }
+        val transitions = rememberScreenTransitions()
         NavDisplay(
             entries = navigator.shownTabs.flatMap { entries.getValue(it) },
+            transitionSpec = { transitions.crossFade() },
+            popTransitionSpec = { transitions.crossFade() },
+            predictivePopTransitionSpec = { transitions.crossFade() },
             onBack = navigator::goBack,
         )
     }
