@@ -62,6 +62,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - Other guards that passed at once are named in their commits: the failure paths in `673e9d0`, four TTL cases in `1855d7d`, the one-notification test in `b752043`, two missing-sync cases in `d896d31`, and `e7e9a0d`.
 
 **Decisions**
+- **Owner (2026-10-30):** the `AGENTS.md` §11 amendment made with LB-017 is confirmed. Until LB-409 lets the user consent, tests verify the analytics events instead of the debug view. The alternative, a debug-only way to grant consent, is not needed.
 - **LB-008 in two parts,** like LB-005: the engine and its rules now, against injected seams; the source, the normaliser, Koin and the triggers in part 2.
 - **The content hash is over the normaliser's fingerprint and the re-encoded JSON,** not the raw bytes of spec §8.5. `SourceClient` returns decoded JSON, and encoding it again keeps key order.
 - **An unchanged payload still counts missing stops.** FR-FAV-04 counts 7 consecutive daily syncs, and a source that stops changing must still reach "No longer served". The LB-008 criterion is amended.
