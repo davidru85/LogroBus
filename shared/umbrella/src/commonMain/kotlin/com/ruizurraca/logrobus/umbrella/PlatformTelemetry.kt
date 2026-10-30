@@ -17,7 +17,11 @@ import org.koin.dsl.module
 /**
  * The app's own telemetry, which it passes to `initKoin`: the injection point for the vendor implementations of LB-409
  * (ADR-0009). On iOS, Swift classes conforming to the exported protocols. A part left `null` falls back to the build's
- * telemetry, and both stay behind the consent gates.
+ * telemetry. Both are called from any thread, so they must be thread-safe.
+ *
+ * The consent gates stand in front of every call made through the contracts. They cannot stop what a vendor SDK
+ * collects by itself, such as uncaught crashes or automatic screen views: LB-409 must ship the SDK with that
+ * collection off and tie it to the user's consent.
  */
 class PlatformTelemetry(
     val analytics: AnalyticsTracker? = null,

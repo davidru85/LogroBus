@@ -2,12 +2,13 @@ package com.ruizurraca.logrobus.core.telemetry
 
 /**
  * Reports what went wrong without crashing, and what the user did before (ADR-0009). Like [AnalyticsTracker], it is a
- * contract whose vendor implementation the platform app passes in at start-up.
+ * contract whose vendor implementation the platform app passes in at start-up, and it is called from any thread: an
+ * implementation must be thread-safe and must not block.
  */
 interface CrashReporter {
     /**
-     * Records [error], caught in [area]. Implementations must not send its message, which can quote a URL or a payload
-     * (NFR-PRIV-02).
+     * Records [error], caught in [area]. Behind the consent gate, an implementation receives a [RedactedThrowable],
+     * whose messages are gone: a message can quote a URL or a payload (NFR-PRIV-02).
      */
     fun recordNonFatal(
         error: Throwable,
