@@ -2,8 +2,10 @@ package com.ruizurraca.logrobus.transit.data
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppDispatchers
+import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
+import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.searchableName
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -12,7 +14,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 
 /** The static sync of architecture.md §4.4. */
-@Suppress("UnusedPrivateProperty") // logger: a stub until its green commit.
 internal class DefaultStaticSyncEngine(
     private val source: StaticSource,
     private val normaliser: StaticNormaliser,
@@ -24,9 +25,22 @@ internal class DefaultStaticSyncEngine(
     override suspend fun syncIfStale(): AppResult<Unit> =
         source.lines().then { lines ->
             source.stops().then { stops ->
-                normaliser.normalise(lines, stops).then { catalogue -> store(catalogue, lines, stops) }
+                normaliser
+                    .normalise(lines, stops)
+                    .then(::validated)
+                    .then { catalogue -> store(catalogue, lines, stops) }
             }
         }
+
+    // Spec §8.5: too few lines or stops means a broken payload, not a smaller network. Provisional stops (DD-10) come
+    // from patterns, not from API-02, so they do not count.
+    private fun validated(catalogue: StaticCatalogue): AppResult<StaticCatalogue> {
+        val lines = catalogue.lines.size
+        val stops = catalogue.stops.count { !it.isProvisional }
+        if (lines >= FEWEST_LINES && stops >= FEWEST_STOPS) return AppResult.Success(catalogue)
+        logger.warn(TAG, "Rejected a suspicious payload with $lines lines and $stops stops")
+        return AppResult.Failure(AppError.Data)
+    }
 
     private suspend fun store(
         catalogue: StaticCatalogue,
@@ -94,6 +108,12 @@ internal class DefaultStaticSyncEngine(
                 stop.lineIds.forEach { lineId -> insertStopLine(stop.id.toLong(), lineId.toLong()) }
             }
         }
+    }
+
+    private companion object {
+        const val TAG = "StaticSync"
+        const val FEWEST_LINES = 5
+        const val FEWEST_STOPS = 100
     }
 }
 
