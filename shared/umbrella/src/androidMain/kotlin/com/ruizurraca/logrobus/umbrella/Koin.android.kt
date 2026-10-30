@@ -8,6 +8,8 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
+import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
+import com.ruizurraca.logrobus.core.telemetry.CrashReporter
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.dsl.onClose
@@ -22,6 +24,8 @@ fun initKoin(
     appVersion: String,
     debug: Boolean,
     uiModules: List<Module> = emptyList(),
+    analytics: AnalyticsTracker? = null,
+    crashReporter: CrashReporter? = null,
 ) {
     startGraph(
         sharedModules(androidModule(context.applicationContext, appVersion, debug), telemetryModule(debug)) + uiModules,

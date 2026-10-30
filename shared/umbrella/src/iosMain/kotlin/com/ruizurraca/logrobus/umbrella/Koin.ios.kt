@@ -7,6 +7,8 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.coreLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
+import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
+import com.ruizurraca.logrobus.core.telemetry.CrashReporter
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 
@@ -19,6 +21,8 @@ import org.koin.dsl.onClose
 fun initKoin(
     appVersion: String,
     debug: Boolean,
+    analytics: AnalyticsTracker?,
+    crashReporter: CrashReporter?,
 ) {
     startGraph(sharedModules(iosModule(appVersion, debug), telemetryModule(debug)))
 }
