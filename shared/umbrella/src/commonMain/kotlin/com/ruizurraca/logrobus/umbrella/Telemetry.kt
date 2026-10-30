@@ -15,16 +15,23 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
- * The telemetry of the build (ADR-0009): logging in debug builds and no-op in release builds, each behind its consent
- * gate. One consent store serves the whole app.
+ * The app's telemetry (ADR-0009), each part behind its consent gate. The platform's own [analytics] and
+ * [crashReporter], the vendor implementations of LB-409, are used when given; otherwise the build's: logging in debug
+ * builds and no-op in release builds. One consent store serves the whole app.
  */
-internal fun telemetryModule(debug: Boolean): Module =
+internal fun telemetryModule(
+    debug: Boolean,
+    analytics: AnalyticsTracker? = null,
+    crashReporter: CrashReporter? = null,
+): Module =
     module {
         single { MemoryConsentStore() } bind ConsentStore::class
         single<AnalyticsTracker> {
-            ConsentGatedAnalyticsTracker(if (debug) LoggingAnalyticsTracker(get()) else NoOpAnalyticsTracker, get())
+            val tracker = analytics ?: if (debug) LoggingAnalyticsTracker(get()) else NoOpAnalyticsTracker
+            ConsentGatedAnalyticsTracker(tracker, get())
         }
         single<CrashReporter> {
-            ConsentGatedCrashReporter(if (debug) LoggingCrashReporter(get()) else NoOpCrashReporter, get())
+            val reporter = crashReporter ?: if (debug) LoggingCrashReporter(get()) else NoOpCrashReporter
+            ConsentGatedCrashReporter(reporter, get())
         }
     }
