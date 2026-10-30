@@ -48,7 +48,7 @@ internal class DefaultStaticSyncEngine(
         lines: JsonElement,
         stops: JsonElement,
     ): AppResult<Unit> {
-        val hashes = mapOf(StaticDataset.LINES to sha256Hex("$lines"), StaticDataset.STOPS to sha256Hex("$stops"))
+        val hashes = mapOf(StaticDataset.LINES to contentHash(lines), StaticDataset.STOPS to contentHash(stops))
         val unchanged = hashes.all { (dataset, hash) -> synced[dataset]?.content_hash == hash }
         return if (unchanged) {
             store(catalogue = null, hashes)
@@ -59,6 +59,13 @@ internal class DefaultStaticSyncEngine(
                 .then { catalogue -> store(catalogue, hashes) }
         }
     }
+
+    /**
+     * Spec §8.5's content hash, over what decides the stored catalogue: the normaliser's fingerprint, then the body.
+     * The body is the source's JSON decoded and encoded again, which keeps its keys in order, so the same body always
+     * hashes the same. A change in whitespace alone hashes the same too, and changes nothing that is stored.
+     */
+    private fun contentHash(body: JsonElement): String = sha256Hex("${normaliser.fingerprint}\n$body")
 
     private fun syncState(dataset: StaticDataset): Sync_state? =
         database.syncQueries.syncState(dataset.key).executeAsOneOrNull()
