@@ -304,13 +304,15 @@ These contracts are defined in ADR-0009:
 Consent-gated wrappers live in shared code. In the MVP, release builds use no-op implementations and debug builds use logging ones. Vendor implementations (likely Firebase Analytics and Crashlytics) are native per platform and injected at start-up once OQ-16 is decided.
 
 **As built (LB-017):**
-- `AnalyticsEvent` and `Breadcrumb` are sealed types whose properties are ids, counts, flags and enums nested in them (`PlanResult.Rejection`, `FavouriteAdd.Kind`, `Breadcrumb.Screen`), so they cannot clash in Swift with domain types. A Konsist rule rejects any other property type.
-- `CrashReporter.recordNonFatal(error, area)` takes a `CrashArea`. Implementations must not send the error's message, which can quote a URL or a payload.
+- `AnalyticsEvent` and `Breadcrumb` are sealed types whose properties are ids, counts, flags and enums nested in them (`PlanResult.Rejection`, `FavouriteAdd.Kind`, `Breadcrumb.Screen`), so they cannot clash in Swift with domain types. A Konsist rule rejects any other property type, at any depth under either root, and the SwiftLint rule `swift_telemetry_payload` stops Swift from adopting either protocol.
+- `CrashReporter.recordNonFatal(error, area)` takes a `CrashArea`. The crash gate passes the error on as a `RedactedThrowable`: each error of the chain with its class name and stack frames, and no messages, which can quote a URL or a payload. On Android it adopts the original stack trace, which vendors read from the Throwable; Kotlin/Native cannot set a stack, so a Swift vendor reads `frames`.
+- Implementations are called from any thread, on the caller's, and must be thread-safe and non-blocking. The gates swallow any exception a vendor throws, so telemetry never breaks the caller.
 - `TelemetryConsent` holds one `ConsentDecision` per kind of telemetry (`UNDECIDED`, `GRANTED`, `DENIED`), as NFR-PRIV-03's granular toggles need. `MemoryConsentStore` starts undecided and forgets on restart; LB-409 replaces it with a persisted store.
 - `ConsentGatedAnalyticsTracker` and `ConsentGatedCrashReporter` read their kind of consent on every call. Nothing is queued, so a withdrawal takes effect at once.
 - `NoOp*` are objects. `Logging*` print through the `Logger` at tag `Telemetry`.
 - `:shared:umbrella` binds them in `telemetryModule(debug, platform)`: one `MemoryConsentStore`, then the platform's own implementations from `PlatformTelemetry` where given, otherwise logging in debug builds and no-op in release builds, each behind its gate.
-- `ModuleRules` rejects vendor telemetry SDKs in every module but `:android:app`.
+- `ModuleRules` rejects vendor analytics and crash-reporting SDKs, native or Kotlin Multiplatform wrappers, in every module but `:android:app`, and detekt forbids their imports. On iOS, an architecture test keeps them out of LogroBusUI's `Package.swift`; the app target may link one.
+- The gates cover every call made through the contracts, not what a vendor SDK collects by itself. LB-409 ships the SDKs with automatic collection off and ties it to consent.
 
 ## 5. Platform presentation layers
 

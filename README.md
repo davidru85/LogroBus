@@ -105,7 +105,8 @@ You will need:
   - LB-017 is done. Both apps have their telemetry contracts, ready for the analytics and crash-reporting vendor that is still to be chosen.
     - Analytics events carry only ids, counts, yes-or-no values and fixed categories, never what you type or where you are. A build check rejects anything else.
     - Nothing is sent without your consent, asked separately for analytics and for crash reports. Until the consent screen arrives, nothing is sent at all.
-    - Release builds have no telemetry yet, and debug builds print it to the developer console. Only the Android app module may add a vendor's library, and each app hands its own telemetry to the shared code at launch.
+    - Crash reports keep each error's type and where it happened, never its message, which could quote a search or a position.
+    - Release builds have no telemetry yet. Debug builds will print it to the developer console once you can give consent; until then, tests check it. Only the app itself may add a vendor's library, on Android and on iOS, and each app hands its own telemetry to the shared code at launch.
   - LB-012 is done. Both apps open on their three tabs: Lines, Near me and Directions.
     - Each tab remembers where you were. Open About data from Lines, switch to Near me and back, and it is still there. Tapping the tab again takes it back to its start.
     - A settings button on every tab opens More, with Settings (empty until its options arrive) and About data, which is now reachable.

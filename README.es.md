@@ -107,7 +107,8 @@ La documentación técnica está en inglés.
   - Completada LB-017. Las dos apps tienen sus contratos de telemetría, listos para el proveedor de analítica e informes de fallos que falta elegir.
     - Los eventos de analítica solo llevan identificadores, recuentos, valores de sí o no y categorías fijas, nunca lo que escribes ni dónde estás. Una comprobación de la compilación rechaza cualquier otra cosa.
     - No se envía nada sin tu consentimiento, que se pide por separado para la analítica y para los informes de fallos. Hasta que llegue la pantalla de consentimiento, no se envía nada en absoluto.
-    - Las compilaciones de publicación aún no tienen telemetría, y las de depuración la muestran en la consola de desarrollo. Solo el módulo de la app de Android puede añadir la biblioteca de un proveedor, y cada app entrega su propia telemetría al código compartido al arrancar.
+    - Los informes de fallos conservan el tipo de cada error y dónde ocurrió, nunca su mensaje, que podría citar una búsqueda o una posición.
+    - Las compilaciones de publicación aún no tienen telemetría. Las de depuración la mostrarán en la consola de desarrollo cuando puedas dar tu consentimiento; hasta entonces, la comprueban los tests. Solo la propia app puede añadir la biblioteca de un proveedor, en Android y en iOS, y cada app entrega su propia telemetría al código compartido al arrancar.
   - Completada LB-012. Las dos apps se abren en sus tres pestañas: Líneas, Cerca de mí y Cómo llegar.
     - Cada pestaña recuerda dónde estabas. Abre «Sobre los datos» desde Líneas, cambia a Cerca de mí y vuelve, y sigue ahí. Al volver a tocar la pestaña, vuelve a su inicio.
     - Un botón de ajustes en cada pestaña abre Más, con Ajustes (vacío hasta que lleguen sus opciones) y «Sobre los datos», que ya se puede abrir.

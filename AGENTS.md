@@ -272,7 +272,7 @@ A story is done when all of these hold (spec §10.6, plus the docs):
 - All UX states of spec §7.3 are implemented and covered by screenshot tests.
 - Spoken labels have been checked with TalkBack and VoiceOver.
 - Strings exist in Spanish and English.
-- Analytics events are wired, consent-gated and verified in the debug view.
+- Analytics events are wired, consent-gated and verified in the debug view. Until LB-409 lets the user consent, nothing reaches the debug view, so tests verify the events instead (`docs/acceptance_criteria.md`, LB-017).
 - ktlint, detekt and SwiftLint report no new findings, and the tests are green.
 - The backlog status and project log are updated.
 - `README.md` and `README.es.md` are updated and say the same thing (§12).

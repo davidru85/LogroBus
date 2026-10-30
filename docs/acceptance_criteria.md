@@ -316,12 +316,15 @@ Done when:
 
 Done (2026-10-30), with tests `lb017_…`:
 - `AnalyticsEvent` has the six MVP events of NFR-OBS-03: `AppOpen`, `StopView`, `LineView`, `PlanRequest`, `PlanResult` and `FavouriteAdd`. `widget_add` and `notice_open` come with their features in v1.0.
-  - The Konsist rule allows only `Int`, `Long`, `Boolean` and telemetry enums in an event or breadcrumb, in the constructor or the body, so free text and coordinates fail whatever their type (`ArchitectureTest`, `ArchitectureRulesTest`). Mutation-checked with a `String` and a `Double` latitude.
-  - A second rule pins the catalogue to the MVP events.
+  - The Konsist rule allows only `Int`, `Long`, `Boolean` and telemetry enums in every type under `AnalyticsEvent` or `Breadcrumb`, at any depth and in the constructor or the body, the roots and intermediate interfaces included, so free text and coordinates fail whatever their type (`ArchitectureTest`, `ArchitectureRulesTest`). Mutation-checked with a `String` and a `Double` latitude, a free-text event under an intermediate sealed interface, and two types sharing a simple name.
+  - A second rule pins the catalogue to the MVP events, at any depth.
+  - `[iOS]` Swift cannot add events or breadcrumbs: the SwiftLint rule `swift_telemetry_payload` rejects any Swift type that adopts either protocol.
 - The gates forward nothing before the user decides, after a refusal or a withdrawal, or on consent to the other kind of telemetry, and nothing dropped is sent later (`ConsentGatedAnalyticsTrackerTest`, `ConsentGatedCrashReporterTest`, on the Android host and the iOS simulator).
+  - The crash gate forwards a `RedactedThrowable`: each error's type and stack frames, none of its messages (`ConsentGatedCrashReporterTest`); on Android, with the original stack trace (`RedactedStackTest`).
+  - A vendor that throws never breaks the caller (`FailingTelemetryTest`).
 - With a logger that prints every level, a release graph prints no telemetry and a debug graph prints it, only after consent (`TelemetryGraphTest`). The logging reporter prints an error's types, never its message (`LoggingTelemetryTest`).
-  - No module but `:android:app` may declare a vendor telemetry SDK: `ModuleRules` fails the build when one is declared (`ModuleRulesTest`).
-- The injection point is `initKoin(…, telemetry = PlatformTelemetry(analytics, crashReporter))` on Android and `doInitKoin(appVersion:debug:telemetry:)` on iOS, documented on both functions and at both call sites. A recording double passed there receives telemetry only after consent (`AndroidGraphTest`, `IosGraphTest`). Swift classes conforming to the exported protocols work behind the shared gates (`TelemetryTests`, iOS).
+- No module but `:android:app` may declare a vendor analytics or crash-reporting SDK, native or a Kotlin Multiplatform wrapper such as GitLive's Firebase or CrashKiOS: `ModuleRules` fails the build when one is declared (`ModuleRulesTest`), and detekt forbids their imports. `[iOS]` LogroBusUI's `Package.swift` declares none (`ArchitectureTest`); the app target may.
+- The injection point is `initKoin(…, telemetry = PlatformTelemetry(analytics, crashReporter))` on Android and `doInitKoin(appVersion:debug:telemetry:)` on iOS, documented on both functions and at both call sites. A recording double passed there receives telemetry only after consent (`AndroidGraphTest`, `IosGraphTest`). Swift classes conforming to the exported protocols work behind the shared gates, receive redacted errors, and go in `PlatformTelemetry` (`TelemetryTests`, iOS).
 - Until LB-409, consent lives in memory and starts undecided, so the debug logs show no telemetry in the running app. Events are checked in tests.
 
 ## E1 Lines
@@ -690,6 +693,8 @@ Refs: NFR-PRIV-03, NFR-OBS-03, OQ-16, ADR-0009. Blocked until the vendor is chos
 - **Given** first launch, **when** the app starts, **then** a consent dialog appears before any analytics or crash data is collected, and declining sends nothing.
 - **Given** Settings, **when** it opens, **then** analytics and crash reporting have separate toggles, and changes take effect immediately.
 - **Given** consent was given, **when** events are inspected in the debug view, **then** only the NFR-OBS-03 events are sent, with no free text or coordinates.
+- **Given** the vendor SDKs, **when** the app ships, **then** their automatic collection is off by default (for Firebase: `firebase_analytics_collection_enabled` and `firebase_crashlytics_collection_enabled` false in the Android manifest, `FIREBASE_ANALYTICS_COLLECTION_ENABLED` and `FirebaseCrashlyticsCollectionEnabled` NO in the iOS Info.plist), and each SDK's own collection, uncaught crashes and automatic events included, follows the user's consent and its withdrawal. The LB-017 gates cover only the calls made through the contracts.
+- **Given** the persisted `ConsentStore` that replaces LB-017's `MemoryConsentStore`, **when** the dialog and Settings write it, **then** each decision is updated atomically, so two writers never lose one, and Swift reaches the store through `SharedDependencies`.
 
 ### LB-410 Onboarding
 Refs: FR-NAV-06, SC-18, FR-LOC-01

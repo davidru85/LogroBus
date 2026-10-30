@@ -103,7 +103,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-406 | Accessibility pass: spoken labels, 200 % font, contrast, polite announcements, list equivalents, glass legibility | NFR-A11Y-01 to 06 | P0 | todo |
 | LB-407 | Favourites included in OS backups; "No longer served" after 7 missing syncs | FR-FAV-03, FR-FAV-04 | P0 | todo |
 | LB-408 | ETAs use the server clock offset when the device clock is off by more than 60 s | FR-ERR-06 | P1 | todo |
-| LB-409 | Consent dialog, Crashlytics and Analytics with the NFR-OBS-03 events only; Settings toggles. Builds on LB-017: a persisted `ConsentStore` (Multiplatform Settings, ADR-0018) replaces `MemoryConsentStore`, and the vendor implementations go in `PlatformTelemetry` | NFR-PRIV-03, NFR-OBS-03 | P1 | blocked (OQ-16) |
+| LB-409 | Consent dialog, Crashlytics and Analytics with the NFR-OBS-03 events only; Settings toggles. Builds on LB-017: a persisted `ConsentStore` (Multiplatform Settings, ADR-0018) replaces `MemoryConsentStore`, exposed to Swift; the vendor implementations go in `PlatformTelemetry`, with the SDKs' automatic collection off and tied to consent | NFR-PRIV-03, NFR-OBS-03 | P1 | blocked (OQ-16) |
 | LB-410 | Onboarding: 3 cards (value, favourites, location rationale) | FR-NAV-06, SC-18, FR-LOC-01 | P1 | todo |
 | LB-411 | Performance budgets: cold start, first ETA, search latency, map fps, download size | NFR-PERF-01 to 06 | P0 | todo |
 | LB-412 | Maestro flows for the five critical journeys (`architecture.md` §8); creates `nightly.yml`, moved from LB-002, unless an instrumented test needs it first | Spec §10.1 | P1 | todo |

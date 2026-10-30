@@ -38,11 +38,33 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - `AndroidGraphTest` and `IosGraphTest` with a recording double passed to `initKoin`;
   - two Swift tests with Swift doubles behind the shared gates;
   - `ModuleRulesTest`, `ArchitectureTest` and `ArchitectureRulesTest`.
-  - All 46 iOS tests pass on the iPhone 17e (iOS 26.5).
+  - All 47 iOS tests pass on the iPhone 17e (iOS 26.5).
+- **Reviews** (the code-reviewer and data-rules-reviewer subagents; no blockers). Fixed:
+  - **The Konsist rule:** it read direct parents only and keyed properties by simple name, so a free-text event under an intermediate sealed interface, or a breadcrumb sharing an event's name, passed. It now follows every type under either root and keys by full name (mutation-checked before and after).
+  - **`ModuleRules`:** it missed the Kotlin Multiplatform wrappers, such as GitLive's Firebase, CrashKiOS and Kermit's Crashlytics and Bugsnag writers, and exempted the tools. Fixed, and detekt forbids those imports.
+  - **Error messages:** the crash gate passed the raw `Throwable` on, so a vendor would have sent its message, which can quote a URL with search text or a payload with coordinates. It now forwards a `RedactedThrowable`, and the logging reporter prints the type chain itself.
+  - **Failing vendors:** a vendor's exception escaped the gates into the caller; the gates swallow it now.
+  - **iOS:**
+    - Swift could adopt `AnalyticsEvent` or `Breadcrumb`, which export as protocols with no requirements; a SwiftLint rule rejects it;
+    - an architecture test keeps vendor packages out of LogroBusUI's manifest;
+    - a Swift test builds `PlatformTelemetry`.
+  - **Docs:**
+    - the READMEs said debug builds print telemetry, which they cannot before LB-409;
+    - the threading contract and the limits of the gates are now in the KDoc;
+    - LB-409 gains criteria for the SDKs' automatic collection and an atomic, Swift-reachable consent store.
+  - **Left:** a Kotlin CocoaPods `pod(…)` in a shared module is not a Gradle dependency, so `ModuleRules` cannot see it; no module uses CocoaPods.
+- **Deviations** (`testing_strategy.md` §7.1):
+  - Four green commits (`b599b10`, `b826583`, `91aedb3`, `1fdcd56`) said "refactor not needed" without running `run-all.sh`. `b5b3915` then refactored `initKoin`'s parameters into `PlatformTelemetry` and fixed lint findings from `b599b10`, `4055ca4` and `b092d76`.
+  - `1b635d8` and `f541dbc` were committed although detekt had failed: the command chain used `;` and did not stop. The next commits, `cd79552` and `a554821`, fixed the findings. Commits are now chained with `&&` after the lint.
+  - `0161a6f` fixes test code, the Konsist rule, so its evidence is a mutation run before and after rather than a red commit.
+  - Guards that passed at once are named in their commits: `a4a16dd` and `cfdc1dd` (Swift), and parts of `77da0e8`, `6253ce5` and `cf1c4a6`.
+- **Unrelated, seen while linting:** detekt reports "compiler errors found during analysis" for `:android:app`, `:shared:core:network`, `:shared:core:database` and `:shared:transit:data`. These modules, apart from a comment in `:android:app`, are untouched here, and detekt still passes.
 
 **Decisions**
 - **Consent in memory until LB-409.** No screen can record consent before the consent dialog and toggles, so LB-017 adds no persistence and no Multiplatform Settings dependency (ADR-0018 update). The consequence: until LB-409, even debug builds print no telemetry in the running app. Events are checked in tests.
 - **The logging implementations are gated too.** Debug builds use the same consent path as release builds, so the gate is exercised whatever the build.
+- **AGENTS.md §11** said analytics events are "verified in the debug view", which no story can do before LB-409. It now says tests verify them until then. **The owner may prefer** a debug-only way to grant consent instead.
+- **Redaction at the gate** rather than in each vendor implementation: the gate is the one place every non-fatal passes through, so no implementation can forget it.
 - **Nested enums** (`PlanResult.Rejection`, `FavouriteAdd.Kind`, `Breadcrumb.Screen`) instead of ADR-0009's `PlanRejection` and `FavouriteType`: a core module cannot use the planner and favourites domains, and nested names cannot clash in Swift (ADR-0009 update).
 - **`PlatformTelemetry`** is the one injection point, instead of two `initKoin` parameters. Android's `initKoin` would have had six, over detekt's limit, and Swift reads one named object.
 - **The vendor-SDK rule** matches by group (Firebase, Crashlytics, Sentry, Bugsnag, Datadog, Amplitude, Mixpanel, Segment, New Relic, Embrace, Instabug, AppsFlyer, Adjust). It matches by artifact for Google Play services, whose group also holds the allowed Location library.
