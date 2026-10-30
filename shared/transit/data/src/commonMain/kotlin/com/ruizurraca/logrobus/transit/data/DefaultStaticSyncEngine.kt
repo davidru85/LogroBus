@@ -13,6 +13,7 @@ import com.ruizurraca.logrobus.core.database.searchableName
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonElement
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.hours
 
@@ -29,22 +30,26 @@ internal class DefaultStaticSyncEngine(
         val synced = withContext(dispatchers.io) { StaticDataset.entries.associateWith(::syncState) }
         if (synced.values.all { it.isFresh() }) return AppResult.Success(Unit)
         return source.lines().then { lines ->
-            source.stops().then { stops ->
-                val hashes =
-                    mapOf(
-                        StaticDataset.LINES to sha256Hex(lines.toString()),
-                        StaticDataset.STOPS to sha256Hex(stops.toString()),
-                    )
-                // architecture.md §4.4: an unchanged payload is not normalised or written, but the sync succeeded.
-                if (hashes.all { (dataset, hash) -> synced[dataset]?.content_hash == hash }) {
-                    store(catalogue = null, hashes)
-                } else {
-                    normaliser
-                        .normalise(lines, stops)
-                        .then(::validated)
-                        .then { catalogue -> store(catalogue, hashes) }
-                }
-            }
+            // Hashing and normalising the payloads is CPU work, kept off the caller's thread, which may be the UI's.
+            source.stops().then { stops -> withContext(dispatchers.default) { update(synced, lines, stops) } }
+        }
+    }
+
+    // architecture.md §4.4: an unchanged payload is not normalised or written, but the sync succeeded.
+    private suspend fun update(
+        synced: Map<StaticDataset, Sync_state?>,
+        lines: JsonElement,
+        stops: JsonElement,
+    ): AppResult<Unit> {
+        val hashes = mapOf(StaticDataset.LINES to sha256Hex("$lines"), StaticDataset.STOPS to sha256Hex("$stops"))
+        val unchanged = hashes.all { (dataset, hash) -> synced[dataset]?.content_hash == hash }
+        return if (unchanged) {
+            store(catalogue = null, hashes)
+        } else {
+            normaliser
+                .normalise(lines, stops)
+                .then(::validated)
+                .then { catalogue -> store(catalogue, hashes) }
         }
     }
 
