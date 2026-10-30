@@ -6,13 +6,16 @@ package com.ruizurraca.logrobus.buildlogic
  */
 object ModuleRules {
     private const val REFERENCE = "ADR-0007, docs/architecture.md §3.2"
+    private const val VENDOR_REFERENCE = "ADR-0009"
     private val platformGroups = listOf("androidx", "com.android", "com.google.android")
 
-    // ADR-0009: analytics, crash-reporting and attribution SDKs, by group, and by artifact where the group also holds
-    // allowed libraries, as Google Play services does.
+    // ADR-0009: analytics, crash-reporting and attribution SDKs, native or Kotlin Multiplatform wrappers, by group, and
+    // by artifact where the group also holds allowed libraries, as Google Play services and Touchlab's do.
     private val vendorTelemetryGroups =
         listOf(
             "com.google.firebase",
+            "dev.gitlive",
+            "co.touchlab.crashkios",
             "com.crashlytics",
             "io.sentry",
             "com.bugsnag",
@@ -25,11 +28,15 @@ object ModuleRules {
             "com.instabug",
             "com.appsflyer",
             "com.adjust",
+            "com.posthog",
+            "com.microsoft.appcenter",
         )
     private val vendorTelemetryArtifacts =
         listOf(
             "com.google.android.gms:play-services-measurement",
             "com.google.android.gms:play-services-analytics",
+            "co.touchlab:kermit-crashlytics",
+            "co.touchlab:kermit-bugsnag",
         )
 
     /**
@@ -51,8 +58,12 @@ object ModuleRules {
             }
         val externalViolations =
             externalDependencies.mapNotNull { coordinate ->
-                externalReason(source, coordinate)
-                    ?.let { "$from -> $coordinate is not allowed: $it ($REFERENCE)" }
+                if (coordinate.isVendorTelemetry() && source != ModuleKind.AndroidApp) {
+                    "$from -> $coordinate is not allowed: only the Android app module may use a vendor analytics or " +
+                        "crash-reporting SDK ($VENDOR_REFERENCE)"
+                } else {
+                    externalReason(source, coordinate)?.let { "$from -> $coordinate is not allowed: $it ($REFERENCE)" }
+                }
             }
         return projectViolations + externalViolations
     }
@@ -88,10 +99,6 @@ object ModuleRules {
         return when {
             from is ModuleKind.Domain && platformGroups.any { group.isInGroup(it) } -> {
                 "domain modules must not use platform libraries"
-            }
-
-            coordinate.isVendorTelemetry() && from != ModuleKind.AndroidApp && from !is ModuleKind.Tool -> {
-                "only the Android app module may use a vendor telemetry SDK (ADR-0009)"
             }
 
             group.isInGroup("io.ktor") && !from.mayUse(owner = ModuleKind.Core("network")) -> {

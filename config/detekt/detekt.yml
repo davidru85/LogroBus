@@ -53,3 +53,7 @@ style:
         reason: 'Structured concurrency: inject a scope.'
       - value: 'com.google.firebase.*'
         reason: 'Telemetry goes through AnalyticsTracker and CrashReporter (ADR-0009). The platform implementation classes (LB-409) suppress this rule.'
+      - value: 'dev.gitlive.firebase.*'
+        reason: 'Telemetry goes through AnalyticsTracker and CrashReporter (ADR-0009); no Firebase wrapper in shared code.'
+      - value: 'co.touchlab.crashkios.*'
+        reason: 'Telemetry goes through AnalyticsTracker and CrashReporter (ADR-0009); no crash-reporting wrapper in shared code.'

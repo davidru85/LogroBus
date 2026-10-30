@@ -241,7 +241,9 @@ class ModuleRulesTest {
 
     @Test
     fun lb017_theVendorRuleNamesItsDecision() {
-        val message = violations(":shared:core:telemetry", external = listOf("dev.gitlive:firebase-crashlytics")).single()
+        val gitLive = listOf("dev.gitlive:firebase-crashlytics")
+
+        val message = violations(":shared:core:telemetry", external = gitLive).single()
 
         assertTrue("dev.gitlive:firebase-crashlytics" in message, message)
         assertTrue("ADR-0009" in message, message)
