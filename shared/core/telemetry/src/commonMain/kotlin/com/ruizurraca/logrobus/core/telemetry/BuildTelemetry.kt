@@ -26,17 +26,14 @@ class LoggingAnalyticsTracker(
     override fun track(event: AnalyticsEvent) = logger.debug(TAG, "track $event")
 }
 
-/**
- * Debug builds (ADR-0009): prints breadcrumbs, and non-fatal errors by area. The [Logger] prints an error as its
- * types only, never its message (NFR-PRIV-02).
- */
+/** Debug builds (ADR-0009): prints breadcrumbs, and non-fatal errors by area and types, never their messages. */
 class LoggingCrashReporter(
     private val logger: Logger,
 ) : CrashReporter {
     override fun recordNonFatal(
         error: Throwable,
         area: CrashArea,
-    ) = logger.warn(TAG, "non-fatal in $area", error)
+    ) = logger.warn(TAG, "non-fatal in $area [${error.typeChain()}]")
 
     override fun breadcrumb(crumb: Breadcrumb) = logger.debug(TAG, "breadcrumb $crumb")
 }

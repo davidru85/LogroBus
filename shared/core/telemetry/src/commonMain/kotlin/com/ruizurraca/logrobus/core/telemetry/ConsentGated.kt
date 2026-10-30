@@ -13,7 +13,10 @@ class ConsentGatedAnalyticsTracker(
     }
 }
 
-/** Forwards non-fatal errors and breadcrumbs to [delegate] only while the user consents to crash reports. */
+/**
+ * Forwards non-fatal errors and breadcrumbs to [delegate] only while the user consents to crash reports. An error is
+ * forwarded as a [RedactedThrowable], with its types and stack and none of its messages (NFR-PRIV-02).
+ */
 class ConsentGatedCrashReporter(
     private val delegate: CrashReporter,
     private val consentStore: ConsentStore,
@@ -22,7 +25,7 @@ class ConsentGatedCrashReporter(
         error: Throwable,
         area: CrashArea,
     ) {
-        if (granted()) delegate.recordNonFatal(error, area)
+        if (granted()) delegate.recordNonFatal(error.redacted(), area)
     }
 
     override fun breadcrumb(crumb: Breadcrumb) {
