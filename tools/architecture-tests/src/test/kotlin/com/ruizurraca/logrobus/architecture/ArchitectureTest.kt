@@ -294,6 +294,13 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb017_theSwiftPackageHasNoVendorTelemetrySdk() {
+        // ADR-0009: as on Android, only the app may link a vendor SDK; the design system and features never do.
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
+        assertEquals(emptyList<String>(), ArchitectureRules.vendorTelemetryPackages(manifest))
+    }
+
+    @Test
     fun lb011_expressiveApisStayInTheDesignSystem() {
         // ADR-0005: an expressive API change then touches one package.
         val offenders =

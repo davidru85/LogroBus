@@ -337,4 +337,26 @@ class ArchitectureRulesTest {
             ArchitectureRules.forbiddenTelemetryProperties(properties, telemetryEnums = setOf("Rejection")),
         )
     }
+
+    @Test
+    fun lb017_vendorTelemetryPackagesAreFoundInASwiftManifest() {
+        val manifest =
+            """
+            dependencies: [
+                .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", exact: "1.19.7"),
+                .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.4.0"),
+                .package(url: "https://github.com/getsentry/sentry-cocoa", from: "8.0.0"),
+                .package(url: "https://github.com/PostHog/posthog-ios.git", exact: "3.0.0"),
+            ]
+            """.trimIndent()
+
+        assertEquals(
+            listOf(
+                "https://github.com/firebase/firebase-ios-sdk.git",
+                "https://github.com/getsentry/sentry-cocoa",
+                "https://github.com/PostHog/posthog-ios.git",
+            ),
+            ArchitectureRules.vendorTelemetryPackages(manifest),
+        )
+    }
 }

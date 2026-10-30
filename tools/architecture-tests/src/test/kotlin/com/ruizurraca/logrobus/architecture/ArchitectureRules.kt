@@ -127,6 +127,8 @@ object ArchitectureRules {
             .map { "$it: ${inManifest[it]} in Package.swift, ${inProject[it]} in project.yml" }
     }
 
+    fun vendorTelemetryPackages(manifest: String): List<String> = emptyList()
+
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
         swiftTarget
