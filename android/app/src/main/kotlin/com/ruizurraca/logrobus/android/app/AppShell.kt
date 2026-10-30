@@ -5,10 +5,11 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.window.core.layout.WindowSizeClass
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.navigation.AboutDataKey
 import com.ruizurraca.logrobus.android.core.navigation.LinesKey
@@ -43,7 +45,7 @@ import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 @Composable
 internal fun AppShell(modifier: Modifier = Modifier) {
     val navigator = rememberTabNavigator()
-    val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
+    val navigationSuiteType = navigationSuiteType(currentWindowAdaptiveInfo())
     NavigationSuiteScaffold(
         navigationItems = {
             TopLevelDestination.entries.forEach { destination ->
@@ -79,6 +81,17 @@ internal fun AppShell(modifier: Modifier = Modifier) {
         )
     }
 }
+
+/**
+ * FR-NAV-05 goes by width alone: a short bar on compact widths, and a collapsed wide rail from the medium width up.
+ * Material's recommendation would keep a bar on a short window, such as a phone in landscape, or on a tabletop posture.
+ */
+internal fun navigationSuiteType(adaptiveInfo: WindowAdaptiveInfo): NavigationSuiteType =
+    if (adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)) {
+        NavigationSuiteType.WideNavigationRailCollapsed
+    } else {
+        NavigationSuiteType.ShortNavigationBarCompact
+    }
 
 /**
  * A tab label on one line, which shrinks to fit its tab but never below its size at 100 % font. The bar's height is
