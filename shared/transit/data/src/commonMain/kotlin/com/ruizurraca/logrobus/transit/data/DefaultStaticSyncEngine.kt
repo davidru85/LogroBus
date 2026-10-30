@@ -12,6 +12,8 @@ import com.ruizurraca.logrobus.core.database.Sync_state
 import com.ruizurraca.logrobus.core.database.searchableName
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlin.coroutines.cancellation.CancellationException
@@ -26,7 +28,12 @@ internal class DefaultStaticSyncEngine(
     private val dispatchers: AppDispatchers,
     private val logger: Logger,
 ) : StaticSyncEngine {
-    override suspend fun syncIfStale(): AppResult<Unit> {
+    private val mutex = Mutex()
+
+    // One sync at a time: app start and the first screen can ask together, and the second then finds the cache fresh.
+    override suspend fun syncIfStale(): AppResult<Unit> = mutex.withLock { failingAsData { sync() } }
+
+    private suspend fun sync(): AppResult<Unit> {
         val synced = withContext(dispatchers.io) { StaticDataset.entries.associateWith(::syncState) }
         if (synced.values.all { it.isFresh() }) return AppResult.Success(Unit)
         return source.lines().then { lines ->
@@ -77,28 +84,36 @@ internal class DefaultStaticSyncEngine(
      * saved stops it lacks, in one transaction (NFR-REL-03). If any write fails, the transaction rolls back and the
      * cache is as it was.
      */
-    @Suppress("TooGenericExceptionCaught") // The database boundary (code_style.md §2.2): a failure is a value.
     private suspend fun store(
         catalogue: StaticCatalogue?,
         hashes: Map<StaticDataset, String>,
     ): AppResult<Unit> {
         val now = clock.now()
-        return try {
-            withContext(dispatchers.io) {
-                database.transaction {
-                    catalogue?.let(::replace)
-                    hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
-                    database.favouriteQueries.countMissingStops(FavouriteTypes.STOP)
-                }
+        withContext(dispatchers.io) {
+            database.transaction {
+                catalogue?.let(::replace)
+                hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
+                database.favouriteQueries.countMissingStops(FavouriteTypes.STOP)
             }
-            AppResult.Success(Unit)
+        }
+        return AppResult.Success(Unit)
+    }
+
+    /**
+     * The database and normaliser boundary (code_style.md §2.2, NFR-REL-02): whatever [block] throws, a database that
+     * cannot be read or written or a normaliser bug, fails this sync alone and leaves the cache as it was. Only the
+     * caller's own cancellation propagates.
+     */
+    @Suppress("TooGenericExceptionCaught") // On purpose: see above.
+    private suspend fun failingAsData(block: suspend () -> AppResult<Unit>): AppResult<Unit> =
+        try {
+            block()
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (failure: Exception) {
-            logger.warn(TAG, "Storing the static catalogue failed; the previous one is kept", failure)
+            logger.warn(TAG, "The static sync failed; the previous catalogue is kept", failure)
             AppResult.Failure(AppError.Data)
         }
-    }
 
     private fun replace(catalogue: StaticCatalogue) {
         with(database.lineQueries) {
