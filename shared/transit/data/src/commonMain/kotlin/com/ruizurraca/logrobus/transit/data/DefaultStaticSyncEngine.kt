@@ -7,11 +7,12 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
+import com.ruizurraca.logrobus.core.database.Sync_state
 import com.ruizurraca.logrobus.core.database.searchableName
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonElement
+import kotlin.time.Duration.Companion.hours
 
 /** The static sync of architecture.md §4.4. */
 internal class DefaultStaticSyncEngine(
@@ -22,15 +23,37 @@ internal class DefaultStaticSyncEngine(
     private val dispatchers: AppDispatchers,
     private val logger: Logger,
 ) : StaticSyncEngine {
-    override suspend fun syncIfStale(): AppResult<Unit> =
-        source.lines().then { lines ->
+    override suspend fun syncIfStale(): AppResult<Unit> {
+        val synced = withContext(dispatchers.io) { StaticDataset.entries.associateWith(::syncState) }
+        if (synced.values.all { it.isFresh() }) return AppResult.Success(Unit)
+        return source.lines().then { lines ->
             source.stops().then { stops ->
-                normaliser
-                    .normalise(lines, stops)
-                    .then(::validated)
-                    .then { catalogue -> store(catalogue, lines, stops) }
+                val hashes =
+                    mapOf(
+                        StaticDataset.LINES to sha256Hex(lines.toString()),
+                        StaticDataset.STOPS to sha256Hex(stops.toString()),
+                    )
+                // architecture.md §4.4: an unchanged payload is not normalised or written, but the sync succeeded.
+                if (hashes.all { (dataset, hash) -> synced[dataset]?.content_hash == hash }) {
+                    store(catalogue = null, hashes)
+                } else {
+                    normaliser
+                        .normalise(lines, stops)
+                        .then(::validated)
+                        .then { catalogue -> store(catalogue, hashes) }
+                }
             }
         }
+    }
+
+    private fun syncState(dataset: StaticDataset): Sync_state? =
+        database.syncQueries.syncState(dataset.key).executeAsOneOrNull()
+
+    // Spec §8.5: lines and stops stay fresh for 24 h after their last success.
+    private fun Sync_state?.isFresh(): Boolean {
+        val lastSuccess = this?.last_success ?: return false
+        return clock.now() - lastSuccess < TTL
+    }
 
     // Spec §8.5: too few lines or stops means a broken payload, not a smaller network. Provisional stops (DD-10) come
     // from patterns, not from API-02, so they do not count.
@@ -42,20 +65,15 @@ internal class DefaultStaticSyncEngine(
         return AppResult.Failure(AppError.Data)
     }
 
+    /** Replaces the cache with [catalogue], if there is one, and records the sync with each dataset's hash. */
     private suspend fun store(
-        catalogue: StaticCatalogue,
-        lines: JsonElement,
-        stops: JsonElement,
+        catalogue: StaticCatalogue?,
+        hashes: Map<StaticDataset, String>,
     ): AppResult<Unit> {
-        val hashes =
-            mapOf(
-                StaticDataset.LINES to sha256Hex(lines.toString()),
-                StaticDataset.STOPS to sha256Hex(stops.toString()),
-            )
         val now = clock.now()
         withContext(dispatchers.io) {
             database.transaction {
-                replace(catalogue)
+                catalogue?.let(::replace)
                 hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
             }
         }
@@ -114,6 +132,7 @@ internal class DefaultStaticSyncEngine(
         const val TAG = "StaticSync"
         const val FEWEST_LINES = 5
         const val FEWEST_STOPS = 100
+        val TTL = 24.hours
     }
 }
 
