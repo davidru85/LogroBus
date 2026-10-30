@@ -32,6 +32,16 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 - The app always opens on Lines (OQ-15). Deep links are the only exception: they open their target tab. Saved-stop ETAs stay one tap away in Near Me, which meets G1.
 - Each tab keeps its own back stack. Re-selecting the active tab pops it to its root, or scrolls to the top if it is already at the root.
 - A toolbar action on each tab root opens **More**: Settings and About data in the MVP, plus News, Fares, Recharge points and Info in v1.0. Use a settings-style icon (`settings` / `gearshape`).
+- **As built (LB-012):**
+  - More, and the screens it opens, are pushed onto the selected tab's stack, with a back button, so each tab keeps its own.
+  - On Android, back at the root of Near Me or How to Get There returns to Lines, and at the root of Lines it leaves the app, as Material recommends for a start destination. iOS has no back at a tab root.
+  - Tab icons are outlined, and filled while selected (Android).
+  - In a navigation bar, a tab label is one line; at large font sizes it shrinks to fit its tab, never below its size at 100 %, because the bar's height is fixed and a second line would draw over the next tab. In a rail, it keeps its size and wraps onto two lines.
+  - Android shows the rail from the medium width up, whatever the height (FR-NAV-05), so a phone in landscape gets the rail.
+  - A tab root's title is its tab label, except How to Get There's, "How to get there" (`plan.title`).
+  - Screen titles are headings, for TalkBack's heading navigation as for VoiceOver's (`ScreenTitle` on Android).
+  - Screens cross-fade on the motion scheme's effects spring (`ScreenTransitions` on Android).
+  - Settings is a titled placeholder until LB-403. The tab roots are placeholders with their title and the More action until LB-101, LB-201 and LB-301.
 
 ### 2.2 Where the spec screens went (ADR-0002)
 
@@ -197,6 +207,10 @@ Results                                   Itinerary detail
   - `LogroBusTheme`, over `MaterialExpressiveTheme`.
   - `LineBadge`.
   - `EtaText`.
+  - Since LB-012:
+    - `MoreActionButton` and `UpButton`: the More action of every tab root and the back action of a pushed screen, with their spoken labels ("Más", "Atrás") and 48 dp touch targets;
+    - `ScreenTitle`, a top app bar's title as a heading;
+    - `ScreenTransitions`, the cross-fade between screens.
 
 | Need | Component |
 | --- | --- |
@@ -230,6 +244,8 @@ Liquid Glass is the navigation and control layer that floats above content. Cont
 - `Tokens.Typography`.
 
 `GlassRendering` in the environment forces the iOS 18–25 fallback, for snapshots and previews.
+
+Since LB-012, the `scrollToTopRequests` environment value counts the re-selections of a tab at its root. The shell sets it on every tab root, and a root with a scrolling list scrolls to its top whenever it changes.
 
 **System first.** These pick up Liquid Glass automatically when built with the iOS 26 SDK and run on iOS 26 or later:
 
@@ -346,6 +362,13 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | `nearme.saved.title` | Mis paradas | My stops |
 | `nearme.nearby.title` | Cerca de ti | Near you |
 | `plan.title` | Cómo llegar | How to get there |
+| `action.more` (spoken; iOS `more.action`) | Más | More |
+| `action.navigate_up` (spoken, Android) | Atrás | Back |
+| `more.title` | Más | More |
+| `more.settings` | Ajustes | Settings |
+| `more.about_data` | Sobre los datos | About data |
+| `settings.title` | Ajustes | Settings |
+| `about.title` | Sobre los datos | About data |
 | `plan.origin.current` | Mi ubicación | My location |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
