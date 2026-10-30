@@ -8,6 +8,30 @@ object ModuleRules {
     private const val REFERENCE = "ADR-0007, docs/architecture.md §3.2"
     private val platformGroups = listOf("androidx", "com.android", "com.google.android")
 
+    // ADR-0009: analytics, crash-reporting and attribution SDKs, by group, and by artifact where the group also holds
+    // allowed libraries, as Google Play services does.
+    private val vendorTelemetryGroups =
+        listOf(
+            "com.google.firebase",
+            "com.crashlytics",
+            "io.sentry",
+            "com.bugsnag",
+            "com.datadoghq",
+            "com.amplitude",
+            "com.mixpanel",
+            "com.segment",
+            "com.newrelic",
+            "io.embrace",
+            "com.instabug",
+            "com.appsflyer",
+            "com.adjust",
+        )
+    private val vendorTelemetryArtifacts =
+        listOf(
+            "com.google.android.gms:play-services-measurement",
+            "com.google.android.gms:play-services-analytics",
+        )
+
     /**
      * Returns one message per forbidden dependency of the module at [from].
      * [projectDependencies] are Gradle project paths; [externalDependencies] are "group:name" coordinates.
@@ -27,7 +51,7 @@ object ModuleRules {
             }
         val externalViolations =
             externalDependencies.mapNotNull { coordinate ->
-                externalReason(source, coordinate.substringBefore(':'))
+                externalReason(source, coordinate)
                     ?.let { "$from -> $coordinate is not allowed: $it ($REFERENCE)" }
             }
         return projectViolations + externalViolations
@@ -58,11 +82,16 @@ object ModuleRules {
 
     private fun externalReason(
         from: ModuleKind,
-        group: String,
-    ): String? =
-        when {
+        coordinate: String,
+    ): String? {
+        val group = coordinate.substringBefore(':')
+        return when {
             from is ModuleKind.Domain && platformGroups.any { group.isInGroup(it) } -> {
                 "domain modules must not use platform libraries"
+            }
+
+            coordinate.isVendorTelemetry() && from != ModuleKind.AndroidApp && from !is ModuleKind.Tool -> {
+                "only the Android app module may use a vendor telemetry SDK (ADR-0009)"
             }
 
             group.isInGroup("io.ktor") && !from.mayUse(owner = ModuleKind.Core("network")) -> {
@@ -77,6 +106,11 @@ object ModuleRules {
                 null
             }
         }
+    }
+
+    private fun String.isVendorTelemetry(): Boolean =
+        vendorTelemetryGroups.any { substringBefore(':').isInGroup(it) } ||
+            vendorTelemetryArtifacts.any { startsWith(it) }
 
     /** Infrastructure libraries belong to their core [owner] plus data modules and the data packages of features. */
     private fun ModuleKind.mayUse(owner: ModuleKind.Core): Boolean =
