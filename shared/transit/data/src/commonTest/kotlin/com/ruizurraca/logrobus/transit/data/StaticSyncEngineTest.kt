@@ -196,6 +196,18 @@ class StaticSyncEngineTest {
         }
 
     @Test
+    fun lb008_aLastSuccessInTheFutureIsStale() =
+        runTest {
+            // Until the first response corrects the clock, a device clock far behind the server's could otherwise keep
+            // a server-corrected last success "fresh" for days.
+            StaticDataset.entries.forEach { database.syncQueries.recordSync(it.key, now + 2.hours, "a hash") }
+
+            engine().syncIfStale()
+
+            assertEquals(2, source.requests)
+        }
+
+    @Test
     fun lb008_aDatasetThatNeverSyncedMakesTheCacheStale() =
         runTest {
             database.syncQueries.recordSync(StaticDataset.LINES.key, now, "a hash")
