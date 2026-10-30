@@ -12,6 +12,7 @@ import com.ruizurraca.logrobus.core.database.searchableName
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.hours
 
 /** The static sync of architecture.md §4.4. */
@@ -65,19 +66,30 @@ internal class DefaultStaticSyncEngine(
         return AppResult.Failure(AppError.Data)
     }
 
-    /** Replaces the cache with [catalogue], if there is one, and records the sync with each dataset's hash. */
+    /**
+     * Replaces the cache with [catalogue], if there is one, and records the sync with each dataset's hash, in one
+     * transaction (NFR-REL-03). If any write fails, the transaction rolls back and the cache is as it was.
+     */
+    @Suppress("TooGenericExceptionCaught") // The database boundary (code_style.md §2.2): a failure is a value.
     private suspend fun store(
         catalogue: StaticCatalogue?,
         hashes: Map<StaticDataset, String>,
     ): AppResult<Unit> {
         val now = clock.now()
-        withContext(dispatchers.io) {
-            database.transaction {
-                catalogue?.let(::replace)
-                hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
+        return try {
+            withContext(dispatchers.io) {
+                database.transaction {
+                    catalogue?.let(::replace)
+                    hashes.forEach { (dataset, hash) -> database.syncQueries.recordSync(dataset.key, now, hash) }
+                }
             }
+            AppResult.Success(Unit)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            logger.warn(TAG, "Storing the static catalogue failed; the previous one is kept", failure)
+            AppResult.Failure(AppError.Data)
         }
-        return AppResult.Success(Unit)
     }
 
     private fun replace(catalogue: StaticCatalogue) {
