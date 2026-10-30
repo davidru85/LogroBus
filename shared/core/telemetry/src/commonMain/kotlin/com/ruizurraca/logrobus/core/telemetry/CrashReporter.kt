@@ -5,7 +5,10 @@ package com.ruizurraca.logrobus.core.telemetry
  * contract whose vendor implementation the platform app passes in at start-up.
  */
 interface CrashReporter {
-    /** Records [error], caught in [area]. Implementations must not send its message, which can quote a URL or payload. */
+    /**
+     * Records [error], caught in [area]. Implementations must not send its message, which can quote a URL or a payload
+     * (NFR-PRIV-02).
+     */
     fun recordNonFatal(
         error: Throwable,
         area: CrashArea,

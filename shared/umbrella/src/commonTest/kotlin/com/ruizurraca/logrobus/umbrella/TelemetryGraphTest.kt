@@ -30,7 +30,7 @@ class TelemetryGraphTest {
     fun stop() = stopKoin()
 
     private fun startGraph(debug: Boolean) {
-        val platform = module { single<Logger> { ConsoleLogger(output = { printed += it }) } }
+        val platform = module { single<Logger> { ConsoleLogger(output = { line -> printed += line }) } }
         startGraph(sharedModules(platform, telemetryModule(debug)))
     }
 

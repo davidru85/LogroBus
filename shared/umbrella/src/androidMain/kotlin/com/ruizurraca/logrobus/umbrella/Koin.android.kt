@@ -8,8 +8,6 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
-import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
-import com.ruizurraca.logrobus.core.telemetry.CrashReporter
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.dsl.onClose
@@ -19,21 +17,20 @@ import org.koin.dsl.onClose
  * its [appVersion] for the User-Agent (spec §8.7), whether it is a [debug] build, which sets the log level
  * (security_privacy.md §4) and the telemetry, and the [uiModules] of its feature modules, which hold their ViewModels.
  *
- * [analytics] and [crashReporter] are the injection point for the app's own telemetry, the vendor implementations of
- * LB-409. They stay behind the consent gates; without them, the build's no-op or logging telemetry is used (ADR-0009).
+ * [telemetry] is the injection point for the app's own telemetry, the vendor implementations of LB-409. It stays behind
+ * the consent gates; without it, the build's no-op or logging telemetry is used (ADR-0009).
  */
 fun initKoin(
     context: Context,
     appVersion: String,
     debug: Boolean,
     uiModules: List<Module> = emptyList(),
-    analytics: AnalyticsTracker? = null,
-    crashReporter: CrashReporter? = null,
+    telemetry: PlatformTelemetry = PlatformTelemetry(),
 ) {
     startGraph(
         sharedModules(
             androidModule(context.applicationContext, appVersion, debug),
-            telemetryModule(debug, analytics, crashReporter),
+            telemetryModule(debug, telemetry),
         ) + uiModules,
     )
 }

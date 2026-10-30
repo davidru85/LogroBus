@@ -24,12 +24,17 @@ sealed interface AnalyticsEvent {
         val originIsCurrentLocation: Boolean,
     ) : AnalyticsEvent
 
-    /** `plan_result`: the planner answered with [itineraryCount] routes, and a [rejection] when there are none (DD-17). */
+    /**
+     * `plan_result`: the planner answered with [itineraryCount] routes, and a [rejection] when there are none (DD-17).
+     */
     data class PlanResult(
         val itineraryCount: Int,
         val rejection: Rejection?,
     ) : AnalyticsEvent {
-        /** Why no route was found: the source's `rejection.reason` (`api_spec.md`, API-07), or the client's area check. */
+        /**
+         * Why no route was found: the source's `rejection.reason` (`api_spec.md`, API-07), or the client's own area
+         * check.
+         */
         enum class Rejection {
             NO_ROUTE,
             WALK_TOO_FAR_ORIGIN,

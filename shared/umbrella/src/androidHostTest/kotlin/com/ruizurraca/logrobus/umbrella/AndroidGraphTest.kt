@@ -44,8 +44,7 @@ class AndroidGraphTest {
             RuntimeEnvironment.getApplication(),
             appVersion = "1.2.0",
             debug = false,
-            analytics = native,
-            crashReporter = native,
+            telemetry = PlatformTelemetry(analytics = native, crashReporter = native),
         )
 
         assertTheGraphUsesTheNativeTelemetry(KoinPlatform.getKoin(), native)

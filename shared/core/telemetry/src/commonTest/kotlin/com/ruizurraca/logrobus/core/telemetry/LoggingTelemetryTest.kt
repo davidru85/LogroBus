@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.core.telemetry
 
 import com.ruizurraca.logrobus.core.common.ConsoleLogger
+import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent.PlanResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,7 +15,7 @@ class LoggingTelemetryTest {
         val tracker = LoggingAnalyticsTracker(logger)
 
         tracker.track(AnalyticsEvent.AppOpen)
-        tracker.track(AnalyticsEvent.PlanResult(itineraryCount = 0, rejection = AnalyticsEvent.PlanResult.Rejection.NO_ROUTE))
+        tracker.track(PlanResult(itineraryCount = 0, rejection = PlanResult.Rejection.NO_ROUTE))
 
         assertEquals(
             listOf(

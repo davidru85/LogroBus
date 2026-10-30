@@ -7,8 +7,6 @@ import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.coreLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
-import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
-import com.ruizurraca.logrobus.core.telemetry.CrashReporter
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 
@@ -18,17 +16,16 @@ import org.koin.dsl.onClose
  * configuration rather than the framework's, which sets the log level (security_privacy.md §4) and the telemetry. It
  * returns nothing, so no Koin type reaches Swift.
  *
- * [analytics] and [crashReporter] are the injection point for the app's own telemetry: Swift classes conforming to the
- * exported protocols, the vendor implementations of LB-409. They stay behind the consent gates; with `nil`, the
- * build's no-op or logging telemetry is used (ADR-0009). Swift sees no default arguments, so the app passes both.
+ * [telemetry] is the injection point for the app's own telemetry: Swift classes conforming to the exported protocols,
+ * the vendor implementations of LB-409. It stays behind the consent gates; a part left `nil` falls back to the build's
+ * no-op or logging telemetry (ADR-0009). Swift sees no default arguments, so the app always passes it.
  */
 fun initKoin(
     appVersion: String,
     debug: Boolean,
-    analytics: AnalyticsTracker?,
-    crashReporter: CrashReporter?,
+    telemetry: PlatformTelemetry,
 ) {
-    startGraph(sharedModules(iosModule(appVersion, debug), telemetryModule(debug, analytics, crashReporter)))
+    startGraph(sharedModules(iosModule(appVersion, debug), telemetryModule(debug, telemetry)))
 }
 
 private fun iosModule(

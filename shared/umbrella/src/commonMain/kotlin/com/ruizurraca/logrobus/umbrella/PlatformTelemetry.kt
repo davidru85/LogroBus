@@ -15,23 +15,31 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
- * The app's telemetry (ADR-0009), each part behind its consent gate. The platform's own [analytics] and
- * [crashReporter], the vendor implementations of LB-409, are used when given; otherwise the build's: logging in debug
- * builds and no-op in release builds. One consent store serves the whole app.
+ * The app's own telemetry, which it passes to `initKoin`: the injection point for the vendor implementations of LB-409
+ * (ADR-0009). On iOS, Swift classes conforming to the exported protocols. A part left `null` falls back to the build's
+ * telemetry, and both stay behind the consent gates.
+ */
+class PlatformTelemetry(
+    val analytics: AnalyticsTracker? = null,
+    val crashReporter: CrashReporter? = null,
+)
+
+/**
+ * The app's telemetry (ADR-0009), each part behind its consent gate: the [platform]'s own where given, otherwise the
+ * build's, logging in debug builds and no-op in release builds. One consent store serves the whole app.
  */
 internal fun telemetryModule(
     debug: Boolean,
-    analytics: AnalyticsTracker? = null,
-    crashReporter: CrashReporter? = null,
+    platform: PlatformTelemetry = PlatformTelemetry(),
 ): Module =
     module {
         single { MemoryConsentStore() } bind ConsentStore::class
         single<AnalyticsTracker> {
-            val tracker = analytics ?: if (debug) LoggingAnalyticsTracker(get()) else NoOpAnalyticsTracker
+            val tracker = platform.analytics ?: if (debug) LoggingAnalyticsTracker(get()) else NoOpAnalyticsTracker
             ConsentGatedAnalyticsTracker(tracker, get())
         }
         single<CrashReporter> {
-            val reporter = crashReporter ?: if (debug) LoggingCrashReporter(get()) else NoOpCrashReporter
+            val reporter = platform.crashReporter ?: if (debug) LoggingCrashReporter(get()) else NoOpCrashReporter
             ConsentGatedCrashReporter(reporter, get())
         }
     }
