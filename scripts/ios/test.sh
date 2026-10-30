@@ -62,8 +62,28 @@ phase_start=$SECONDS
 # A failed snapshot writes its actual image here, which CI uploads (TEST_RUNNER_ variables reach the tests).
 rm -rf build/snapshot-artifacts
 mkdir -p build/snapshot-artifacts
-TEST_RUNNER_SNAPSHOT_ARTIFACTS="$root/build/snapshot-artifacts" \
-  xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "$destination" \
-  -derivedDataPath "$derived_data" -quiet test-without-building
+test_log="$(mktemp)"
+run_tests() {
+  TEST_RUNNER_SNAPSHOT_ARTIFACTS="$root/build/snapshot-artifacts" \
+    xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "$destination" \
+    -derivedDataPath "$derived_data" -quiet test-without-building 2>&1 | tee "$test_log"
+}
+if ! run_tests; then
+  # A CI runner flake, seen on PRs #21, #28 and #33: the simulator the build has just used vanishes,
+  # and xcodebuild finds no device before any test runs. Wait for it to come back, boot it and retry
+  # once. Any other failure, such as a failing test, fails at once.
+  grep -q "Unable to find a device matching the provided destination specifier" "$test_log" || exit 1
+  echo "WARN: the '$simulator' simulator ($udid) vanished before the tests ran; retrying once" >&2
+  for _ in $(seq 12); do
+    xcrun simctl list devices available | grep -q "$udid" && break
+    sleep 10
+  done
+  if ! xcrun simctl bootstatus "$udid" -b > "$boot_log" 2>&1; then
+    cat "$boot_log" >&2
+    echo "FAIL: the '$simulator' simulator ($udid) did not come back" >&2
+    exit 1
+  fi
+  run_tests
+fi
 echo "TIME: tests ran in $((SECONDS - phase_start)) s"
 echo "OK:   iOS tests passed on $simulator, iOS $os ($udid)"
