@@ -52,6 +52,12 @@ class StaticSyncEngineTest {
     fun closeDatabase() = driver.close()
 
     @Test
+    fun lb008_aNewDatabaseHasNoLinesOrStops() {
+        // ADR-0008: no seed is bundled or imported; the first sync brings everything.
+        assertEquals(nothing, driver.storedCatalogue())
+    }
+
+    @Test
     fun lb008_theFirstSyncStoresTheLinesPatternsShapesAndStopsItDownloads() =
         runTest {
             assertEquals(AppResult.Success(Unit), engine().syncIfStale())
@@ -416,6 +422,21 @@ class StaticSyncEngineTest {
                 listOf(first.await(), second.await()),
             )
             assertEquals(2, source.requests)
+        }
+
+    @Test
+    fun lb008_whatLeavesThePayloadLeavesTheCacheAndTheSearch() =
+        runTest {
+            val engine = engine()
+            normaliser.result = AppResult.Success(catalogue(lineCount = FEWEST_LINES + 1, stopCount = FEWEST_STOPS + 1))
+            engine.syncIfStale()
+            now += 25.hours
+
+            publish(version = 2)
+            engine.syncIfStale()
+
+            assertEquals(catalogue(version = 2), driver.storedCatalogue())
+            assertEquals(emptyList(), database.searchStops("colon 101").map { it.id })
         }
 
     /** The source and the normaliser answer with [version] from now on. */

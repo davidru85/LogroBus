@@ -317,6 +317,31 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb008_databasesAndSeedFilesAreSeedData() {
+        val seeds =
+            listOf(
+                "android/app/src/main/assets/logrobus.db",
+                "iosApp/iosApp/Resources/catalogue.sqlite",
+                "shared/core/database/src/commonMain/resources/Seed-lines.json",
+                "iosApp/iosApp/stops.sqlite3",
+            )
+        assertEquals(seeds, seeds.filter(ArchitectureRules::isSeedData))
+    }
+
+    @Test
+    fun lb008_otherResourcesAreNotSeedData() {
+        val others =
+            listOf(
+                "android/app/src/main/res/values/strings.xml",
+                "fixtures/lines_2026-10-22.json",
+                "shared/core/database/src/commonMain/sqldelight/com/ruizurraca/logrobus/core/database/Stop.sq",
+                "iosApp/iosAppTests/__Snapshots__/LineBadgeTests/dark.png",
+                "android/core/designsystem/src/test/screenshots/seedling.png",
+            )
+        assertEquals(emptyList<String>(), others.filter(ArchitectureRules::isSeedData))
+    }
+
+    @Test
     fun lb017_freeTextAndCoordinatesAreFlaggedInTelemetry() {
         // ADR-0009, NFR-OBS-03, NFR-PRIV-02: no free text and no coordinates, whatever their type.
         val properties =
