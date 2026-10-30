@@ -230,6 +230,41 @@ class StaticSyncEngineTest {
             assertEquals(catalogue(version = 2), driver.storedCatalogue())
         }
 
+    @Test
+    fun lb008_aWriteThatFailsHalfwayRollsBackAndKeepsTheCache() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            val firstSync = database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne()
+            now += 25.hours
+            publish(version = 2)
+            // The lines are written before the stops, and the last stop repeats the first one's id.
+            val payload = catalogue(version = 2)
+            normaliser.result = AppResult.Success(payload.copy(stops = payload.stops + payload.stops.first()))
+
+            assertEquals(AppResult.Failure(AppError.Data), engine.syncIfStale())
+
+            assertEquals(catalogue(), driver.storedCatalogue())
+            assertEquals(firstSync, database.syncQueries.syncState(StaticDataset.LINES.key).executeAsOne())
+            assertTrue(logger.entries.any { it.level == LogLevel.Warn && it.tag == "StaticSync" })
+        }
+
+    @Test
+    fun lb008_observersHearOfTheNewCatalogueOnceItIsWhole() =
+        runTest {
+            val engine = engine()
+            engine.syncIfStale()
+            var notifications = 0
+            driver.addListener("line", "pattern", "pattern_stop", "stop", "stop_line") { notifications++ }
+            now += 25.hours
+            publish(version = 2)
+
+            engine.syncIfStale()
+
+            // One transaction, so a reader sees the old catalogue or the new one, never a mix of both.
+            assertEquals(1, notifications)
+        }
+
     /** The source and the normaliser answer with [version] from now on. */
     private fun publish(version: Int) {
         source.lines = AppResult.Success(body("lines", version))
