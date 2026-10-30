@@ -5,7 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertIs
 
-/** ADR-0009 on Android: a vendor that reads the Throwable itself, as Crashlytics does, sees where the error came from. */
+/** ADR-0009 on Android: a vendor that reads the Throwable, as Crashlytics does, sees where the error came from. */
 class RedactedStackTest {
     @Test
     fun lb017_onAndroidTheRedactedErrorKeepsTheOriginalStack() {
