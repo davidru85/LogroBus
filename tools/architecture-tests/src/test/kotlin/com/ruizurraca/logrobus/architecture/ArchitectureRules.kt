@@ -29,6 +29,24 @@ object ArchitectureRules {
     private val dataPackage = Regex("""^${Regex.escape(ROOT_PACKAGE)}\..*\.data(\.|$)""")
     private val infrastructure = listOf("io.ktor.", "app.cash.sqldelight.")
     private val telemetryValueTypes = setOf("Int", "Long", "Boolean")
+    private val swiftPackageUrl = Regex("""\.package\(\s*url:\s*"([^"]+)"""")
+    private val vendorSwiftOwners =
+        setOf(
+            "firebase",
+            "getsentry",
+            "bugsnag",
+            "datadog",
+            "amplitude",
+            "mixpanel",
+            "posthog",
+            "segmentio",
+            "newrelic",
+            "embrace-io",
+            "instabug",
+            "appsflyersdk",
+            "adjust",
+            "googleanalytics",
+        )
     private val platform =
         listOf(
             "java.",
@@ -127,7 +145,16 @@ object ArchitectureRules {
             .map { "$it: ${inManifest[it]} in Package.swift, ${inProject[it]} in project.yml" }
     }
 
-    fun vendorTelemetryPackages(manifest: String): List<String> = emptyList()
+    /**
+     * The analytics and crash-reporting packages a Swift manifest declares, by URL, recognised by the GitHub owner of
+     * their repository (ADR-0009).
+     */
+    fun vendorTelemetryPackages(manifest: String): List<String> =
+        swiftPackageUrl
+            .findAll(manifest)
+            .map { it.groupValues[1] }
+            .filter { url -> url.substringAfter("github.com/").substringBefore('/').lowercase() in vendorSwiftOwners }
+            .toList()
 
     /** Feature targets of a Swift package manifest that depend on another feature target (ADR-0007, §3.2). */
     fun crossFeatureSwiftDependencies(manifest: String): List<String> =
