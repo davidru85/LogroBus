@@ -102,6 +102,7 @@ You will need:
 ### Recent changes
 
 - **2026-10-30:**
+  - Every commit now has one identity, `David Ruiz <davidru85@gmail.com>`, and no co-author lines, as the owner decided. The rule is in `AGENTS.md`, the git hooks and the local checks enforce it, and the setup script sets it for each clone. The owner rewrote the existing history to match.
   - LB-012 is done. Both apps open on their three tabs: Lines, Near me and Directions.
     - Each tab remembers where you were. Open About data from Lines, switch to Near me and back, and it is still there. Tapping the tab again takes it back to its start.
     - A settings button on every tab opens More, with Settings (empty until its options arrive) and About data, which is now reachable.

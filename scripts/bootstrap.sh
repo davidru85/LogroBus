@@ -16,6 +16,13 @@ chmod +x .githooks/* scripts/*.sh scripts/checks/*.sh scripts/agent/*.sh scripts
   scripts/github/*.sh 2>/dev/null || true
 echo "Git hooks installed (core.hooksPath=.githooks)."
 
+# Owner rule (AGENTS.md §12): every commit in this repository has one identity.
+# shellcheck source=scripts/checks/lib.sh
+. scripts/checks/lib.sh
+git config user.name "$LB_COMMIT_NAME"
+git config user.email "$LB_COMMIT_EMAIL"
+echo "Commit identity set for this clone: $LB_COMMIT_IDENTITY."
+
 check() {
   local tool="$1" why="$2"
   if command -v "$tool" >/dev/null 2>&1; then

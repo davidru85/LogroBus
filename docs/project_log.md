@@ -19,6 +19,30 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-30: One commit identity, and the history rewritten to match
+
+**Done**
+- **The rule (owner, 2026-10-30):** every commit is authored and committed as `David Ruiz <davidru85@gmail.com>`, with no `Co-Authored-By` trailer, an agent's included (`AGENTS.md` §12, `engineering_workflow.md` §2).
+  - Enforced by `scripts/checks/check-commit-identity.sh`, in the `pre-commit`, `commit-msg` and `pre-push` hooks and in `run-all.sh`. Its negative cases fail as they should: another author email, a co-author trailer, the old history, a non-merge commit by GitHub and a bot author. A merge commit with GitHub as committer passes.
+  - `scripts/bootstrap.sh` sets the identity for the clone. `.claude/settings.json` turns off Claude Code's commit attribution.
+  - Dependabot's commits are replayed as our own on a branch of ours (`engineering_workflow.md` §9).
+- **Why:** the clone's local `user.email` was the GitHub noreply address, so 407 of the 462 commits on `main` carried it. Claude's co-author trailer was on 431.
+- **The history rewrite (owner decisions, 2026-10-30):**
+  - Every commit on `main` and on the open branches was rebuilt with the same tree, parents, dates and message, but with this author and committer and without the co-author trailer, and re-signed with the owner's SSH key. That covers the 28 web merges committed by GitHub and the one Dependabot commit too.
+  - It was checked on a scratch clone first: the same 462 commits and 33 merges, identical trees and dates, and every commit signed.
+  - The owner lifted `main`'s protection, force-pushed with `--force-with-lease` and reapplied the protection with `scripts/github/protect-main.sh`. This is a one-off exception to "no force pushes" (`engineering_workflow.md` §1.1).
+
+**Decisions**
+- **Merges on the web:** GitHub stays the committer of the merge commits it creates, the only exception to the rule. The owner set the GitHub commit email to `davidru85@gmail.com`, so their author matches.
+- **Pull request descriptions** keep the "Generated with Claude Code" line; only commit trailers go.
+
+**Open / next**
+- The 30 closed pull requests keep their original commits, under read-only `refs/pull/*` refs, so the old identity is still visible there. Only GitHub Support can purge them.
+- Commit hashes quoted in older log entries and pull request descriptions name the commits before the rewrite. They still open from their pull requests.
+- Any other clone must be cloned again.
+
+---
+
 ## 2026-10-30: LB-012: the app shell, with three tabs
 
 **Done**
