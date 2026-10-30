@@ -36,11 +36,12 @@ internal fun MoreScreen(
             )
         },
     ) { padding ->
+        // The padding goes inside the scroll, so the rows scroll behind the system bars rather than stop above them.
         Column(
             Modifier
-                .padding(padding)
                 .consumeWindowInsets(padding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(padding),
         ) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.more_settings)) },
