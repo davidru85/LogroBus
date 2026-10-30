@@ -5,6 +5,7 @@ import com.ruizurraca.logrobus.core.common.AppDispatchers
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
+import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.database.searchStops
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -264,6 +265,108 @@ class StaticSyncEngineTest {
             // One transaction, so a reader sees the old catalogue or the new one, never a mix of both.
             assertEquals(1, notifications)
         }
+
+    @Test
+    fun lb008_aSavedStopMissingFromASyncCountsOneMoreMissingSync() =
+        runTest {
+            val engine = engine()
+            save(FavouriteTypes.STOP, "5")
+            save(FavouriteTypes.STOP, "101")
+            engine.syncIfStale()
+            now += 25.hours
+            publish(version = 2)
+
+            engine.syncIfStale()
+
+            assertEquals(mapOf("5" to 0L, "101" to 2L), missingSyncs(FavouriteTypes.STOP))
+        }
+
+    @Test
+    fun lb008_aSavedStopThatReappearsStartsAgainFromZero() =
+        runTest {
+            val engine = engine()
+            save(FavouriteTypes.STOP, "101")
+            engine.syncIfStale()
+            assertEquals(mapOf("101" to 1L), missingSyncs(FavouriteTypes.STOP))
+            now += 25.hours
+            publish(version = 2)
+            normaliser.result = AppResult.Success(catalogue(version = 2, stopCount = FEWEST_STOPS + 1))
+
+            engine.syncIfStale()
+
+            assertEquals(mapOf("101" to 0L), missingSyncs(FavouriteTypes.STOP))
+        }
+
+    @Test
+    fun lb008_anUnchangedPayloadStillCountsMissingStops() =
+        runTest {
+            // FR-FAV-04 counts daily syncs: a source that stops changing must still reach "No longer served".
+            val engine = engine()
+            save(FavouriteTypes.STOP, "101")
+            engine.syncIfStale()
+            now += 25.hours
+
+            engine.syncIfStale()
+
+            assertEquals(mapOf("101" to 2L), missingSyncs(FavouriteTypes.STOP))
+        }
+
+    @Test
+    fun lb008_aSavedStopThatIsOnlyProvisionalIsMissing() =
+        runTest {
+            // DD-10: a provisional stop is made up from a pattern, so API-02 no longer delivers it.
+            val payload = catalogue(stopCount = FEWEST_STOPS + 1)
+            normaliser.result =
+                AppResult.Success(payload.copy(stops = payload.stops.map { it.copy(isProvisional = it.id == 5) }))
+            save(FavouriteTypes.STOP, "5")
+
+            engine().syncIfStale()
+
+            assertEquals(mapOf("5" to 1L), missingSyncs(FavouriteTypes.STOP))
+        }
+
+    @Test
+    fun lb008_aFailedSyncCountsNoMissingSync() =
+        runTest {
+            save(FavouriteTypes.STOP, "101")
+            source.lines = AppResult.Failure(AppError.Network)
+
+            engine().syncIfStale()
+
+            assertEquals(mapOf("101" to 0L), missingSyncs(FavouriteTypes.STOP))
+        }
+
+    @Test
+    fun lb008_onlySavedStopsAreCounted() =
+        runTest {
+            save("line", "101")
+
+            engine().syncIfStale()
+
+            assertEquals(mapOf("101" to 0L), missingSyncs("line"))
+        }
+
+    private fun save(
+        type: String,
+        refId: String,
+    ) {
+        driver.execute(
+            identifier = null,
+            sql = "INSERT INTO favourite (id, type, ref_id, position, created_at) VALUES (?, ?, ?, 0, 0)",
+            parameters = 3,
+        ) {
+            bindString(0, "$type $refId")
+            bindString(1, type)
+            bindString(2, refId)
+        }
+    }
+
+    private fun missingSyncs(type: String): Map<String, Long> =
+        driver
+            .select("SELECT ref_id, missing_syncs, type FROM favourite") {
+                Triple(it.getString(0)!!, it.getLong(1)!!, it.getString(2))
+            }.filter { it.third == type }
+            .associate { it.first to it.second }
 
     /** The source and the normaliser answer with [version] from now on. */
     private fun publish(version: Int) {
