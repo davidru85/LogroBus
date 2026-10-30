@@ -79,12 +79,21 @@ internal class DefaultStaticSyncEngine(
     }
 
     // Spec §8.5: too few lines or stops means a broken payload, not a smaller network. Provisional stops (DD-10) come
-    // from patterns, not from API-02, so they do not count.
+    // from patterns, not from API-02, so they do not count; but every pattern stop needs one, or a pattern would point
+    // at nothing.
     private fun validated(catalogue: StaticCatalogue): AppResult<StaticCatalogue> {
         val lines = catalogue.lines.size
         val stops = catalogue.stops.count { !it.isProvisional }
-        if (lines >= FEWEST_LINES && stops >= FEWEST_STOPS) return AppResult.Success(catalogue)
-        logger.warn(TAG, "Rejected a suspicious payload with $lines lines and $stops stops")
+        val stopIds = catalogue.stops.mapTo(HashSet()) { it.id }
+        val unlinked =
+            catalogue.lines.sumOf { line ->
+                line.patterns.sumOf { it.stops.count { s -> s.stopId !in stopIds } }
+            }
+        if (lines >= FEWEST_LINES && stops >= FEWEST_STOPS && unlinked == 0) return AppResult.Success(catalogue)
+        logger.warn(
+            TAG,
+            "Rejected a suspicious payload with $lines lines and $stops stops; $unlinked pattern stops lack one",
+        )
         return AppResult.Failure(AppError.Data)
     }
 
