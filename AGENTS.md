@@ -279,7 +279,7 @@ A story is done when all of these hold (spec §10.6, plus the docs):
 
 ## 12. Git and pull request conventions
 
-- Use Conventional Commits with the story id, for example `feat(near-me): stop sheet arrivals [LB-205]`. Scopes: `lines`, `near-me`, `planner`, `shared`, `data`, `network`, `db`, `android`, `ios`, `design`, `docs`, `backlog`, `build`, `build-logic`, `architecture`, `harness`, `ci`.
+- Use Conventional Commits with the story id, for example `feat(near-me): stop sheet arrivals [LB-205]`. Scopes: `lines`, `near-me`, `planner`, `shared`, `data`, `network`, `db`, `android`, `ios`, `shell` (the app shells of both platforms: tabs, navigation, More), `design`, `docs`, `backlog`, `build`, `build-logic`, `architecture`, `harness`, `ci`.
 - Branch names follow `feat/LB-205-stop-sheet` or `fix/LB-xxx-short-name`, one story per branch.
 - **README rule (mandatory):** every merged PR must leave `README.md` (English) and `README.es.md` (Spanish) up to date. The README changes therefore go inside the PR itself, before it is merged:
   - At minimum, add an entry under "Recent changes" / "Cambios recientes" and refresh "Project status" / "Estado del proyecto".

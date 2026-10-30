@@ -77,7 +77,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - `TopAppBarActionsTest` (`395fea9`) was written after the buttons it tests (`98e25f9`), and passed at once.
 - **Commit types:**
   - `a5fee8c` and `14a22a7` are snapshot changes typed `test(ios)`;
-  - `8412595`, `325deb1` and `cda07f4` span both platforms and have no scope.
+  - `8412595`, `325deb1` and `cda07f4` span both platforms and have no scope. AGENTS.md §12 now lists a `shell` scope for such changes, which the PR's title uses.
 - **Build:** a stale incremental compile reran an old `MainActivityTest` and showed a false green. Every run since uses `--no-configuration-cache --no-watch-fs`.
 
 **Open / next**
