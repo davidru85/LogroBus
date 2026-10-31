@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009), el cliente que habla con la fuente (LB-005, en curso) y la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); la sincronización que mantiene las líneas y paradas en el dispositivo está hecha, y espera a los formatos de datos de la fuente (LB-008, en curso); el sistema de diseño está listo en las dos plataformas (LB-011); las dos apps se abren en sus tres pestañas (LB-012); y los contratos de telemetría esperan a un proveedor, sin enviar nada sin consentimiento (LB-017). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009), el cliente que habla con la fuente (LB-005, en curso) y la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); la sincronización que mantiene las líneas y paradas en el dispositivo está hecha, y espera a los formatos de datos de la fuente (LB-008, en curso), igual que las reglas que limpian esos datos (LB-006, en curso); el sistema de diseño está listo en las dos plataformas (LB-011); las dos apps se abren en sus tres pestañas (LB-012); y los contratos de telemetría esperan a un proveedor, sin enviar nada sin consentimiento (LB-017). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -103,6 +103,14 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **31-10-2026:**
+  - LB-006, parte 1: las reglas que limpian los datos de la fuente antes de que los use ninguna pantalla.
+    - Las paradas y líneas se reconocen en cualquiera de los formatos de identificador de la fuente, y un valor vacío cuenta como ausente.
+    - Las direcciones se leen de las palabras de la fuente, y los códigos numéricos de ET se deducen de las paradas por las que pasan sus autobuses.
+    - Se corrigen las horas de llegada a la siguiente parada, que la fuente marca como UTC pero da en hora de Madrid, también las noches de cambio de hora.
+    - Los colores de línea se leen en los dos formatos de la fuente, los nombres se recortan y se corrigen sus erratas desde la configuración remota, y cada línea obtiene su código, un nombre legible y si es nocturna.
+    - Se reconocen las posiciones muy alejadas de Logroño, para poder descartarlas.
+    - Aún no está activo: empezará a funcionar cuando la app sepa leer los datos de la fuente (LB-005), con el resto de LB-006.
 - **30-10-2026:**
   - Flujo de trabajo: el agente de IA corrige ahora él mismo los checks de CI que fallan en su pull request, sin esperar al propietario, para que cada pull request llegue a revisión en verde. Corrige el fallo en la rama, o relanza una vez un fallo de la máquina de CI, y nunca debilita un check. La regla está en `AGENTS.md`, y `scripts/agent/watch-pr.sh` avisa de los checks fallidos además de las fusiones y los comentarios.
     - Los tests de iOS se reintentan una vez cuando el simulador de CI desaparece antes de ejecutarlos, un fallo de la máquina de CI visto tres veces.

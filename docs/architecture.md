@@ -159,11 +159,19 @@ Done in LB-005 part 1 and the first half of part 2; the DTOs and services come w
   - `decodeEach(serializer, logger)` decodes a collection item by item, returning the items and the number dropped. A dropped item is logged by DTO name, index and error type.
   - `decodeAs(serializer)` decodes a bare object, as the transit endpoints send it.
   - A missing envelope or an undecodable object is `Data`.
+- **Source values (LB-006 part 1):** `String?.trimmedOrNull()` (DD-07) and `IdParser` (DD-01, DD-02, DD-06). They live here, not in `:shared:transit:data`, because the planner's mappers in `:shared:feature:planner` read the same formats and may not depend on a data module.
 
 ### 4.2 Transit data (`:shared:transit:data`)
 
 - **DTOs and services:** `LinesApi` (API-01, 02), `RealtimeApi` (API-03 to 06).
 - **Normaliser:** the pipeline of spec §5.4, with the DD-rule map in `api_spec.md` §6. It emits domain entities and a `DataQualityReport`. For the static sync it emits the `StaticCatalogue` the sync stores, shaped like the tables, and a `fingerprint` that changes whenever the same payloads would normalise differently: a new normaliser, or new name overrides (DD-11) (LB-008).
+- **Normalisation rules (as built, LB-006 part 1),** the parts that need no DTO shapes, each a pure function with its `ddNN_` tests (`api_spec.md` §6):
+  - `DirectionMapper` (DD-04 words) and `EtDirectionInferrer` (spec §5.6 steps 2–5);
+  - `correctNextStopTime` (DD-05), on `madridTimeZone` from `:shared:core:common` (ADR-0015);
+  - `NameNormaliser` (DD-11) and `LineNameParser` (spec §5.5);
+  - `ServiceArea` (spec §5.4, step 7);
+  - `parseCssColor` (DD-08) sits in `:shared:core:common`, beside `onColorFor`, for the planner's colours too.
+  - Part 2 adds the DTOs' mappers, the `StaticNormaliser`, DD-10's provisional stops, the direction cache and the `DataQualityReport`.
 - **Repositories:** `NetworkRepository` (lines, patterns, stops, search), `ArrivalsRepository`, `VehiclesRepository`.
 - **Sync status (as built, LB-010 part 2):** `SyncStatusRepositoryImpl` reads `sync_state` for `SyncStatusRepository` (`:shared:transit:domain`). It gives the last successful sync of each `StaticDataset` (spec §8.5: lines and stops in the MVP), stored under the keys `lines` and `stops`, which never change with the enum's names. The static sync (LB-008) writes `sync_state` with the same keys.
 

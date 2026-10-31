@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source (LB-005, in progress) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device is built, and waits for the source's data formats (LB-008, in progress); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source (LB-005, in progress) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device is built, and waits for the source's data formats (LB-008, in progress), and so do the rules that clean up that data (LB-006, in progress); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -101,6 +101,14 @@ You will need:
 
 ### Recent changes
 
+- **2026-10-31:**
+  - LB-006, part 1: the rules that clean up the source's data, before any screen uses it.
+    - Stops and lines are recognised whichever of the source's id formats they come in, and an empty value counts as missing.
+    - Directions are read from the source's words, and ET's numeric codes are worked out from where their buses call.
+    - Arrival times at a bus's next stop, which the source labels as UTC but gives in Madrid time, are corrected, including on the nights the clocks change.
+    - Line colours are read in both of the source's formats, names are trimmed and their typos fixed from remote configuration, and each line gets its code, a readable name and whether it is a night line.
+    - Positions far outside Logroño are recognised, so they can be left out.
+    - It is not switched on yet: it starts working once the app can read the source's data (LB-005), with the rest of LB-006.
 - **2026-10-30:**
   - Workflow: the AI agent now fixes the failing CI checks of its own pull request, without waiting for the owner, so that each pull request reaches review green. It fixes a fault in the branch, or reruns a failure of the CI machine once, and it never weakens a check. The rule is in `AGENTS.md`, and `scripts/agent/watch-pr.sh` reports failed checks along with merges and comments.
     - The iOS tests now retry once when the CI simulator vanishes before they run, a fault of the CI machine seen three times.
