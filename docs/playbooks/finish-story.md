@@ -34,12 +34,20 @@
 
    **Do not merge** unless the owner explicitly asks. When asked, and only once the checks are green, run `gh pr merge --merge --delete-branch`.
 9. **Watch the pull request until it is merged** (owner rule, 2026-10-25). The owner approves and merges without saying so in the conversation.
-   - Poll its state in the background, a few minutes apart, not in a tight loop:
+   - Watch it in the background. The script polls every 180 s, not in a tight loop, and exits with one line saying why: `MERGED`, `CLOSED`, `CHANGES_REQUESTED`, `COMMENTS` or `CHECKS_FAILED`.
 
      ```bash
-     gh pr view <number> --json state,reviewDecision
+     scripts/agent/watch-pr.sh <number>
      ```
 
+   - **`CHECKS_FAILED`** (owner rule, 2026-10-30): fix the failure without waiting for the owner, so that the pull request reaches review green.
+     1. Read the log of each failed job (`gh run view <run> --log-failed`; the run id is in the link the watch prints) and find the cause.
+     2. **A fault in the branch,** such as a failing test, a lint finding or a broken build: fix it on the branch like any other change. A bug gets a regression test, the TDD commits apply, and `scripts/checks/run-all.sh` passes before the push.
+     3. **A runner flake,** a failure outside the change, such as a simulator that vanishes or a job that hangs with no log: rerun the failed jobs once (`gh run rerun <run> --failed`). Search `project_log.md` for the same failure first; if it has happened before, also make the pipeline resilient to it, in this pull request.
+     4. Add the fix to the pull request description, in its own section, and to the `project_log.md` entry.
+     5. Once the new run shows the checks as pending, start the watch again.
+     - Never make a check pass by weakening, skipping or disabling it, by lowering a coverage floor, or by force-pushing.
+     - **Stop and report instead** when the fix needs something on the "ask the owner before" list (`AGENTS.md` §10), touches `main` or its protection, or the same check still fails after three attempts.
    - **`MERGED`:** run `git checkout main && git pull --ff-only`, tell the owner in one line that the merge was detected, and start the task named in the hand-over. If none was named, start the next open item of the story in `backlog.md`, through `start-story.md` when it is a new story.
    - **`CLOSED` without a merge, `CHANGES_REQUESTED`, or new review comments:** stop and report to the owner; do not move on.
    - If the session ends while the PR is open, the next session resumes the watch.

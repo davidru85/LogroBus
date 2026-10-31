@@ -56,8 +56,8 @@ LogroBus/
 │   │   ├── presentation/            # shared presentation primitives: EtaDisplay, Freshness, ErrorReason, LineBadgeUi + mappers
 │   │   └── testing/                 # TestAppClock, fixture loader, mockSource DSL, fakes, builders
 │   ├── transit/
-│   │   ├── domain/                  # entities (spec §5.1), transit repository interfaces, shared use cases
-│   │   └── data/                    # DTOs (API-01 to 06), normaliser and mappers (DD rules), StaticSyncEngine, repositories
+│   │   ├── domain/                  # entities (spec §5.1), transit repository interfaces, StaticSyncEngine, shared use cases
+│   │   └── data/                    # DTOs (API-01 to 06), normaliser and mappers (DD rules), DefaultStaticSyncEngine, repositories
 │   ├── favourites/
 │   │   ├── domain/                  # Favourite, Place, RecentPlan; repository interfaces; use cases
 │   │   └── data/                    # SQLDelight-backed repositories
@@ -163,7 +163,7 @@ Done in LB-005 part 1 and the first half of part 2; the DTOs and services come w
 ### 4.2 Transit data (`:shared:transit:data`)
 
 - **DTOs and services:** `LinesApi` (API-01, 02), `RealtimeApi` (API-03 to 06).
-- **Normaliser:** the pipeline of spec §5.4, with the DD-rule map in `api_spec.md` §6. It emits domain entities and a `DataQualityReport`.
+- **Normaliser:** the pipeline of spec §5.4, with the DD-rule map in `api_spec.md` §6. It emits domain entities and a `DataQualityReport`. For the static sync it emits the `StaticCatalogue` the sync stores, shaped like the tables, and a `fingerprint` that changes whenever the same payloads would normalise differently: a new normaliser, or new name overrides (DD-11) (LB-008).
 - **Repositories:** `NetworkRepository` (lines, patterns, stops, search), `ArrivalsRepository`, `VehiclesRepository`.
 - **Sync status (as built, LB-010 part 2):** `SyncStatusRepositoryImpl` reads `sync_state` for `SyncStatusRepository` (`:shared:transit:domain`). It gives the last successful sync of each `StaticDataset` (spec §8.5: lines and stops in the MVP), stored under the keys `lines` and `stops`, which never change with the enum's names. The static sync (LB-008) writes `sync_state` with the same keys.
 
@@ -206,7 +206,7 @@ sequenceDiagram
     Sync->>DB: read sync_state (TTL, content_hash)
     Sync->>API: GET API-01 and API-02
     API-->>Sync: raw bodies (or failure)
-    Sync->>Sync: unchanged hash? stop
+    Sync->>Sync: unchanged hash? record the success, count missing stops, stop
     Sync->>Sync: normalise, validate (>= 5 lines, >= 100 stops)
     Sync->>DB: one transaction: replace lines, patterns, stops, stop_line, FTS
     Sync->>DB: update sync_state, bump favourite.missing_syncs
@@ -218,6 +218,17 @@ sequenceDiagram
   - An unchanged hash skips the replace, but the sync still succeeded: it records `last_success`, which also restarts the TTL.
   - A failed or suspicious refresh leaves `last_success` as it was. `recordSync` is `INSERT OR REPLACE` over the whole row, so it must not write a null `last_success` over an earlier success.
 - Background refresh runs as a daily WorkManager job on Android and as a `BGAppRefreshTask` on iOS.
+- **As built (LB-008 part 1, 2026-10-30):**
+  - `StaticSyncEngine.syncIfStale()` lives in `:shared:transit:domain`. `DefaultStaticSyncEngine` in `:shared:transit:data` takes a `StaticSource` (the bodies of API-01 and API-02) and a `StaticNormaliser`, both injected until LB-005's services and LB-006's normaliser exist. Part 2 binds it in Koin as a `single`, since its mutex serialises syncs per instance, and adds the triggers.
+  - **TTL:** the cache is fresh while both datasets' last success is between 0 and 24 h old by `AppClock`. A dataset that never synced, or a last success in the future, which says nothing about the cache's age, makes it stale.
+  - **Content hash:** the SHA-256 (`MessageDigest` on Android, CommonCrypto on iOS) of the normaliser's `fingerprint` and the body. Spec §8.5 says "of the raw body"; `SourceClient` returns decoded JSON, so the body is that JSON encoded again, which keeps key order and is as stable as the bytes. The fingerprint makes an unchanged payload renormalise when the normaliser or the name overrides change.
+  - **Unchanged payload:** not normalised and not written, but the success is recorded and the saved stops are counted (FR-FAV-04 counts daily syncs, so a stable source must still reach "No longer served").
+  - **Validation:** at least 5 lines and 100 stops that are not provisional, and a stop for every pattern stop (DD-10). A rejection writes nothing, its hash included, and logs only counts.
+  - **One transaction** deletes and inserts lines, patterns, pattern stops, stops and served lines (the FTS triggers follow), records `sync_state` and runs `updateMissingSyncs`. Observers hear of it once, and a failure rolls all of it back.
+  - **Missing syncs:** a saved stop counts as there when the catalogue has it, a provisional stop made up from a pattern included, since buses still call there (DD-10). Its `ref_id` is the canonical decimal id (DD-01), under `FavouriteTypes.STOP`.
+  - **Failures** are values: one boundary turns whatever the database or the normaliser throws into `Failure(Data)` and keeps the cache. Only the caller's cancellation propagates.
+  - Lines and stops download together; hashing and normalising run on the default dispatcher, the database on io.
+  - **No seed:** an architecture test fails on any database file, file named "seed", or lines or stops JSON bundled under `android/`, `iosApp/` or `shared/` (ADR-0008).
 
 ### 4.5 Live data and `PollingEngine` (`:shared:core:polling`)
 

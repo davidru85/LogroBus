@@ -4,7 +4,7 @@
 
 LogroBus es una aplicación nativa no oficial de los autobuses urbanos de Logroño, para Android e iOS. Responde rápido a dos preguntas: *¿cuándo llega mi autobús?* y *¿cómo llego?*
 
-> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009) el cliente que habla con la fuente (LB-005, en curso) la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); el sistema de diseño está listo en las dos plataformas (LB-011); las dos apps se abren en sus tres pestañas (LB-012); y los contratos de telemetría esperan a un proveedor, sin enviar nada sin consentimiento (LB-017). Consulta el [estado del proyecto](#estado-del-proyecto).
+> **Estado:** hito M0, «Cimientos», en curso. Ya existen la compilación con Gradle, los 19 módulos compartidos de Kotlin Multiplatform y los esqueletos de las apps de Android e iOS (LB-001), y la CI revisa cada pull request (LB-002); el núcleo compartido está listo (LB-004), con el motor que refresca los datos en directo (LB-009), el cliente que habla con la fuente (LB-005, en curso) y la base de datos local con la búsqueda de paradas (LB-007), y las dos apps los ponen en marcha al arrancar, con las convenciones que sigue cada pantalla (LB-010); la sincronización que mantiene las líneas y paradas en el dispositivo está hecha, y espera a los formatos de datos de la fuente (LB-008, en curso); el sistema de diseño está listo en las dos plataformas (LB-011); las dos apps se abren en sus tres pestañas (LB-012); y los contratos de telemetría esperan a un proveedor, sin enviar nada sin consentimiento (LB-017). Consulta el [estado del proyecto](#estado-del-proyecto).
 
 ## Funcionalidades (MVP)
 
@@ -104,6 +104,13 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **30-10-2026:**
+  - Flujo de trabajo: el agente de IA corrige ahora él mismo los checks de CI que fallan en su pull request, sin esperar al propietario, para que cada pull request llegue a revisión en verde. Corrige el fallo en la rama, o relanza una vez un fallo de la máquina de CI, y nunca debilita un check. La regla está en `AGENTS.md`, y `scripts/agent/watch-pr.sh` avisa de los checks fallidos además de las fusiones y los comentarios.
+    - Los tests de iOS se reintentan una vez cuando el simulador de CI desaparece antes de ejecutarlos, un fallo de la máquina de CI visto tres veces.
+  - LB-008, parte 1: el motor que mantiene al día las líneas y paradas guardadas en el dispositivo.
+    - La primera pantalla que las necesita las descarga, y se actualizan cuando tienen más de un día. La app no incluye una copia propia (ADR-0008), así que sin conexión esa primera pantalla mostrará un error con «Reintentar».
+    - Una descarga que parece rota, con menos de 5 líneas o 100 paradas, o una que falla a medias, no cambia nada: se conservan las líneas y paradas anteriores. Una descarga idéntica no se vuelve a escribir, salvo que la app haya cambiado su forma de leerla.
+    - Cada actualización cuenta cuántas veces seguidas falta una parada guardada, para poder marcar más adelante una parada que ya no tiene servicio.
+    - Aún no está activo: empezará a funcionar cuando la app sepa leer las líneas y paradas de la fuente (LB-005, LB-006).
   - Completada LB-017. Las dos apps tienen sus contratos de telemetría, listos para el proveedor de analítica e informes de fallos que falta elegir.
     - Los eventos de analítica solo llevan identificadores, recuentos, valores de sí o no y categorías fijas, nunca lo que escribes ni dónde estás. Una comprobación de la compilación rechaza cualquier otra cosa.
     - No se envía nada sin tu consentimiento, que se pide por separado para la analítica y para los informes de fallos. Hasta que llegue la pantalla de consentimiento, no se envía nada en absoluto.
@@ -214,7 +221,7 @@ La documentación técnica está en inglés.
 
 ## Cómo contribuir
 
-Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas, de Kotlin y de iOS en cada pull request, y deben pasar antes de fusionarla. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
+Lee [AGENTS.md](AGENTS.md) antes de empezar. El código y la documentación se escriben en inglés técnico (consulta la política de idiomas en AGENTS.md). Trabaja en una rama y abre una pull request con una de las plantillas; nadie sube cambios directamente a `main`. La CI ejecuta las comprobaciones de políticas, de Kotlin y de iOS en cada pull request, y deben pasar antes de fusionarla. Un agente de IA corrige las comprobaciones que fallan en las pull requests que abre antes de que lleguen a revisión. Ejecuta antes `scripts/checks/run-all.sh` y pega su resumen en la pull request: hace las mismas comprobaciones en local, además de las que aún no tienen job en la CI. Cada pull request debe actualizar este README y su versión en inglés, [README.md](README.md), antes de fusionarse.
 
 ## Datos y aviso legal
 

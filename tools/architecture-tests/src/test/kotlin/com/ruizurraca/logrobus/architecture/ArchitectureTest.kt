@@ -294,6 +294,23 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb008_noModuleBundlesSeedData() {
+        // ADR-0008: the first use downloads lines and stops; the MVP bundles no seed in either app or shared code.
+        val skipped = ignoredDirectories + setOf(".build", "DerivedData", "Frameworks", "iosApp.xcodeproj")
+        val offenders =
+            listOf("android", "iosApp", "shared")
+                .flatMap { area ->
+                    File(root, area)
+                        .walkTopDown()
+                        .onEnter { it.name !in skipped }
+                        .filter { it.isFile }
+                        .toList()
+                }.map { it.relativePath() }
+                .filter(ArchitectureRules::isSeedData)
+        assertEquals(emptyList<String>(), offenders)
+    }
+
+    @Test
     fun lb017_theSwiftPackageHasNoVendorTelemetrySdk() {
         // ADR-0009: as on Android, only the app may link a vendor SDK; the design system and features never do.
         val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
