@@ -14,6 +14,9 @@ internal object LineNameParser {
     // Spec §5.5: these stay lower case, except as a name's first word.
     private val linkWords = setOf("de", "del", "la", "las", "el", "los", "y")
 
+    // Spec §5.5's B?\d{1,2}, with room for a line 100: no set of lines is fixed (AGENTS.md §5, rule 10).
+    private val lineCode = Regex("""B?\d{1,3}""")
+
     /**
      * The parts of [name], API-01's name after the DD-11 overrides. When a terminus holds a hyphen, the name cannot
      * tell where the termini split, so the names of the outbound pattern's first and last stops ([outboundTermini])
@@ -23,19 +26,25 @@ internal object LineNameParser {
         name: String,
         outboundTermini: Pair<String, String>? = null,
     ): LineName? {
-        val code = name.substringBefore('-').trim()
+        val code = name.substringBefore('-').trim().uppercase()
+        if (!lineCode.matches(code)) return null
         val parts =
             name
                 .substringAfter('-', missingDelimiterValue = "")
                 .split('-')
                 .map(String::trim)
                 .filter(String::isNotEmpty)
-        val termini = if (parts.size == 2) parts[0] to parts[1] else outboundTermini
         val displayName =
-            termini?.let { (from, to) -> "${titleCase(from)} - ${titleCase(to)}" }
-                ?: parts.joinToString(" - ", transform = ::titleCase).ifEmpty { code }
+            when {
+                parts.size == 2 -> "${titleCase(parts[0])} - ${titleCase(parts[1])}"
+
+                // Stop names come in their own case already (AGENTS.md §7).
+                outboundTermini != null -> "${outboundTermini.first} - ${outboundTermini.second}"
+
+                else -> parts.joinToString(" - ", transform = ::titleCase).ifEmpty { code }
+            }
         // Spec §5.1: the night (Búho) lines' codes start with B.
-        val kind = if (code.startsWith('B', ignoreCase = true)) LineKind.NIGHT else LineKind.DAY
+        val kind = if (code.startsWith('B')) LineKind.NIGHT else LineKind.DAY
         return LineName(code, displayName, kind)
     }
 
