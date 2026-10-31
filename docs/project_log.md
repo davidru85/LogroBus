@@ -19,6 +19,69 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-10-31: LB-006, part 1: the DD rules that need no DTO shapes
+
+**Done**
+- **Merge:** the owner merged PR #33 (LB-008 part 1, the CI retry and the rule on failing checks), with all 53 checks green, and `main` was synced. The iOS job passed at its first attempt; the simulator did not vanish, so the new retry did not run.
+- **LB-006 split in two,** like LB-005 and LB-008. Part 1 is the rules that need no DTO shapes. Part 2 is the mappers over LB-005's DTOs and the rules that need them, checked against LB-003's fixtures (OQ-11).
+- **`:shared:core:network`:**
+  - `String?.trimmedOrNull()` (DD-07);
+  - `IdParser.stopId()` and `lineId()` (DD-01, DD-02, DD-06). They live here so the planner's mappers can read the same formats.
+- **`:shared:core:common`:**
+  - `madridTimeZone`, moved from `MadridDateTime` as ADR-0015 planned, with kotlinx-datetime now exposed as API;
+  - `parseCssColor()` (DD-08), beside `onColorFor()`.
+- **`:shared:transit:data`:**
+  - `DirectionMapper` (DD-04 words) and `EtDirectionInferrer` (spec §5.6 steps 2 to 5);
+  - `correctNextStopTime()` (DD-05);
+  - `NameNormaliser` (DD-11) and `LineNameParser` (spec §5.5);
+  - `ServiceArea` (spec §5.4, step 7).
+- **Tests:** 67 new tests on the Android host and the iOS simulator, named after their DD rule or `lb006_`. A mutation to `api_spec.md`'s DD-05 sketch fails exactly the October second-pass case.
+- **Reviews** (the code-reviewer and data-rules-reviewer subagents; no blockers, changes asked). Fixed, each with its own TDD cycle:
+  - **ET directions (major, both reviewers):** calls at one stop skipped the positional steps, although `order` still places them, so every stop on both patterns would have lost its direction in API-06's answers. Positions now come first, with membership as step 4's fallback.
+  - **The ±1 window (major):** it was symmetric only for an `order` counted from 0. `order` now counts from 1, as spec §4.6's example suggests, and fits one place either side.
+  - **The cache:** `infer()` now says whether its answer may be cached, so part 2 keeps only step 3's decisions across several stops.
+  - **DD-05:** March's skipped hour is read nearest the report too. New tests: that hour, a time across October's change, and a late bus 40 min after its report, which pins the threshold from above.
+  - **DD-11:**
+    - the overrides apply in one pass, so no fix is rewritten by another;
+    - a combining accent (NFD) is part of its word;
+    - the longest-first order is pinned.
+  - **Line names:**
+    - the outbound pattern's termini show as delivered ("Puente Madre-Hospital", "IES"), not title-cased;
+    - codes are checked against spec §5.5's form and upper-cased; a name with no code gives `null`;
+    - the parameter is `name`, as it comes after the overrides.
+  - **Smaller:** a test of 39 of 49 calls pins the rounding, and `DirectionMapper`'s comment names the real sources of its words.
+  - **Left, recorded below:**
+    - the planner's direction words;
+    - sharing the service box;
+    - the part 2 notes.
+
+**Decisions**
+- **DD-05 around the changes of time:** of the instants a wall-clock time can stand for, the one nearest the report wins: two in October's repeated hour, and the CET and CEST readings in March's skipped hour. The zone's default reading, which `api_spec.md` §4 sketched, would put a bus in the second 02:xx an hour early. Night lines run then.
+- **Spec §5.6 for calls at one stop:** steps 2 and 3 run first, and step 4, the stop's membership, is the fallback for any set of calls at a single stop, not only a single call. The cache keeps only step 3's decisions across several stops.
+- **`order` counts from 1** (spec §4.6's example), with a call fitting one place either side; the fixtures will confirm it.
+- **Overrides (DD-11)** replace whole words in their exact case, longest first, in one pass. A typo in another case needs its own key.
+- **The display name** takes the outbound pattern's first and last stops, as delivered, when a terminus holds a hyphen; with no patterns, it shows every part of the name. A line code is `B` and up to three digits, since no set of lines is fixed.
+- **Only the agency prefix `1:` is stripped from ids;** another prefix would be another feed's id space, so the id is `null`.
+
+**Open / next**
+- **LB-006 part 2,** with LB-005 part 2 and LB-003's fixtures (OQ-11):
+  - the DTO mappers;
+  - the `StaticNormaliser` for LB-008, with a fingerprint of its version and the overrides;
+  - DD-03, DD-09, DD-10's synthetic stops, DD-16 to DD-18;
+  - the persisted `direction_code_cache` with codes 401 and 402;
+  - the `DataQualityReport` with the dropped items.
+- **Notes for part 2, from the reviews:**
+  - **ET calls:** the ET mapper drops calls with no stop or `order` before grouping them.
+  - **Pattern lists:** the lists passed to `EtDirectionInferrer` include DD-10's provisional stops in sequence, or every later position shifts.
+  - **Colours:** `parseCssColor` keeps alpha, so a translucent line colour must be made opaque before `onColorFor`.
+  - **OTP line ids:** check in `route_ok.json` whether OTP names night lines by id or by code (`IdParser.lineId("1:B1-asc")` is `null`).
+  - **Line names:** a line whose name has no code falls back on its id, and is counted.
+- **For the planner and Near Me stories:**
+  - API-07's legs send `asc` and `desc`, but `DirectionMapper` is internal to `:shared:transit:data`, which features may not use. Move the word table to a core module then, or record a planner copy.
+  - The planner (5 km, FR-PLAN-10) and Near Me's camera need the stops' extent too. Move the unexpanded box where they can reach it.
+- **Still waiting on the owner:** OQ-11 (LB-003), OQ-10 (LB-013), the provisional saved stop of DD-10, the limits of the rule on failing checks, and the 8 Dependabot alerts.
+- **Next story:** everything left in M0 waits for an owner answer: OQ-11 (LB-003, and through it LB-005, LB-006 and LB-008 part 2), OQ-10 (LB-013) or OQ-16 (LB-014). The next task is LB-101 part 1: the Lines list over a repository contract and scripted lines, with `lines_2026-10-22.json` checked in part 2.
+
 ## 2026-10-30: LB-008, part 1: the static sync engine
 
 **Done**

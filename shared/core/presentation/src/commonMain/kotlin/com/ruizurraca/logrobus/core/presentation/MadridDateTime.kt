@@ -1,6 +1,6 @@
 package com.ruizurraca.logrobus.core.presentation
 
-import kotlinx.datetime.TimeZone
+import com.ruizurraca.logrobus.core.common.madridTimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
@@ -20,10 +20,8 @@ data class MadridDateTime(
     val minute: Int,
 ) {
     companion object {
-        private val madrid = TimeZone.of("Europe/Madrid")
-
         fun of(instant: Instant): MadridDateTime {
-            val local = instant.toLocalDateTime(madrid)
+            val local = instant.toLocalDateTime(madridTimeZone)
             return MadridDateTime(local.year, local.month.number, local.day, local.hour, local.minute)
         }
     }

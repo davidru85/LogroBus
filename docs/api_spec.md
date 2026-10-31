@@ -169,6 +169,8 @@ internal fun correctNextStopTime(raw: Instant, recordedAt: Instant): Instant =
     }
 ```
 
+As built (LB-006 part 1, `NextStopTime.kt`): the sketch's `toInstant(TimeZone.of("Europe/Madrid"))` takes the earlier reading of the hour repeated on the last Sunday of October, which puts a bus an hour early during the second pass. `correctNextStopTime` takes, of the instants at which Madrid shows that wall-clock time, the one nearest `recordedAt`. A time in the hour skipped in March shows on no Madrid clock, so its CET and CEST readings both stand, and the nearest wins too. The threshold is strictly more than 30 min.
+
 Other rules:
 - Bearing is computed client-side from the last two positions of the same `vehicleRef` (FR-LINE-06).
 - A vehicle is hidden 45 s (`vehicle_grace_ms`) after its last report (FR-LINE-07).
@@ -203,6 +205,10 @@ Fixtures: `vm_all_with_object_lineRef.json`, `vm_line2.json`.
 Mapping:
 - Sort by `expectedArrivalTime`, falling back to `aimedArrivalTime`; the source order is not guaranteed.
 - Infer direction with the algorithm of spec §5.6, using the persisted `direction_code_cache`. When the result is ambiguous, the direction is `null` and no headsign is shown.
+  - As built (LB-006 part 1), until the fixtures confirm it:
+    - **Step 2:** `order` counts from 1, as spec §4.6's example suggests (stop 38, the 25th and last stop of line 1 outbound, at order 25). A call fits a pattern that has its stop one place either side of that position.
+    - **Calls at one stop,** as API-06 returns them, go through steps 2 and 3 like any others, since their order still places them. Step 4 is the fallback when the order fits both patterns or neither, for every set of calls at a single stop, not only a single call.
+    - **The cache** keeps only decisions by position across several stops (step 3). One stop is one observation, so what it decides is used for that response only.
 - Quality is `REALTIME_LOW_CONFIDENCE` when `predictionInaccurate` is true (DD-09). `cancellation` set to true gives a cancelled arrival.
 - For API-06, `lines` is always the stop's served lines from API-02, and `previewMinutes` is the remote-config key `eta_preview_minutes` (default 60).
 
@@ -329,14 +335,14 @@ The pipeline order is spec §5.4. Each rule has a home and a test prefix.
 
 | DD | Handled in | Test prefix |
 | --- | --- | --- |
-| DD-01 stop id formats | `IdParser.stopId()` | `dd01_` |
-| DD-02 line id formats | `IdParser.lineId()` | `dd02_` |
+| DD-01 stop id formats | `IdParser.stopId()` (`:shared:core:network`, shared with the planner) | `dd01_` |
+| DD-02 line id formats | `IdParser.lineId()` (`:shared:core:network`) | `dd02_` |
 | DD-03 VM and ET vehicle ids differ | Not joined anywhere; VM fleet number shown only in the vehicle sheet | `dd03_` |
-| DD-04 direction encodings | `DirectionMapper`, `EtDirectionInferrer` + `direction_code_cache` | `dd04_` |
-| DD-05 VM local time labelled Z | `VehicleMapper.correctNextStopTime()` | `dd05_` (CET and CEST) |
+| DD-04 direction encodings | `DirectionMapper.fromToken()`, `EtDirectionInferrer.infer()` (spec §5.6 steps 2–5) + `direction_code_cache` (step 1, LB-006 part 2) | `dd04_` |
+| DD-05 VM local time labelled Z | `correctNextStopTime()`, called by the vehicle mapper (LB-006 part 2) | `dd05_` (CET and CEST) |
 | DD-06 `"[object Object]"` lineRef | `IdParser.lineId()` → `null` | `dd06_` |
-| DD-07 `""` instead of null | `String?.blankToNull()` applied in every mapper | `dd07_` |
-| DD-08 colour formats | `ColorParser` (rgba and hex), `ContrastColor` | `dd08_` |
+| DD-07 `""` instead of null | `String?.trimmedOrNull()` (`:shared:core:network`) applied in every mapper | `dd07_` |
+| DD-08 colour formats | `parseCssColor()` (rgba and hex) and `onColorFor()`, both in `:shared:core:common` | `dd08_` |
 | DD-09 low-confidence predictions | `ArrivalMapper` → `PredictionQuality` | `dd09_` |
 | DD-10 pattern stops missing from the catalogue | `NetworkNormaliser.synthesiseProvisionalStops()` | `dd10_` |
 | DD-11 typos and trailing spaces | `NameNormaliser` + remote-config `name_overrides` | `dd11_` |

@@ -127,6 +127,17 @@ Done when:
 - Stops 383, 384 and 385 exist as synthetic provisional stops. Items outside the service bounding box expanded by 2 km are dropped and counted in the `DataQualityReport`.
 - Line coverage of `data` and `domain` is at least 80 %.
 
+Part 1 (2026-10-31), the rules that need no DTO shapes, done with this evidence (on the Android host and the iOS simulator):
+- DD-01, DD-02, DD-06 (`IdParserTest`): `dd01_aStopIdInEverySourceFormatIsTheSameNumber`, `dd01_aStopIdThatIsNotAWholeNumberIsNull`, `dd01_onlyTheAgencyPrefixOneIsStripped`, `dd02_aLineIdInEverySourceFormatIsTheSameNumber`, `dd06_theLiteralObjectObjectLineRefIsNull`.
+- DD-04: `DirectionMapperTest` (`dd04_ascAndIdaAreOutbound`, `dd04_descAndVueltaAreInbound`, …) and `EtDirectionInferrerTest` (`dd04_eightyPercentForOnePatternAndUnderFiftyForTheOtherDecides`, `dd04_anOrderOneAboveOrBelowItsPositionStillFits`, `dd04_oneStopAtDifferentPlacesOnThePatternsIsDecidedByItsOrderButNotCached`, …). Codes 401 and 402 of `et_line1_60min.json`, and the cache, are part 2.
+- DD-05 (`NextStopTimeTest`): `dd05_aMislabelledTimeIsReadAsMadridTime_inCet`, `…_inCest`, `dd05_aTimeWithinThirtyMinutesOfTheReportIsLeftAlone`, `dd05_onTheLastSundayOfMarchTimesOnEitherSideOfTheJumpAreCorrected`, `dd05_aTimeInTheHourSkippedInMarchIsReadNearestTheReport`, `dd05_onTheLastSundayOfOctoberATimeAcrossTheChangeIsCorrected`, `dd05_onTheLastSundayOfOctoberTheRepeatedHourIsReadNearestTheReport`.
+- DD-07 (`SourceStringsTest`), DD-08 (`CssColorTest`, with `ContrastTest` from LB-011), DD-11 (`NameNormaliserTest`).
+- The display name and the kind (`LineNameParserTest`): `lb006_pradoviejooShowsAsPalacioDeCongresosPradoviejo`, `lb006_aCodeStartingWithBIsANightLine`.
+- The bounding box (`ServiceAreaTest`): `lb006_aPointMoreThanTwoKilometresBeyondTheStopsIsNot`. Dropping and counting items is part 2.
+- DD-15 was done in LB-005 (`SourceClientTest.dd15_anyTwoHundredStatusIsASuccessAndPostsAnswer201`).
+
+Part 2 is left: the mappers over LB-005's DTOs (lines, stops, VM, ET, planner) and the `StaticNormaliser` for LB-008; DD-03, DD-09, DD-10's synthetic stops 383 to 385, DD-16 to DD-18; the persisted `direction_code_cache` with codes 401 and 402; the `DataQualityReport`; all checked against LB-003's fixtures.
+
 ### LB-007 `:shared:core:database`
 Refs: spec §8.8, `architecture.md` §4.3, FR-STOP-01, NFR-I18N-03, NFR-PERF-03
 
