@@ -60,4 +60,27 @@ class NameNormaliserTest {
 
         assertEquals("LOGROÑO", normaliser.normalise("LOGROÑO"))
     }
+
+    @Test
+    fun dd11_aDecomposedAccentIsPartOfItsWordToo() {
+        // NFD writes Ñ as N and a combining tilde (U+0303), as some sources send it.
+        val decomposed = "LOGRON\u0303O"
+
+        assertEquals(decomposed, NameNormaliser(mapOf("LOGRON" to "X")).normalise(decomposed))
+    }
+
+    @Test
+    fun dd11_aLongerOverrideWinsOverAShorterOneInsideIt() {
+        val normaliser = NameNormaliser(mapOf("PRADO" to "PRADERA", "PRADO VIEJO" to "PRADOVIEJO"))
+
+        assertEquals("PRADOVIEJO", normaliser.normalise("PRADO VIEJO"))
+    }
+
+    @Test
+    fun dd11_oneOverridesFixIsNeverRewrittenByAnother() {
+        val normaliser = NameNormaliser(mapOf("SAN MILLAN" to "SAN MILLÁN", "SAN" to "SANTO"))
+
+        assertEquals("SAN MILLÁN", normaliser.normalise("SAN MILLAN"))
+        assertEquals("SANTO DOMINGO", normaliser.normalise("SAN DOMINGO"))
+    }
 }
