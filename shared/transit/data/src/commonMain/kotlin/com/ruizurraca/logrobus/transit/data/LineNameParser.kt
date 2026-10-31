@@ -15,16 +15,17 @@ internal object LineNameParser {
     private val linkWords = setOf("de", "del", "la", "las", "el", "los", "y")
 
     /**
-     * The parts of [rawName]. When a terminus holds a hyphen, the name cannot tell where the termini split, so the
-     * names of the outbound pattern's first and last stops ([outboundTermini]) are its termini.
+     * The parts of [name], API-01's name after the DD-11 overrides. When a terminus holds a hyphen, the name cannot
+     * tell where the termini split, so the names of the outbound pattern's first and last stops ([outboundTermini])
+     * are its termini; with no patterns, each part of the name shows. `null` when the name starts with no line code.
      */
     fun parse(
-        rawName: String,
+        name: String,
         outboundTermini: Pair<String, String>? = null,
-    ): LineName {
-        val code = rawName.substringBefore('-').trim()
+    ): LineName? {
+        val code = name.substringBefore('-').trim()
         val parts =
-            rawName
+            name
                 .substringAfter('-', missingDelimiterValue = "")
                 .split('-')
                 .map(String::trim)
