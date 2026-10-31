@@ -26,6 +26,14 @@ class NextStopTimeTest {
     }
 
     @Test
+    fun dd05_aLateBussMislabelledTimeIsCorrectedToo_inCet() {
+        // 08:20 CET, twenty minutes late for its 08:00 stop: labelled 08:00Z, only 40 minutes after the report.
+        val corrected = correctNextStopTime(raw = at("2026-01-15T08:00:00Z"), recordedAt = at("2026-01-15T07:20:00Z"))
+
+        assertEquals(at("2026-01-15T07:00:00Z"), corrected)
+    }
+
+    @Test
     fun dd05_aTimeWithinThirtyMinutesOfTheReportIsLeftAlone() {
         // Risk R4: should the source fix the label, its times stay as they are.
         listOf("2026-07-15T06:45:00Z", "2026-07-15T06:50:00Z").forEach { raw ->
@@ -56,6 +64,25 @@ class NextStopTimeTest {
         assertEquals(
             at("2026-03-29T01:25:00Z"),
             correctNextStopTime(raw = at("2026-03-29T03:25:00Z"), recordedAt = at("2026-03-29T01:20:00Z")),
+        )
+    }
+
+    @Test
+    fun dd05_aTimeInTheHourSkippedInMarchIsReadNearestTheReport() {
+        // Madrid's clock never shows 02:30 that night, so the source counted from CET (01:30 UTC) or from CEST
+        // (00:30 UTC). At 01:25 CET, five minutes ahead is the one a next stop can be.
+        assertEquals(
+            at("2026-03-29T00:30:00Z"),
+            correctNextStopTime(raw = at("2026-03-29T02:30:00Z"), recordedAt = at("2026-03-29T00:25:00Z")),
+        )
+    }
+
+    @Test
+    fun dd05_onTheLastSundayOfOctoberATimeAcrossTheChangeIsCorrected() {
+        // 02:55 CEST, next stop at 02:05 CET, ten minutes later across the change.
+        assertEquals(
+            at("2026-10-25T01:05:00Z"),
+            correctNextStopTime(raw = at("2026-10-25T02:05:00Z"), recordedAt = at("2026-10-25T00:55:00Z")),
         )
     }
 
