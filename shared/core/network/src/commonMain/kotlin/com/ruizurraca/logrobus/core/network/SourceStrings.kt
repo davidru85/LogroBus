@@ -5,4 +5,4 @@ package com.ruizurraca.logrobus.core.network
  * `nextStopRef` among others. Every mapper reads its strings through this first (spec §5.4, step 2): a missing,
  * empty or blank string is `null`, and any other is trimmed.
  */
-fun String?.trimmedOrNull(): String? = this
+fun String?.trimmedOrNull(): String? = this?.trim()?.ifEmpty { null }
