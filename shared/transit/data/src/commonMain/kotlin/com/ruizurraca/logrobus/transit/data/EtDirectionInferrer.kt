@@ -8,6 +8,12 @@ internal data class EtCall(
     val order: Int,
 )
 
+/** A direction found by [EtDirectionInferrer], and whether spec §5.6 lets the learned cache keep it. */
+internal data class InferredDirection(
+    val direction: Direction,
+    val cacheable: Boolean,
+)
+
 /**
  * DD-04 and spec §5.6: ET's `directionRef` is an opaque code such as `"401"`, so its direction is inferred from where
  * its calls are. The learned cache of step 1 comes with the ET mapper (LB-006 part 2); this is steps 2 to 5.
@@ -29,12 +35,12 @@ internal object EtDirectionInferrer {
     fun infer(
         calls: List<EtCall>,
         patterns: Map<Direction, List<Int>>,
-    ): Direction? =
+    ): InferredDirection? =
         when {
             calls.isEmpty() -> null
             calls.all { it.stopId == calls.first().stopId } -> byMembership(calls.first().stopId, patterns)
             else -> byPosition(calls, patterns)
-        }
+        }?.let { InferredDirection(it, cacheable = true) } // TDD: red
 
     // Step 4: calls at one stop, as API-06 returns them, say nothing by their position. A stop on only one pattern
     // still fixes the direction.

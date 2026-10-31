@@ -5,7 +5,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/** Spec §5.6, steps 2 to 5. Patterns are stop ids in order; a call's `order` may count from 0 or from 1. */
+/**
+ * Spec §5.6, steps 2 to 5. Patterns are stop ids in order. A call's `order` counts from 1, as spec §4.6's example
+ * suggests (stop 38, the 25th and last of line 1 outbound, at order 25); a call fits within one place of it.
+ */
 class EtDirectionInferrerTest {
     private val outbound = (1..10).toList()
     private val inbound = outbound.reversed()
@@ -16,15 +19,26 @@ class EtDirectionInferrerTest {
         val forwards = outbound.mapIndexed { index, stop -> EtCall(stop, order = index + 1) }
         val backwards = inbound.mapIndexed { index, stop -> EtCall(stop, order = index + 1) }
 
-        assertEquals(Direction.OUTBOUND, EtDirectionInferrer.infer(forwards, line))
-        assertEquals(Direction.INBOUND, EtDirectionInferrer.infer(backwards, line))
+        assertEquals(InferredDirection(Direction.OUTBOUND, cacheable = true), EtDirectionInferrer.infer(forwards, line))
+        assertEquals(InferredDirection(Direction.INBOUND, cacheable = true), EtDirectionInferrer.infer(backwards, line))
     }
 
     @Test
-    fun dd04_anOrderCountedFromZeroMatchesToo() {
-        val calls = inbound.take(6).mapIndexed { index, stop -> EtCall(stop, order = index) }
+    fun dd04_anOrderOneAboveOrBelowItsPositionStillFits() {
+        val oneAbove = outbound.mapIndexed { index, stop -> EtCall(stop, order = index + 2) }
+        val oneBelow = outbound.mapIndexed { index, stop -> EtCall(stop, order = index) }
 
-        assertEquals(Direction.INBOUND, EtDirectionInferrer.infer(calls, line))
+        assertEquals(Direction.OUTBOUND, EtDirectionInferrer.infer(oneAbove, line)?.direction)
+        assertEquals(Direction.OUTBOUND, EtDirectionInferrer.infer(oneBelow, line)?.direction)
+    }
+
+    @Test
+    fun dd04_anOrderTwoAwayFromItsPositionDoesNotFit() {
+        val twoAbove = outbound.mapIndexed { index, stop -> EtCall(stop, order = index + 3) }
+        val twoBelow = outbound.mapIndexed { index, stop -> EtCall(stop, order = index - 1) }
+
+        assertNull(EtDirectionInferrer.infer(twoAbove, line))
+        assertNull(EtDirectionInferrer.infer(twoBelow, line))
     }
 
     @Test
@@ -36,9 +50,21 @@ class EtDirectionInferrerTest {
 
         assertEquals(
             Direction.OUTBOUND,
-            EtDirectionInferrer.infer(calls, line + (Direction.INBOUND to inboundSharingFour)),
+            EtDirectionInferrer.infer(calls, line + (Direction.INBOUND to inboundSharingFour))?.direction,
         )
         assertNull(EtDirectionInferrer.infer(calls, line + (Direction.INBOUND to inboundSharingFive)))
+    }
+
+    @Test
+    fun dd04_aShareJustUnderEightyPercentDoesNotDecide() {
+        val long = mapOf(Direction.OUTBOUND to (1..49).toList(), Direction.INBOUND to (101..149).toList())
+
+        fun calls(fitting: Int) =
+            (1..fitting).map { EtCall(it, order = it) } + (fitting + 1..49).map { EtCall(200 + it, order = it) }
+
+        // 39 of 49 is 79.6 %; 40 of 49 is 81.6 %.
+        assertNull(EtDirectionInferrer.infer(calls(fitting = 39), long))
+        assertEquals(Direction.OUTBOUND, EtDirectionInferrer.infer(calls(fitting = 40), long)?.direction)
     }
 
     @Test
@@ -57,21 +83,32 @@ class EtDirectionInferrerTest {
     }
 
     @Test
-    fun dd04_callsAtOneStopOfOnlyOnePatternTakeItsDirection() {
-        // Stop 11 is only on the inbound pattern. One stop says nothing by its position, only by its membership.
-        val inboundWithItsOwnStop = listOf(11) + inbound
-        val calls = listOf(EtCall(11, order = 7), EtCall(11, order = 7))
-
+    fun dd04_oneStopAtDifferentPlacesOnThePatternsIsDecidedByItsOrderButNotCached() {
+        // Stop 3 is third outbound and eighth inbound; API-06 answers with calls at one stop like this one.
         assertEquals(
-            Direction.INBOUND,
-            EtDirectionInferrer.infer(calls, line + (Direction.INBOUND to inboundWithItsOwnStop)),
+            InferredDirection(Direction.OUTBOUND, cacheable = false),
+            EtDirectionInferrer.infer(listOf(EtCall(3, order = 3), EtCall(3, order = 3)), line),
         )
     }
 
     @Test
-    fun dd04_callsAtOneStopOfBothPatternsAreNull() {
-        // Stop 3 is third outbound, which this order fits; but one stop on both patterns cannot tell them apart.
-        assertNull(EtDirectionInferrer.infer(listOf(EtCall(3, order = 3)), line))
+    fun dd04_oneStopOfOnlyOnePatternTakesItsDirectionButIsNotCached() {
+        // Stop 11 is only on the inbound pattern, at a place its order does not fit.
+        val inboundWithItsOwnStop = listOf(11) + inbound
+
+        assertEquals(
+            InferredDirection(Direction.INBOUND, cacheable = false),
+            EtDirectionInferrer.infer(
+                listOf(EtCall(11, order = 7)),
+                line + (Direction.INBOUND to inboundWithItsOwnStop),
+            ),
+        )
+    }
+
+    @Test
+    fun dd04_oneStopAtTheSamePlaceOnBothPatternsIsNull() {
+        // Stop 5 is fifth outbound and sixth inbound: its order fits both.
+        assertNull(EtDirectionInferrer.infer(listOf(EtCall(5, order = 5)), line))
     }
 
     @Test
