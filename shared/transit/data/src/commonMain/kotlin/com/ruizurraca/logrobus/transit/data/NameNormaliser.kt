@@ -9,19 +9,22 @@ import com.ruizurraca.logrobus.core.network.trimmedOrNull
 internal class NameNormaliser(
     overrides: Map<String, String>,
 ) {
-    // Longest first, so a short typo never breaks a longer one that contains it.
-    private val rules =
-        overrides.entries
-            .filter { it.key.isNotBlank() }
-            .sortedByDescending { it.key.length }
-            .map { (typo, fix) -> wholeWords(typo) to Regex.escapeReplacement(fix) }
+    private val fixes = overrides.filterKeys { it.isNotBlank() }
+
+    // Every typo in one pass, longest first: a short typo never breaks a longer one that contains it, and no fix is
+    // rewritten by another override. A typo matches as whole words, in its exact case, never inside a longer word:
+    // letters, digits and combining accents (NFD) all belong to a word.
+    private val typos =
+        fixes.keys
+            .sortedByDescending { it.length }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString("|", prefix = """(?<![\p{L}\p{M}\p{N}])(?:""", postfix = """)(?![\p{L}\p{M}\p{N}])""") {
+                Regex.escape(it)
+            }?.let(::Regex)
 
     /** [raw] trimmed, with every override applied; `null` when it is missing or blank. */
     fun normalise(raw: String?): String? {
         val name = raw.trimmedOrNull() ?: return null
-        return rules.fold(name) { fixed, (typo, fix) -> typo.replace(fixed, fix) }.trimmedOrNull()
+        return (typos?.replace(name) { fixes.getValue(it.value) } ?: name).trimmedOrNull()
     }
-
-    // A typo matches as whole words, in its exact case: never inside a longer word, accented letters included.
-    private fun wholeWords(typo: String) = Regex("""(?<![\p{L}\p{N}])${Regex.escape(typo)}(?![\p{L}\p{N}])""")
 }
