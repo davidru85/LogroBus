@@ -25,7 +25,7 @@ internal object EtDirectionInferrer {
     private const val DECIDING_PERCENT = 80
     private const val DOUBTFUL_PERCENT = 50
 
-    // Step 2: a call fits a pattern that has its stop within one place of its order, which may count from 0 or 1.
+    // Step 2: a call fits a pattern that has its stop within one place of its order.
     private const val TOLERANCE = 1
 
     /**
@@ -35,19 +35,18 @@ internal object EtDirectionInferrer {
     fun infer(
         calls: List<EtCall>,
         patterns: Map<Direction, List<Int>>,
-    ): InferredDirection? =
-        when {
-            calls.isEmpty() -> null
-            calls.all { it.stopId == calls.first().stopId } -> byMembership(calls.first().stopId, patterns)
-            else -> byPosition(calls, patterns)
-        }?.let { InferredDirection(it, cacheable = true) } // TDD: red
-
-    // Step 4: calls at one stop, as API-06 returns them, say nothing by their position. A stop on only one pattern
-    // still fixes the direction.
-    private fun byMembership(
-        stopId: Int,
-        patterns: Map<Direction, List<Int>>,
-    ): Direction? = patterns.filterValues { stopId in it }.keys.singleOrNull()
+    ): InferredDirection? {
+        if (calls.isEmpty()) return null
+        // API-06 answers with calls at one stop. Their order still places them, but they are one observation, so the
+        // cache, which step 3 fills, never keeps what they decide.
+        val oneStop = calls.all { it.stopId == calls.first().stopId }
+        val placed = byPosition(calls, patterns)
+        return when {
+            placed != null -> InferredDirection(placed, cacheable = !oneStop)
+            oneStop -> byMembership(calls.first().stopId, patterns)?.let { InferredDirection(it, cacheable = false) }
+            else -> null
+        }
+    }
 
     // Steps 2 and 3. Whole percentages round down, which keeps both comparisons exact.
     private fun byPosition(
@@ -59,6 +58,15 @@ internal object EtDirectionInferrer {
         return decided?.takeIf { shares.all { (direction, share) -> direction == decided || share < DOUBTFUL_PERCENT } }
     }
 
-    private fun EtCall.fits(stops: List<Int>): Boolean =
-        (order - TOLERANCE..order + TOLERANCE).any { stops.getOrNull(it) == stopId }
+    // Step 4: when its order fits both patterns or neither, a stop on only one pattern still fixes the direction.
+    private fun byMembership(
+        stopId: Int,
+        patterns: Map<Direction, List<Int>>,
+    ): Direction? = patterns.filterValues { stopId in it }.keys.singleOrNull()
+
+    // Order counts from 1, as spec §4.6's example shows: stop 38, the 25th and last of line 1 outbound, at order 25.
+    private fun EtCall.fits(stops: List<Int>): Boolean {
+        val index = order - 1
+        return (index - TOLERANCE..index + TOLERANCE).any { stops.getOrNull(it) == stopId }
+    }
 }
