@@ -31,15 +31,13 @@ internal fun correctNextStopTime(
 }
 
 /**
- * Every instant at which Madrid's clock shows [wallClock]: two in the hour repeated on the last Sunday of October, so
- * the caller picks the one nearer the report, and one at any other time. A time in the hour skipped in March shows on
- * no clock; the time zone's own reading, an hour later, stands for it.
+ * The instants [wallClock] can stand for in Madrid, for the caller to pick the one nearer the report. Usually one; two
+ * in the hour repeated on the last Sunday of October. The hour skipped in March shows on no Madrid clock, so the source
+ * counted from CET or from CEST, and both readings stand.
  */
 private fun madridReadings(wallClock: LocalDateTime): List<Instant> {
     val usual = wallClock.toInstant(madridTimeZone)
     val offsets = setOf(madridTimeZone.offsetAt(usual - AROUND), madridTimeZone.offsetAt(usual + AROUND))
-    return offsets
-        .map { wallClock.toInstant(it) }
-        .filter { it.toLocalDateTime(madridTimeZone) == wallClock }
-        .ifEmpty { listOf(usual) }
+    val readings = offsets.map { wallClock.toInstant(it) }
+    return readings.filter { it.toLocalDateTime(madridTimeZone) == wallClock }.ifEmpty { readings }
 }
