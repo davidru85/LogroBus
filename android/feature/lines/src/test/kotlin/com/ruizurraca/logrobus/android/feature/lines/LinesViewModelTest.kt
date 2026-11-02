@@ -34,7 +34,8 @@ import org.junit.Test
 
 /**
  * LB-101, ADR-0007 and testing_strategy.md §3: the Lines ViewModel builds every state with the shared use case and
- * mapper, retries on Retry, and stops its upstream after the screen leaves.
+ * mapper, retries on Retry, and stops its upstream after the screen leaves. LB-103: a row's toggle sets its line as a
+ * favourite.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LinesViewModelTest {
@@ -59,7 +60,7 @@ class LinesViewModelTest {
     fun lb101_theViewModelLoads_thenShowsWhatTheSharedMapperMakesOfTheLines() =
         runTest {
             val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
-            val viewModel = LinesViewModel { observed }
+            val viewModel = viewModel { observed }
 
             viewModel.state.test {
                 assertEquals(LinesUiState.Loading, awaitItem())
@@ -71,7 +72,7 @@ class LinesViewModelTest {
     @Test
     fun lb101_aFirstLaunchWithNoNetworkShowsTheError_andRetryLoadsTheLines() =
         runTest {
-            val viewModel = LinesViewModel(Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
+            val viewModel = viewModel(Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
 
             viewModel.state.test {
                 assertEquals(LinesUiState.Error(ErrorReason.NETWORK), awaitSettled())
@@ -87,7 +88,7 @@ class LinesViewModelTest {
         runTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
-            val viewModel = LinesViewModel { observed }
+            val viewModel = viewModel { observed }
 
             val screen = backgroundScope.launch { viewModel.state.collect {} }
             runCurrent()
@@ -112,7 +113,7 @@ class LinesViewModelTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             // A read that takes a moment, as the database's does.
             val viewModel =
-                LinesViewModel {
+                viewModel {
                     flow {
                         delay(100)
                         emit(lines)
@@ -134,6 +135,26 @@ class LinesViewModelTest {
 
             assertEquals(listOf(LinesUiMapper.state(lines)), states)
         }
+
+    @Test
+    fun lb103_aRowsToggleSetsItsLineAsAFavourite_orNot() =
+        runTest {
+            // FR-LINE-15: the carousel changes through the use case's flow, at once.
+            val set = mutableListOf<Pair<Int, Boolean>>()
+            val viewModel =
+                LinesViewModel({ flowOf(lines) }) { lineId, isFavourite ->
+                    set += lineId to isFavourite
+                    AppResult.Success(Unit)
+                }
+
+            viewModel.onEvent(LinesEvent.SetFavourite(lineId = 3, isFavourite = true))
+            viewModel.onEvent(LinesEvent.SetFavourite(lineId = 10, isFavourite = false))
+
+            assertEquals(listOf(3 to true, 10 to false), set)
+        }
+
+    private fun viewModel(observe: ObserveLinesWithFavourites) =
+        LinesViewModel(observe) { _, _ -> AppResult.Success(Unit) }
 
     /** The next state after Loading. A read may be quicker than the collector, which then never sees Loading. */
     private suspend fun ReceiveTurbine<LinesUiState>.awaitSettled(): LinesUiState {

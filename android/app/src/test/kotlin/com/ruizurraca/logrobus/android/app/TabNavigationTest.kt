@@ -2,11 +2,13 @@ package com.ruizurraca.logrobus.android.app
 
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
@@ -17,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -26,6 +29,7 @@ import org.robolectric.annotation.Config
 /**
  * LB-012: each tab keeps its own back stack, and re-selecting a tab pops it to its root (FR-NAV-03). Each tab root
  * opens More, with Settings and About data (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
+ * LB-103: favourite lines, end to end through the shell, from the Lines rows and a line's detail.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "en")
@@ -158,6 +162,50 @@ class TabNavigationTest {
 
         compose.onNodeWithContentDescription("Line 1").assertIsDisplayed()
     }
+
+    @Test
+    fun lb103_aLineAddedToFavouritesShowsAtTheEndOfTheCarousel_andItsToggleSaysSo() {
+        // FR-LINE-12, FR-LINE-15, through the debug build's graph and the device's database.
+        favouriteToggle("Add line 10 to favourites").performClick()
+        favouriteToggle("Add line 3 to favourites").performClick()
+
+        favouriteToggle("Remove line 3 from favourites").assertExists()
+        assertEquals(listOf("Line 10", "Line 3"), carouselCards())
+    }
+
+    @Test
+    fun lb103_aFavouriteCardOpensItsLine_andBackReturnsToLines() {
+        favouriteToggle("Add line 10 to favourites").performClick()
+
+        card("Line 10").performClick()
+        heading("Line 10").assertIsDisplayed()
+        back()
+
+        heading("Lines").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb103_aLineAddedFromItsDetailIsInTheCarousel_backOnLines() {
+        // FR-LINE-09: the row opens the line's detail, whose toolbar has the toggle.
+        compose.onNode(hasText("Campillo - El Cubo") and hasClickAction()).performClick()
+        favouriteToggle("Add line 3 to favourites").performClick()
+        back()
+
+        assertEquals(listOf("Line 3"), carouselCards())
+    }
+
+    private fun favouriteToggle(label: String): SemanticsNodeInteraction = compose.onNodeWithContentDescription(label)
+
+    /** A favourite line's card: it alone says where the line heads ("Towards …"). */
+    private fun card(badge: String): SemanticsNodeInteraction =
+        compose.onNode(hasContentDescription(badge) and hasContentDescription("Towards", substring = true))
+
+    /** The carousel's cards, by their badge, in their order. */
+    private fun carouselCards(): List<String?> =
+        compose
+            .onAllNodes(hasContentDescription("Towards", substring = true) and hasClickAction())
+            .fetchSemanticsNodes()
+            .map { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
 
     private fun openAboutDataInLines() {
         moreAction().performClick()

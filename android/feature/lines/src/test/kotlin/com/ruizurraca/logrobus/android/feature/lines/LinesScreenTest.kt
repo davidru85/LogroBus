@@ -8,12 +8,17 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -43,24 +48,20 @@ class LinesScreenTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
-    private val network =
-        LinesUiMapper.state(
-            AppResult.Success(
-                LinesWithFavourites(
-                    listOf(
-                        line(101, "B1", "Varea - La Cava", 0xFFE30613),
-                        line(10, "10", "El Arco - Hospital San Pedro", 0xFFAD1457),
-                        line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613),
-                        line(11, "11", "Artesanos - Manuel de Falla", 0xFF00897B, isOperational = false),
-                    ),
-                    favouriteIds = emptyList(),
-                ),
-            ),
+    private val networkLines =
+        listOf(
+            line(101, "B1", "Varea - La Cava", 0xFFE30613),
+            line(10, "10", "El Arco - Hospital San Pedro", 0xFFAD1457)
+                .copy(headsigns = listOf("Hospital San Pedro", "El Arco")),
+            line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613),
+            line(11, "11", "Artesanos - Manuel de Falla", 0xFF00897B, isOperational = false),
         )
+
+    private val network = favourites()
 
     @Test
     fun lb101_dayLinesThenNightLines_eachUnderItsHeading_inCodeOrder() {
-        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         val day = context.getString(R.string.lines_group_day)
         val night = context.getString(R.string.lines_group_night)
@@ -82,7 +83,7 @@ class LinesScreenTest {
 
     @Test
     fun lb101_aLineThatIsNotOperationalShowsAStatusChip() {
-        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         compose
             .onNode(hasText(context.getString(R.string.lines_not_operational)))
@@ -96,7 +97,7 @@ class LinesScreenTest {
     @Test
     fun lb101_linesThatShareAColourAreSpokenByTheirCode_neverTheColour() {
         // DD-08: lines 4 and B1 share red.
-        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         compose.onAllNodesWithContentDescription(badge("4")).fetchSemanticsNodes().let { assertEquals(1, it.size) }
         compose.onAllNodesWithContentDescription(badge("B1")).fetchSemanticsNodes().let { assertEquals(1, it.size) }
@@ -104,7 +105,7 @@ class LinesScreenTest {
 
     @Test
     fun lb101_eachRowIsReadAsOne_lineThenNameThenStatus() {
-        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         val row = compose.onNode(hasText("Artesanos - Manuel de Falla", substring = true)).fetchSemanticsNode()
         val spoken =
@@ -121,7 +122,7 @@ class LinesScreenTest {
 
     @Test
     fun lb101_theFirstLoadShowsPlaceholders_notASpinner() {
-        compose.setContent { LinesScreen(LinesUiState.Loading, onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(LinesUiState.Loading, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         compose.onNode(isHeading() and hasText(context.getString(R.string.lines_title))).assertExists()
         compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertDoesNotExist()
@@ -130,7 +131,7 @@ class LinesScreenTest {
     @Test
     fun lb101_theFirstLoadIsAnnouncedToTalkBack() {
         // The placeholders are hidden from TalkBack, so the list says it is loading instead (design_guidelines §8).
-        compose.setContent { LinesScreen(LinesUiState.Loading, onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(LinesUiState.Loading, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         compose.onNode(hasContentDescription(context.getString(R.string.lines_loading))).assertExists()
     }
@@ -138,7 +139,7 @@ class LinesScreenTest {
     @Test
     fun lb101_everyErrorReasonShowsItsMessage() {
         var reason by mutableStateOf(ErrorReason.NETWORK)
-        compose.setContent { LinesScreen(LinesUiState.Error(reason), onEvent = {}, onOpenMore = {}) }
+        compose.setContent { LinesScreen(LinesUiState.Error(reason), onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 
         ErrorReason.entries.forEach {
             reason = it
@@ -149,9 +150,8 @@ class LinesScreenTest {
     @Test
     fun lb101_aFirstLaunchWithNoNetworkShowsTheNetworkReason_andRetrySendsTheEvent() {
         val events = mutableListOf<LinesEvent>()
-        compose.setContent {
-            LinesScreen(LinesUiState.Error(ErrorReason.NETWORK), onEvent = { events += it }, onOpenMore = {})
-        }
+        val offline = LinesUiState.Error(ErrorReason.NETWORK)
+        compose.setContent { LinesScreen(offline, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {}) }
 
         compose.onNodeWithText(context.getString(DS.string.error_network)).assertExists()
         compose.onNodeWithText(context.getString(DS.string.error_retry)).performClick()
@@ -162,7 +162,9 @@ class LinesScreenTest {
     @Test
     fun lb101_noLinesShowsOneSentence_andRetry() {
         val events = mutableListOf<LinesEvent>()
-        compose.setContent { LinesScreen(LinesUiState.Empty, onEvent = { events += it }, onOpenMore = {}) }
+        compose.setContent {
+            LinesScreen(LinesUiState.Empty, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {})
+        }
 
         compose.onNodeWithText(context.getString(R.string.lines_empty)).assertExists()
         compose.onNodeWithText(context.getString(DS.string.error_retry)).performClick()
@@ -173,12 +175,71 @@ class LinesScreenTest {
     @Test
     fun lb101_theMoreActionOpensMore() {
         var opened = 0
-        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = { opened++ }) }
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = { opened++ }, onOpenLine = {}) }
 
         compose.onNode(hasContentDescription(context.getString(MORE_ACTION))).performClick()
 
         assertEquals(1, opened)
     }
+
+    @Test
+    fun lb103_withNoFavouritesTheSectionShowsOneHint() {
+        // FR-LINE-14: the section never disappears, so the feature stays discoverable.
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_favourites_title))).assertExists()
+        compose.onAllNodesWithText(context.getString(R.string.lines_favourites_hint)).assertCountEquals(1)
+    }
+
+    @Test
+    fun lb103_eachRowHasAToggleLabelledByItsLine_thatSendsItsNewValue() {
+        // FR-LINE-15: "Add line 4 to favourites", then "Remove line 10 from favourites" for a favourite.
+        val events = mutableListOf<LinesEvent>()
+        compose.setContent {
+            LinesScreen(favourites(10), onEvent = { events += it }, onOpenMore = {}, onOpenLine = {})
+        }
+
+        compose.onNodeWithContentDescription(context.getString(R.string.lines_favourite_add, "4")).performClick()
+        compose.onNodeWithContentDescription(context.getString(R.string.lines_favourite_remove, "10")).performClick()
+
+        assertEquals(
+            listOf(LinesEvent.SetFavourite(lineId = 4, isFavourite = true), LinesEvent.SetFavourite(10, false)),
+            events,
+        )
+    }
+
+    @Test
+    fun lb103_aFavouriteCardShowsItsBadgeNameAndHeadsigns_andOpensItsLine() {
+        // FR-LINE-13. TalkBack reads the headsigns as words, never as arrows.
+        val opened = mutableListOf<Int>()
+        compose.setContent {
+            LinesScreen(favourites(10), onEvent = {}, onOpenMore = {}, onOpenLine = { opened += it })
+        }
+
+        compose.onNodeWithText("→ Hospital San Pedro · → El Arco", useUnmergedTree = true).assertExists()
+        val card = compose.onNode(hasContentDescription(towards("Hospital San Pedro", "El Arco")) and hasClickAction())
+        card.assert(hasContentDescription(badge("10"))).assert(hasText("El Arco - Hospital San Pedro"))
+        card.performClick()
+
+        assertEquals(listOf(10), opened)
+    }
+
+    @Test
+    fun lb103_tappingARowOpensItsLine() {
+        // So that a line can be added to favourites from its detail too (FR-LINE-09).
+        val opened = mutableListOf<Int>()
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = { opened += it }) }
+
+        compose.onNode(hasText("Casa Blanca - Yagüe") and hasClickAction()).performClick()
+
+        assertEquals(listOf(4), opened)
+    }
+
+    private fun favourites(vararg ids: Int) =
+        LinesUiMapper.state(AppResult.Success(LinesWithFavourites(networkLines, favouriteIds = ids.toList())))
+
+    private fun towards(vararg headsigns: String) =
+        headsigns.joinToString(", ") { context.getString(R.string.lines_towards, it) }
 
     private fun badge(code: String) = context.getString(BADGE_LABEL, code)
 
