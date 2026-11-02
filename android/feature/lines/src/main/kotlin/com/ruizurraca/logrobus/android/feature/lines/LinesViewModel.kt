@@ -24,10 +24,22 @@ class LinesViewModel(
     // Each Retry bumps it, which starts a new load, and with it a new sync (ADR-0008).
     private val loads = MutableStateFlow(0)
 
+    // The load whose result the state shows. Coming back to the screen restarts the same load, which keeps the list
+    // rather than flash Loading (spec §7.3); only a new load, after Retry, starts at Loading.
+    private var shownLoad = 0
+
     val state: StateFlow<LinesUiState> =
         loads
-            .flatMapLatest {
-                observeLines().map(LinesUiMapper::state).onStart { emit(LinesUiState.Loading) }
+            .flatMapLatest { load ->
+                val states = observeLines().map(LinesUiMapper::state)
+                if (load == shownLoad) {
+                    states
+                } else {
+                    states.onStart {
+                        shownLoad = load
+                        emit(LinesUiState.Loading)
+                    }
+                }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), LinesUiState.Loading)
 
     fun onEvent(event: LinesEvent) {
