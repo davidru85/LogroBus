@@ -280,6 +280,17 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb101_iosWorkflowRunsEveryTestTargetOfTheSwiftPackage() {
+        // A test target runs in CI only if it is in the ViewModel and snapshot job's matrix (docs/ci_cd.md §3).
+        val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
+        val workflow = File(root, ".github/workflows/ios-checks.yml").readText()
+        assertEquals(
+            ArchitectureRules.swiftTestTargets(manifest).toSortedSet(),
+            ArchitectureRules.jobMatrixItems(workflow, job = "ios-package-tests").toSortedSet(),
+        )
+    }
+
+    @Test
     fun lb011_theIosDesignSystemDependsOnSharedOnly() {
         // Like :android:core:designsystem, it draws shared models and never reaches maps or features (ADR-0007).
         val manifest = File(root, "iosApp/Packages/LogroBusUI/Package.swift").readText()
