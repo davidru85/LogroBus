@@ -104,6 +104,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **02-11-2026:**
+  - CI: cuando un repositorio no sirve una dependencia que tiene (el "demasiadas peticiones" de Maven Central o el "no encontrado" del Gradle Plugin Portal), Gradle vuelve a ejecutarse, hasta tres veces y con un minuto de espera. Pasó en un job distinto en casi cada ejecución del 2 de noviembre. Un test que falla sigue fallando en el acto.
   - LB-103: líneas favoritas.
     - Cada línea de la lista tiene una estrella. Al pulsarla, la línea se añade a "Tus líneas favoritas", al final de una fila de tarjetas en lo alto de la lista, y al pulsarla otra vez se quita. Sin favoritas, la fila explica cómo añadir una.
     - Una tarjeta muestra el distintivo de la línea, su nombre y los dos extremos del recorrido. Al pulsar una tarjeta o una línea se abre la página de la línea, que de momento muestra la línea y la misma estrella; su mapa, sus sentidos y sus paradas llegan después (LB-104).

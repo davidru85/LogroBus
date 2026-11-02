@@ -102,6 +102,7 @@ You will need:
 ### Recent changes
 
 - **2026-11-02:**
+  - CI: when a repository does not serve a dependency it has (Maven Central's "too many requests", or the Gradle Plugin Portal's "not found"), Gradle now runs again, up to three times, a minute apart. It happened in a different job on almost every run of 2 November. A failing test still fails at once.
   - LB-103: favourite lines.
     - Each line in the list has a star. Tapping it adds the line to "Your favourite lines", at the end of a row of cards at the top of the list, and tapping it again removes it. With no favourites, the row shows how to add one.
     - A card shows the line's badge, its name and both ends of the route. Tapping a card or a line opens the line's page, which for now shows the line and the same star; its map, directions and stops come next (LB-104).
