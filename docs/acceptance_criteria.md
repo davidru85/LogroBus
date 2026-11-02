@@ -457,6 +457,7 @@ Refs: FR-FAV-02, FR-FAV-05
 - **Given** three favourite lines, **when** the user opens Edit and drags the third to the first position, **then** the carousel order updates and persists across restarts.
 - **Given** edit mode, **when** a line is removed, **then** it leaves the carousel and the toggle on its row becomes unselected.
 - **Given** 20 favourite lines, **when** the user tries to add a 21st, **then** a limit message is shown and nothing is added.
+- **Given** a favourite line that has left the catalogue, which since LB-103 stays saved with no card, **when** edit mode opens, **then** it is listed as no longer served and can be removed, and it counts towards the limit of 20 (from LB-103's data review).
 - **Given** a screen reader, **when** reordering, **then** "Move up" and "Move down" accessibility actions work without dragging. `[manual: TalkBack, VoiceOver]`
 
 ---

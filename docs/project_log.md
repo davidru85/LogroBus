@@ -34,6 +34,33 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **iOS:** `FavouriteToggle` in `DesignSystem`; `LinesView`'s favourites `Section` with an `HStack` of cards that share the tallest one's height, rows that are buttons beside their toggles, `LineDetailView` and `LineDetailViewModel`, and `Route.line` in the shell. Strings in es and en; snapshots recorded and reviewed.
   - **End to end through both shells:** a line added from its row goes at the end of the carousel and its toggle says so; a card opens its line; a line added from its detail is in the carousel back on Lines.
 
+**Reviews** (the code-reviewer, data-rules-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; no blockers or majors; the UI reviewers asked for changes). Fixed, test first where a test could show it:
+- **Shared:**
+  - `favourite_add` was counted when a double tap saved nothing: `add` now says whether it saved the line.
+  - Two quick opposite taps could land in the wrong order on the I/O threads: the repository writes behind a `Mutex`, and both Swift ViewModels chain their writes, since SKIE may start two Kotlin calls in either order. The Swift test failed now and then before the chain.
+  - A malformed saved id is dropped and counted in the log; `favouriteLine(id:)` keeps one entry per line; `dd08_` covers the cards, and a test covers a pattern of an unknown direction (both regression guards).
+- **Android:**
+  - The shell's preview had lost its binding for `SetFavouriteLine`.
+  - A quick second tap could push a second detail: `TabNavigator.open` now takes the screen it opens from.
+  - The toggle was a checkbox, so TalkBack said "checked" beside "Remove…": it is a button now, with a 48 dp test.
+  - The detail flashed Loading on return after a Retry, and drew nothing while loading: it keeps its load and draws a skeleton, titled "Línea", with a Loading preview.
+  - At 200 %, the star left "Valdegastea" too narrow: the badge goes above the name.
+  - Cards widen with the text; rows and cards say "abrir línea"; the hint is read without its ☆; no-break spaces keep arrows with their headsigns; the skeleton has the favourites section; the measured copies take no input.
+- **iOS:**
+  - The same large-text, card width, skeleton, title, no-break space and spoken hint fixes.
+  - Content margins replace padding, which view-aligned snapping ignores.
+  - The headsigns' spoken label uses `Text` interpolation, since `Text + Text` is deprecated in the iOS 26 SDK.
+  - The card colour is a token, and the toggle has previews and snapshots.
+- **UI tests:** both shells' favourites tests no longer depend on favourites left by a manual run: rows are found without cards, a test checks only line 3's card, and Back is the button labelled Lines.
+- **Docs:**
+  - LB-110 lists the favourites whose line left the catalogue, which have no card now, so that the user can remove them.
+  - LB-008 part 2 clears the favourites saved against the sample lines' ids in debug builds.
+- **Not changed:**
+  - The detail's bar names the line in words, with the badge in the body: a deliberate exception until LB-104 designs the bar (`design_guidelines.md` §3.1).
+  - A second tap that arrives before the first one's state shows sends the same value again, so it does nothing; the writes keep their order.
+  - On iOS the third card is cut by the inset row's rounded corner.
+  - The green commits before the review say "No refactor needed." instead of the exact line `TDD: refactor not needed` (`testing_strategy.md` §7.1); pushed history is not rewritten for it, and the review's commits use the line.
+
 **Decisions**
 - **A minimal line detail now** (owner decision, 2026-11-02): two criteria need line detail, which LB-104 builds. LB-103 adds its route, ViewModel and toolbar toggle, with the line's badge and name; LB-104 adds the map, directions and stops.
 - **Rows open their line** too, so a line can be added from its detail before it is a favourite (FR-LINE-09).
@@ -47,6 +74,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The pull request of this entry** (branch `feat/LB-103-favourite-lines`) is open, and its watch runs. So does PR #37's.
 - **Next, once it is merged:** LB-102 part 1, the search bar over the lines' codes and termini; finding lines by a stop's name waits for the stops (LB-008 part 2) or sample stops. LB-110 (edit favourite lines: reorder, remove, the limit of 20) needs nothing else either. Unless the owner chooses otherwise, LB-102 (`/start-story LB-102`).
 - **LB-104** builds on this detail; its map needs a style for development, where OQ-10's documented fallback names a free OSM-based style whose terms are still to be verified: that check is the owner's.
+- **For LB-104:** a shared `ObserveLine(lineId)` use case, so the detail stops collecting every line and syncing on each opening, and the badge in the detail's bar.
 - **Follow-ups from LB-101's reviews** stay open, as listed in the entry below.
 - **Waiting on the owner:** as in the entries below.
 
