@@ -13,10 +13,16 @@ import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -82,6 +88,39 @@ class LineDetailViewModelTest {
 
                 assertEquals(LineDetailUiMapper.state(lines, lineId = 3), awaitSettled())
             }
+        }
+
+    @Test
+    fun lb103_returningToTheDetailAfterARetryKeepsTheLine_withoutShowingLoadingAgain() =
+        runTest {
+            // As the Lines list (LB-101): after the upstream stops, coming back reads again, and the line must stay.
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val viewModel =
+                LineDetailViewModel(
+                    lineId = 3,
+                    {
+                        flow {
+                            delay(100)
+                            emit(lines)
+                        }
+                    },
+                ) { _, _ -> AppResult.Success(Unit) }
+            viewModel.onEvent(LineDetailEvent.Retry)
+            val states = mutableListOf<LineDetailUiState>()
+            backgroundScope.launch { viewModel.state.collect { states += it } }.let { first ->
+                advanceTimeBy(200)
+                runCurrent()
+                first.cancel()
+            }
+            advanceTimeBy(6_000)
+            runCurrent()
+            states.clear()
+
+            backgroundScope.launch { viewModel.state.collect { states += it } }
+            advanceTimeBy(200)
+            runCurrent()
+
+            assertEquals(listOf(LineDetailUiMapper.state(lines, lineId = 3)), states)
         }
 
     private suspend fun app.cash.turbine.ReceiveTurbine<LineDetailUiState>.awaitSettled(): LineDetailUiState {

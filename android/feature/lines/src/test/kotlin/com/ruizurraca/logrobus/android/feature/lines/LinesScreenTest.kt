@@ -1,10 +1,13 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
 import android.content.Context
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -21,6 +24,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
@@ -33,6 +37,7 @@ import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -223,10 +228,49 @@ class LinesScreenTest {
         card
             .assert(hasContentDescription(badge("10")))
             .assert(hasText("El Arco - Hospital San Pedro"))
-            .assert(hasText("→ Hospital San Pedro · → El Arco"))
+            // No-break spaces keep each arrow with its headsign when the text wraps.
+            .assert(hasText("→\u00A0Hospital San Pedro\u00A0· →\u00A0El Arco"))
         card.performClick()
 
         assertEquals(listOf(10), opened)
+    }
+
+    @Test
+    fun lb103_rowsAndCardsSayTheyOpenTheLine() {
+        // TalkBack: "double-tap to open line", rather than "double-tap to activate".
+        compose.setContent { LinesScreen(favourites(10), onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+
+        val open = context.getString(R.string.lines_open_line)
+        listOf(
+            compose.onNode(hasText("Casa Blanca - Yagüe") and hasClickAction()),
+            compose.onNode(hasContentDescription(towards("Hospital San Pedro", "El Arco")) and hasClickAction()),
+        ).forEach { node ->
+            assertEquals(open, node.fetchSemanticsNode().config[SemanticsActions.OnClick].label)
+        }
+    }
+
+    @Test
+    fun lb103_theHintIsReadAsWords_notAsAStarSymbol() {
+        compose.setContent { LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+
+        compose
+            .onNodeWithText(context.getString(R.string.lines_favourites_hint))
+            .assert(hasContentDescription(context.getString(R.string.lines_favourites_hint_spoken)))
+    }
+
+    @Test
+    fun lb103_atLargeTextTheBadgeSitsAboveTheName_soNamesBreakBetweenWords() {
+        // At 200 %, the toggle beside a name would leave it too narrow for "Valdegastea".
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
+                LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {})
+            }
+        }
+
+        val badge = compose.onNodeWithContentDescription(badge("4"), useUnmergedTree = true).fetchSemanticsNode()
+        val name = compose.onNodeWithText("Casa Blanca - Yagüe", useUnmergedTree = true).fetchSemanticsNode()
+        assertTrue("the badge ends above the name", badge.boundsInRoot.bottom <= name.boundsInRoot.top)
     }
 
     @Test

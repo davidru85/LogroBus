@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavBackStack
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.ruizurraca.logrobus.android.core.navigation.AboutDataKey
+import com.ruizurraca.logrobus.android.core.navigation.LineDetailKey
 import com.ruizurraca.logrobus.android.core.navigation.LinesKey
 import com.ruizurraca.logrobus.android.core.navigation.MoreKey
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
@@ -36,8 +37,8 @@ class TabNavigatorTest {
     @Test
     fun lb012_reselectingATabDeeperInPopsItToItsRoot_withoutScrolling() =
         runTest {
-            navigator.open(MoreKey)
-            navigator.open(AboutDataKey)
+            navigator.open(MoreKey, from = LinesKey)
+            navigator.open(AboutDataKey, from = MoreKey)
 
             navigator.scrollToTopRequests(TopLevelDestination.LINES).test {
                 navigator.select(TopLevelDestination.LINES)
@@ -46,6 +47,16 @@ class TabNavigatorTest {
                 expectNoEvents()
             }
         }
+
+    @Test
+    fun lb103_aScreenOpensAnotherOnlyWhileItIsOnTop() {
+        // A quick second tap on a row reaches the Lines root while it fades out: it must not push a second detail.
+        navigator.open(LineDetailKey(10), from = LinesKey)
+        navigator.open(LineDetailKey(10), from = LinesKey)
+        navigator.open(LineDetailKey(3), from = LinesKey)
+
+        assertEquals(listOf(LinesKey, LineDetailKey(10)), navigator.stack(TopLevelDestination.LINES).toList())
+    }
 
     @Test
     fun lb012_aScreenOnTwoTabsHasTwoContentKeys() {

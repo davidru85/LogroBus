@@ -1,6 +1,9 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -75,6 +78,17 @@ class LineDetailScreenTest {
         compose.onNodeWithContentDescription(context.getString(DS.string.action_navigate_up)).performClick()
 
         assertEquals(1, back)
+    }
+
+    @Test
+    fun lb103_theDetailHasATitleWhileItLoads_andAfterAnError() {
+        // TalkBack meets a titled screen at once; the line's code comes with its data.
+        var state: LineDetailUiState by mutableStateOf(LineDetailUiState.Loading)
+        compose.setContent { LineDetailScreen(state, onEvent = {}, onBack = {}) }
+
+        compose.onNode(isHeading() and hasText(context.getString(R.string.line_detail_title_generic))).assertExists()
+        state = LineDetailUiState.Error(ErrorReason.NETWORK)
+        compose.onNode(isHeading() and hasText(context.getString(R.string.line_detail_title_generic))).assertExists()
     }
 
     @Test
