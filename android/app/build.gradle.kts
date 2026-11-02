@@ -21,6 +21,7 @@ dependencies {
     implementation(projects.shared.umbrella)
     implementation(projects.android.core.designsystem)
     implementation(projects.android.core.navigation)
+    implementation(projects.android.feature.lines)
     implementation(projects.android.feature.settings)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.material3)
