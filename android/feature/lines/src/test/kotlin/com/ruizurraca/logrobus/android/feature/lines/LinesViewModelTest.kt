@@ -13,8 +13,10 @@ import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -96,6 +98,37 @@ class LinesViewModelTest {
             advanceTimeBy(2)
             runCurrent()
             assertEquals(0, observed.subscriptionCount.value)
+        }
+
+    @Test
+    fun lb101_returningToTheScreenKeepsTheList_withoutShowingLoadingAgain() =
+        runTest {
+            // After the upstream stops (5 s away, in More, another tab or the background), coming back reads again.
+            // The list must stay, as on iOS: a skeleton would flash and the list would lose its scroll position.
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            // A read that takes a moment, as the database's does.
+            val viewModel =
+                LinesViewModel {
+                    flow {
+                        delay(100)
+                        emit(lines)
+                    }
+                }
+            val states = mutableListOf<LinesUiState>()
+            backgroundScope.launch { viewModel.state.collect { states += it } }.let { first ->
+                advanceTimeBy(200)
+                runCurrent()
+                first.cancel()
+            }
+            advanceTimeBy(6_000)
+            runCurrent()
+            states.clear()
+
+            backgroundScope.launch { viewModel.state.collect { states += it } }
+            advanceTimeBy(200)
+            runCurrent()
+
+            assertEquals(listOf(LinesUiMapper.state(lines)), states)
         }
 
     /** The next state after Loading. A read may be quicker than the collector, which then never sees Loading. */
