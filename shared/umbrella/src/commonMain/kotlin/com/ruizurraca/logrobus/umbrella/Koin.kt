@@ -39,7 +39,8 @@ internal val APPLICATION_SCOPE = named("application")
  * The shared graph (ADR-0014): the core, with one instance of each service for the whole process, then one module per
  * data and feature module. [platform] provides what only a platform can create: the [Logger], the app lifecycle, the
  * location provider, the client identity for the `User-Agent` and the SQLite driver. [telemetry] binds the telemetry
- * contracts for the build (ADR-0009). [debug] builds list sample lines until LB-008 part 2 (owner decision, 2026-11-02).
+ * contracts for the build (ADR-0009). [debug] builds list sample lines until LB-008 part 2 (owner decision,
+ * 2026-11-02).
  */
 internal fun sharedModules(
     platform: Module,
@@ -91,7 +92,9 @@ private val settingsModule =
 private fun linesModule(debug: Boolean) =
     module {
         factory<ObserveLines> {
-            if (debug) DefaultObserveLines(SampleSync, SampleLinesRepository) else DefaultObserveLines(NoSourceSync, get())
+            val sync = if (debug) SampleSync else NoSourceSync
+            val repository = if (debug) SampleLinesRepository else get<LinesRepository>()
+            DefaultObserveLines(sync, repository)
         }
     }
 

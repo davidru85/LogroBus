@@ -16,7 +16,7 @@ class SampleLinesTest {
             setOf("1", "2", "3", "4", "5", "6", "7", "9", "10", "11", "B1", "B2", "B3"),
             byCode.keys,
         )
-        assertEquals(SampleLines.all.size, SampleLines.all.map { it.id }.toSet().size)
+        assertEquals(SampleLines.all, SampleLines.all.distinctBy { it.id })
     }
 
     @Test

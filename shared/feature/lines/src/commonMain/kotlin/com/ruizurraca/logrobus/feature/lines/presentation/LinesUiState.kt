@@ -36,8 +36,8 @@ data class LineGroupUi(
 )
 
 /**
- * A row of the list (FR-LINE-02): the badge's [code] on [color] in [onColor] (ARGB), the display name, and a status chip
- * when the line is not operational. The badge's spoken label names the code, never the colour (NFR-A11Y-02).
+ * A row of the list (FR-LINE-02): the badge's [code] on [color] in [onColor] (ARGB), the display name, and a status
+ * chip when the line is not operational. The badge's spoken label names the code, never the colour (NFR-A11Y-02).
  */
 data class LineRowUi(
     val id: Int,

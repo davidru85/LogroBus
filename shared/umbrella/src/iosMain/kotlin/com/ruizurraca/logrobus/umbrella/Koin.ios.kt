@@ -14,8 +14,7 @@ import org.koin.dsl.onClose
  * Starts the dependency graph of the iOS app, once, from the app's initialiser on the main thread (ADR-0014). The app
  * passes its [appVersion] for the User-Agent (spec §8.7) and whether it is a [debug] build, from its own build
  * configuration rather than the framework's, which sets the log level (security_privacy.md §4), the telemetry and,
- * until LB-008 part 2, the sample lines. It
- * returns nothing, so no Koin type reaches Swift.
+ * until LB-008 part 2, the sample lines. It returns nothing, so no Koin type reaches Swift.
  *
  * [telemetry] is the injection point for the app's own telemetry: Swift classes conforming to the exported protocols,
  * the vendor implementations of LB-409. It stays behind the consent gates; a part left `nil` falls back to the build's

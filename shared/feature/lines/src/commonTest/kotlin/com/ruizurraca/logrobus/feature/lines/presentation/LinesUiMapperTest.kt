@@ -62,7 +62,11 @@ class LinesUiMapperTest {
                 onColor = 0xFF000000,
                 isOperational = false,
             ),
-            (state as LinesUiState.Content).groups.single().lines.single(),
+            (state as LinesUiState.Content)
+                .groups
+                .single()
+                .lines
+                .single(),
         )
     }
 
