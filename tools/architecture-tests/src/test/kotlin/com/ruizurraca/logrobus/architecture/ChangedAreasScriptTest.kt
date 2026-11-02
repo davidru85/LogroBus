@@ -56,8 +56,13 @@ class ChangedAreasScriptTest {
 
     @Test
     fun lb002_iosFilesReadByTheArchitectureTestsRunTheKotlinJobs() {
-        // ArchitectureTest reads the XcodeGen spec, the package manifest and .gitignore.
-        listOf("iosApp/project.yml", "iosApp/Packages/LogroBusUI/Package.swift", ".gitignore").forEach { path ->
+        // ArchitectureTest reads the XcodeGen spec, the package manifest, .gitignore and the iOS workflow's matrix.
+        listOf(
+            "iosApp/project.yml",
+            "iosApp/Packages/LogroBusUI/Package.swift",
+            ".gitignore",
+            ".github/workflows/ios-checks.yml",
+        ).forEach { path ->
             repo.listFiles()?.forEach { it.deleteRecursively() }
             commitBase("README.md")
             commitChange(path)
