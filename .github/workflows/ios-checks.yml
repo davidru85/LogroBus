@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Shared tests on the iOS simulator
-        run: ./gradlew iosSimulatorArm64Test
+        run: scripts/ci/gradle-retry.sh iosSimulatorArm64Test
 
   ios-app:
     name: iOS build and tests
