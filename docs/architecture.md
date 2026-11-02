@@ -358,8 +358,10 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - The screen draws Loading as the final layout with placeholders, and Error with its reason and Retry. Its states for previews and screenshots live in `AboutDataPreviewData`.
     - The route collects it with `collectAsStateWithLifecycle()`.
   - **As built (LB-101 part 1, `LinesViewModel`):** the same shape over `ObserveLines`, so each Retry is a new collection and with it a new sync (ADR-0008).
+    - Only a new load, after Retry, starts at Loading. Coming back to the screen after the upstream stopped restarts the same load and keeps the list, as on iOS; About data's ViewModel still shows Loading then.
     - `LinesScreen` is a `LazyColumn`: each group under a heading, each row a `ListItem` with the `LineBadge`, the display name, which wraps, and a status chip when the line is not operational. A row merges its semantics, so TalkBack reads "Line 11, Artesanos - Manuel de Falla, Not in service".
-    - Loading draws placeholder rows, hidden from TalkBack; Empty and Error draw one sentence and Retry. The list calls `ScrollToTopOnReselect`.
+    - Loading draws a heading and rows shaped like the list's, which TalkBack reads as "Loading lines". Empty and Error use the design system's `RetryMessage`. The list calls `ScrollToTopOnReselect`, and the top app bar takes its scrolled colour without collapsing (a programmatic scroll to the top would not bring a collapsed bar back).
+  - **Shared by every screen (`:android:core:designsystem`):** `RetryMessage`, one sentence and Retry that scrolls at large font sizes, with `ErrorReason.messageRes` and the `error_*` strings, which each feature module used to define again.
     - Each feature module exposes a Koin `<x>UiModule` that declares its ViewModels with `viewModelOf`, and the app passes the modules to `initKoin`.
 - Maps: MapLibre Native through `maplibre-compose` in `:android:core:map`.
 - Location uses the Fused Location Provider of Google Play services (`fusedLocationProvider`, in `:shared:core:location`; owner approval, 2026-10-26). Permission prompts use the Activity Result API in the UI.
@@ -420,7 +422,10 @@ public final class AboutDataViewModel {
   - The `iosApp` scheme runs them, so `scripts/ios/test.sh` does too. CI runs each test target in a job of its own (LB-101): `scripts/ios/test.sh <Target>Tests` builds and runs only that target.
   - A cancellation test cancels `observe()`, as `.task {}` does, and waits for `activeCollections` to fall back to 0.
 - **The view, as built:** Loading is the final list over sample content with `.redacted(reason: .placeholder)`, Error is a `ContentUnavailableView` with the reason and Retry, and times follow SwiftUI's environment locale.
-- **The Lines list, as built (LB-101 part 1):** `LinesView` and `LinesViewModel` in `FeatureLines`, on the same pattern. A `List` has a `Section` per group; a row combines its accessibility element, so VoiceOver reads "Line 4, Casa Blanca - Yagüe". A `ScrollViewReader` scrolls to the first line whenever `scrollToTopRequests` changes. Its snapshots wait for the ViewModel's state before the capture.
+- **The Lines list, as built (LB-101 part 1):** `LinesView` and `LinesViewModel` in `FeatureLines`, on the same pattern. A `List` has a `Section` per group; a row combines its accessibility element, so VoiceOver reads "Line 4, Casa Blanca - Yagüe". The loading list reads as "Loading lines".
+  - Whenever `scrollToTopRequests` changes, a `ScrollPosition` scrolls the list to its top edge, its first heading included. A `ScrollViewReader` cannot reach a section header in a `List`.
+  - Its snapshots wait for the ViewModel's state before the capture, and the list's are as tall as the whole list.
+- **Shared by every screen (`DesignSystem`):** `RetryButton`, a large bordered button of at least 44 pt, and `ErrorReason.message`, with the `error.*` strings.
 - **The shell, as built (LB-012):**
   - `AppShell`, in the app target, is a `TabView` with one `Tab` per `TopLevelDestination` and a `NavigationStack` per tab.
   - `TabRouter` (`@MainActor @Observable`) holds the selection and one `[Route]` path per tab. The `TabView`'s selection setter also runs when the selected tab is tapped again. The router then pops that tab to its root or, at the root, counts a request to scroll to the top. The shell hands the count to the root as the `scrollToTopRequests` environment value of `DesignSystem`.

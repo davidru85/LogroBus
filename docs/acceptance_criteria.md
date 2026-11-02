@@ -259,7 +259,7 @@ Part 2 (2026-10-29, iOS), also done when:
   - The fallback is forced on the iOS 26 simulator through `glassRendering`; real iOS 18 runs come with the nightly (LB-412).
   - Reduce Transparency, which no trait sets, is checked by hand.
 - `[iOS]` The glass buttons are at least 44 × 44 pt. A line badge always holds its code, at 200 % too. An ETA in a narrow row overflows rather than truncates.
-- `[iOS]` The snapshot tests run in the iOS build-and-tests job, through the iosApp scheme, rather than a job of their own, pending the owner's decision on the iOS CI budget.
+- `[iOS]` The snapshot tests run in the iOS build-and-tests job, through the iosApp scheme, rather than a job of their own, pending the owner's decision on the iOS CI budget. Since LB-101 (owner decision, 2026-11-02), `DesignSystemTests` runs in the iOS ViewModel and snapshot job of its own; the app-hosted `GlassSnapshotTests` stay in the app's job.
 
 ### LB-012 App shell
 Refs: FR-NAV-01 to 05, FR-NAV-07, ADR-0002, ADR-0005

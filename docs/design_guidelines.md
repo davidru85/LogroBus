@@ -361,6 +361,7 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | `lines.group.night` | Líneas nocturnas (Búho) | Night lines (Búho) |
 | `lines.not_operational` (status chip, FR-LINE-02) | Sin servicio | Not in service |
 | `lines.empty` | No hay líneas que mostrar. | There are no lines to show. |
+| `lines.loading` (spoken, the first load) | Cargando líneas | Loading lines |
 | `nearme.saved.title` | Mis paradas | My stops |
 | `nearme.nearby.title` | Cerca de ti | Near you |
 | `plan.title` | Cómo llegar | How to get there |
