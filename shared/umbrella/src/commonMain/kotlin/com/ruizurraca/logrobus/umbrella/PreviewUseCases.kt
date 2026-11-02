@@ -32,8 +32,8 @@ import kotlin.time.Instant
 
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
- * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, and the cache holds the sample
- * lines; each script replaces the last.
+ * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
+ * lines and there are no favourite lines; each script replaces the last, except [favouriteLines].
  */
 class PreviewUseCases internal constructor() : UseCases {
     // Null scripts a first load that never ends.
@@ -66,6 +66,9 @@ class PreviewUseCases internal constructor() : UseCases {
     fun synced(): PreviewUseCases =
         script(lastSuccesses = StaticDataset.entries.associateWith { SAMPLE_SYNC }, lines = SampleLines.all)
 
+    /** Scripts the favourite lines, by id, in the user's order. A toggle in the preview then changes them. */
+    fun favouriteLines(vararg ids: Int): PreviewUseCases = apply { favouriteLineIds.value = ids.toList() }
+
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }
 
@@ -95,7 +98,7 @@ class PreviewUseCases internal constructor() : UseCases {
             },
         )
 
-    override fun observeLines(): ObserveLines =
+    private val lines: ObserveLines =
         DefaultObserveLines(
             object : StaticSyncEngine {
                 override suspend fun syncIfStale() = sync ?: awaitCancellation()
@@ -114,12 +117,12 @@ class PreviewUseCases internal constructor() : UseCases {
         )
 
     override fun observeLinesWithFavourites(): ObserveLinesWithFavourites =
-        DefaultObserveLinesWithFavourites(observeLines(), favouriteLines)
+        DefaultObserveLinesWithFavourites(lines, favourites)
 
-    override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favouriteLines, NoOpAnalyticsTracker)
+    override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
 
     // In memory, like the database: a toggle in a preview or test shows at once.
-    private val favouriteLines =
+    private val favourites =
         object : FavouriteLinesRepository {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
 

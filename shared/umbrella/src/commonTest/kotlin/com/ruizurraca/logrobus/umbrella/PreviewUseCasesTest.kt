@@ -7,7 +7,9 @@ import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -78,7 +80,7 @@ class PreviewUseCasesTest {
     @Test
     fun lb101_thePreviewListsTheSampleLines() =
         runTest {
-            assertEquals(AppResult.Success(SampleLines.all), SharedDependencies.preview().observeLines()().first())
+            assertEquals(AppResult.Success(SampleLines.all), SharedDependencies.preview().lines().first())
         }
 
     @Test
@@ -86,7 +88,7 @@ class PreviewUseCasesTest {
         runTest {
             val preview = SharedDependencies.preview().offline()
 
-            assertEquals(AppResult.Failure(AppError.Network), preview.observeLines()().first())
+            assertEquals(AppResult.Failure(AppError.Network), preview.lines().first())
             assertEquals(
                 AppResult.Success(
                     listOf(DatasetSync(StaticDataset.LINES, null), DatasetSync(StaticDataset.STOPS, null)),
@@ -102,7 +104,7 @@ class PreviewUseCasesTest {
 
             preview.synced()
 
-            assertEquals(AppResult.Success(SampleLines.all), preview.observeLines()().first())
+            assertEquals(AppResult.Success(SampleLines.all), preview.lines().first())
             assertEquals(
                 AppResult.Success(
                     listOf(DatasetSync(StaticDataset.LINES, sample), DatasetSync(StaticDataset.STOPS, sample)),
@@ -119,7 +121,7 @@ class PreviewUseCasesTest {
                 SharedDependencies
                     .preview()
                     .neverSynced()
-                    .observeLines()()
+                    .lines()
                     .first(),
             )
         }
@@ -127,7 +129,7 @@ class PreviewUseCasesTest {
     @Test
     fun lb101_thePreviewCanScriptLinesThatNeverLoad() =
         runTest {
-            SharedDependencies.preview().loading().observeLines()().test {
+            SharedDependencies.preview().loading().lines().test {
                 expectNoEvents()
             }
         }
@@ -140,7 +142,7 @@ class PreviewUseCasesTest {
                 SharedDependencies
                     .preview()
                     .failing()
-                    .observeLines()()
+                    .lines()
                     .first(),
             )
         }
@@ -183,12 +185,21 @@ class PreviewUseCasesTest {
         runTest {
             val preview = SharedDependencies.preview()
 
-            preview.observeLines()().test {
+            preview.lines().test {
                 awaitItem()
                 assertEquals(1, preview.activeCollections)
                 cancelAndIgnoreRemainingEvents()
             }
 
             assertEquals(0, preview.activeCollections)
+        }
+
+    /** The lines alone, as the Lines tab reads them. */
+    private fun PreviewUseCases.lines(): Flow<AppResult<List<Line>>> =
+        observeLinesWithFavourites()().map { result ->
+            when (result) {
+                is AppResult.Success -> AppResult.Success(result.value.lines)
+                is AppResult.Failure -> result
+            }
         }
 }
