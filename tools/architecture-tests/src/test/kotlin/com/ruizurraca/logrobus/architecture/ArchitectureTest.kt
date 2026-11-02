@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.util.Properties
 
 /**
  * Module layout and package boundaries of ADR-0007 (docs/architecture.md §3), applied to the repository.
@@ -180,6 +181,18 @@ class ArchitectureTest {
                     ArchitectureRules.jobNamesWithExpressions(file.readText()).map { "${file.name}: $it" }
                 }
         assertEquals(emptyList<String>(), offenders)
+    }
+
+    @Test
+    fun lb002_gradleWaitsOutRateLimitedDownloads() {
+        // Maven Central answers 429 when many CI jobs download at once with an empty cache (docs/ci_cd.md §5).
+        // Gradle retries 408, 429 and 5xx, by default 3 times from 1 s: about 3 s in all, too short to wait it out.
+        val properties = Properties().apply { File(root, "gradle.properties").reader().use { load(it) } }
+
+        fun setting(name: String) = properties.getProperty("systemProp.org.gradle.internal.repository.$name")?.toInt()
+
+        assertTrue((setting("max.tentatives") ?: 0) >= MIN_DOWNLOAD_TENTATIVES, "max.tentatives")
+        assertTrue((setting("initial.backoff") ?: 0) >= MIN_DOWNLOAD_BACKOFF_MS, "initial.backoff")
     }
 
     @Test
@@ -473,3 +486,7 @@ class ArchitectureTest {
 
 private const val TELEMETRY_PACKAGE = "com.ruizurraca.logrobus.core.telemetry"
 private val TELEMETRY_PAYLOADS = setOf("AnalyticsEvent", "Breadcrumb")
+
+// About a minute of backoff in all (2 + 4 + 8 + 16 + 32 s), against Gradle's default of 3 s.
+private const val MIN_DOWNLOAD_TENTATIVES = 6
+private const val MIN_DOWNLOAD_BACKOFF_MS = 2_000
