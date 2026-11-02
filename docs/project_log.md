@@ -61,6 +61,9 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - On iOS the third card is cut by the inset row's rounded corner.
   - The green commits before the review say "No refactor needed." instead of the exact line `TDD: refactor not needed` (`testing_strategy.md` §7.1); pushed history is not rewritten for it, and the review's commits use the line.
 
+**CI fixes**
+- **PR #38's first run** failed in "Shared unit tests (:shared:transit:data)", outside the change: configuring build-logic, the Gradle Plugin Portal answered "not found" for `kotlin-stdlib:2.4.0`, as in PR #36's nearme job. It recurred, so the pipeline was made resilient in this pull request, test first: build-logic's `pluginManagement` lists Maven Central before the Portal, as the root settings do (`ci_cd.md` §5).
+
 **Decisions**
 - **A minimal line detail now** (owner decision, 2026-11-02): two criteria need line detail, which LB-104 builds. LB-103 adds its route, ViewModel and toolbar toggle, with the line's badge and name; LB-104 adds the map, directions and stops.
 - **Rows open their line** too, so a line can be added from its detail before it is a favourite (FR-LINE-09).
