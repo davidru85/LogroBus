@@ -9,6 +9,7 @@ import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.SelectLines
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
@@ -27,7 +28,8 @@ class LinesRepositoryImpl(
             .selectLines()
             .asFlow()
             .mapToList(dispatchers.io)
-            .map { rows -> rows.mapNotNull(::lineOf) }
+            // One row per pattern: a line's rows are next to each other, in id order.
+            .map { rows -> rows.groupBy { it.id }.values.mapNotNull(::lineOf) }
             .map<_, AppResult<List<Line>>> { AppResult.Success(it) }
             // The database boundary (code_style.md §2.2): a failure ends the flow as a value, never as a crash.
             .catch { failure ->
@@ -35,7 +37,8 @@ class LinesRepositoryImpl(
                 emit(AppResult.Failure(AppError.Data))
             }
 
-    private fun lineOf(row: SelectLines): Line? {
+    private fun lineOf(rows: List<SelectLines>): Line? {
+        val row = rows.first()
         val kind = LineKind.entries.firstOrNull { it.key == row.kind }
         // DD-02: ids are Ints. A wider one would be truncated into another line's id.
         val id = row.id.takeIf { it in Int.MIN_VALUE..Int.MAX_VALUE }?.toInt()
@@ -53,8 +56,16 @@ class LinesRepositoryImpl(
             onColor = row.on_color,
             kind = kind,
             isOperational = row.operational,
+            headsigns = headsignsOf(rows),
         )
     }
+
+    // FR-LINE-13: outbound first. A pattern of a direction this version does not know is left out.
+    private fun headsignsOf(rows: List<SelectLines>): List<String> =
+        rows
+            .mapNotNull { row -> Direction.entries.firstOrNull { it.key == row.direction }?.to(row.headsign) }
+            .sortedBy { (direction, _) -> direction.ordinal }
+            .mapNotNull { (_, headsign) -> headsign }
 
     private companion object {
         const val TAG = "Lines"
