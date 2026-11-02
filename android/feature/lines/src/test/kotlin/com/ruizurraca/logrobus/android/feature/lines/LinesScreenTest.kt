@@ -36,12 +36,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /** LB-101 (FR-LINE-01, FR-LINE-02, NFR-A11Y-02) and spec §7.3 on Android: the Lines list and its states. */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
+// Tall enough for the favourites section and every row: a lazy list composes only the rows it shows.
+@Config(qualifiers = "h1000dp")
 class LinesScreenTest {
     @get:Rule
     val compose = createComposeRule()
@@ -216,9 +219,11 @@ class LinesScreenTest {
             LinesScreen(favourites(10), onEvent = {}, onOpenMore = {}, onOpenLine = { opened += it })
         }
 
-        compose.onNodeWithText("→ Hospital San Pedro · → El Arco", useUnmergedTree = true).assertExists()
         val card = compose.onNode(hasContentDescription(towards("Hospital San Pedro", "El Arco")) and hasClickAction())
-        card.assert(hasContentDescription(badge("10"))).assert(hasText("El Arco - Hospital San Pedro"))
+        card
+            .assert(hasContentDescription(badge("10")))
+            .assert(hasText("El Arco - Hospital San Pedro"))
+            .assert(hasText("→ Hospital San Pedro · → El Arco"))
         card.performClick()
 
         assertEquals(listOf(10), opened)

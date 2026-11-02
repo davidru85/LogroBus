@@ -30,12 +30,14 @@ import androidx.window.core.layout.WindowSizeClass
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.rememberScreenTransitions
 import com.ruizurraca.logrobus.android.core.navigation.AboutDataKey
+import com.ruizurraca.logrobus.android.core.navigation.LineDetailKey
 import com.ruizurraca.logrobus.android.core.navigation.LinesKey
 import com.ruizurraca.logrobus.android.core.navigation.LocalScrollToTopRequests
 import com.ruizurraca.logrobus.android.core.navigation.MoreKey
 import com.ruizurraca.logrobus.android.core.navigation.NearMeKey
 import com.ruizurraca.logrobus.android.core.navigation.PlannerKey
 import com.ruizurraca.logrobus.android.core.navigation.SettingsKey
+import com.ruizurraca.logrobus.android.feature.lines.LineDetailRoute
 import com.ruizurraca.logrobus.android.feature.lines.LinesRoute
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataRoute
 import com.ruizurraca.logrobus.android.feature.settings.SettingsScreen
@@ -148,7 +150,10 @@ internal fun screens(
         )
     }
     return entryProvider {
-        entry<LinesKey>(onTab) { root { LinesRoute(onOpenMore = openMore) } }
+        entry<LinesKey>(onTab) {
+            root { LinesRoute(onOpenMore = openMore, onOpenLine = { navigator.open(LineDetailKey(it)) }) }
+        }
+        entry<LineDetailKey>(onTab) { key -> LineDetailRoute(key.lineId, onBack = navigator::goBack) }
         entry<NearMeKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.NEAR_ME, onOpenMore = openMore) } }
         entry<PlannerKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.PLANNER, onOpenMore = openMore) } }
         entry<MoreKey>(onTab) {

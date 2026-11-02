@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.android.feature.lines
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
@@ -15,11 +16,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-/** The Lines list (LB-101). It orchestrates only: the shared use case and mapper build the state (ADR-0007). */
+/**
+ * The Lines tab (LB-101, LB-103). It orchestrates only: the shared use cases and mapper build the state (ADR-0007).
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LinesViewModel(
     observeLines: ObserveLinesWithFavourites,
+    private val setFavourite: SetFavouriteLine,
 ) : ViewModel() {
     // Each Retry bumps it, which starts a new load, and with it a new sync (ADR-0008).
     private val loads = MutableStateFlow(0)
@@ -46,8 +51,9 @@ class LinesViewModel(
         when (event) {
             LinesEvent.Retry -> loads.update { it + 1 }
 
-            // No row has a toggle yet.
-            is LinesEvent.SetFavourite -> Unit
+            // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a damaged
+            // database the repository has logged, leaves them as they were.
+            is LinesEvent.SetFavourite -> viewModelScope.launch { setFavourite(event.lineId, event.isFavourite) }
         }
     }
 

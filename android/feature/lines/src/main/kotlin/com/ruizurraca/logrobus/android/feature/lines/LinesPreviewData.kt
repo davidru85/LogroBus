@@ -35,6 +35,9 @@ internal object LinesPreviewData {
 
     val loading: LinesUiState = LinesUiState.Loading
     val content = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, favouriteIds = emptyList())))
+
+    /** LB-103: lines 10, 4 and B1 are favourites, in the order they were added; "content" has the hint instead. */
+    val favourites = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, listOf(10, 4, 101))))
     val empty: LinesUiState = LinesUiState.Empty
     val error: LinesUiState = LinesUiState.Error(ErrorReason.NETWORK)
 
@@ -52,6 +55,8 @@ internal object LinesPreviewData {
         onColorFor(color),
         if (code.startsWith("B")) LineKind.NIGHT else LineKind.DAY,
         isOperational,
+        // Each heads for each end of its name, outbound first, as the sample lines do (FR-LINE-13).
+        headsigns = name.split(" - ").reversed(),
     )
 }
 
@@ -63,24 +68,31 @@ private fun PreviewTheme(content: @Composable () -> Unit) {
 @PreviewLightDark
 @Composable
 private fun LinesLoadingPreview() {
-    PreviewTheme { LinesScreen(LinesPreviewData.loading, onEvent = {}, onOpenMore = {}) }
+    PreviewTheme { LinesScreen(LinesPreviewData.loading, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 }
 
 @PreviewLightDark
 @PreviewFontScale
 @Composable
 private fun LinesContentPreview() {
-    PreviewTheme { LinesScreen(LinesPreviewData.content, onEvent = {}, onOpenMore = {}) }
+    PreviewTheme { LinesScreen(LinesPreviewData.content, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+}
+
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun LinesFavouritesPreview() {
+    PreviewTheme { LinesScreen(LinesPreviewData.favourites, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun LinesEmptyPreview() {
-    PreviewTheme { LinesScreen(LinesPreviewData.empty, onEvent = {}, onOpenMore = {}) }
+    PreviewTheme { LinesScreen(LinesPreviewData.empty, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun LinesErrorPreview() {
-    PreviewTheme { LinesScreen(LinesPreviewData.error, onEvent = {}, onOpenMore = {}) }
+    PreviewTheme { LinesScreen(LinesPreviewData.error, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
 }

@@ -11,12 +11,14 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -194,18 +196,35 @@ class TabNavigationTest {
         assertEquals(listOf("Line 3"), carouselCards())
     }
 
-    private fun favouriteToggle(label: String): SemanticsNodeInteraction = compose.onNodeWithContentDescription(label)
+    /**
+     * A row's or the detail's toggle, scrolled into view: a lazy list composes only the rows it shows. The list scrolls
+     * down from its top, so the row ends up above the tab bar, never under the top app bar, which the list runs behind.
+     */
+    private fun favouriteToggle(label: String): SemanticsNodeInteraction {
+        if (compose.onAllNodes(isLinesList).fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNode(isLinesList).performScrollToIndex(0).performScrollToNode(hasContentDescription(label))
+        }
+        return compose.onNodeWithContentDescription(label)
+    }
 
     /** A favourite line's card: it alone says where the line heads ("Towards …"). */
-    private fun card(badge: String): SemanticsNodeInteraction =
-        compose.onNode(hasContentDescription(badge) and hasContentDescription("Towards", substring = true))
+    private fun card(badge: String): SemanticsNodeInteraction {
+        compose.onNode(isLinesList).performScrollToIndex(0)
+        return compose.onNode(hasContentDescription(badge) and hasContentDescription("Towards", substring = true))
+    }
 
-    /** The carousel's cards, by their badge, in their order. */
-    private fun carouselCards(): List<String?> =
-        compose
+    /**
+     * The carousel's cards, by their badge, from left to right: the order the user sees and TalkBack reads, which sorts
+     * siblings by position. The carousel adds its items to the semantics tree in another order.
+     */
+    private fun carouselCards(): List<String?> {
+        compose.onNode(isLinesList).performScrollToIndex(0)
+        return compose
             .onAllNodes(hasContentDescription("Towards", substring = true) and hasClickAction())
             .fetchSemanticsNodes()
+            .sortedBy { it.boundsInRoot.left }
             .map { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
+    }
 
     private fun openAboutDataInLines() {
         moreAction().performClick()
@@ -230,6 +249,10 @@ class TabNavigationTest {
     }
 
     private val isTab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+
+    // The Lines list is the lazy list that scrolls vertically; the favourites carousel inside it scrolls horizontally.
+    private val isLinesList =
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and hasScrollToIndexAction()
 
     private companion object {
         const val SETTLED_MILLIS = 400L
