@@ -168,63 +168,78 @@ class TabNavigationTest {
     @Test
     fun lb103_aLineAddedToFavouritesShowsAtTheEndOfTheCarousel_andItsToggleSaysSo() {
         // FR-LINE-12, FR-LINE-15, through the debug build's graph and the device's database.
-        favouriteToggle("Add line 10 to favourites").performClick()
-        favouriteToggle("Add line 3 to favourites").performClick()
+        rowToggle("Add line 10 to favourites").performClick()
+        awaitNode(hasContentDescription("Remove line 10 from favourites"))
+        rowToggle("Add line 3 to favourites").performClick()
 
-        favouriteToggle("Remove line 3 from favourites").assertExists()
-        assertEquals(listOf("Line 10", "Line 3"), carouselCards())
+        awaitNode(hasContentDescription("Remove line 3 from favourites"))
+        awaitCarousel(listOf("Line 10", "Line 3"))
     }
 
     @Test
     fun lb103_aFavouriteCardOpensItsLine_andBackReturnsToLines() {
-        favouriteToggle("Add line 10 to favourites").performClick()
+        rowToggle("Add line 10 to favourites").performClick()
+        awaitNode(hasContentDescription("Remove line 10 from favourites"))
 
         card("Line 10").performClick()
-        heading("Line 10").assertIsDisplayed()
+        awaitNode(hasText("Line 10") and isHeading()).assertIsDisplayed()
         back()
 
-        heading("Lines").assertIsDisplayed()
+        awaitNode(hasText("Lines") and isHeading()).assertIsDisplayed()
     }
 
     @Test
     fun lb103_aLineAddedFromItsDetailIsInTheCarousel_backOnLines() {
-        // FR-LINE-09: the row opens the line's detail, whose toolbar has the toggle.
+        // FR-LINE-09: the row opens the line's detail, whose toolbar has the toggle once the line has loaded.
         compose.onNode(hasText("Campillo - El Cubo") and hasClickAction()).performClick()
-        favouriteToggle("Add line 3 to favourites").performClick()
+        awaitNode(hasContentDescription("Add line 3 to favourites")).performClick()
+        awaitNode(hasContentDescription("Remove line 3 from favourites"))
         back()
 
-        assertEquals(listOf("Line 3"), carouselCards())
+        awaitCarousel(listOf("Line 3"))
     }
 
     /**
-     * A row's or the detail's toggle, scrolled into view: a lazy list composes only the rows it shows. The list scrolls
-     * down from its top, so the row ends up above the tab bar, never under the top app bar, which the list runs behind.
+     * A row's toggle, scrolled into view: a lazy list composes only the rows it shows. The list scrolls down from its
+     * top, so the row ends up above the tab bar, never under the top app bar, which the list runs behind.
      */
-    private fun favouriteToggle(label: String): SemanticsNodeInteraction {
-        if (compose.onAllNodes(isLinesList).fetchSemanticsNodes().isNotEmpty()) {
-            compose.onNode(isLinesList).performScrollToIndex(0).performScrollToNode(hasContentDescription(label))
-        }
+    private fun rowToggle(label: String): SemanticsNodeInteraction {
+        compose.onNode(isLinesList).performScrollToIndex(0).performScrollToNode(hasContentDescription(label))
         return compose.onNodeWithContentDescription(label)
+    }
+
+    /**
+     * The node [matcher] finds, once it exists. The lines and the favourites are read and written on the I/O threads,
+     * which the test's idle sync does not wait for: on a slow CI runner the screen shows the change a moment later.
+     */
+    private fun awaitNode(matcher: SemanticsMatcher): SemanticsNodeInteraction {
+        compose.waitUntil(AWAIT_MILLIS) { compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        return compose.onNode(matcher)
     }
 
     /** A favourite line's card: it alone says where the line heads ("Towards …"). */
     private fun card(badge: String): SemanticsNodeInteraction {
         compose.onNode(isLinesList).performScrollToIndex(0)
-        return compose.onNode(hasContentDescription(badge) and hasContentDescription("Towards", substring = true))
+        return awaitNode(hasContentDescription(badge) and hasContentDescription("Towards", substring = true))
+    }
+
+    /** Waits until the carousel shows [badges], then checks them, in their order. */
+    private fun awaitCarousel(badges: List<String>) {
+        compose.onNode(isLinesList).performScrollToIndex(0)
+        runCatching { compose.waitUntil(AWAIT_MILLIS) { carouselCards() == badges } }
+        assertEquals(badges, carouselCards())
     }
 
     /**
      * The carousel's cards, by their badge, from left to right: the order the user sees and TalkBack reads, which sorts
      * siblings by position. The carousel adds its items to the semantics tree in another order.
      */
-    private fun carouselCards(): List<String?> {
-        compose.onNode(isLinesList).performScrollToIndex(0)
-        return compose
+    private fun carouselCards(): List<String?> =
+        compose
             .onAllNodes(hasContentDescription("Towards", substring = true) and hasClickAction())
             .fetchSemanticsNodes()
             .sortedBy { it.boundsInRoot.left }
             .map { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
-    }
 
     private fun openAboutDataInLines() {
         moreAction().performClick()
@@ -256,5 +271,8 @@ class TabNavigationTest {
 
     private companion object {
         const val SETTLED_MILLIS = 400L
+
+        // Far longer than a read or a write takes, even on a busy runner.
+        const val AWAIT_MILLIS = 5_000L
     }
 }
