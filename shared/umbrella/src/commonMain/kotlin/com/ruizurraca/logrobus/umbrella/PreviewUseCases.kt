@@ -2,8 +2,14 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.transit.domain.Line
@@ -34,6 +40,7 @@ class PreviewUseCases internal constructor() : UseCases {
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
     private val cachedLines = MutableStateFlow(SampleLines.all)
+    private val favouriteLineIds = MutableStateFlow(emptyList<Int>())
     private val collections = MutableStateFlow(0)
 
     @Volatile private var failing = false
@@ -105,6 +112,27 @@ class PreviewUseCases internal constructor() : UseCases {
                     }.counted()
             },
         )
+
+    override fun observeLinesWithFavourites(): ObserveLinesWithFavourites =
+        DefaultObserveLinesWithFavourites(observeLines(), favouriteLines)
+
+    override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favouriteLines, NoOpAnalyticsTracker)
+
+    // In memory, like the database: a toggle in a preview or test shows at once.
+    private val favouriteLines =
+        object : FavouriteLinesRepository {
+            override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
+
+            override suspend fun add(lineId: Int): AppResult<Unit> {
+                favouriteLineIds.update { ids -> if (lineId in ids) ids else ids + lineId }
+                return AppResult.Success(Unit)
+            }
+
+            override suspend fun remove(lineId: Int): AppResult<Unit> {
+                favouriteLineIds.update { ids -> ids - lineId }
+                return AppResult.Success(Unit)
+            }
+        }
 
     private fun <T> Flow<T>.counted(): Flow<T> =
         onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }

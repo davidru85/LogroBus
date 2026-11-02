@@ -21,6 +21,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
@@ -45,11 +46,14 @@ class LinesScreenTest {
     private val network =
         LinesUiMapper.state(
             AppResult.Success(
-                listOf(
-                    line(101, "B1", "Varea - La Cava", 0xFFE30613),
-                    line(10, "10", "El Arco - Hospital San Pedro", 0xFFAD1457),
-                    line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613),
-                    line(11, "11", "Artesanos - Manuel de Falla", 0xFF00897B, isOperational = false),
+                LinesWithFavourites(
+                    listOf(
+                        line(101, "B1", "Varea - La Cava", 0xFFE30613),
+                        line(10, "10", "El Arco - Hospital San Pedro", 0xFFAD1457),
+                        line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613),
+                        line(11, "11", "Artesanos - Manuel de Falla", 0xFF00897B, isOperational = false),
+                    ),
+                    favouriteIds = emptyList(),
                 ),
             ),
         )

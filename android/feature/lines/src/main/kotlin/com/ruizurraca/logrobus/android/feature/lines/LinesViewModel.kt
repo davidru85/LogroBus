@@ -2,7 +2,7 @@ package com.ruizurraca.logrobus.android.feature.lines
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.update
 /** The Lines list (LB-101). It orchestrates only: the shared use case and mapper build the state (ADR-0007). */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LinesViewModel(
-    observeLines: ObserveLines,
+    observeLines: ObserveLinesWithFavourites,
 ) : ViewModel() {
     // Each Retry bumps it, which starts a new load, and with it a new sync (ADR-0008).
     private val loads = MutableStateFlow(0)
@@ -45,6 +45,9 @@ class LinesViewModel(
     fun onEvent(event: LinesEvent) {
         when (event) {
             LinesEvent.Retry -> loads.update { it + 1 }
+
+            // No row has a toggle yet.
+            is LinesEvent.SetFavourite -> Unit
         }
     }
 

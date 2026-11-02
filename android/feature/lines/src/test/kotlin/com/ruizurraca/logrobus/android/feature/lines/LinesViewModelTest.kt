@@ -5,7 +5,8 @@ import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
-import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
@@ -39,9 +40,12 @@ import org.junit.Test
 class LinesViewModelTest {
     private val lines =
         AppResult.Success(
-            listOf(
-                Line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613, 0xFFFFFFFF, LineKind.DAY, isOperational = true),
-                Line(101, "B1", "Varea - La Cava", 0xFFE30613, 0xFFFFFFFF, LineKind.NIGHT, isOperational = true),
+            LinesWithFavourites(
+                listOf(
+                    Line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613, 0xFFFFFFFF, LineKind.DAY, isOperational = true),
+                    Line(101, "B1", "Varea - La Cava", 0xFFE30613, 0xFFFFFFFF, LineKind.NIGHT, isOperational = true),
+                ),
+                favouriteIds = emptyList(),
             ),
         )
 
@@ -54,7 +58,7 @@ class LinesViewModelTest {
     @Test
     fun lb101_theViewModelLoads_thenShowsWhatTheSharedMapperMakesOfTheLines() =
         runTest {
-            val observed = MutableSharedFlow<AppResult<List<Line>>>()
+            val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
             val viewModel = LinesViewModel { observed }
 
             viewModel.state.test {
@@ -82,7 +86,7 @@ class LinesViewModelTest {
     fun lb101_leavingTheScreenStopsTheUseCase_fiveSecondsLater() =
         runTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-            val observed = MutableSharedFlow<AppResult<List<Line>>>()
+            val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
             val viewModel = LinesViewModel { observed }
 
             val screen = backgroundScope.launch { viewModel.state.collect {} }
@@ -140,8 +144,8 @@ class LinesViewModelTest {
 
     /** Hands out [flows] in order, one per call: a first load, then each Retry. */
     private class Scripted(
-        vararg flows: Flow<AppResult<List<Line>>>,
-    ) : ObserveLines {
+        vararg flows: Flow<AppResult<LinesWithFavourites>>,
+    ) : ObserveLinesWithFavourites {
         private val loads = ArrayDeque(flows.toList())
 
         override fun invoke() = loads.removeFirst()

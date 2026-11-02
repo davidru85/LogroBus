@@ -8,6 +8,7 @@ import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
 import com.ruizurraca.logrobus.transit.domain.Line
@@ -33,7 +34,7 @@ internal object LinesPreviewData {
         )
 
     val loading: LinesUiState = LinesUiState.Loading
-    val content = LinesUiMapper.state(AppResult.Success(lines))
+    val content = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, favouriteIds = emptyList())))
     val empty: LinesUiState = LinesUiState.Empty
     val error: LinesUiState = LinesUiState.Error(ErrorReason.NETWORK)
 

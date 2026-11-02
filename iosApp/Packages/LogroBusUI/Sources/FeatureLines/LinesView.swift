@@ -74,7 +74,7 @@ public struct LinesView: View {
             lines: (1...8).map { id in
                 LineRowUi(
                     id: Int32(id), code: "\(id)", displayName: "Lardero - Hospital San Pedro",
-                    color: 0xFF9E_9E9E, onColor: 0xFFFF_FFFF, isOperational: true
+                    color: 0xFF9E_9E9E, onColor: 0xFFFF_FFFF, isOperational: true, isFavourite: false
                 )
             }
         )

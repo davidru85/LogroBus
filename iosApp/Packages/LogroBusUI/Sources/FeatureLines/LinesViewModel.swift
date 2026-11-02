@@ -23,12 +23,15 @@ public final class LinesViewModel {
         case .retry:
             state = LinesUiStateLoading.shared
             attempt += 1
+        case .setFavourite:
+            // No row has a toggle yet.
+            break
         }
     }
 
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
     public func observe() async {
-        for await result in useCases.observeLines().invoke() {
+        for await result in useCases.observeLinesWithFavourites().invoke() {
             state = LinesUiMapper.shared.state(result: result)
         }
     }
