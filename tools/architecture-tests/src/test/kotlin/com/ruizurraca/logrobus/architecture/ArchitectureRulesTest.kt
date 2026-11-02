@@ -322,7 +322,10 @@ class ArchitectureRulesTest {
                       - OtherTests
             """.trimIndent()
 
-        assertEquals(listOf("DesignSystemTests", "FeatureLinesTests"), ArchitectureRules.jobMatrixItems(workflow, "package-tests"))
+        assertEquals(
+            listOf("DesignSystemTests", "FeatureLinesTests"),
+            ArchitectureRules.jobMatrixItems(workflow, "package-tests"),
+        )
     }
 
     @Test
