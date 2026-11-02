@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.umbrella
 import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -142,6 +143,39 @@ class PreviewUseCasesTest {
                     .observeLines()()
                     .first(),
             )
+        }
+
+    @Test
+    fun lb103_thePreviewStartsWithNoFavouriteLines() =
+        runTest {
+            assertEquals(
+                AppResult.Success(LinesWithFavourites(SampleLines.all, favouriteIds = emptyList())),
+                SharedDependencies.preview().observeLinesWithFavourites()().first(),
+            )
+        }
+
+    @Test
+    fun lb103_thePreviewCanScriptFavouriteLines_inTheUsersOrder() =
+        runTest {
+            val preview = SharedDependencies.preview().favouriteLines(10, 3)
+
+            val favourites = preview.observeLinesWithFavourites()().first()
+
+            assertEquals(listOf(10, 3), (favourites as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+        }
+
+    @Test
+    fun lb103_aFavouriteSetInThePreviewShowsAtOnce() =
+        runTest {
+            val preview = SharedDependencies.preview().favouriteLines(10)
+
+            preview.observeLinesWithFavourites()().test {
+                assertEquals(listOf(10), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+                assertEquals(AppResult.Success(Unit), preview.setFavouriteLine()(lineId = 3, isFavourite = true))
+                assertEquals(listOf(10, 3), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+                preview.setFavouriteLine()(lineId = 10, isFavourite = false)
+                assertEquals(listOf(3), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+            }
         }
 
     @Test

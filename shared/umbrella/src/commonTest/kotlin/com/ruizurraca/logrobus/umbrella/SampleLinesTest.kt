@@ -38,6 +38,15 @@ class SampleLinesTest {
     }
 
     @Test
+    fun lb103_eachSampleLineHeadsForEachEndOfItsName_outboundFirst() {
+        // FR-LINE-13: a favourite card shows both headsigns. "Lardero - Hospital San Pedro" runs towards Hospital San
+        // Pedro, then back towards Lardero.
+        SampleLines.all.forEach { line ->
+            assertEquals(line.displayName.split(" - ").reversed(), line.headsigns, line.code)
+        }
+    }
+
+    @Test
     fun lb101_oneSampleLineIsNotOperational_soItsStatusChipShows() {
         assertTrue(SampleLines.all.count { !it.isOperational } == 1)
     }

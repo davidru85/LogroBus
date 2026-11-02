@@ -7,7 +7,10 @@ import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.error
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.network.ClientIdentity
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -119,6 +122,21 @@ class AndroidGraphTest {
             initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
 
             assertEquals(AppResult.Success(SampleLines.all), KoinPlatform.getKoin().get<ObserveLines>()().first())
+        }
+
+    @Test
+    fun lb103_favouriteLinesAreKeptInTheDevicesDatabase_acrossARestart() =
+        runTest {
+            // FR-FAV-03: favourites are the user's own, so debug builds keep them in the real database too.
+            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+            KoinPlatform.getKoin().get<SetFavouriteLine>()(lineId = 10, isFavourite = true)
+            KoinPlatform.getKoin().get<SetFavouriteLine>()(lineId = 3, isFavourite = true)
+            stopKoin()
+
+            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+            val restarted = KoinPlatform.getKoin().get<ObserveLinesWithFavourites>()().first()
+
+            assertEquals(listOf(10, 3), (restarted as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
         }
 
     @Test

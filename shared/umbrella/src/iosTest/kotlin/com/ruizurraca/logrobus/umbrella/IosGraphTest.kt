@@ -21,6 +21,8 @@ class IosGraphTest {
         // the Android host test checks every function of UseCases.
         SharedDependencies.observeLastSyncs()
         SharedDependencies.observeLines()
+        SharedDependencies.observeLinesWithFavourites()
+        SharedDependencies.setFavouriteLine()
     }
 
     @Test
