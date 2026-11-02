@@ -30,6 +30,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    // KoinApplicationPreview: the shell's preview gives the Lines root its ViewModel (ADR-0014).
+    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)

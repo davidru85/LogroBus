@@ -80,8 +80,11 @@ fun LinesScreen(
         when (state) {
             // Spec §7.3: the final layout with placeholders, never a lone spinner.
             LinesUiState.Loading -> PlaceholderRows(padding)
+
             is LinesUiState.Content -> LineList(state.groups, padding)
+
             LinesUiState.Empty -> Message(stringResource(R.string.lines_empty), retry, centred)
+
             is LinesUiState.Error -> Message(stringResource(state.reason.messageRes), retry, centred)
         }
     }
@@ -130,9 +133,11 @@ private fun LineRow(line: LineRowUi) {
         headlineContent = { Text(line.displayName) },
         modifier = Modifier.semantics(mergeDescendants = true) {},
         leadingContent = { LineBadge(line.code, line.color, line.onColor) },
-        supportingContent = if (line.isOperational) null else ({ StatusChip(stringResource(R.string.lines_not_operational)) }),
+        supportingContent = if (line.isOperational) null else notOperational,
     )
 }
+
+private val notOperational: @Composable () -> Unit = { StatusChip(stringResource(R.string.lines_not_operational)) }
 
 /** A label, not an action: a line's status, in the error container's colours. */
 @Composable
@@ -154,7 +159,11 @@ private fun StatusChip(text: String) {
 /** Spec §7.3: rows shaped like the list's, hidden from accessibility services, while the first load runs. */
 @Composable
 private fun PlaceholderRows(contentPadding: PaddingValues) {
-    val lineHeight = with(LocalDensity.current) { MaterialTheme.typography.bodyLarge.lineHeight.toDp() }
+    val lineHeight =
+        with(LocalDensity.current) {
+            MaterialTheme.typography.bodyLarge.lineHeight
+                .toDp()
+        }
     Column(
         Modifier
             .consumeWindowInsets(contentPadding)

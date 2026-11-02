@@ -13,7 +13,8 @@ open class LogroBusApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         // The version for the User-Agent (spec §8.7), the build type for the log level, the telemetry and, until
-        // LB-008 part 2, the sample lines (security_privacy.md §4, ADR-0009), and the ViewModels of each feature module. LB-409 passes the vendor's
+        // LB-008 part 2, the sample lines (security_privacy.md §4, ADR-0009), and the ViewModels of each feature
+        // module. LB-409 passes the vendor's
         // analytics tracker and crash reporter here too, as `telemetry = PlatformTelemetry(…)`.
         initKoin(
             this,
