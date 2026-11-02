@@ -106,7 +106,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.ios == 'true' }}
     runs-on: macos-26
-    timeout-minutes: 20
+    # Owner decision, 2026-11-02: 30 minutes. With cold caches and five macOS jobs at once, one took 18 minutes to
+    # build the framework and the app before its tests could run (docs/ci_cd.md §5).
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       # Must list exactly the test targets of LogroBusUI's Package.swift

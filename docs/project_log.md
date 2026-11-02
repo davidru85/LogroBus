@@ -64,7 +64,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 **CI fixes**
 - **PR #38's first run** failed in "Shared unit tests (:shared:transit:data)", outside the change: configuring build-logic, the Gradle Plugin Portal answered "not found" for `kotlin-stdlib:2.4.0`, as in PR #36's nearme job. It recurred, so the pipeline was made resilient in this pull request, test first: build-logic's `pluginManagement` lists Maven Central before the Portal, as the root settings do (`ci_cd.md` §5).
 - **PR #38's second run:** "iOS ViewModel and snapshot tests (FeatureSettingsTests)" reached its 20-minute limit and was cancelled. With cold caches and the five macOS runners busy, it spent 625 s generating the framework and 469 s building, and the other matrix jobs took 17 to 18 minutes. It is the first time this job timed out (in PR #37 it never got a runner), so the failed jobs were rerun once.
-  - If it recurs, the matrix jobs need more room or less work, for example a framework built once and shared. Their budget is the owner's to change.
+  - The rerun's job never got a runner: GitHub's annotation says "not acquired … capacity constraints" for macOS arm64, as in PR #37. Asked, the owner chose to rerun and to raise the matrix jobs' limit from 20 to 30 minutes (owner decision, 2026-11-02), done in this pull request (`ios-checks.yml`, `ci_cd.md` §3 and §5). A job that gets no runner cannot be prevented from the pipeline.
 
 **Decisions**
 - **A minimal line detail now** (owner decision, 2026-11-02): two criteria need line detail, which LB-104 builds. LB-103 adds its route, ViewModel and toolbar toggle, with the line's badge and name; LB-104 adds the map, directions and stops.
