@@ -93,7 +93,8 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Line 3"].waitForExistence(timeout: 5), "the card opened line 3")
         back(in: app)
         removeFavourite("3", in: app)
-        XCTAssertTrue(app.staticTexts["Tap ☆ on a line to pin it here"].waitForExistence(timeout: 5))
+        // Other favourites may be left on the simulator from a manual run: only line 3's card is checked.
+        XCTAssertTrue(favouriteCard("3", in: app).waitForNonExistence(timeout: 5), "line 3 left the carousel")
     }
 
     @MainActor
@@ -129,16 +130,17 @@ final class ShellUITests: XCTestCase {
         return app.buttons.matching(card).firstMatch
     }
 
-    /// The navigation bar's back button, to the previous screen of the tab.
+    /// The navigation bar's back button, labelled with the previous screen's title, Lines; the star is beside it.
     @MainActor
     private func back(in app: XCUIApplication) {
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigationBars.buttons["Lines"].tap()
     }
 
-    /// The row of the line with `code`, read as one element that starts with its badge's spoken label.
+    /// The row of the line with `code`, read as one element that starts with its badge's spoken label. A favourite
+    /// card starts the same way, and it alone says where the line heads, so it is left out.
     @MainActor
     private func line(_ code: String, in app: XCUIApplication) -> XCUIElement {
-        let row = NSPredicate(format: "label BEGINSWITH %@", "Line \(code), ")
+        let row = NSPredicate(format: "label BEGINSWITH %@ AND NOT label CONTAINS %@", "Line \(code), ", "Towards")
         return app.descendants(matching: .any).matching(row).firstMatch
     }
 

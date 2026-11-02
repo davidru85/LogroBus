@@ -19,6 +19,15 @@ struct SnapshotTests {
         assertSnapshot(of: appearance.apply(to: EveryEta()), as: appearance.strategy, named: appearance.name)
     }
 
+    @Test(arguments: Appearance.allCases)
+    func lb103_theFavouriteToggle_offAndOn(appearance: Appearance) {
+        let toggles = HStack {
+            FavouriteToggle(isFavourite: false, label: Text(verbatim: "Añadir línea 3 a favoritas")) { _ in }
+            FavouriteToggle(isFavourite: true, label: Text(verbatim: "Quitar línea 3 de favoritas")) { _ in }
+        }
+        assertSnapshot(of: appearance.apply(to: toggles), as: appearance.strategy, named: appearance.name)
+    }
+
     @Test
     func lb011_anEtaInANarrowRowIsNeverTruncated() {
         // design_guidelines.md §8: a row narrower than the ETA lets it overflow; it never shows "…".

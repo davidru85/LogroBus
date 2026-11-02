@@ -91,6 +91,21 @@ struct LinesViewModelTests {
         try await waitUntil { favourites(of: viewModel) == ["3"] }
     }
 
+    @Test
+    func lb103_twoQuickOppositeTapsLeaveTheLastOne() async throws {
+        // Each tap's write runs in its own task; the repository applies them in the order they were made.
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview())
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { favourites(of: viewModel) == [] }
+
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: true))
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: false))
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(favourites(of: viewModel) == [])
+    }
+
     /// The carousel's cards, by code.
     private func favourites(of viewModel: LinesViewModel) -> [String]? {
         (viewModel.state as? LinesUiStateContent)?.favourites.map(\.code)
