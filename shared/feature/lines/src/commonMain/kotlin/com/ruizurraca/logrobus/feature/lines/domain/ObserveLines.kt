@@ -47,11 +47,19 @@ class DefaultObserveLines(
         lines: AppResult<List<Line>>,
         sync: AppResult<Unit>?,
     ): AppResult<List<Line>>? =
-        when {
-            lines is AppResult.Failure -> lines
-            (lines as AppResult.Success).value.isNotEmpty() -> lines
-            sync == null -> null
-            sync is AppResult.Failure -> sync
-            else -> lines
+        when (lines) {
+            is AppResult.Failure -> lines
+            is AppResult.Success -> if (lines.value.isNotEmpty()) lines else resultOfEmptyCache(lines, sync)
+        }
+
+    // An empty cache waits for the sync, whose failure is then the result (FR-ERR-05).
+    private fun resultOfEmptyCache(
+        lines: AppResult.Success<List<Line>>,
+        sync: AppResult<Unit>?,
+    ): AppResult<List<Line>>? =
+        when (sync) {
+            null -> null
+            is AppResult.Failure -> sync
+            is AppResult.Success -> lines
         }
 }
