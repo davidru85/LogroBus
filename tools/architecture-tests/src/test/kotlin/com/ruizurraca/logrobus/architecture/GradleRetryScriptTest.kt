@@ -36,6 +36,26 @@ class GradleRetryScriptTest {
     }
 
     @Test
+    fun lb002_aRunAgainAsksForEveryDependencyAgain() {
+        // Gradle remembers a file a repository did not serve, such as a module's metadata, and would fail the same
+        // way on the next run without asking again.
+        run(PORTAL_NOT_FOUND, SUCCESS)
+
+        val task = ":shared:feature:lines:ciUnitTest --quiet"
+        assertEquals(listOf(task, "$task --refresh-dependencies"), File(dir, "arguments").readLines())
+    }
+
+    @Test
+    fun lb002_aVariantThatAMissingModuleFileLeftUnmatchedIsTriedAgain() {
+        // PR #38: Maven Central did not serve compose ui 1.10.2's module metadata, so Gradle read its POM, whose iOS
+        // artifact matches no Android variant.
+        val result = run(VARIANT_FROM_A_MISSING_MODULE_FILE, SUCCESS)
+
+        assertEquals(0, result.exitCode)
+        assertEquals(2, result.runs)
+    }
+
+    @Test
     fun lb002_itGivesUpAfterThreeRuns_withGradlesExitCode() {
         val result = run(PORTAL_NOT_FOUND, PORTAL_NOT_FOUND, PORTAL_NOT_FOUND, SUCCESS)
 
@@ -117,6 +137,9 @@ class GradleRetryScriptTest {
         const val FAILING_TEST =
             "TabNavigationTest > lb103_x FAILED\n49 tests completed, 1 failed\n" +
                 "> There were failing tests. See the report at file:///x/index.html"
+        const val VARIANT_FROM_A_MISSING_MODULE_FILE =
+            "> Could not resolve org.jetbrains.compose.ui:ui-uikit:1.10.2.\n" +
+                "   > No matching variant of org.jetbrains.compose.ui:ui-uikit:1.10.2 was found."
         const val COMPILE_ERROR =
             "e: file:///x/Y.kt:3:5 Unresolved reference 'z'.\n> Compilation error. See log for more details"
     }
