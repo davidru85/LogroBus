@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 
 /**
  * Settings shared by the Android application and library conventions: SDK levels and JVM target from the
- * catalog, Compose with its BOM, Robolectric-ready unit tests, the `ciUnitTest` alias, the security floors of AGP's
- * tools and [ModuleRules].
+ * catalog, Compose with its BOM, Robolectric-ready unit tests, the `ciUnitTest` alias, the security floors of the
+ * build's tools and tests, and [ModuleRules].
  */
 internal fun Project.configureAndroidModule(android: CommonExtension) {
     pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
@@ -46,7 +46,7 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         dependsOn("testDebugUnitTest")
     }
 
-    raiseAgpToolSecurityFloors()
+    raiseSecurityFloors()
     configureDetekt(listOf("detektMain", "detektTest"))
     verifyModuleRules()
 }

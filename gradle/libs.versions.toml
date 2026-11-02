@@ -47,11 +47,18 @@ koin = "4.2.2"
 skie = "0.10.15"
 # Time zones and calendars for the Madrid clock; instants come from kotlin.time (ADR-0015).
 kotlinx-datetime = "0.8.0"
-# Not project dependencies: security floors for libraries that AGP 9.3 brings into its tools and plugin
-# classpath with critical advisories (docs/ci_cd.md §6). Drop each once AGP brings a fixed version itself.
+# Not project dependencies: security floors for libraries with known advisories that AGP 9.3 (its tools and
+# plugin classpath), KGP's Swift export and Robolectric bring (docs/ci_cd.md §6). Drop each once the tool that
+# brings it ships a fixed version itself.
 netty = "4.1.139.Final"
 bouncycastle = "1.85"
 freemarker = "2.3.35"
+guava = "33.7.2-jre"
+opentelemetry = "1.67.0"
+commons-lang3 = "3.18.0"
+httpclient = "4.5.14"
+jose4j = "0.9.6"
+jdom2 = "2.0.6.1"
 
 [libraries]
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -109,6 +116,12 @@ sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", versi
 netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 bouncycastle-bom = { module = "org.bouncycastle:bc-jdk18on-bom", version.ref = "bouncycastle" }
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
+guava-bom = { module = "com.google.guava:guava-bom", version.ref = "guava" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+httpclient = { module = "org.apache.httpcomponents:httpclient", version.ref = "httpclient" }
+jose4j = { module = "org.bitbucket.b_c:jose4j", version.ref = "jose4j" }
+jdom2 = { module = "org.jdom:jdom2", version.ref = "jdom2" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
