@@ -94,6 +94,19 @@ class LinesRepositoryTest {
         }
 
     @Test
+    fun lb101_aLineWhoseIdIsNoIntIsDroppedAndLogged() =
+        runTest {
+            // DD-02 ids are Ints; a wider one would be truncated into another line's id.
+            database.insert(line4, kind = "day")
+            database.lineQueries.insertLine(Int.MAX_VALUE + 1L, "B1", "raw", "Varea - La Cava", 0, 0, "night", true)
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(listOf(line4)), awaitItem())
+            }
+            assertEquals(LogLevel.Warn, logger.entries.single().level)
+        }
+
+    @Test
     fun lb101_aDatabaseThatCannotBeReadGivesAFailure_notACrash() =
         runTest {
             driver.execute(null, "DROP TABLE line", 0)
