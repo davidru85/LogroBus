@@ -103,6 +103,8 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **02-11-2026:**
+  - Flujo de trabajo: una nueva sesión de un agente de IA, por ejemplo tras un reinicio, retoma el trabajo desde la entrada más reciente de `docs/project_log.md`. Esa entrada indica la pull request abierta, la siguiente tarea y las decisiones pendientes del propietario. `AGENTS.md` lo indica, y una sesión que termina con una pull request abierta escribe antes esa entrada.
 - **31-10-2026:**
   - LB-006, parte 1: las reglas que limpian los datos de la fuente antes de que los use ninguna pantalla.
     - Las paradas y líneas se reconocen en cualquiera de los formatos de identificador de la fuente, y un valor vacío cuenta como ausente.

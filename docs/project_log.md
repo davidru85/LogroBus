@@ -19,6 +19,45 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-02: Hand-over: where work stands, and how to resume
+
+**Done**
+- **A restart of the owner's machine:** the owner asked for the docs to record where work stands, so that a new agent session can resume after the restart. This entry is that record.
+- **State at the hand-over:**
+  - **PR #34** (LB-006 part 1, branch `feat/LB-006-normalisation-rules`) is open. All 53 checks passed on `6fc65b5`, and there is no review, comment or change request yet. This entry's commit is pushed to the same branch, so the checks run again.
+  - **`main`** is at `94fa572`, the merge of PR #33.
+  - **Local state:** nothing is uncommitted, and no simulator or emulator started by the agent is running. The background watch of PR #34 (`scripts/agent/watch-pr.sh 34 180`) ends with the machine, so the next session starts it again.
+- **Docs:** `AGENTS.md` §10 and `finish-story.md` step 9 now say where a session resumes, and both READMEs record it.
+
+**Decisions**
+- **Where a session resumes:** the newest entry of this log is the hand-over. Its "Open / next" names any open pull request, the next task and what waits for the owner. A session that ends with a pull request open records them there before it ends.
+
+**Open / next**
+- **Resume, in this order:**
+  1. Run `scripts/agent/session-start.sh` (Claude Code's hook runs it), then `git fetch` and `git status`. Expect `feat/LB-006-normalisation-rules`, clean and level with `origin`.
+  2. Check PR #34: `gh pr view 34 --json state,reviewDecision,reviews,comments` and `gh pr checks 34`.
+     - **Open:** start the watch in the background, `scripts/agent/watch-pr.sh 34 180`, and act on its result as `AGENTS.md` §10 says. Failed checks are fixed without waiting for the owner.
+     - **Merged:** run `git checkout main && git pull --ff-only`, tell the owner in one line, and start the next task.
+     - **Closed without a merge, changes requested or new comments:** stop and report to the owner.
+  3. **The next task, once PR #34 is merged,** is LB-101 part 1, through `start-story.md` (`/start-story LB-101`): the Lines list over a repository contract and scripted lines.
+     - Part 1 covers every LB-101 criterion that scripted lines can show.
+     - Part 2 checks the list against `lines_2026-10-22.json`, once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008.
+- **Waiting on the owner.** None of these blocks LB-101 part 1.
+  - **PR #34's three points,** in its description and in `api_spec.md` §4 and §5:
+    - DD-05 takes the reading nearest the report around the changes of time;
+    - the readings of spec §5.6: `order` counts from 1, calls at one stop are placed by their order first, and only step 3's decisions across several stops are cached;
+    - line codes are `B` and up to three digits.
+  - **OQ-11,** the terms of reuse: it blocks LB-003, and through it the part 2s of LB-005, LB-006 and LB-008.
+  - **OQ-10,** the tile provider: it blocks LB-013.
+  - **OQ-16,** the analytics, crash-reporting and remote-config vendors: it blocks LB-014's last ADR and LB-015.
+  - **DD-10's provisional saved stop counts as served** (FR-FAV-04), in the 2026-10-30 LB-008 entry.
+  - **The limits of the rule on failing checks,** in the same entry.
+  - **WorkManager** for LB-008 part 2's daily job: a new dependency, with its ADR.
+  - **8 Dependabot alerts on `main`:** 3 high and 5 moderate.
+- **Still open from the 2026-10-31 entry:** LB-006 part 2's notes, and the notes for the planner and Near Me stories.
+
+---
+
 ## 2026-10-31: LB-006, part 1: the DD rules that need no DTO shapes
 
 **Done**

@@ -228,8 +228,9 @@ Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, 
 
 **Before coding:**
 1. Make sure `scripts/bootstrap.sh` has been run in this clone, so the git hooks are installed. Agents without hooks run `scripts/agent/session-start.sh` themselves.
-2. Find the story in `docs/backlog.md`, or add one if the owner asks for something new. Read its criteria in `docs/acceptance_criteria.md` and the requirement ids it cites.
-3. Check `docs/open_questions.md`. If the work depends on an open question, implement the documented fallback or ask.
+2. **Resuming work** in a new session, after a restart for example: read the newest entry of `docs/project_log.md`, the hand-over. Its "Open / next" names any open pull request, the next task and what waits for the owner. Check each open pull request first and restart its watch, as described below.
+3. Find the story in `docs/backlog.md`, or add one if the owner asks for something new. Read its criteria in `docs/acceptance_criteria.md` and the requirement ids it cites.
+4. Check `docs/open_questions.md`. If the work depends on an open question, implement the documented fallback or ask.
 
 **While coding:**
 - Work in small vertical slices with tests in the same change, and keep logic in shared code unless it is inherently platform-specific.

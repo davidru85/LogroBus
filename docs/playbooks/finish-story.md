@@ -50,4 +50,4 @@
      - **Stop and report instead** when the fix needs something on the "ask the owner before" list (`AGENTS.md` §10), touches `main` or its protection, or the same check still fails after three attempts.
    - **`MERGED`:** run `git checkout main && git pull --ff-only`, tell the owner in one line that the merge was detected, and start the task named in the hand-over. If none was named, start the next open item of the story in `backlog.md`, through `start-story.md` when it is a new story.
    - **`CLOSED` without a merge, `CHANGES_REQUESTED`, or new review comments:** stop and report to the owner; do not move on.
-   - If the session ends while the PR is open, the next session resumes the watch.
+   - If the session ends while the PR is open, the next session resumes the watch. Before it ends, record in the newest `project_log.md` entry the pull request, its state, the next task and what waits for the owner: that entry is where the next session starts (`AGENTS.md` §10).
