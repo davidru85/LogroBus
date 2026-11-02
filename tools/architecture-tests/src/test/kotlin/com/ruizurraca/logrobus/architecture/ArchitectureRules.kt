@@ -22,6 +22,9 @@ object ArchitectureRules {
             Regex("""\b(strictly|require|prefer)\s*\(\s*""""),
         )
     private val swiftTarget = Regex("""\.target\(\s*name:\s*"(\w+)"(?:\s*,\s*dependencies:\s*\[([^\]]*)])?""")
+    private val swiftTestTarget = Regex("""\.testTarget\(\s*name:\s*"(\w+)"""")
+    private val matrixKey = Regex("""^( *)matrix:\s*$""", RegexOption.MULTILINE)
+    private val listItem = Regex("""^\s*-\s*"?([^"\s]+)"?\s*$""")
     private val swiftPackageExact =
         Regex("""\.package\(\s*url:\s*"[^"]*/([\w.-]+?)(?:\.git)?"\s*,\s*exact:\s*"([^"]+)"""")
     private val xcodegenPackageExact = Regex("""url:\s*\S*/([\w.-]+?)(?:\.git)?\s*\n\s*exactVersion:\s*"?([\w.-]+)"?""")
@@ -136,6 +139,10 @@ object ArchitectureRules {
         return quoted.findAll(dependencies.orEmpty()).map { it.groupValues[1] }.toList()
     }
 
+    /** The test targets a Swift package manifest declares, in order. */
+    fun swiftTestTargets(manifest: String): List<String> =
+        swiftTestTarget.findAll(manifest).map { it.groupValues[1] }.toList()
+
     /**
      * Remote Swift packages that the package manifest and the XcodeGen spec pin to different exact versions. Two exact
      * requirements for one package fail resolution, so they must move together.
@@ -203,6 +210,23 @@ object ArchitectureRules {
         workflow: String,
         job: String,
     ): Set<String> = workflowMatrixModules(jobBodies(workflow)[job].orEmpty())
+
+    /** The items of [job]'s matrix, such as `- FeatureLinesTests`, in order; empty if it has no matrix. */
+    fun jobMatrixItems(
+        workflow: String,
+        job: String,
+    ): List<String> {
+        val body = jobBodies(workflow)[job].orEmpty()
+        val matrix = matrixKey.find(body) ?: return emptyList()
+        val indent = matrix.groupValues[1].length
+        // The matrix ends at the first line indented no deeper than its own key.
+        return body
+            .substring(matrix.range.last + 1)
+            .lines()
+            .filter { it.isNotBlank() }
+            .takeWhile { line -> line.length - line.trimStart().length > indent }
+            .mapNotNull { listItem.find(it)?.groupValues?.get(1) }
+    }
 
     /**
      * Jobs of a GitHub Actions workflow that its [gate] job does not list in `needs`. The gate is the one required

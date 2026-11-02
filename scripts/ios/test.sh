@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Usage: scripts/ios/test.sh
+# Usage: scripts/ios/test.sh [test-target...]
 #
-# Generates the iOS project (scripts/ios/generate-project.sh) and runs every iOS test on an
-# iPhone simulator: the built-bundle checks (iosAppTests) and the launch UI tests
-# (iosAppUITests). The "iOS build and tests" CI job runs exactly this.
+# Generates the iOS project (scripts/ios/generate-project.sh) and runs the iOS tests on an
+# iPhone simulator: with no argument, every test target of the iosApp scheme; otherwise only the
+# named ones, which alone are built. CI splits them (docs/ci_cd.md §3): the "iOS build and tests"
+# job runs the app's targets (iosAppTests, iosAppUITests), and the "iOS ViewModel and snapshot
+# tests" job runs each test target of the LogroBusUI package on its own.
 #
 # A simulator's first boot on a fresh CI machine takes minutes. The script therefore starts the
 # boot before building the app and tests and waits for it only once they are built, and it
@@ -45,9 +47,14 @@ xcrun simctl bootstatus "$udid" -b > "$boot_log" 2>&1 &
 boot_pid=$!
 
 destination="platform=iOS Simulator,id=$udid"
+# The named test targets only, or the whole scheme.
+only_testing=()
+for target in "$@"; do
+  only_testing+=("-only-testing:$target")
+done
 phase_start=$SECONDS
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "$destination" \
-  -derivedDataPath "$derived_data" -quiet build-for-testing
+  -derivedDataPath "$derived_data" -quiet ${only_testing[@]+"${only_testing[@]}"} build-for-testing
 echo "TIME: app and tests built in $((SECONDS - phase_start)) s"
 
 phase_start=$SECONDS
@@ -66,7 +73,8 @@ test_log="$(mktemp)"
 run_tests() {
   TEST_RUNNER_SNAPSHOT_ARTIFACTS="$root/build/snapshot-artifacts" \
     xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -destination "$destination" \
-    -derivedDataPath "$derived_data" -quiet test-without-building 2>&1 | tee "$test_log"
+    -derivedDataPath "$derived_data" -quiet ${only_testing[@]+"${only_testing[@]}"} test-without-building 2>&1 |
+    tee "$test_log"
 }
 if ! run_tests; then
   # A CI runner flake, seen on PRs #21, #28 and #33: the simulator the build has just used vanishes,
@@ -86,4 +94,4 @@ if ! run_tests; then
   run_tests
 fi
 echo "TIME: tests ran in $((SECONDS - phase_start)) s"
-echo "OK:   iOS tests passed on $simulator, iOS $os ($udid)"
+echo "OK:   iOS tests (${*:-every target}) passed on $simulator, iOS $os ($udid)"
