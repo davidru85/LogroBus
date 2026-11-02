@@ -128,6 +128,8 @@ Because `main` is protected, path-filtered workflows need a small always-running
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.
 - **Runner flakes:** the agent watching a pull request reruns a failure outside the change once (`AGENTS.md` §10). One that recurs is made harmless in the pipeline:
   - **A vanishing simulator** (PRs #21, #28 and #33): after a clean build, `xcodebuild test-without-building` found no device (exit code 70), and a rerun passed. Since PR #33, `scripts/ios/test.sh` then waits up to 2 minutes for the simulator to come back, boots it and retries the tests once. Any other failure, such as a failing test, fails at once.
+- **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
+  - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.
 
 ## 6. Workflow security
 

@@ -4,7 +4,8 @@
 # Installs the pinned SwiftLint release for Linux x86-64 into <install-dir>, after checking
 # its SHA-256: third-party tools are pinned (docs/ci_cd.md §6). The SwiftLint CI job uses
 # it; macOS developers install SwiftLint with Homebrew (docs/code_style.md §3.1). Bump the
-# version and the checksum together.
+# version and the checksum together. The binary links the runner's libxml2.so.2, so the job
+# pins its Ubuntu image (docs/ci_cd.md §5); a binary that cannot run fails the install.
 set -euo pipefail
 
 version="0.65.1"
@@ -18,4 +19,8 @@ echo "$sha256  $archive" | sha256sum --check --quiet
 mkdir -p "$dest"
 unzip -q -o "$archive" -d "$dest"
 chmod +x "$dest/swiftlint"
-echo "OK:   SwiftLint $("$dest/swiftlint" version) installed in $dest"
+if ! installed="$("$dest/swiftlint" version 2>&1)"; then
+  echo "FAIL: SwiftLint $version does not run on this machine: $installed" >&2
+  exit 1
+fi
+echo "OK:   SwiftLint $installed installed in $dest"

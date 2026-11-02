@@ -46,7 +46,9 @@ jobs:
     name: SwiftLint
     needs: changes
     if: ${{ needs.changes.outputs.ios == 'true' }}
-    runs-on: ubuntu-latest
+    # Pinned: SwiftLint's Linux binary needs libxml2.so.2, which Ubuntu 26.04 (ubuntu-latest
+    # from 2026-11) no longer ships. Move on when a SwiftLint release runs there.
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
