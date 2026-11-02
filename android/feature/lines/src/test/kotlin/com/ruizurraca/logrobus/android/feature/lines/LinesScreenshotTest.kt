@@ -17,12 +17,13 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * AGENTS.md §9 and spec §7.3: every state of the Lines list in light, dark and at 200 % font, in Spanish. At 200 %,
- * no code is cut and names wrap (LB-101). One capture per test, on [SCREENSHOT_SDK].
+ * AGENTS.md §9 and spec §7.3: every state of the Lines list in light, dark and at 200 % font, in Spanish, on a window
+ * tall enough for the whole list: at 200 %, every code shows whole and names wrap (LB-101). One capture per test, on
+ * [SCREENSHOT_SDK].
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "es", sdk = [SCREENSHOT_SDK])
+@Config(qualifiers = "es-h1600dp", sdk = [SCREENSHOT_SDK])
 class LinesScreenshotTest(
     private val state: String,
     private val variant: String,

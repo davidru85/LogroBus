@@ -6,6 +6,8 @@
     <string name="lines_group_night">Night lines (Búho)</string>
     <!-- FR-LINE-02: the status chip of a line that is not operational. -->
     <string name="lines_not_operational">Not in service</string>
+    <!-- Spec §7.3 and design_guidelines.md §8: what TalkBack says while the first load runs. -->
+    <string name="lines_loading">Loading lines</string>
     <!-- Spec §7.3: the Empty state, one sentence and Retry. -->
     <string name="lines_empty">There are no lines to show.</string>
 </resources>

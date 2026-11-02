@@ -19,17 +19,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
+import com.ruizurraca.logrobus.android.core.designsystem.LineBadgeSize
 import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
 import com.ruizurraca.logrobus.android.core.designsystem.RetryMessage
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
@@ -62,12 +66,16 @@ fun LinesScreen(
     onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // The bar takes its scrolled colour while the list runs under it. It does not collapse yet: a scroll to the top on
+    // re-selection (FR-NAV-03) is programmatic, so it would not bring a collapsed bar back.
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = { ScreenTitle(stringResource(R.string.lines_title)) },
                 actions = { MoreActionButton(onClick = onOpenMore) },
+                scrollBehavior = scrollBehavior,
             )
         },
     ) { padding ->
@@ -152,7 +160,10 @@ private fun StatusChip(text: String) {
     }
 }
 
-/** Spec §7.3: rows shaped like the list's, hidden from accessibility services, while the first load runs. */
+/**
+ * Spec §7.3: a heading and rows shaped like the list's while the first load runs. TalkBack hears "Loading lines"
+ * rather than the shapes (design_guidelines.md §8).
+ */
 @Composable
 private fun PlaceholderRows(contentPadding: PaddingValues) {
     val lineHeight =
@@ -160,16 +171,19 @@ private fun PlaceholderRows(contentPadding: PaddingValues) {
             MaterialTheme.typography.bodyLarge.lineHeight
                 .toDp()
         }
+    val loading = stringResource(R.string.lines_loading)
+    val badge = LineBadgeSize.Regular
     Column(
         Modifier
             .consumeWindowInsets(contentPadding)
             .padding(contentPadding)
-            .clearAndSetSemantics {},
+            .clearAndSetSemantics { contentDescription = loading },
     ) {
+        ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
         repeat(PLACEHOLDER_ROWS) {
             ListItem(
                 headlineContent = { Placeholder(Modifier.fillMaxWidth(PLACEHOLDER_WIDTH).height(lineHeight)) },
-                leadingContent = { Placeholder(Modifier.size(Tokens.minTouchTarget, lineHeight)) },
+                leadingContent = { Placeholder(Modifier.size(badge.minWidth, badge.minHeight)) },
             )
         }
     }
@@ -190,6 +204,9 @@ private val LineKind.titleRes: Int
 
 // Enough rows to fill a phone's first screen.
 private const val PLACEHOLDER_ROWS = 8
+
+// A placeholder heading is shorter than a name, as "Líneas diurnas" is.
+private const val HEADING_WIDTH = 0.35f
 
 // A placeholder name spans this share of its row: long enough to read as text, short enough not to look like content.
 private const val PLACEHOLDER_WIDTH = 0.6f

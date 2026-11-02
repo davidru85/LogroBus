@@ -125,7 +125,7 @@ class LinesScreenTest {
 
     @Test
     fun lb101_theFirstLoadIsAnnouncedToTalkBack() {
-        // The placeholders are hidden from TalkBack, so the list says that it is loading instead (design_guidelines §8).
+        // The placeholders are hidden from TalkBack, so the list says it is loading instead (design_guidelines §8).
         compose.setContent { LinesScreen(LinesUiState.Loading, onEvent = {}, onOpenMore = {}) }
 
         compose.onNode(hasContentDescription(context.getString(R.string.lines_loading))).assertExists()
