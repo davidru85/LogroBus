@@ -8,10 +8,4 @@
     <string name="lines_not_operational">Sin servicio</string>
     <!-- Spec §7.3: the Empty state, one sentence and Retry. -->
     <string name="lines_empty">No hay líneas que mostrar.</string>
-
-    <!-- FR-ERR-05: the Error state's reason and action (design_guidelines.md §7 and §9, keys error.*). -->
-    <string name="error_network">No hay conexión. Comprueba tu red.</string>
-    <string name="error_server">El servicio no responde. Inténtalo más tarde.</string>
-    <string name="error_data">No se han podido leer los datos.</string>
-    <string name="error_retry">Reintentar</string>
 </resources>

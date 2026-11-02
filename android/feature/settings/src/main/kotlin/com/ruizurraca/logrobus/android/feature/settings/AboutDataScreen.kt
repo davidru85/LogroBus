@@ -6,18 +6,15 @@ import android.icu.util.TimeZone
 import android.text.format.DateFormat
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,7 +23,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
@@ -36,12 +32,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruizurraca.logrobus.android.core.designsystem.RetryMessage
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
-import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataEvent
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiState
@@ -101,8 +97,8 @@ private fun AboutDataContent(
         }
 
         is AboutDataUiState.Error -> {
-            ErrorMessage(
-                state.reason,
+            RetryMessage(
+                stringResource(state.reason.messageRes),
                 onRetry = { onEvent(AboutDataEvent.Retry) },
                 Modifier.padding(contentPadding).consumeWindowInsets(contentPadding),
             )
@@ -151,23 +147,6 @@ private fun LastSyncs(
     }
 }
 
-/** FR-ERR-05: the reason, and Retry. */
-@Composable
-private fun ErrorMessage(
-    reason: ErrorReason,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier.fillMaxSize().padding(Tokens.Spacing.xl),
-        verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xl, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(stringResource(reason.messageRes), textAlign = TextAlign.Center)
-        Button(onClick = onRetry) { Text(stringResource(R.string.error_retry)) }
-    }
-}
-
 /** A line-high bar where text will be, hidden from accessibility services. */
 @Composable
 private fun TextPlaceholder() {
@@ -192,15 +171,6 @@ private val StaticDataset.labelRes: Int
         when (this) {
             StaticDataset.LINES -> R.string.about_dataset_lines
             StaticDataset.STOPS -> R.string.about_dataset_stops
-        }
-
-@get:StringRes
-private val ErrorReason.messageRes: Int
-    get() =
-        when (this) {
-            ErrorReason.NETWORK -> R.string.error_network
-            ErrorReason.SERVER -> R.string.error_server
-            ErrorReason.DATA -> R.string.error_data
         }
 
 /** Formats a Madrid wall-clock time in the device locale, as a medium date and a time in the device's 12/24-h style. */

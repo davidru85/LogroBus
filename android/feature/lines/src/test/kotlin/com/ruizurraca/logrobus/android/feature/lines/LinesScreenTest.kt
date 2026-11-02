@@ -27,6 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.GraphicsMode
+import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /** LB-101 (FR-LINE-01, FR-LINE-02, NFR-A11Y-02) and spec §7.3 on Android: the Lines list and its states. */
 @RunWith(AndroidJUnit4::class)
@@ -125,8 +126,8 @@ class LinesScreenTest {
             LinesScreen(LinesUiState.Error(ErrorReason.NETWORK), onEvent = { events += it }, onOpenMore = {})
         }
 
-        compose.onNodeWithText(context.getString(R.string.error_network)).assertExists()
-        compose.onNodeWithText(context.getString(R.string.error_retry)).performClick()
+        compose.onNodeWithText(context.getString(DS.string.error_network)).assertExists()
+        compose.onNodeWithText(context.getString(DS.string.error_retry)).performClick()
 
         assertEquals(listOf(LinesEvent.Retry), events)
     }
@@ -137,7 +138,7 @@ class LinesScreenTest {
         compose.setContent { LinesScreen(LinesUiState.Empty, onEvent = { events += it }, onOpenMore = {}) }
 
         compose.onNodeWithText(context.getString(R.string.lines_empty)).assertExists()
-        compose.onNodeWithText(context.getString(R.string.error_retry)).performClick()
+        compose.onNodeWithText(context.getString(DS.string.error_retry)).performClick()
 
         assertEquals(listOf(LinesEvent.Retry), events)
     }
@@ -171,7 +172,7 @@ class LinesScreenTest {
     )
 
     private companion object {
-        val BADGE_LABEL = com.ruizurraca.logrobus.android.core.designsystem.R.string.line_badge
-        val MORE_ACTION = com.ruizurraca.logrobus.android.core.designsystem.R.string.action_more
+        val BADGE_LABEL = DS.string.line_badge
+        val MORE_ACTION = DS.string.action_more
     }
 }

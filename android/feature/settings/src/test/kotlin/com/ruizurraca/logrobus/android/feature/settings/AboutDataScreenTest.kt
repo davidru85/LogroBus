@@ -24,6 +24,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.util.TimeZone
 import kotlin.time.Instant
+import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /** Spec §7.3 and FR-ERR-05 on Android: About data's states, and its times on the Madrid clock (LB-405). */
 @RunWith(AndroidJUnit4::class)
@@ -59,8 +60,8 @@ class AboutDataScreenTest {
             AboutDataScreen(AboutDataUiState.Error(ErrorReason.DATA), onEvent = { events += it }, onBack = {})
         }
 
-        compose.onNodeWithText(context.getString(R.string.error_data)).assertExists()
-        compose.onNodeWithText(context.getString(R.string.error_retry)).performClick()
+        compose.onNodeWithText(context.getString(DS.string.error_data)).assertExists()
+        compose.onNodeWithText(context.getString(DS.string.error_retry)).performClick()
 
         assertEquals(listOf(AboutDataEvent.Retry), events)
     }

@@ -2,12 +2,10 @@ package com.ruizurraca.logrobus.android.feature.lines
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -24,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
@@ -32,14 +28,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
 import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
+import com.ruizurraca.logrobus.android.core.designsystem.RetryMessage
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
+import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.android.core.navigation.ScrollToTopOnReselect
-import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.feature.lines.presentation.LineGroupUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineRowUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
@@ -83,9 +79,9 @@ fun LinesScreen(
 
             is LinesUiState.Content -> LineList(state.groups, padding)
 
-            LinesUiState.Empty -> Message(stringResource(R.string.lines_empty), retry, centred)
+            LinesUiState.Empty -> RetryMessage(stringResource(R.string.lines_empty), retry, centred)
 
-            is LinesUiState.Error -> Message(stringResource(state.reason.messageRes), retry, centred)
+            is LinesUiState.Error -> RetryMessage(stringResource(state.reason.messageRes), retry, centred)
         }
     }
 }
@@ -184,38 +180,12 @@ private fun Placeholder(modifier: Modifier) {
     Box(modifier.clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceVariant))
 }
 
-/** FR-ERR-05 and spec §7.3: one sentence, and Retry. */
-@Composable
-private fun Message(
-    text: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier.fillMaxSize().padding(Tokens.Spacing.xl),
-        verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xl, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text, textAlign = TextAlign.Center)
-        Button(onClick = onRetry) { Text(stringResource(R.string.error_retry)) }
-    }
-}
-
 @get:StringRes
 private val LineKind.titleRes: Int
     get() =
         when (this) {
             LineKind.DAY -> R.string.lines_group_day
             LineKind.NIGHT -> R.string.lines_group_night
-        }
-
-@get:StringRes
-private val ErrorReason.messageRes: Int
-    get() =
-        when (this) {
-            ErrorReason.NETWORK -> R.string.error_network
-            ErrorReason.SERVER -> R.string.error_server
-            ErrorReason.DATA -> R.string.error_data
         }
 
 // Enough rows to fill a phone's first screen.
