@@ -72,7 +72,7 @@ class LinesUiMapperTest {
 
     @Test
     fun dd08_linesThatShareAColourKeepTheirOwnCodes() {
-        // Lines 4 and B1 share red: each row keeps its code beside the colour, so the badge never stands for the colour.
+        // Lines 4 and B1 share red: each row keeps its code beside the colour, so a badge never stands for a colour.
         val state = LinesUiMapper.state(AppResult.Success(listOf(line("4"), line("B1"))))
 
         val rows = (state as LinesUiState.Content).groups.flatMap { it.lines }

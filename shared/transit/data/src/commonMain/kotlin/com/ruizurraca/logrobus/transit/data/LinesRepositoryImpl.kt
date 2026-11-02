@@ -37,17 +37,16 @@ class LinesRepositoryImpl(
 
     private fun lineOf(row: SelectLines): Line? {
         val kind = LineKind.entries.firstOrNull { it.key == row.kind }
-        if (kind == null) {
-            logger.warn(TAG, "Dropped a line of an unknown kind")
-            return null
-        }
         // DD-02: ids are Ints. A wider one would be truncated into another line's id.
-        if (row.id !in Int.MIN_VALUE..Int.MAX_VALUE) {
-            logger.warn(TAG, "Dropped a line whose id is out of range")
+        val id = row.id.takeIf { it in Int.MIN_VALUE..Int.MAX_VALUE }?.toInt()
+        if (kind == null || id == null) {
+            // By cause only, never with the row's values.
+            val cause = if (kind == null) "an unknown kind" else "an id out of range"
+            logger.warn(TAG, "Dropped a line with $cause")
             return null
         }
         return Line(
-            id = row.id.toInt(),
+            id = id,
             code = row.code,
             displayName = row.display_name,
             color = row.color,

@@ -4,7 +4,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-/** Spec §5.1: a line is its code and the rest of its data, never its colour alone (DD-08's mapping: LinesUiMapperTest). */
+/**
+ * Spec §5.1: a line is its code and the rest of its data, never its colour alone. DD-08's handling is tested in
+ * LinesUiMapperTest.
+ */
 class LineTest {
     private val line4 = Line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613, 0xFFFFFFFF, LineKind.DAY, isOperational = true)
 
