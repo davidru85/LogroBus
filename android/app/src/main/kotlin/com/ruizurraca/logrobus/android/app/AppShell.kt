@@ -36,6 +36,7 @@ import com.ruizurraca.logrobus.android.core.navigation.MoreKey
 import com.ruizurraca.logrobus.android.core.navigation.NearMeKey
 import com.ruizurraca.logrobus.android.core.navigation.PlannerKey
 import com.ruizurraca.logrobus.android.core.navigation.SettingsKey
+import com.ruizurraca.logrobus.android.feature.lines.LinesRoute
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataRoute
 import com.ruizurraca.logrobus.android.feature.settings.SettingsScreen
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
@@ -147,7 +148,7 @@ internal fun screens(
         )
     }
     return entryProvider {
-        entry<LinesKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.LINES, onOpenMore = openMore) } }
+        entry<LinesKey>(onTab) { root { LinesRoute(onOpenMore = openMore) } }
         entry<NearMeKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.NEAR_ME, onOpenMore = openMore) } }
         entry<PlannerKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.PLANNER, onOpenMore = openMore) } }
         entry<MoreKey>(onTab) {
