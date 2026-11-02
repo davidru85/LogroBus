@@ -56,3 +56,13 @@ package.targets.append(
         linkerSettings: linksShared
     )
 )
+
+// The Lines list's ViewModel and snapshot tests (LB-101).
+package.targets.append(
+    .testTarget(
+        name: "FeatureLinesTests",
+        dependencies: ["FeatureLines", "Shared", .product(name: "SnapshotTesting", package: "swift-snapshot-testing")],
+        exclude: ["__Snapshots__"],
+        linkerSettings: linksShared
+    )
+)
