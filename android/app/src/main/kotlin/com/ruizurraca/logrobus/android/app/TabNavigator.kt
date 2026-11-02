@@ -60,9 +60,16 @@ internal class TabNavigator(
         }
     }
 
-    /** Opens [key] on the selected tab's stack. */
-    fun open(key: NavKey) {
-        stack(selected).add(key)
+    /**
+     * Opens [key] on the selected tab's stack, from the screen [from], only while that screen is on top. A screen
+     * fading out still takes taps, so a quick second tap would otherwise open a second screen over the first (LB-103).
+     */
+    fun open(
+        key: NavKey,
+        from: NavKey,
+    ) {
+        val stack = stack(selected)
+        if (stack.lastOrNull() == from) stack.add(key)
     }
 
     /** Back: pops the selected tab; at the root of any tab but the start one, returns to the start tab (FR-NAV-02). */

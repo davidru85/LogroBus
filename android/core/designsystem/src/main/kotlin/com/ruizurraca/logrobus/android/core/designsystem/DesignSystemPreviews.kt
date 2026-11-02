@@ -84,3 +84,16 @@ private fun TopAppBarActionsPreview() {
 // Line B1's red and its onColor (spec §3).
 private const val PREVIEW_RED = 0xFFFD0200
 private const val PREVIEW_ON_RED = 0xFF000000
+
+@PreviewLightDark
+@Composable
+private fun FavouriteTogglePreview() {
+    LogroBusTheme {
+        Surface {
+            Row {
+                FavouriteToggle(isFavourite = false, onToggle = {}, label = "Añadir línea 3 a favoritas")
+                FavouriteToggle(isFavourite = true, onToggle = {}, label = "Quitar línea 3 de favoritas")
+            }
+        }
+    }
+}

@@ -141,7 +141,7 @@ internal fun screens(
     navigator: TabNavigator,
 ): (NavKey) -> NavEntry<NavKey> {
     val onTab: (NavKey) -> Any = { "${tab.name}/$it" }
-    val openMore = { navigator.open(MoreKey) }
+    val openMore = { navigator.open(MoreKey, from = tab.rootKey) }
     // A tab root hears its tab's re-selections, to scroll to its top.
     val root: @Composable (@Composable () -> Unit) -> Unit = { content ->
         CompositionLocalProvider(
@@ -151,15 +151,16 @@ internal fun screens(
     }
     return entryProvider {
         entry<LinesKey>(onTab) {
-            root { LinesRoute(onOpenMore = openMore, onOpenLine = { navigator.open(LineDetailKey(it)) }) }
+            val openLine = { lineId: Int -> navigator.open(LineDetailKey(lineId), from = LinesKey) }
+            root { LinesRoute(onOpenMore = openMore, onOpenLine = openLine) }
         }
         entry<LineDetailKey>(onTab) { key -> LineDetailRoute(key.lineId, onBack = navigator::goBack) }
         entry<NearMeKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.NEAR_ME, onOpenMore = openMore) } }
         entry<PlannerKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.PLANNER, onOpenMore = openMore) } }
         entry<MoreKey>(onTab) {
             MoreScreen(
-                onOpenSettings = { navigator.open(SettingsKey) },
-                onOpenAboutData = { navigator.open(AboutDataKey) },
+                onOpenSettings = { navigator.open(SettingsKey, from = MoreKey) },
+                onOpenAboutData = { navigator.open(AboutDataKey, from = MoreKey) },
                 onBack = navigator::goBack,
             )
         }

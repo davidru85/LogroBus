@@ -18,7 +18,13 @@ import org.koin.dsl.module
 @Composable
 private fun AppShellPreview() {
     // The Lines root takes its ViewModel from the graph, here over the scripted use cases (architecture.md §5.2).
-    val lines = module { factory { SharedDependencies.preview().observeLinesWithFavourites() } }
+    // One scripted set, so that a toggle in the interactive preview reaches the list.
+    val useCases = SharedDependencies.preview()
+    val lines =
+        module {
+            factory { useCases.observeLinesWithFavourites() }
+            factory { useCases.setFavouriteLine() }
+        }
     KoinApplicationPreview(application = { modules(lines, linesUiModule) }) {
         LogroBusTheme { AppShell() }
     }

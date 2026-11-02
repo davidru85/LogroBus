@@ -36,6 +36,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -149,10 +150,12 @@ private fun FavouriteLines(
     onOpenLine: (lineId: Int) -> Unit,
 ) {
     if (cards.isEmpty()) {
+        val spoken = stringResource(R.string.lines_favourites_hint_spoken)
         OutlinedCard(Modifier.padding(horizontal = Tokens.Spacing.l).fillMaxWidth()) {
             Text(
                 stringResource(R.string.lines_favourites_hint),
-                modifier = Modifier.padding(Tokens.Spacing.l),
+                // TalkBack reads words, never "white star".
+                modifier = Modifier.padding(Tokens.Spacing.l).semantics { contentDescription = spoken },
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -160,24 +163,28 @@ private fun FavouriteLines(
         return
     }
     val carousel = rememberCarouselState { cards.size }
+    val fontScale = LocalDensity.current.fontScale
     // The carousel centres each card in its height, so every card takes the tallest one's: a copy of each, measured at
     // the card width and hidden from TalkBack, sets it. Names and headsigns then wrap at 200 % without a ragged row.
+    // Cards widen with the text, up to most of the row, so at 200 % a name keeps more than a word per line.
     SubcomposeLayout { constraints ->
-        val cardWidth = CARD_WIDTH.roundToPx()
+        val cardWidth =
+            minOf(CARD_WIDTH.toPx() * fontScale.coerceAtLeast(1f), constraints.maxWidth * MAX_CARD_SHARE).toInt()
         val tallest =
             subcompose(MEASURED_CARDS) {
-                cards.forEach { card -> Box(Modifier.clearAndSetSemantics {}) { FavouriteCard(card, onOpenLine = {}) } }
+                cards.forEach { card -> Box(Modifier.clearAndSetSemantics {}) { FavouriteCard(card, onOpen = null) } }
             }.maxOf { it.measure(Constraints(maxWidth = cardWidth)).height }
         val shown =
             subcompose(SHOWN_CARDS) {
                 HorizontalUncontainedCarousel(
                     state = carousel,
-                    itemWidth = CARD_WIDTH,
+                    itemWidth = cardWidth.toDp(),
                     modifier = Modifier.height(tallest.toDp()),
                     itemSpacing = Tokens.Spacing.s,
                     contentPadding = PaddingValues(horizontal = Tokens.Spacing.l),
                 ) { index ->
-                    FavouriteCard(cards[index], onOpenLine, Modifier.fillMaxHeight().maskClip(CardDefaults.shape))
+                    val card = cards[index]
+                    FavouriteCard(card, { onOpenLine(card.id) }, Modifier.fillMaxHeight().maskClip(CardDefaults.shape))
                 }
             }.single().measure(constraints)
         layout(shown.width, shown.height) { shown.place(0, 0) }
@@ -186,16 +193,22 @@ private fun FavouriteLines(
 
 /**
  * FR-LINE-13: the badge, the display name in at most two lines, and both headsigns, "→ Hospital San Pedro · → Lardero".
- * TalkBack reads the card as one, the headsigns as "Towards …", and opens the line on a double tap.
+ * TalkBack reads the card as one, the headsigns as "Towards …", and opens the line on a double tap ("open line"). With
+ * no [onOpen], the copy that is only measured, it takes no input.
  */
 @Composable
 private fun FavouriteCard(
     card: FavouriteLineCardUi,
-    onOpenLine: (lineId: Int) -> Unit,
+    onOpen: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val towards = card.headsigns.map { stringResource(R.string.lines_towards, it) }.joinToString(", ")
-    Card(onClick = { onOpenLine(card.id) }, modifier = modifier.fillMaxWidth()) {
+    val open = stringResource(R.string.lines_open_line)
+    val clickable =
+        onOpen?.let { action ->
+            Modifier.clip(CardDefaults.shape).clickable(onClickLabel = open, role = Role.Button, onClick = action)
+        } ?: Modifier
+    Card(modifier = modifier.fillMaxWidth().then(clickable)) {
         Column(Modifier.padding(Tokens.Spacing.m), verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.s)) {
             LineBadge(card.code, card.color, card.onColor)
             Text(
@@ -206,7 +219,7 @@ private fun FavouriteCard(
             )
             if (card.headsigns.isNotEmpty()) {
                 Text(
-                    card.headsigns.joinToString(HEADSIGN_SEPARATOR) { "$HEADSIGN_ARROW $it" },
+                    card.headsigns.joinToString(HEADSIGN_SEPARATOR) { "$HEADSIGN_ARROW$NO_BREAK_SPACE$it" },
                     modifier = Modifier.semantics { contentDescription = towards },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
@@ -244,10 +257,18 @@ private fun LineRow(
     onOpenLine: (lineId: Int) -> Unit,
 ) {
     val toggle = if (line.isFavourite) R.string.lines_favourite_remove else R.string.lines_favourite_add
+    val badge: @Composable () -> Unit = { LineBadge(line.code, line.color, line.onColor) }
+    // At large text the badge goes above the name, which then has the row's width beside the toggle and breaks between
+    // words rather than inside one ("Valdegastea").
+    val stacked = LocalDensity.current.fontScale >= LARGE_TEXT_SCALE
     ListItem(
         headlineContent = { Text(line.displayName) },
-        modifier = Modifier.clickable { onOpenLine(line.id) },
-        leadingContent = { LineBadge(line.code, line.color, line.onColor) },
+        modifier =
+            Modifier.clickable(onClickLabel = stringResource(R.string.lines_open_line), role = Role.Button) {
+                onOpenLine(line.id)
+            },
+        overlineContent = if (stacked) badge else null,
+        leadingContent = if (stacked) null else badge,
         supportingContent = if (line.isOperational) null else notOperational,
         trailingContent = {
             FavouriteToggle(
@@ -279,8 +300,9 @@ private fun StatusChip(text: String) {
 }
 
 /**
- * Spec §7.3: a heading and rows shaped like the list's while the first load runs. TalkBack hears "Loading lines"
- * rather than the shapes (design_guidelines.md §8).
+ * Spec §7.3: the favourites heading and hint, then a heading and rows shaped like the list's, while the first load
+ * runs, so nothing moves when the lines arrive. TalkBack hears "Loading lines" rather than the shapes
+ * (design_guidelines.md §8).
  */
 @Composable
 private fun PlaceholderRows(contentPadding: PaddingValues) {
@@ -298,17 +320,26 @@ private fun PlaceholderRows(contentPadding: PaddingValues) {
             .clearAndSetSemantics { contentDescription = loading },
     ) {
         ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
+        Placeholder(
+            Modifier
+                .padding(horizontal = Tokens.Spacing.l)
+                .fillMaxWidth()
+                .height(lineHeight + Tokens.Spacing.l * 2),
+        )
+        ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
         repeat(PLACEHOLDER_ROWS) {
             ListItem(
                 headlineContent = { Placeholder(Modifier.fillMaxWidth(PLACEHOLDER_WIDTH).height(lineHeight)) },
                 leadingContent = { Placeholder(Modifier.size(badge.minWidth, badge.minHeight)) },
+                trailingContent = { Placeholder(Modifier.size(Tokens.Spacing.xl)) },
             )
         }
     }
 }
 
+/** A shape that stands for content while it loads, in the surface variant colour. */
 @Composable
-private fun Placeholder(modifier: Modifier) {
+internal fun Placeholder(modifier: Modifier) {
     Box(modifier.clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceVariant))
 }
 
@@ -328,9 +359,17 @@ private const val SHOWN_CARDS = "shown-cards"
 // Wide enough for a two-line name and a short headsign; a phone shows two cards and the edge of a third.
 private val CARD_WIDTH = 168.dp
 
-// Symbols, the same in every language; TalkBack reads the headsigns as words (lines_towards).
+// At large text, cards widen with it, up to this share of the row, so the next card's edge still shows.
+private const val MAX_CARD_SHARE = 0.8f
+
+// From this font scale, a row puts its badge above its name (Android's 200 % is 2).
+private const val LARGE_TEXT_SCALE = 1.5f
+
+// Symbols, the same in every language; TalkBack reads the headsigns as words (lines_towards). No-break spaces keep
+// each arrow with its headsign, and the dot with the headsign before it, when the text wraps.
+private const val NO_BREAK_SPACE = '\u00A0'
 private const val HEADSIGN_ARROW = "→"
-private const val HEADSIGN_SEPARATOR = " · "
+private const val HEADSIGN_SEPARATOR = "$NO_BREAK_SPACE· "
 
 // Enough rows to fill a phone's first screen.
 private const val PLACEHOLDER_ROWS = 8
@@ -339,4 +378,4 @@ private const val PLACEHOLDER_ROWS = 8
 private const val HEADING_WIDTH = 0.35f
 
 // A placeholder name spans this share of its row: long enough to read as text, short enough not to look like content.
-private const val PLACEHOLDER_WIDTH = 0.6f
+internal const val PLACEHOLDER_WIDTH = 0.6f

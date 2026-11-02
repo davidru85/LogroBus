@@ -31,12 +31,22 @@ class LineDetailViewModel(
     // Each Retry bumps it, which starts a new load.
     private val loads = MutableStateFlow(0)
 
+    // The load whose result the state shows. Coming back to the screen restarts the same load, which keeps the line
+    // rather than flash Loading (spec §7.3); only a new load, after Retry, starts at Loading, as in LinesViewModel.
+    private var shownLoad = 0
+
     val state: StateFlow<LineDetailUiState> =
         loads
             .flatMapLatest { load ->
                 val states = observeLines().map { LineDetailUiMapper.state(it, lineId) }
-                // After Retry, Loading until the new load answers.
-                if (load == 0) states else states.onStart { emit(LineDetailUiState.Loading) }
+                if (load == shownLoad) {
+                    states
+                } else {
+                    states.onStart {
+                        shownLoad = load
+                        emit(LineDetailUiState.Loading)
+                    }
+                }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), LineDetailUiState.Loading)
 
     fun onEvent(event: LineDetailEvent) {

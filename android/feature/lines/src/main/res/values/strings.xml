@@ -13,11 +13,17 @@
     <!-- LB-103: the favourite lines carousel (FR-LINE-12 to 14) and the toggle of each row and line detail (FR-LINE-15). -->
     <string name="lines_favourites_title">Tus líneas favoritas</string>
     <string name="lines_favourites_hint">Marca ☆ en una línea para tenerla aquí</string>
+    <!-- How TalkBack reads the hint: words, never the star symbol. -->
+    <string name="lines_favourites_hint_spoken">Marca la estrella de una línea para tenerla aquí</string>
+    <!-- What a double tap on a row or a card does, as TalkBack says it. -->
+    <string name="lines_open_line">abrir línea</string>
     <string name="lines_favourite_add">Añadir línea %1$s a favoritas</string>
     <string name="lines_favourite_remove">Quitar línea %1$s de favoritas</string>
     <!-- How TalkBack reads each headsign of a favourite card, which shows "→ Hospital San Pedro". -->
     <string name="lines_towards">Hacia %1$s</string>
     <!-- The line detail (SC-04), until LB-104 adds its map, directions and stops. -->
     <string name="line_detail_title">Línea %1$s</string>
+    <!-- The detail's title while it loads or fails, before the line's code is known. -->
+    <string name="line_detail_title_generic">Línea</string>
     <string name="line_detail_loading">Cargando línea</string>
 </resources>

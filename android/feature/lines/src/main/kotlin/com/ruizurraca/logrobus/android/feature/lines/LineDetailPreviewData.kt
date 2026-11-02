@@ -30,6 +30,12 @@ private fun LineDetailContentPreview() {
 
 @PreviewLightDark
 @Composable
+private fun LineDetailLoadingPreview() {
+    LogroBusTheme { Surface { LineDetailScreen(LineDetailPreviewData.loading, onEvent = {}, onBack = {}) } }
+}
+
+@PreviewLightDark
+@Composable
 private fun LineDetailFavouritePreview() {
     LogroBusTheme { Surface { LineDetailScreen(LineDetailPreviewData.favourite, onEvent = {}, onBack = {}) } }
 }

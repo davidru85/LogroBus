@@ -3,7 +3,9 @@ package com.ruizurraca.logrobus.android.feature.lines
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ListItem
@@ -14,6 +16,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -60,7 +63,11 @@ fun LineDetailScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { line?.let { ScreenTitle(stringResource(R.string.line_detail_title, it.code)) } },
+                // "Line" until the line's code is known, so the screen is never untitled.
+                title = {
+                    val title = line?.let { stringResource(R.string.line_detail_title, it.code) }
+                    ScreenTitle(title ?: stringResource(R.string.line_detail_title_generic))
+                },
                 navigationIcon = { UpButton(onClick = onBack) },
                 actions = { line?.let { FavouriteAction(it, onEvent) } },
             )
@@ -114,17 +121,27 @@ private fun LineHeader(
     )
 }
 
-/** Spec §7.3: no lone spinner. TalkBack hears "Loading line" (design_guidelines.md §8). */
+/**
+ * Spec §7.3: the header's shape, a badge and a name, never a lone spinner. TalkBack hears "Loading line"
+ * (design_guidelines.md §8).
+ */
 @Composable
 private fun LoadingLine(contentPadding: PaddingValues) {
     val loading = stringResource(R.string.line_detail_loading)
+    val lineHeight =
+        with(LocalDensity.current) {
+            MaterialTheme.typography.titleMedium.lineHeight
+                .toDp()
+        }
+    val badge = LineBadgeSize.Large
     ListItem(
-        headlineContent = {},
+        headlineContent = { Placeholder(Modifier.fillMaxWidth(PLACEHOLDER_WIDTH).height(lineHeight)) },
         modifier =
             Modifier
                 .consumeWindowInsets(contentPadding)
                 .padding(contentPadding)
                 .fillMaxWidth()
                 .clearAndSetSemantics { contentDescription = loading },
+        leadingContent = { Placeholder(Modifier.size(badge.minWidth, badge.minHeight)) },
     )
 }
