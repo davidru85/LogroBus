@@ -103,6 +103,8 @@ You will need:
 
 - **2026-11-02:**
   - Workflow: a new AI agent session, after a restart for example, resumes from the newest entry of `docs/project_log.md`. It names the open pull request, the next task and the decisions waiting for the owner. `AGENTS.md` says so, and a session that ends with a pull request open writes that entry first.
+    - Each new session also starts watching the open pull requests again, before anything else: `scripts/agent/session-start.sh` lists them when the session starts.
+  - CI: the SwiftLint check runs on Ubuntu 24.04 again. GitHub's newest Linux machines lack a library that SwiftLint needs, and its install now fails clearly when that happens.
 - **2026-10-31:**
   - LB-006, part 1: the rules that clean up the source's data, before any screen uses it.
     - Stops and lines are recognised whichever of the source's id formats they come in, and an empty value counts as missing.

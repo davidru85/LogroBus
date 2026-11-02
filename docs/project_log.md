@@ -24,19 +24,25 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 **Done**
 - **A restart of the owner's machine:** the owner asked for the docs to record where work stands, so that a new agent session can resume after the restart. This entry is that record.
 - **State at the hand-over:**
-  - **PR #34** (LB-006 part 1, branch `feat/LB-006-normalisation-rules`) is open. All 53 checks passed on `6fc65b5`, and there is no review, comment or change request yet. This entry's commit is pushed to the same branch, so the checks run again.
+  - **PR #34** (LB-006 part 1, branch `feat/LB-006-normalisation-rules`) is open. All 53 checks passed on `6fc65b5`, and there is no review, comment or change request yet. This entry's commits are pushed to the same branch, so the checks run again.
   - **`main`** is at `94fa572`, the merge of PR #33.
   - **Local state:** nothing is uncommitted, and no simulator or emulator started by the agent is running. The background watch of PR #34 (`scripts/agent/watch-pr.sh 34 180`) ends with the machine, so the next session starts it again.
 - **Docs:** `AGENTS.md` §10 and `finish-story.md` step 9 now say where a session resumes, and both READMEs record it.
+- **The watch starts again by itself** (the owner asked that a new chat resume it): `scripts/agent/session-start.sh`, which Claude Code runs at the start of every session, now lists the open pull requests with the command that watches each. `AGENTS.md` §10 says to start those watches before the owner's first task, whatever it is. `gh` gets 6 s, inside the hook's 10 s; when it fails or hangs, the context says to list the pull requests by hand. Checked with a fake `gh` that fails, hangs and finds nothing.
+  - **The limit:** an agent acts only once the owner writes, so the watch starts with the session's first message, whatever it says.
+- **A failing check fixed** (`AGENTS.md` §10): the run on `aba277b` failed in SwiftLint. `ubuntu-latest` has moved to Ubuntu 26.04, which no longer ships `libxml2.so.2`, and SwiftLint 0.65.1's Linux binary needs it. The same job had passed on `6fc65b5` on Ubuntu 24.04, and a rerun would fail the same way.
+  - The SwiftLint job pins `ubuntu-24.04`, until a SwiftLint release runs on 26.04 (`ci_cd.md` §5).
+  - `install-swiftlint.sh` had reported the broken binary as installed. It now fails with the binary's error; a fake `curl`, `sha256sum` and `unzip` show both paths.
 
 **Decisions**
+- **Open pull requests first:** every session starts the watch of each open pull request before anything else. The session-start hook lists them, so no session depends on remembering it.
 - **Where a session resumes:** the newest entry of this log is the hand-over. Its "Open / next" names any open pull request, the next task and what waits for the owner. A session that ends with a pull request open records them there before it ends.
 
 **Open / next**
 - **Resume, in this order:**
-  1. Run `scripts/agent/session-start.sh` (Claude Code's hook runs it), then `git fetch` and `git status`. Expect `feat/LB-006-normalisation-rules`, clean and level with `origin`.
+  1. Run `scripts/agent/session-start.sh` (Claude Code's hook runs it), and start the watch of each open pull request it lists. Then run `git fetch` and `git status`. Expect `feat/LB-006-normalisation-rules`, clean and level with `origin`.
   2. Check PR #34: `gh pr view 34 --json state,reviewDecision,reviews,comments` and `gh pr checks 34`.
-     - **Open:** start the watch in the background, `scripts/agent/watch-pr.sh 34 180`, and act on its result as `AGENTS.md` §10 says. Failed checks are fixed without waiting for the owner.
+     - **Open:** the watch from step 1 (`scripts/agent/watch-pr.sh 34 180`, in the background) runs; act on its result as `AGENTS.md` §10 says. Failed checks are fixed without waiting for the owner.
      - **Merged:** run `git checkout main && git pull --ff-only`, tell the owner in one line, and start the next task.
      - **Closed without a merge, changes requested or new comments:** stop and report to the owner.
   3. **The next task, once PR #34 is merged,** is LB-101 part 1, through `start-story.md` (`/start-story LB-101`): the Lines list over a repository contract and scripted lines.
