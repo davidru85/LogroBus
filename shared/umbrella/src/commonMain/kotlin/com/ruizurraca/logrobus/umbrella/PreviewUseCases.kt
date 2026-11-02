@@ -33,7 +33,7 @@ import kotlin.time.Instant
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
- * lines and there are no favourite lines; each script replaces the last, except [favouriteLines].
+ * lines and there are no favourite lines; each script replaces the last, except [favouriteLine].
  */
 class PreviewUseCases internal constructor() : UseCases {
     // Null scripts a first load that never ends.
@@ -66,8 +66,11 @@ class PreviewUseCases internal constructor() : UseCases {
     fun synced(): PreviewUseCases =
         script(lastSuccesses = StaticDataset.entries.associateWith { SAMPLE_SYNC }, lines = SampleLines.all)
 
-    /** Scripts the favourite lines, by id, in the user's order. A toggle in the preview then changes them. */
-    fun favouriteLines(vararg ids: Int): PreviewUseCases = apply { favouriteLineIds.value = ids.toList() }
+    /**
+     * Adds line [id] to the scripted favourite lines, last, as the user's toggle would. One line per call, so Swift
+     * chains plain Ints: `preview().favouriteLine(id: 10).favouriteLine(id: 4)`.
+     */
+    fun favouriteLine(id: Int): PreviewUseCases = apply { favouriteLineIds.update { ids -> ids + id } }
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }

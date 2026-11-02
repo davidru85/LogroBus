@@ -159,7 +159,7 @@ class PreviewUseCasesTest {
     @Test
     fun lb103_thePreviewCanScriptFavouriteLines_inTheUsersOrder() =
         runTest {
-            val preview = SharedDependencies.preview().favouriteLines(10, 3)
+            val preview = SharedDependencies.preview().favouriteLine(10).favouriteLine(3)
 
             val favourites = preview.observeLinesWithFavourites()().first()
 
@@ -169,7 +169,7 @@ class PreviewUseCasesTest {
     @Test
     fun lb103_aFavouriteSetInThePreviewShowsAtOnce() =
         runTest {
-            val preview = SharedDependencies.preview().favouriteLines(10)
+            val preview = SharedDependencies.preview().favouriteLine(10)
 
             preview.observeLinesWithFavourites()().test {
                 assertEquals(listOf(10), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
