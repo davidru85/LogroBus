@@ -1,6 +1,9 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -15,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
@@ -117,6 +121,25 @@ class LinesScreenTest {
 
         compose.onNode(isHeading() and hasText(context.getString(R.string.lines_title))).assertExists()
         compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertDoesNotExist()
+    }
+
+    @Test
+    fun lb101_theFirstLoadIsAnnouncedToTalkBack() {
+        // The placeholders are hidden from TalkBack, so the list says that it is loading instead (design_guidelines §8).
+        compose.setContent { LinesScreen(LinesUiState.Loading, onEvent = {}, onOpenMore = {}) }
+
+        compose.onNode(hasContentDescription(context.getString(R.string.lines_loading))).assertExists()
+    }
+
+    @Test
+    fun lb101_everyErrorReasonShowsItsMessage() {
+        var reason by mutableStateOf(ErrorReason.NETWORK)
+        compose.setContent { LinesScreen(LinesUiState.Error(reason), onEvent = {}, onOpenMore = {}) }
+
+        ErrorReason.entries.forEach {
+            reason = it
+            compose.onNodeWithText(context.getString(it.messageRes)).assertExists()
+        }
     }
 
     @Test
