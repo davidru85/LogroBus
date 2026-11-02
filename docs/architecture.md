@@ -196,6 +196,7 @@ Done in LB-007. The schema lives in `.sq` files by area: `Line`, `Stop`, `Conten
   - `plan_recent.created_at` is `NOT NULL`.
   - `favourite` is `UNIQUE(type, ref_id)`.
   - `pattern_stop(stop_id)` and `stop_line(line_id)` are indexed.
+- **Favourites (LB-103):** `FavouriteLinesRepositoryImpl` (`:shared:favourites:data`) keeps the favourite lines by id in decimal (`FavouriteTypes.LINE`). `insertFavourite` puts a favourite after the last of its type, and `UNIQUE(type, ref_id)` keeps one that is already saved where it was; `selectFavouriteRefs` reads them by position. A line that leaves the catalogue stays saved, without a card, until it comes back or the user removes it. `selectLines` joins the patterns, so each line carries its headsigns, outbound first.
 - **Types:** flag columns are `INTEGER` in SQLite and `Boolean` in Kotlin. Instant columns hold UTC epoch milliseconds and read as `kotlin.time.Instant` through one `InstantColumnAdapter`. `logroBusDatabase(driver)` wires the adapters; SQLDelight asks for a table's adapters once a query uses it.
 - **Search (FR-STOP-01, NFR-I18N-03):**
   - `normalized_name` is `searchableName(name)`: the `searchWords` of the name, one space apart. `searchWords` folds case, accents, `ñ` and combining marks, and splits on anything but letters and digits (`:shared:core:common`).
@@ -271,7 +272,7 @@ Each shared feature module contains three packages:
 
 | Feature | Use cases (examples) | Presentation models | Endpoints |
 | --- | --- | --- | --- |
-| `lines` | `ObserveLines` (built), `SearchLines`, `ObserveFavouriteLines`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | `LinesUiState`, `LineDetailUiState`, `LineRowUi`, `FavouriteLineCardUi` | API-01, 04, 05 |
+| `lines` | `ObserveLines`, `ObserveLinesWithFavourites` and `SetFavouriteLine` (built), `SearchLines`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | `LinesUiState`, `LineRowUi`, `FavouriteLineCardUi` (built), `LineDetailUiState` (built minimal in LB-103) | API-01, 04, 05 |
 | `stops` | `ObserveStopArrivals`, `SearchStops`, `SaveStop` | `StopDetailUiState`, `ArrivalUi`, `StopSearchUiState` | API-02, 06 |
 | `nearme` | `GetNearbyStops`, `ObserveSavedStopArrivals`, `ObserveNetworkVehicles` | `NearMeUiState`, `SavedStopCardUi`, `NearbyStopRowUi`, map layer models | API-02, 03, 06, 08 |
 | `planner` | `SearchPlaces`, `PlanJourney`, `ObserveRecentPlans` | `PlannerUiState`, `ItineraryCardUi`, `ItineraryDetailUiState` | API-07, 08, 06, CartoCiudad |
@@ -361,6 +362,10 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - Only a new load, after Retry, starts at Loading. Coming back to the screen after the upstream stopped restarts the same load and keeps the list, as on iOS; About data's ViewModel still shows Loading then.
     - `LinesScreen` is a `LazyColumn`: each group under a heading, each row a `ListItem` with the `LineBadge`, the display name, which wraps, and a status chip when the line is not operational. A row merges its semantics, so TalkBack reads "Line 11, Artesanos - Manuel de Falla, Not in service".
     - Loading draws a heading and rows shaped like the list's, which TalkBack reads as "Loading lines". Empty and Error use the design system's `RetryMessage`. The list calls `ScrollToTopOnReselect`, and the top app bar takes its scrolled colour without collapsing (a programmatic scroll to the top would not bring a collapsed bar back).
+  - **As built (LB-103, favourite lines):** `LinesViewModel` also takes `SetFavouriteLine` and reads `ObserveLinesWithFavourites`, so a toggle reaches the carousel through the flow.
+    - The list starts with the "Your favourite lines" heading, then one hint card, or a `HorizontalUncontainedCarousel` of fixed-width cards. The carousel's pager centres its items vertically, so a `SubcomposeLayout` measures a copy of each card, cleared of semantics so TalkBack never meets it, and gives the carousel the tallest card's height.
+    - A row opens its line on a tap, and its trailing `FavouriteToggle` (design system) is its own TalkBack element, labelled "Add line 3 to favourites" or "Remove line 3 from favourites".
+    - A card or a row opens `LineDetailKey(lineId)` on the Lines stack. `LineDetailRoute` gets its ViewModel with `koinViewModel { parametersOf(lineId) }`, declared in `linesUiModule` as `viewModel { (lineId: Int) -> … }`. Until LB-104, the detail is the line's badge and name under "Line 10", with the toggle in the toolbar (owner decision, 2026-11-02).
   - **Shared by every screen (`:android:core:designsystem`):** `RetryMessage`, one sentence and Retry that scrolls at large font sizes, with `ErrorReason.messageRes` and the `error_*` strings, which each feature module used to define again.
     - Each feature module exposes a Koin `<x>UiModule` that declares its ViewModels with `viewModelOf`, and the app passes the modules to `initKoin`.
 - Maps: MapLibre Native through `maplibre-compose` in `:android:core:map`.
@@ -380,7 +385,9 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
   - The Xcode project is generated from `iosApp/project.yml` by XcodeGen and is never committed. The same script writes `Configuration/Version.xcconfig` from `version.properties`.
   - `SharedDependencies` (LB-001, LB-010) gives the start destination and `isReady`, whether the graph has started. It implements `UseCases`, the use cases a Swift ViewModel can ask for, from the graph. SKIE is applied (LB-010 part 1).
   - `SharedDependencies.shared.preview()` returns a new `PreviewUseCases`: the real use cases over scripted repositories.
-    - By default every dataset synced at 10:30 in Madrid, and the cache holds the sample lines (LB-101). `loading()`, `neverSynced()`, `offline()` (a first launch with no network), `synced()` (the default again) and `failing()` change the script.
+    - By default every dataset synced at 10:30 in Madrid, the cache holds the sample lines (LB-101), and there are no favourite lines. `loading()`, `neverSynced()`, `offline()` (a first launch with no network), `synced()` (the default again) and `failing()` change the script. `favouriteLine(id:)` adds a favourite line, last, one per call so that Swift passes plain Ints (LB-103); a toggle then changes them in memory.
+  - `UseCases` hands out `observeLastSyncs()`, `observeLinesWithFavourites()` and `setFavouriteLine()` (LB-103). `observeLines()` left it then: both Lines ViewModels read the lines with their favourites. The graph still binds `ObserveLines`, which `ObserveLinesWithFavourites` wraps.
+  - **Calling a `suspend` use case from Swift (LB-103):** SKIE makes it `async`, and Swift 6 refuses to send a Kotlin object, which declares no `Sendable` conformance, to that function from the main actor. A ViewModel that calls one imports `Shared` with `@preconcurrency`: Kotlin/Native's memory model lets any thread call it. `LinesViewModel` and `LineDetailViewModel` call `setFavouriteLine()` in a `Task` and ignore its failure, which the repository has logged; the state changes through the flow.
     - `activeCollections` counts the collections running, for cancellation tests.
 - **Composition root.**
   - `LogroBusApp.init` calls `doInitKoin(appVersion:debug:telemetry:)`, a Swift global function through SKIE, with `CFBundleShortVersionString`, `#if DEBUG` and a `PlatformTelemetry`, on the main actor. The iOS module of the graph creates `NotificationAppLifecycle` and Core Location there. Swift implementations of platform contracts are passed the same way: LB-409's vendor telemetry, as Swift classes conforming to `AnalyticsTracker` and `CrashReporter` (subclasses of `NSObject`), goes in `PlatformTelemetry`, which passes `nil` until then (§4.7).
@@ -425,13 +432,16 @@ public final class AboutDataViewModel {
 - **The Lines list, as built (LB-101 part 1):** `LinesView` and `LinesViewModel` in `FeatureLines`, on the same pattern. A `List` has a `Section` per group; a row combines its accessibility element, so VoiceOver reads "Line 4, Casa Blanca - Yagüe". The loading list reads as "Loading lines".
   - Whenever `scrollToTopRequests` changes, a `ScrollPosition` scrolls the list to its top edge, its first heading included. A `ScrollViewReader` cannot reach a section header in a `List`.
   - Its snapshots wait for the ViewModel's state before the capture, and the list's are as tall as the whole list.
+- **Favourite lines, as built (LB-103):** the list starts with a "Your favourite lines" `Section`: one hint, or a horizontal `ScrollView` of an `HStack` of cards (at most 20, FR-FAV-05). The stack fixes its height, so every card takes the tallest one's. Cards are 150 pt: the inset row clips its content, and the next card's edge then shows.
+  - A row is a plain-style `Button` that opens its line through `LinesView`'s `onOpenLine`, beside its `FavouriteToggle` (`DesignSystem`): two VoiceOver elements, "Line 4, Casa Blanca - Yagüe" and "Add line 4 to favourites".
+  - The shell pushes `Route.line(id)`, which it resolves to `LineDetailView` (`FeatureLines`): until LB-104, the line's badge and name under "Line 10", with the toggle in the toolbar (owner decision, 2026-11-02).
 - **Shared by every screen (`DesignSystem`):** `RetryButton`, a large bordered button of at least 44 pt, and `ErrorReason.message`, with the `error.*` strings.
 - **The shell, as built (LB-012):**
   - `AppShell`, in the app target, is a `TabView` with one `Tab` per `TopLevelDestination` and a `NavigationStack` per tab.
   - `TabRouter` (`@MainActor @Observable`) holds the selection and one `[Route]` path per tab. The `TabView`'s selection setter also runs when the selected tab is tapped again. The router then pops that tab to its root or, at the root, counts a request to scroll to the top. The shell hands the count to the root as the `scrollToTopRequests` environment value of `DesignSystem`.
   - The Lines tab's root is `LinesView` (LB-101); the other two are placeholders until LB-201 and LB-301.
     - The system pops a re-selected tab's stack by itself, after the setter, so the two agree. It does not scroll a root to its top, so the count is needed (checked on iOS 26.5 and 27.0; iOS 18 waits for LB-412).
-  - The shell adds the More toolbar action to every tab root and resolves the routes: `MoreView` (app target), `SettingsView` and `AboutDataView` (`FeatureSettings`).
+  - The shell adds the More toolbar action to every tab root and resolves the routes: `MoreView` (app target), `SettingsView` and `AboutDataView` (`FeatureSettings`), and `LineDetailView` (`FeatureLines`, LB-103).
 - **Maps:** MapLibre Native iOS (Swift package) wrapped in `MapUI`. Floating controls use the `DesignSystem` glass helpers.
 - **Platform:** iPhone only in the MVP (NFR-PLAT-03), with an iOS 18 deployment target and Liquid Glass on iOS 26 or later (ADR-0003).
 - **Location and lifecycle:** Core Location (`coreLocationProvider`, in `:shared:core:location`), on the main thread. `AppLifecycle` follows the `UIApplication` enter-background and enter-foreground notifications (`NotificationAppLifecycle`).

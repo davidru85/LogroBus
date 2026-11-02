@@ -62,7 +62,7 @@ Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: insta
 
 Los módulos compartidos ya compilan: `./gradlew ciUnitTest` ejecuta los tests unitarios y las reglas de arquitectura. Si `ANDROID_HOME` no está definido, crea un archivo `local.properties` con `sdk.dir=<ruta a tu Android SDK>`; Git lo ignora.
 
-Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. Se abre en la lista de Líneas. Hasta que la app pueda descargar las líneas reales, las builds debug muestran líneas de ejemplo con nombres y colores inventados.
+Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. Se abre en la lista de Líneas. Hasta que la app pueda descargar las líneas reales, las builds debug muestran líneas de ejemplo con nombres y colores inventados. Las líneas que marques como favoritas se guardan en el dispositivo.
 
 Para ejecutar la app de iOS en macOS, ejecuta `scripts/ios/generate-project.sh` (también lo ejecuta `scripts/bootstrap.sh`, y hay que repetirlo tras cambiar código Kotlin). El script compila el framework compartido y genera `iosApp/iosApp.xcodeproj`; abre ese proyecto en Xcode y ejecuta el esquema `iosApp` en un simulador de iPhone.
 
@@ -104,6 +104,10 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **02-11-2026:**
+  - LB-103: líneas favoritas.
+    - Cada línea de la lista tiene una estrella. Al pulsarla, la línea se añade a "Tus líneas favoritas", al final de una fila de tarjetas en lo alto de la lista, y al pulsarla otra vez se quita. Sin favoritas, la fila explica cómo añadir una.
+    - Una tarjeta muestra el distintivo de la línea, su nombre y los dos extremos del recorrido. Al pulsar una tarjeta o una línea se abre la página de la línea, que de momento muestra la línea y la misma estrella; su mapa, sus sentidos y sus paradas llegan después (LB-104).
+    - Las favoritas se guardan en el dispositivo, en el orden en que se añadieron, y se conservan al reiniciar. Los lectores de pantalla dicen "Añadir línea 3 a favoritas" o "Quitar línea 3 de favoritas".
   - LB-101, parte 1: las dos apps se abren en la lista de Líneas.
     - Primero van las líneas diurnas y después las nocturnas (Búho), cada grupo ordenado por su número: la 9 antes que la 10. Cada línea muestra su distintivo de color, su nombre y una etiqueta "Sin servicio" cuando no circula.
     - Los lectores de pantalla dicen "Línea 4", nunca un color, porque algunas líneas lo comparten. Con textos grandes los nombres pasan a otra línea y los códigos nunca se cortan.

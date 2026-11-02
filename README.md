@@ -62,7 +62,7 @@ After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and re
 
 The shared modules already build: `./gradlew ciUnitTest` runs the unit tests and the architecture rules. If `ANDROID_HOME` is not set, create a `local.properties` file with `sdk.dir=<path to your Android SDK>`; Git ignores it.
 
-To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. It opens on the Lines list. Until the app can download the real lines, debug builds show sample lines with made-up names and colours.
+To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. It opens on the Lines list. Until the app can download the real lines, debug builds show sample lines with made-up names and colours. The favourite lines you mark are kept on the device.
 
 To run the iOS app on macOS, run `scripts/ios/generate-project.sh` (it is also run by `scripts/bootstrap.sh`, and must be rerun after Kotlin changes). The script builds the shared framework and generates `iosApp/iosApp.xcodeproj`; open that project in Xcode and run the `iosApp` scheme on an iPhone simulator.
 
@@ -102,6 +102,10 @@ You will need:
 ### Recent changes
 
 - **2026-11-02:**
+  - LB-103: favourite lines.
+    - Each line in the list has a star. Tapping it adds the line to "Your favourite lines", at the end of a row of cards at the top of the list, and tapping it again removes it. With no favourites, the row shows how to add one.
+    - A card shows the line's badge, its name and both ends of the route. Tapping a card or a line opens the line's page, which for now shows the line and the same star; its map, directions and stops come next (LB-104).
+    - Favourites are kept on the device, in the order they were added, and survive a restart. Screen readers say "Add line 3 to favourites" or "Remove line 3 from favourites".
   - LB-101, part 1: both apps open on the Lines list.
     - Day lines come first, then night (Búho) lines, each sorted by its number: 9 before 10. Each line shows its coloured badge, its name, and a "Not in service" label when it is not running.
     - Screen readers say "Line 4", never a colour, since some lines share one. Names wrap at large text sizes, and line codes are never cut.

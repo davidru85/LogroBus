@@ -19,6 +19,37 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-02: LB-103, favourite lines, with a minimal line detail
+
+**Done**
+- **PR #36 (LB-101 part 1) merged,** and `main` was synced. Seven of the eight Dependabot alerts closed; the Kotlin Gradle plugin's stays open, waiting for the owner.
+- **PR #37** (Gradle's longer retries for rate-limited downloads, LB-002) is open. Its first run's iOS gate failed outside the change: "iOS ViewModel and snapshot tests (FeatureSettingsTests)" never got a macOS runner, queued for 16 minutes while `main`'s full run after PR #36 held them (GitHub Free allows 5 at once), and ended cancelled. The failed jobs were rerun once; it is the first time, so the pipeline is unchanged. Recorded here rather than on PR #37's branch, since a push there would have cancelled the rerun.
+- **LB-103 (`feat/LB-103-favourite-lines`):**
+  - **Shared:**
+    - `FavouriteLinesRepository` (`:shared:favourites:domain`) and its implementation over the `favourite` table (`:shared:favourites:data`): a favourite line goes last, one already saved keeps its place, and the favourites survive a restart. `FavouriteTypes.LINE`; `logroBusDatabase` passes favourite's Instant adapter.
+    - `Line.headsigns`: `selectLines` joins the patterns, outbound first.
+    - `:shared:feature:lines`: `ObserveLinesWithFavourites`, which wraps `ObserveLines`, and `SetFavouriteLine`, which counts `favourite_add` of kind LINE once a line is saved. `LinesUiState.Content` has the carousel's `FavouriteLineCardUi`s in the user's order, and each `LineRowUi` says whether it is a favourite. `LineDetailUiState` and its mapper are the minimal detail.
+    - `:shared:umbrella`: the graph binds the repository and both use cases, keeping favourites in the real database in debug builds too. The sample lines head for each end of their names. `PreviewUseCases.favouriteLine(id:)` scripts favourites. `UseCases.observeLines()` gave way to `observeLinesWithFavourites()` and `setFavouriteLine()`.
+  - **Android:** `FavouriteToggle` in the design system (Material Symbols' star). `LinesScreen` has the favourites heading, the hint card or a `HorizontalUncontainedCarousel` whose cards share the tallest one's height, and a toggle on each row; a row or a card opens `LineDetailKey`. `LineDetailRoute`, `LineDetailScreen` and `LineDetailViewModel`, which takes its line through `koinViewModel`'s parameters. Strings in es and en; screenshots recorded and reviewed.
+  - **iOS:** `FavouriteToggle` in `DesignSystem`; `LinesView`'s favourites `Section` with an `HStack` of cards that share the tallest one's height, rows that are buttons beside their toggles, `LineDetailView` and `LineDetailViewModel`, and `Route.line` in the shell. Strings in es and en; snapshots recorded and reviewed.
+  - **End to end through both shells:** a line added from its row goes at the end of the carousel and its toggle says so; a card opens its line; a line added from its detail is in the carousel back on Lines.
+
+**Decisions**
+- **A minimal line detail now** (owner decision, 2026-11-02): two criteria need line detail, which LB-104 builds. LB-103 adds its route, ViewModel and toolbar toggle, with the line's badge and name; LB-104 adds the map, directions and stops.
+- **Rows open their line** too, so a line can be added from its detail before it is a favourite (FR-LINE-09).
+- **`ObserveLinesWithFavourites` wraps `ObserveLines`,** whose sync logic and tests stay as they were. Favourites that cannot be read leave the lines with none: the list still shows (spec §7.3).
+- **Equal-height cards on both platforms,** so the carousel is never ragged at large text sizes, and headsigns wrap rather than clip. Android measures copies of the cards hidden from TalkBack, since its carousel centres its items; iOS uses an `HStack` of fixed height rather than the `LazyHStack` that `design_guidelines.md` named, which it now names instead. iOS cards are 150 pt, so the next card's edge shows inside the inset row; Android's are 168 dp.
+- **Swift calls a `suspend` use case** through `@preconcurrency import Shared`: Swift 6 refuses to send a Kotlin object, which declares no `Sendable` conformance, to SKIE's `async` function (`architecture.md` §5.2).
+- **iOS UI tests that change favourites start and end with them removed:** the simulator keeps the app's database between launches, unlike Robolectric.
+- **Test fixtures adapted while going green** (each in its commit body): `LinesScreenTest` runs on a taller window, since the favourites section comes first and a lazy list composes only what it shows; `TabNavigationTest` scrolls the list from its top before a tap, so a row is never under the top app bar, which the list runs behind, and reads the cards from left to right, as TalkBack does; `AndroidGraphTest`'s restart test is a regression guard written after the wiring.
+
+**Open / next**
+- **The pull request of this entry** (branch `feat/LB-103-favourite-lines`) is open, and its watch runs. So does PR #37's.
+- **Next, once it is merged:** LB-102 part 1, the search bar over the lines' codes and termini; finding lines by a stop's name waits for the stops (LB-008 part 2) or sample stops. LB-110 (edit favourite lines: reorder, remove, the limit of 20) needs nothing else either. Unless the owner chooses otherwise, LB-102 (`/start-story LB-102`).
+- **LB-104** builds on this detail; its map needs a style for development, where OQ-10's documented fallback names a free OSM-based style whose terms are still to be verified: that check is the owner's.
+- **Follow-ups from LB-101's reviews** stay open, as listed in the entry below.
+- **Waiting on the owner:** as in the entries below.
+
 ## 2026-11-02: LB-101, part 1: the Lines list over sample lines
 
 **Done**
