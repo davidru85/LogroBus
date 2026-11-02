@@ -62,7 +62,7 @@ After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and re
 
 The shared modules already build: `./gradlew ciUnitTest` runs the unit tests and the architecture rules. If `ANDROID_HOME` is not set, create a `local.properties` file with `sdk.dir=<path to your Android SDK>`; Git ignores it.
 
-To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. For now it shows a placeholder for the Lines tab.
+To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. It opens on the Lines list. Until the app can download the real lines, debug builds show sample lines with made-up names and colours.
 
 To run the iOS app on macOS, run `scripts/ios/generate-project.sh` (it is also run by `scripts/bootstrap.sh`, and must be rerun after Kotlin changes). The script builds the shared framework and generates `iosApp/iosApp.xcodeproj`; open that project in Xcode and run the `iosApp` scheme on an iPhone simulator.
 
@@ -93,7 +93,7 @@ You will need:
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | M0 Foundations | Project skeleton, data layer, CI | In progress |
-| M1 Lines | Lines section | Not started |
+| M1 Lines | Lines section | In progress |
 | M2 Near Me | Near Me section | Not started |
 | M3 How to Get There | Trip planner | Not started |
 | M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, privacy declarations | Not started |
@@ -102,6 +102,13 @@ You will need:
 ### Recent changes
 
 - **2026-11-02:**
+  - LB-101, part 1: both apps open on the Lines list.
+    - Day lines come first, then night (Búho) lines, each sorted by its number: 9 before 10. Each line shows its coloured badge, its name, and a "Not in service" label when it is not running.
+    - Screen readers say "Line 4", never a colour, since some lines share one. Names wrap at large text sizes, and line codes are never cut.
+    - The lines download the first time they are needed. With no connection, the screen says so and offers Retry.
+    - That download is not built yet (it waits for the terms of data reuse, OQ-11), so debug builds show sample lines, and release builds the error.
+    - Tapping the Lines tab again scrolls the list back to the top.
+    - CI: the tests of each part of the iOS interface code (the design system, Lines, Settings) now run in a job of their own, and the iOS app's job runs only the app's tests.
   - Workflow: a new AI agent session, after a restart for example, resumes from the newest entry of `docs/project_log.md`. It names the open pull request, the next task and the decisions waiting for the owner. `AGENTS.md` says so, and a session that ends with a pull request open writes that entry first.
     - Each new session also starts watching the open pull requests again, before anything else: `scripts/agent/session-start.sh` lists them when the session starts.
   - CI: the SwiftLint check runs on Ubuntu 24.04 again. GitHub's newest Linux machines lack a library that SwiftLint needs, and its install now fails clearly when that happens.

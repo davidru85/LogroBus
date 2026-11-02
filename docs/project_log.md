@@ -19,6 +19,37 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-02: LB-101, part 1: the Lines list over sample lines
+
+**Done**
+- **Merge:** the owner merged PR #34 (LB-006 part 1), and `main` was synced. PR #35 (the Dependabot alerts) is still open; `main` was merged into it, its 2026-11-02 entries combined with PR #34's.
+- **LB-101 split in two,** like LB-005, LB-006 and LB-008. Part 1 is the list over a repository contract and sample lines; part 2 checks it against `lines_2026-10-22.json` once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008.
+- **Shared (`architecture.md` §4.2, §4.6):**
+  - `:shared:transit:domain`: `Line` (spec §5.1, without patterns) and `LinesRepository`;
+  - `:shared:transit:data`: `LinesRepositoryImpl` over the `line` table, with the new `selectLines` query;
+  - `:shared:feature:lines`: `ObserveLines`, with a sync on every collection: an empty cache waits for it and shows its failure (FR-ERR-05), and a failed refresh of a full cache stays silent (FR-ERR-04). `LinesUiState`, `LineGroupUi`, `LineRowUi` and `LinesUiMapper`: day then night groups, sorted by the number in the code, with no fixed set of lines.
+  - `:shared:umbrella`: `observeLines()` for Swift, the sample lines, and `PreviewUseCases`' `offline()` and `synced()` scripts.
+- **Android:** `LinesViewModel`, `LinesRoute` and `LinesScreen` in `:android:feature:lines`, at the root of the Lines tab; strings in es and en; screenshots of the four states in light, dark and 200 %. The shell's screenshots were recorded again, since the Lines root now shows the list. The shell's preview gets its ViewModel through `KoinApplicationPreview`.
+- **iOS:** `LinesViewModel` and `LinesView` in `FeatureLines`, at the root of the Lines tab; `Localizable.xcstrings` in es and en; `FeatureLinesTests` with the ViewModel tests and snapshots of the four states in light, dark and large text.
+- **Scroll to top,** end to end through the shell: `TabNavigationTest` on Android, and `ShellUITests` on iOS at the largest text size, so the list is far longer than the screen.
+- **CI:** the "iOS ViewModel and snapshot tests" job, one per test target of `LogroBusUI` (`DesignSystemTests`, `FeatureLinesTests`, `FeatureSettingsTests`). `scripts/ios/test.sh` takes test targets, and the app's job runs only `iosAppTests` and `iosAppUITests`. An architecture test fails when the matrix and `Package.swift` differ. `:android:feature:lines` joined the Android screenshot matrix.
+- **A coverage gap found by the gates:** `:shared:transit:domain` fell to 42.9 % (floor 80 %), because Kover counts each module's own tests and `Line` had none there. `LineTest` covers it with a DD-08 case: two lines that share a colour are still two lines.
+- **The iOS green commit needed no refactor:** it follows About data's pattern. The snapshot appearances repeat `DesignSystemTests`' small enum rather than add a shared test target for one type.
+
+**Decisions**
+- **Debug builds list sample lines** until LB-008 part 2 can download the real ones (owner decision, 2026-11-02). They have the network's codes, no line 8, and the shared colours of DD-08; their names and colours are placeholders, and line 11 is not operational so that the chip shows. Release builds read the empty cache behind a sync that fails with `Data` (`NoSourceSync`), so they show the error with Retry.
+- **One CI job per Swift test target** (owner decision, 2026-11-02), each building the framework again. "iOS build and tests" took 19 minutes on PR #35, against its 10-minute budget. A pull request now uses 5 macOS runners at once, GitHub Free's limit.
+- **`ObserveLines` reads the cache again after the sync,** with `flatMapLatest`, so the lines a sync stores are never read before its transaction.
+- **The status chip says "Sin servicio" / "Not in service"** (`lines.not_operational`), and the Empty state "No hay líneas que mostrar." (`lines.empty`); both are in `design_guidelines.md` §9.
+
+**Open / next**
+- **PR #36** (this entry, branch `feat/LB-101-lines-list`) is open, and its watch runs (`scripts/agent/watch-pr.sh 36 180`). **PR #35** (the Dependabot alerts) is open too, with its own watch. Whichever merges second gets `main` merged into it: both add 2026-11-02 entries to this log and to both READMEs.
+- **Next, once PR #36 is merged:** the next M1 story that needs neither OQ-11 nor OQ-10. LB-103 (favourite lines and their carousel) needs only the lines and the `favourite` table; LB-102's search also finds stops by name, so its part 1 would need sample stops too. Unless the owner chooses otherwise, LB-103 (`/start-story LB-103`).
+- **LB-101 part 2** waits for OQ-11 (LB-003), and with it the part 2s of LB-005, LB-006 and LB-008; LB-008 part 2 removes the sample lines.
+- **Waiting on the owner:** the Kotlin Gradle plugin alert (PR #35), and the items of the hand-over entry below: PR #34's three points (now merged), OQ-11, OQ-10, OQ-16, DD-10's provisional saved stop, the limits of the rule on failing checks, and WorkManager.
+
+---
+
 ## 2026-11-02: Hand-over: where work stands, and how to resume
 
 **Done**

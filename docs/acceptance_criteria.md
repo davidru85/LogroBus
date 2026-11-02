@@ -368,6 +368,17 @@ Refs: FR-LINE-01, FR-LINE-02, DD-08, NFR-A11Y-02
 - **Given** the first Swift ViewModel, `LinesViewModel`, **when** a pull request changes it, **then** CI runs its tests in the `iOS ViewModel and snapshot tests` job, behind the iOS gate (moved from LB-002).
 - **Given** the list scrolled down, **when** the user re-selects the Lines tab, **then** the list scrolls to its top, end to end through the shell, on both platforms (FR-NAV-03, moved from LB-012).
 
+Part 1 (2026-11-02), the list over a repository contract and sample lines, done with this evidence. The first criterion's fixture, `lines_2026-10-22.json`, waits for part 2 (OQ-11, LB-003); every other criterion is met with the sample lines, which have the network's codes and shared colours:
+- Order and groups: `LinesUiMapperTest` (the codes of the fixture, shuffled, and 9 before 10), the Android screen test, and `LinesViewModelTests` on iOS.
+- The status chip: the mapper, the Android screen test, and the screenshots of both platforms (sample line 11 is not operational).
+- Lines 4 and B1: the Android screen test, and `ShellUITests` on iOS (VoiceOver's label is "Line 4, Casa Blanca - Yagüe").
+- 200 % font: the screenshots at 200 % on Android and at `accessibility3` on iOS.
+- First launch with no network: `ObserveLinesTest` (an empty cache waits for the sync, whose failure is the result; a failed refresh of a full cache stays silent; Retry syncs again), and the ViewModel tests of both platforms.
+- The CI job: `iOS ViewModel and snapshot tests`, one per test target of `LogroBusUI`, behind the iOS gate (owner decision, 2026-11-02).
+- Scroll to top: `TabNavigationTest` on Android and `ShellUITests` on iOS, both through the shell on the debug build's sample lines (owner decision, 2026-11-02: debug builds list sample lines until LB-008 part 2).
+
+Part 2, also done when: the first criterion holds with `lines_2026-10-22.json` through LB-005's DTOs, LB-006's normaliser and LB-008's sync, and the sample lines are gone from debug builds.
+
 ### LB-102 Lines search
 Refs: FR-LINE-03, FR-LINE-16, NFR-I18N-03
 

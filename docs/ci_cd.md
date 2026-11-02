@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. LB-002 is done (2026-10-25). The screenshot jobs follow in LB-011, the iOS ViewModel tests in LB-101 and the nightly workflow in LB-412 |
+| Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. LB-002 is done (2026-10-25). The screenshot jobs came with LB-011 and the iOS ViewModel and snapshot jobs with LB-101; the nightly workflow follows in LB-412 |
 | Last updated | 2026-10-24 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
@@ -67,8 +67,8 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | iOS gate | `ios-checks.yml` | none: it reads the results of the other iOS jobs, all listed in its `needs` (`lb002_iosGateWaitsForEveryIosJob`) | Linux | < 1 min | Active, required after the merge (§4) |
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
 | Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
-| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh`: generates the project, boots the iPhone 17e simulator (iOS 26.5) while `xcodebuild build-for-testing` runs, then runs `test-without-building` (Xcode 26.6), printing each phase's time; it retries the tests once if the simulator vanishes (§5) | macOS | < 10 min (measured exception, §5) | Active, through the gate |
-| iOS ViewModel and snapshot tests: `Feature<X>` (matrix) | `ios-checks.yml` | `swift test` / `xcodebuild test -only-testing:<Feature>Tests` | macOS | < 8 min each | Not yet a job of their own. The iosApp scheme runs the package's tests, so the "iOS build and tests" job does: `FeatureSettingsTests` (LB-010), `DesignSystemTests` and the app-hosted `GlassSnapshotTests` (LB-011). A separate job would rebuild the framework on another macOS runner while that job is already over its budget; the owner decides with the iOS budget (LB-101 adds the ViewModel matrix) |
+| iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh iosAppTests iosAppUITests`, the app's own test targets: generates the project, boots the iPhone 17e simulator (iOS 26.5) while `xcodebuild build-for-testing` runs, then runs `test-without-building` (Xcode 26.6), printing each phase's time; it retries the tests once if the simulator vanishes (§5) | macOS | < 10 min (measured exception, §5) | Active, through the gate |
+| iOS ViewModel and snapshot tests: one per test target of `LogroBusUI` (matrix) | `ios-checks.yml` | `scripts/ios/test.sh <Target>Tests`, which builds and runs that target alone (`-only-testing`): `DesignSystemTests`, `FeatureLinesTests`, `FeatureSettingsTests` | macOS | < 10 min each | Active, through the gate (LB-101; owner decision, 2026-11-02: one job per target, each rebuilding the framework, to take the package's tests out of the app's job). The app-hosted `GlassSnapshotTests` stay in the app's job. An architecture test fails when the matrix and `Package.swift`'s test targets differ |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
 
@@ -124,6 +124,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - **In both variants the tests never waited for the boot.** Besides the boot's contention, the rest of the time goes to the tests' first launches on the newly booted simulator.
   - **Splitting the job would not shorten it:** each part would need its own macOS runner, Gradle build and boot, and GitHub Free allows only 5 macOS jobs at once.
   - **Its budget is therefore 10 minutes** (owner decision, 2026-10-25, §2). The launch UI tests stay on every pull request.
+  - **The package's tests left it (LB-101, 2026-11-02):** it took 19 minutes on PR #35. Since LB-101, it runs only the app's test targets, and each test target of `LogroBusUI` runs in a matrix job of its own (§3). Each of those jobs builds the framework again: with the app's job and the shared iOS tests, a pull request uses 5 macOS runners at once, the most that GitHub Free allows.
 - **Concurrency:** `concurrency` with `cancel-in-progress: true` per pull request, so a new push cancels the stale run.
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.
 - **Runner flakes:** the agent watching a pull request reruns a failure outside the change once (`AGENTS.md` §10). One that recurs is made harmless in the pipeline:

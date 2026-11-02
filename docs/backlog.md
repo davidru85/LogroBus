@@ -46,7 +46,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 
 | Id | Story | Refs | Priority | Status |
 | --- | --- | --- | --- | --- |
-| LB-101 | Lines list grouped Day / Night (Búho) and sorted by code; rows with badge, display name and status chip; CI: the iOS ViewModel test job (`Feature<X>` matrix), moved from LB-002. Part 1 (in progress): the list over a repository contract and scripted lines, with every criterion that scripted lines can show. Part 2: the list checked against `lines_2026-10-22.json`, once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008 | FR-LINE-01, FR-LINE-02 | P0 | in-progress |
+| LB-101 | Lines list grouped Day / Night (Búho) and sorted by code; rows with badge, display name and status chip; CI: the iOS ViewModel test job (`Feature<X>` matrix), moved from LB-002. Part 1 (done): the list over a repository contract and sample lines, with every criterion that sample lines can show, and the iOS ViewModel and snapshot jobs (one per test target). Part 2: the list checked against `lines_2026-10-22.json`, once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008 | FR-LINE-01, FR-LINE-02 | P0 | in-progress |
 | LB-102 | Search bar filtering by code, terminus or stop name, ignoring accents and case | FR-LINE-03, FR-LINE-16 | P0 | todo |
 | LB-103 | Favourite lines: star toggle on rows and in detail; "Your favourite lines" carousel at the top; empty hint | FR-LINE-09, FR-LINE-12 to 15, FR-FAV-01 | P0 | todo |
 | LB-104 | Line detail: map with both shapes, direction toggle labelled with headsigns, ordered stop list; tap a stop to open Stop detail | FR-LINE-04 | P0 | todo |

@@ -62,7 +62,7 @@ Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: insta
 
 Los módulos compartidos ya compilan: `./gradlew ciUnitTest` ejecuta los tests unitarios y las reglas de arquitectura. Si `ANDROID_HOME` no está definido, crea un archivo `local.properties` con `sdk.dir=<ruta a tu Android SDK>`; Git lo ignora.
 
-Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. De momento muestra una pantalla provisional de la pestaña Líneas.
+Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. Se abre en la lista de Líneas. Hasta que la app pueda descargar las líneas reales, las builds debug muestran líneas de ejemplo con nombres y colores inventados.
 
 Para ejecutar la app de iOS en macOS, ejecuta `scripts/ios/generate-project.sh` (también lo ejecuta `scripts/bootstrap.sh`, y hay que repetirlo tras cambiar código Kotlin). El script compila el framework compartido y genera `iosApp/iosApp.xcodeproj`; abre ese proyecto en Xcode y ejecuta el esquema `iosApp` en un simulador de iPhone.
 
@@ -95,7 +95,7 @@ La documentación técnica está en inglés.
 | Hito | Alcance | Estado |
 | --- | --- | --- |
 | M0 Cimientos | Esqueleto del proyecto, capa de datos, integración continua | En curso |
-| M1 Líneas | Sección Líneas | Sin empezar |
+| M1 Líneas | Sección Líneas | En curso |
 | M2 Cerca de mí | Sección Cerca de mí | Sin empezar |
 | M3 Cómo llegar | Planificador de viajes | Sin empezar |
 | M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | Sin empezar |
@@ -104,6 +104,13 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **02-11-2026:**
+  - LB-101, parte 1: las dos apps se abren en la lista de Líneas.
+    - Primero van las líneas diurnas y después las nocturnas (Búho), cada grupo ordenado por su número: la 9 antes que la 10. Cada línea muestra su distintivo de color, su nombre y una etiqueta "Sin servicio" cuando no circula.
+    - Los lectores de pantalla dicen "Línea 4", nunca un color, porque algunas líneas lo comparten. Con textos grandes los nombres pasan a otra línea y los códigos nunca se cortan.
+    - Las líneas se descargan la primera vez que hacen falta. Sin conexión, la pantalla lo dice y ofrece Reintentar.
+    - Esa descarga aún no existe (espera a las condiciones de reutilización de los datos, OQ-11), así que las builds debug muestran líneas de ejemplo y las de release, el error.
+    - Volver a pulsar la pestaña Líneas sube la lista al principio.
+    - CI: los tests de cada parte del código de interfaz de iOS (el sistema de diseño, Líneas, Ajustes) se ejecutan ahora en un job propio, y el job de la app de iOS solo ejecuta los tests de la app.
   - Flujo de trabajo: una nueva sesión de un agente de IA, por ejemplo tras un reinicio, retoma el trabajo desde la entrada más reciente de `docs/project_log.md`. Esa entrada indica la pull request abierta, la siguiente tarea y las decisiones pendientes del propietario. `AGENTS.md` lo indica, y una sesión que termina con una pull request abierta escribe antes esa entrada.
     - Cada nueva sesión vuelve además a vigilar las pull requests abiertas antes que nada: `scripts/agent/session-start.sh` las lista al empezar la sesión.
   - CI: el check de SwiftLint vuelve a ejecutarse en Ubuntu 24.04. Las máquinas Linux más nuevas de GitHub no tienen una biblioteca que SwiftLint necesita, y ahora su instalación falla con un error claro cuando ocurre.
