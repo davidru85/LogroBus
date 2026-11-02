@@ -41,6 +41,11 @@ class LinesRepositoryImpl(
             logger.warn(TAG, "Dropped a line of an unknown kind")
             return null
         }
+        // DD-02: ids are Ints. A wider one would be truncated into another line's id.
+        if (row.id !in Int.MIN_VALUE..Int.MAX_VALUE) {
+            logger.warn(TAG, "Dropped a line whose id is out of range")
+            return null
+        }
         return Line(
             id = row.id.toInt(),
             code = row.code,
