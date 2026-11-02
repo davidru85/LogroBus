@@ -1,11 +1,16 @@
-// Security floors for libraries that AGP 9.3 brings onto the plugin classpath with critical advisories
-// (docs/ci_cd.md §6): Bouncy Castle and FreeMarker. As constraints, they never lower a newer version.
-// The floors of AGP's tool configurations live in build-logic (AgpToolSecurityFloors.kt).
+// Security floors for libraries that AGP 9.3 brings onto the plugin classpath with known advisories
+// (docs/ci_cd.md §6): Bouncy Castle, FreeMarker, Guava, Commons Lang, jose4j (bundletool) and JDOM (Jetifier).
+// As constraints, they never lower a newer version. The floors of the tool and test configurations live in
+// build-logic (SecurityFloors.kt).
 buildscript {
     dependencies {
         classpath(platform(libs.bouncycastle.bom))
+        classpath(platform(libs.guava.bom))
         constraints {
             classpath(libs.freemarker)
+            classpath(libs.commons.lang3)
+            classpath(libs.jose4j)
+            classpath(libs.jdom2)
         }
     }
 }
