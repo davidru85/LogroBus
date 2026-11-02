@@ -9,6 +9,7 @@ import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -43,6 +44,38 @@ class ObserveLinesTest {
         runTest {
             observeLines().test {
                 expectNoEvents()
+                sync.complete(AppResult.Success(Unit), stores = listOf(line1, line2))
+                assertEquals(AppResult.Success(listOf(line1, line2)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb101_theFirstSyncsLinesAreReadAfterItEnds() =
+        runTest {
+            // SQLDelight reads again only after a write commits. A repository that reads once per collection shows
+            // whether the lines are read before the sync ends, when there are none, or after it.
+            val readsOnce =
+                DefaultObserveLines(
+                    sync,
+                    object : LinesRepository {
+                        override fun observeLines() = flow { emit(cache.value) }
+                    },
+                )
+
+            readsOnce().test {
+                sync.complete(AppResult.Success(Unit), stores = listOf(line1, line2))
+                assertEquals(AppResult.Success(listOf(line1, line2)), awaitItem())
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun lb101_aRefreshThatStoresNewLinesShowsThem() =
+        runTest {
+            cache.value = AppResult.Success(listOf(line1))
+
+            observeLines().test {
+                assertEquals(AppResult.Success(listOf(line1)), awaitItem())
                 sync.complete(AppResult.Success(Unit), stores = listOf(line1, line2))
                 assertEquals(AppResult.Success(listOf(line1, line2)), awaitItem())
             }

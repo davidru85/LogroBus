@@ -27,7 +27,7 @@ class SampleLinesTest {
     }
 
     @Test
-    fun dd08_lines4AndB1ShareAColour_asDo9AndB2() {
+    fun lb101_theSampleSharesColoursAsTheNetworkDoes_4AndB1_9AndB2() {
         assertEquals(byCode.getValue("4").color, byCode.getValue("B1").color)
         assertEquals(byCode.getValue("9").color, byCode.getValue("B2").color)
     }

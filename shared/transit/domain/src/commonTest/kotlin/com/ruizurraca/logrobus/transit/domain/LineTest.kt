@@ -4,12 +4,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-/** Spec §5.1 and DD-08: a line is its code and the rest of its data, never its colour alone. */
+/** Spec §5.1: a line is its code and the rest of its data, never its colour alone (DD-08's mapping: LinesUiMapperTest). */
 class LineTest {
     private val line4 = Line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613, 0xFFFFFFFF, LineKind.DAY, isOperational = true)
 
     @Test
-    fun dd08_linesThatShareAColourAreStillTwoLines() {
+    fun lb101_linesThatShareAColourAreStillTwoLines() {
         val lineB1 = line4.copy(id = 101, code = "B1", displayName = "Varea - La Cava", kind = LineKind.NIGHT)
 
         assertEquals(line4.color, lineB1.color)
