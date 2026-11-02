@@ -1,12 +1,17 @@
 package com.ruizurraca.logrobus.umbrella
 
 import app.cash.sqldelight.db.SqlDriver
+import com.ruizurraca.logrobus.core.common.AppError
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.error
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.network.ClientIdentity
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.test.runTest
 import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
 import org.koin.mp.KoinPlatform
@@ -106,4 +111,23 @@ class AndroidGraphTest {
         assertFalse(scope.isActive)
         assertFailsWith<IllegalStateException> { driver.execute(null, "DELETE FROM sync_state", 0) }
     }
+
+    @Test
+    fun lb101_debugBuildsListTheSampleLines() =
+        runTest {
+            // Until LB-008 part 2 downloads the real catalogue (owner decision, 2026-11-02).
+            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+
+            assertEquals(AppResult.Success(SampleLines.all), KoinPlatform.getKoin().get<ObserveLines>()().first())
+        }
+
+    @Test
+    fun lb101_releaseBuildsReadTheCache_whichNothingCanFillYet() =
+        runTest {
+            // No sample data in a release build: the cache is empty, and there is no source to sync from until
+            // LB-008 part 2, so the list shows the error with Retry.
+            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = false)
+
+            assertEquals(AppResult.Failure(AppError.Data), KoinPlatform.getKoin().get<ObserveLines>()().first())
+        }
 }
