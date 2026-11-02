@@ -1,0 +1,123 @@
+package com.ruizurraca.logrobus.transit.data
+
+import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.AppDispatchers
+import com.ruizurraca.logrobus.core.common.AppError
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.LogLevel
+import com.ruizurraca.logrobus.core.database.LogroBusDatabase
+import com.ruizurraca.logrobus.core.database.logroBusDatabase
+import com.ruizurraca.logrobus.transit.domain.Line
+import com.ruizurraca.logrobus.transit.domain.LineKind
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import kotlin.test.AfterTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+
+/** LB-101 (FR-LINE-01, FR-LINE-02): the lines that the static sync stored, for the Lines list. */
+class LinesRepositoryTest {
+    private val driver = testDriver()
+    private val database = logroBusDatabase(driver)
+    private val logger = RecordingLogger()
+
+    private val line4 =
+        Line(
+            id = 4,
+            code = "4",
+            displayName = "Casa Blanca - Yagüe",
+            color = 0xFFE30613,
+            onColor = 0xFFFFFFFF,
+            kind = LineKind.DAY,
+            isOperational = true,
+        )
+    private val lineB1 =
+        Line(
+            id = 101,
+            code = "B1",
+            displayName = "Varea - La Cava",
+            color = 0xFFE30613,
+            onColor = 0xFFFFFFFF,
+            kind = LineKind.NIGHT,
+            isOperational = false,
+        )
+
+    private fun TestScope.repository() =
+        LinesRepositoryImpl(database, AppDispatchers(StandardTestDispatcher(testScheduler)), logger)
+
+    @AfterTest
+    fun closeDatabase() = driver.close()
+
+    @Test
+    fun lb101_thereAreNoLinesBeforeTheFirstSync() =
+        runTest {
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(emptyList()), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb101_linesAreReadAsTheSyncStoredThem() =
+        runTest {
+            database.insert(lineB1, kind = "night")
+            database.insert(line4, kind = "day")
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(listOf(line4, lineB1)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb101_aNewSyncEmitsTheNewLines() =
+        runTest {
+            database.insert(line4, kind = "day")
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(listOf(line4)), awaitItem())
+                database.insert(lineB1, kind = "night")
+                assertEquals(AppResult.Success(listOf(line4, lineB1)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb101_aLineOfAnUnknownKindIsDroppedAndLogged() =
+        runTest {
+            database.insert(line4, kind = "day")
+            database.insert(lineB1, kind = "tram")
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(listOf(line4)), awaitItem())
+            }
+            assertEquals(LogLevel.Warn, logger.entries.single().level)
+        }
+
+    @Test
+    fun lb101_aDatabaseThatCannotBeReadGivesAFailure_notACrash() =
+        runTest {
+            driver.execute(null, "DROP TABLE line", 0)
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Failure(AppError.Data), awaitItem())
+                awaitComplete()
+            }
+            val entry = logger.entries.single()
+            assertEquals(LogLevel.Warn, entry.level)
+            assertNotNull(entry.throwable)
+        }
+
+    private fun LogroBusDatabase.insert(
+        line: Line,
+        kind: String,
+    ) = lineQueries.insertLine(
+        id = line.id.toLong(),
+        code = line.code,
+        raw_name = "raw ${line.displayName}",
+        display_name = line.displayName,
+        color = line.color,
+        on_color = line.onColor,
+        kind = kind,
+        operational = line.isOperational,
+    )
+}
