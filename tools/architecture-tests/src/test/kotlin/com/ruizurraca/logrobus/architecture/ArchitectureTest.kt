@@ -184,6 +184,20 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb002_everyGradleStepOfTheWorkflowsRetriesDependenciesThatWereNotServed() {
+        // A step that ran ./gradlew directly would fail on a repository's 429 or "not found" (docs/ci_cd.md §5).
+        val direct =
+            File(root, ".github/workflows")
+                .listFiles { file -> file.extension == "yml" }
+                .orEmpty()
+                .flatMap { file ->
+                    file.readLines().filter { "./gradlew" in it }.map { "${file.name}: ${it.trim()}" }
+                }
+        assertEquals(emptyList<String>(), direct)
+        assertTrue("scripts/ci/gradle-retry.sh" in File(root, "scripts/ios/generate-project.sh").readText())
+    }
+
+    @Test
     fun lb002_jobNamesReadWellWhenSkipped() {
         // A skipped job shows its name unexpanded; GitHub appends the matrix values to a plain name by itself.
         val offenders =
