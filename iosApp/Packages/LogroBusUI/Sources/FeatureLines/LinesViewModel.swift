@@ -15,6 +15,9 @@ public final class LinesViewModel {
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap.
     private let useCases: any UseCases
+    // The last toggle's write. Each waits for the one before: SKIE may start two Kotlin calls in either order, so two
+    // quick taps could otherwise land the wrong way round.
+    private var favouriteWrite: Task<Void, Never>?
 
     /// Takes the use cases from the graph, or from `SharedDependencies.shared.preview()` in previews and tests.
     public init(useCases: any UseCases = SharedDependencies.shared) {
@@ -29,7 +32,9 @@ public final class LinesViewModel {
         case .setFavourite(let favourite):
             // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a
             // damaged database the repository has logged, leaves them as they were.
-            Task {
+            let previous = favouriteWrite
+            favouriteWrite = Task { [useCases] in
+                await previous?.value
                 _ = try? await useCases.setFavouriteLine().invoke(
                     lineId: favourite.lineId, isFavourite: favourite.isFavourite
                 )

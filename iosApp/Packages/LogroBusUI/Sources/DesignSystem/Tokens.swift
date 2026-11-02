@@ -41,6 +41,9 @@ public enum Tokens {
         public static let warning = Color(light: light.warning, dark: dark.warning)
         public static let errorContainer = Color(light: light.errorContainer, dark: dark.errorContainer)
         public static let onErrorContainer = Color(light: light.onErrorContainer, dark: dark.onErrorContainer)
+        /// A card on a grouped list's background, such as a favourite line's (LB-103): the system's colour until the
+        /// brand palette (LB-413).
+        public static let cardBackground = Color(uiColor: .secondarySystemGroupedBackground)
     }
 
     /// The spacing scale and the screen margin (design_guidelines.md §6.1).

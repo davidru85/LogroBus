@@ -45,6 +45,16 @@ private struct GlassPreview: View {
     }
 }
 
+private struct FavouriteTogglesPreview: View {
+    var body: some View {
+        HStack {
+            FavouriteToggle(isFavourite: false, label: Text(verbatim: "Añadir línea 3 a favoritas")) { _ in }
+            FavouriteToggle(isFavourite: true, label: Text(verbatim: "Quitar línea 3 de favoritas")) { _ in }
+        }
+        .padding()
+    }
+}
+
 #Preview("Line badges") { BadgesPreview() }
 #Preview("Line badges, dark") { BadgesPreview().preferredColorScheme(.dark) }
 #Preview("ETAs") { EtasPreview() }
@@ -55,3 +65,5 @@ private struct GlassPreview: View {
 #Preview("Glass, iOS 18 fallback, dark") {
     GlassPreview().environment(\.glassRendering, .fallback).preferredColorScheme(.dark)
 }
+#Preview("Favourite toggles") { FavouriteTogglesPreview() }
+#Preview("Favourite toggles, dark") { FavouriteTogglesPreview().preferredColorScheme(.dark) }

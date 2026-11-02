@@ -36,8 +36,9 @@ public struct LineDetailView: View {
         (viewModel.state as? LineDetailUiStateContent)?.line
     }
 
+    /// "Line 10"; "Line" until the line's code is known, so the screen is never untitled.
     private var title: Text {
-        line.map { Text("line.title \($0.code)", bundle: .module) } ?? Text(verbatim: "")
+        line.map { Text("line.title \($0.code)", bundle: .module) } ?? Text("line.title.generic", bundle: .module)
     }
 
     @ViewBuilder private var content: some View {
@@ -111,10 +112,36 @@ public struct LineDetailView: View {
     }
 }
 
+#Preview("Loading") {
+    NavigationStack {
+        LineDetailView(
+            viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().loading())
+        )
+    }
+}
+
+#Preview("Loading, dark") {
+    NavigationStack {
+        LineDetailView(
+            viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().loading())
+        )
+        .preferredColorScheme(.dark)
+    }
+}
+
 #Preview("No network") {
     NavigationStack {
         LineDetailView(
             viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().offline())
         )
+    }
+}
+
+#Preview("No network, dark") {
+    NavigationStack {
+        LineDetailView(
+            viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().offline())
+        )
+        .preferredColorScheme(.dark)
     }
 }
