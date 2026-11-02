@@ -1,78 +1,6 @@
 {
   "sourceLanguage": "es",
   "strings": {
-    "error.data": {
-      "comment": "FR-ERR-05: the Error state's reason when the data cannot be read (design_guidelines.md §9).",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The data couldn’t be read."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se han podido leer los datos."
-          }
-        }
-      }
-    },
-    "error.network": {
-      "comment": "FR-ERR-05: the Error state's reason with no connection (design_guidelines.md §9).",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No connection. Check your network."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No hay conexión. Comprueba tu red."
-          }
-        }
-      }
-    },
-    "error.retry": {
-      "comment": "FR-ERR-05: the action of the Error and Empty states.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reintentar"
-          }
-        }
-      }
-    },
-    "error.server": {
-      "comment": "FR-ERR-05: the Error state's reason when the service fails (design_guidelines.md §9).",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The service isn’t responding. Try again later."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "El servicio no responde. Inténtalo más tarde."
-          }
-        }
-      }
-    },
     "lines.empty": {
       "comment": "Spec §7.3: the Lines list's Empty state, one sentence above Retry (LB-101).",
       "extractionState": "manual",
@@ -123,6 +51,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Líneas nocturnas (Búho)"
+          }
+        }
+      }
+    },
+    "lines.loading": {
+      "comment": "What VoiceOver says while the Lines list's first load runs (spec §7.3, design_guidelines.md §8).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando líneas"
           }
         }
       }

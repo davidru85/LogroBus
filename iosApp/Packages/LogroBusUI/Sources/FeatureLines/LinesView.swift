@@ -7,6 +7,7 @@ import SwiftUI
 public struct LinesView: View {
     @State private var viewModel: LinesViewModel
     @Environment(\.scrollToTopRequests) private var scrollToTopRequests
+    @State private var scrollPosition = ScrollPosition(edge: .top)
 
     public init(viewModel: LinesViewModel = LinesViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -23,34 +24,35 @@ public struct LinesView: View {
         switch onEnum(of: viewModel.state) {
         case .loading:
             // Spec §7.3: the final layout with placeholders, never a lone spinner.
+            // VoiceOver hears that the lines are loading rather than the shapes (design_guidelines.md §8).
             lineList(Self.placeholders)
                 .redacted(reason: .placeholder)
-                .accessibilityHidden(true)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("lines.loading", bundle: .module))
         case .content(let content):
             lineList(content.groups)
         case .empty:
             message(Text("lines.empty", bundle: .module))
         case .error(let error):
-            message(Text(error.reason.message, bundle: .module))
+            message(error.reason.message)
         }
     }
 
-    /// FR-LINE-01: each group under its heading. Re-selecting the tab at this root scrolls it to the top (FR-NAV-03).
+    /// FR-LINE-01: each group under its heading. Re-selecting the tab at this root scrolls it to the top, its first
+    /// heading included (FR-NAV-03).
     private func lineList(_ groups: [LineGroupUi]) -> some View {
-        ScrollViewReader { proxy in
-            List {
-                ForEach(groups, id: \.kind) { group in
-                    Section {
-                        ForEach(group.lines, id: \.id) { LineRow(line: $0) }
-                    } header: {
-                        Text(group.kind.title, bundle: .module)
-                    }
+        List {
+            ForEach(groups, id: \.kind) { group in
+                Section {
+                    ForEach(group.lines, id: \.id) { LineRow(line: $0) }
+                } header: {
+                    Text(group.kind.title, bundle: .module)
                 }
             }
-            .onChange(of: scrollToTopRequests) {
-                guard let first = groups.first?.lines.first else { return }
-                withAnimation { proxy.scrollTo(first.id, anchor: .top) }
-            }
+        }
+        .scrollPosition($scrollPosition)
+        .onChange(of: scrollToTopRequests) {
+            withAnimation { scrollPosition.scrollTo(edge: .top) }
         }
     }
 
@@ -59,10 +61,8 @@ public struct LinesView: View {
         ContentUnavailableView {
             text
         } actions: {
-            Button {
+            RetryButton {
                 viewModel.onEvent(LinesEventRetry.shared)
-            } label: {
-                Text("error.retry", bundle: .module)
             }
         }
     }
@@ -106,9 +106,10 @@ private struct StatusChip: View {
     var body: some View {
         Text("lines.not_operational", bundle: .module)
             .font(.caption.weight(.medium))
+            .foregroundStyle(Tokens.Colors.onErrorContainer)
             .padding(.horizontal, Tokens.Spacing.small)
-            .padding(.vertical, 2)
-            .background(.red.opacity(0.18), in: RoundedRectangle(cornerRadius: Tokens.lineBadgeCornerRadius))
+            .padding(.vertical, Tokens.Spacing.xSmall)
+            .background(Tokens.Colors.errorContainer, in: RoundedRectangle(cornerRadius: Tokens.lineBadgeCornerRadius))
     }
 }
 
@@ -118,17 +119,6 @@ extension LineKind {
         switch self {
         case .day: "lines.group.day"
         case .night: "lines.group.night"
-        }
-    }
-}
-
-extension ErrorReason {
-    /// FR-ERR-05: the short reason (design_guidelines.md §9, keys `error.*`).
-    var message: LocalizedStringKey {
-        switch self {
-        case .network: "error.network"
-        case .server: "error.server"
-        case .data: "error.data"
         }
     }
 }
@@ -159,9 +149,23 @@ extension ErrorReason {
     }
 }
 
+#Preview("Loading, dark") {
+    NavigationStack {
+        LinesView(viewModel: LinesViewModel(useCases: SharedDependencies.shared.preview().loading()))
+            .preferredColorScheme(.dark)
+    }
+}
+
 #Preview("No lines") {
     NavigationStack {
         LinesView(viewModel: LinesViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+    }
+}
+
+#Preview("No lines, dark") {
+    NavigationStack {
+        LinesView(viewModel: LinesViewModel(useCases: SharedDependencies.shared.preview().neverSynced()))
+            .preferredColorScheme(.dark)
     }
 }
 

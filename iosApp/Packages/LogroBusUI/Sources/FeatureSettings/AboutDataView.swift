@@ -1,3 +1,4 @@
+import DesignSystem
 import Shared
 import SwiftUI
 
@@ -28,12 +29,10 @@ public struct AboutDataView: View {
             lastSyncs(content.lastSyncs.map { ($0.dataset, $0.lastSuccess) })
         case .error(let error):
             ContentUnavailableView {
-                Text(error.reason.message, bundle: .module)
+                error.reason.message
             } actions: {
-                Button {
+                RetryButton {
                     viewModel.onEvent(AboutDataEventRetry.shared)
-                } label: {
-                    Text("error.retry", bundle: .module)
                 }
             }
         }
@@ -69,17 +68,6 @@ extension StaticDataset {
         switch self {
         case .lines: "about.dataset.lines"
         case .stops: "about.dataset.stops"
-        }
-    }
-}
-
-extension ErrorReason {
-    /// FR-ERR-05: the short reason (design_guidelines.md §9, keys `error.*`).
-    var message: LocalizedStringKey {
-        switch self {
-        case .network: "error.network"
-        case .server: "error.server"
-        case .data: "error.data"
         }
     }
 }
