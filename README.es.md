@@ -104,6 +104,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **02-11-2026:**
+  - CI: cuando Maven Central rechaza descargas porque llegan demasiadas a la vez (HTTP 429), Gradle sigue reintentando durante cerca de un minuto en vez de 3 segundos. Pasó dos veces el 2 de noviembre, cuando todos los jobs de CI descargaron a la vez las nuevas dependencias.
   - LB-101, parte 1: las dos apps se abren en la lista de Líneas.
     - Primero van las líneas diurnas y después las nocturnas (Búho), cada grupo ordenado por su número: la 9 antes que la 10. Cada línea muestra su distintivo de color, su nombre y una etiqueta "Sin servicio" cuando no circula.
     - Los lectores de pantalla dicen "Línea 4", nunca un color, porque algunas líneas lo comparten. Con textos grandes los nombres pasan a otra línea y los códigos nunca se cortan.

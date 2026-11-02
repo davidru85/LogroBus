@@ -19,6 +19,25 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-02: Gradle waits out rate-limited downloads
+
+**Done**
+- **PR #36 (LB-101 part 1) merged,** and `main` was synced. Seven of the eight Dependabot alerts closed once `main` submitted its dependency graph; the Kotlin Gradle plugin's (GHSA-r937-wjx7-w2jp) stays open.
+- **A runner flake that recurred, made harmless (`ci_cd.md` §5):** Maven Central answered `429 Too Many Requests` for Robolectric's `nativeruntime-dist-compat` jar twice in a few minutes: in "Android unit tests (:android:feature:settings)" on PR #36's first run, and in "Coverage" on `main` after PR #35 (7266c7f). Both runs had started with an empty Gradle cache, since PR #35 changed the dependencies, so every job downloaded at once.
+  - Gradle 9.7.1 already retries 408, 429 and 5xx answers, but 3 times from 1 s. `gradle.properties` now sets `org.gradle.internal.repository.max.tentatives=6` and `initial.backoff=2000`: about a minute of backoff.
+  - `ArchitectureTest.lb002_gradleWaitsOutRateLimitedDownloads` keeps those floors (red, then green; no refactor needed).
+  - **Checked against a local server that answers 429 to everything:** Gradle made 3 requests over 3 s by default, and 6 over 62 s with the settings. The wrapper also copies the `systemProp.` entries of its own project's `gradle.properties`, so a probe run through this repository's `gradlew` gets them even with `-p`; the comparison used Gradle's own launcher.
+- **Not covered:** the other failure of PR #36's first run, in "Android unit tests (:android:feature:nearme)": the Gradle Plugin Portal answered that `kotlin-stdlib:2.4.0` did not exist, a 404 that Gradle does not retry.
+
+**Decisions**
+- **Retries rather than a rerun step:** a longer backoff only waits when a repository refuses a download, while rerunning a whole Gradle step after a failure could also hide a failing check.
+
+**Open / next**
+- **The pull request of this entry** (branch `fix/LB-002-download-retries`) is open, and its watch runs.
+- **Next:** LB-103 (favourite lines and their carousel), as the LB-101 entry below says, unless the owner chooses otherwise.
+- **If the Plugin Portal's 404 recurs,** rerun the failed jobs, then look for a fix that does not need the Portal for Kotlin's artifacts.
+- **Waiting on the owner:** as in the LB-101 entry below.
+
 ## 2026-11-02: LB-101, part 1: the Lines list over sample lines
 
 **Done**
