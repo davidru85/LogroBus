@@ -17,13 +17,15 @@ struct LinesSnapshotTests {
 
     @Test(arguments: Appearance.allCases)
     func lb101_theFirstLoad(appearance: Appearance) async throws {
-        let screen = try await screen(SharedDependencies.shared.preview().loading(), settlesOn: LinesUiStateLoading.self)
+        let useCases = SharedDependencies.shared.preview().loading()
+        let screen = try await screen(useCases, settlesOn: LinesUiStateLoading.self)
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
     @Test(arguments: Appearance.allCases)
     func lb101_noLines(appearance: Appearance) async throws {
-        let screen = try await screen(SharedDependencies.shared.preview().neverSynced(), settlesOn: LinesUiStateEmpty.self)
+        let useCases = SharedDependencies.shared.preview().neverSynced()
+        let screen = try await screen(useCases, settlesOn: LinesUiStateEmpty.self)
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
@@ -44,7 +46,7 @@ struct LinesSnapshotTests {
     }
 }
 
-/// Light, dark, and 200 % text or more (`accessibility3`), on a 393 × 852 pt phone screen, as DesignSystemTests'.
+/// Light, dark, and 200 % text or more (`accessibility3`), on a whole iPhone screen, as the app's ShellSnapshotTests.
 enum Appearance: CaseIterable, Sendable {
     case light, dark, largeText
 
@@ -60,7 +62,7 @@ enum Appearance: CaseIterable, Sendable {
         .image(
             precision: 0.9995,
             perceptualPrecision: 0.98,
-            layout: .fixed(width: 393, height: 852),
+            layout: .device(config: .iPhone13),
             traits: UITraitCollection(traitsFrom: [
                 UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light),
                 UITraitCollection(displayScale: 3)

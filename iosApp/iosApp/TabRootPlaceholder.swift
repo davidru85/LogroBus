@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The root of a tab until its feature lands (LB-101, LB-201, LB-301): its title alone. The shell adds the More action.
+/// The root of a tab until its feature lands (LB-201, LB-301): its title alone. The shell adds the More action.
 struct TabRootPlaceholder: View {
     let destination: TopLevelDestination
 
@@ -13,6 +13,6 @@ struct TabRootPlaceholder: View {
 
 #Preview {
     NavigationStack {
-        TabRootPlaceholder(destination: .lines)
+        TabRootPlaceholder(destination: .nearMe)
     }
 }

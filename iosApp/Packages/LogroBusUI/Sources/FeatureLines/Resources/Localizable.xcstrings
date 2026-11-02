@@ -1,0 +1,168 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "error.data": {
+      "comment": "FR-ERR-05: the Error state's reason when the data cannot be read (design_guidelines.md §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The data couldn’t be read."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se han podido leer los datos."
+          }
+        }
+      }
+    },
+    "error.network": {
+      "comment": "FR-ERR-05: the Error state's reason with no connection (design_guidelines.md §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No connection. Check your network."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay conexión. Comprueba tu red."
+          }
+        }
+      }
+    },
+    "error.retry": {
+      "comment": "FR-ERR-05: the action of the Error and Empty states.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reintentar"
+          }
+        }
+      }
+    },
+    "error.server": {
+      "comment": "FR-ERR-05: the Error state's reason when the service fails (design_guidelines.md §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service isn’t responding. Try again later."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servicio no responde. Inténtalo más tarde."
+          }
+        }
+      }
+    },
+    "lines.empty": {
+      "comment": "Spec §7.3: the Lines list's Empty state, one sentence above Retry (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are no lines to show."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay líneas que mostrar."
+          }
+        }
+      }
+    },
+    "lines.group.day": {
+      "comment": "FR-LINE-01: the heading of the day lines (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas diurnas"
+          }
+        }
+      }
+    },
+    "lines.group.night": {
+      "comment": "FR-LINE-01: the heading of the night (Búho) lines; Búho is a name, not translated (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night lines (Búho)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas nocturnas (Búho)"
+          }
+        }
+      }
+    },
+    "lines.not_operational": {
+      "comment": "FR-LINE-02: the status chip of a line that is not operational (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not in service"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin servicio"
+          }
+        }
+      }
+    },
+    "lines.title": {
+      "comment": "The Lines screen's title (design_guidelines.md §9, key tab.lines).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

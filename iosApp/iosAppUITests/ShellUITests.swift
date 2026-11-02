@@ -46,8 +46,8 @@ final class ShellUITests: XCTestCase {
 
     @MainActor
     func test_lb101_reselectingLinesAtItsRootScrollsTheListToItsTop() {
-        // FR-NAV-03 end to end through the shell, moved from LB-012. Debug builds list the sample lines, and the largest
-        // text makes them far longer than the screen.
+        // FR-NAV-03 end to end through the shell, moved from LB-012. Debug builds list the sample lines, and the
+        // largest text makes them far longer than the screen.
         let app = launch(textSize: "UICTContentSizeCategoryAccessibilityXL")
         let firstLine = line("1", in: app)
         XCTAssertTrue(firstLine.waitForExistence(timeout: 10))
@@ -75,7 +75,8 @@ final class ShellUITests: XCTestCase {
     /// The row of the line with `code`, read as one element that starts with its badge's spoken label.
     @MainActor
     private func line(_ code: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Line \(code), ")).firstMatch
+        let row = NSPredicate(format: "label BEGINSWITH %@", "Line \(code), ")
+        return app.descendants(matching: .any).matching(row).firstMatch
     }
 
     @MainActor
