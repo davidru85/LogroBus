@@ -42,7 +42,8 @@ internal fun Project.raiseSecurityFloors() {
     val handler = dependencies
     val boms = SECURITY_FLOOR_BOMS.map { handler.platform(libs.findLibrary(it).get()) }
     val libraries = SECURITY_FLOOR_LIBRARIES.map { libs.findLibrary(it).get() }
-    configurations.matching { getsSecurityFloors(it.name) }.configureEach {
+    // By name, so that no other configuration is realised to be filtered.
+    configurations.named { getsSecurityFloors(it) }.configureEach {
         libraries.forEach { handler.constraints.addProvider(name, it) }
         // Through the DependencyHandler: added straight to the configuration, a BOM loses its platform attribute and
         // resolves as a plain library, so its constraints do not apply.

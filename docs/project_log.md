@@ -33,7 +33,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - `SecurityFloors.kt` replaces `AgpToolSecurityFloors.kt`. The conventions add the floors to AGP's tools, the Swift export classpath and the test dependencies, never to the app's classpaths.
   - The root build script raises Guava, Commons Lang, jose4j and JDOM on the plugin classpath, next to Bouncy Castle and FreeMarker.
   - New catalog entries: `guava` (BOM), `opentelemetry` (API), `commons-lang3`, `httpclient`, `jose4j` and `jdom2`.
-- **A trap found on the way:** a BOM in `swiftExportClasspath` removed KGP's `swift-export-embeddable` instead of raising its OpenTelemetry. KGP adds it as a default dependency, which applies only while the configuration declares none. That classpath now gets plain constraints, and a test (`lb002_swiftExportClasspathKeepsKgpsDefaultTools`) keeps it so.
+- **A trap found on the way:** a BOM in `swiftExportClasspath` removed KGP's `swift-export-embeddable` instead of raising its OpenTelemetry. KGP adds it as a default dependency, which applies only while the configuration declares none. That classpath now gets plain constraints, and a test (`lb002_swiftExportClasspathGetsNoBoms`) keeps the BOMs out of it; the resolution itself was checked by hand, as below.
 - **Verified:**
   - Every affected library now resolves to its fixed version or later, except the Kotlin Gradle plugin of build-logic.
   - A diff of the modules that every configuration resolves, before and after: only tool and test configurations change. The BOMs appear, Guava 33.7.2 trades `jsr305` and `checker-qual` for `jspecify`, and OpenTelemetry 1.67 adds `opentelemetry-common`. No app classpath and no iOS framework changes.

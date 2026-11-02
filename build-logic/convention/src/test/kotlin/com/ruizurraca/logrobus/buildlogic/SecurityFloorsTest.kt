@@ -30,10 +30,10 @@ class SecurityFloorsTest {
     }
 
     @Test
-    fun lb002_swiftExportClasspathKeepsKgpsDefaultTools() {
+    fun lb002_swiftExportClasspathGetsNoBoms() {
         // KGP adds the Swift export tools as default dependencies, which a BOM (a dependency) would remove: the
-        // classpath gets the plain constraints alone. AGP's tools and the tests declare their own, so they also get
-        // the BOMs.
+        // classpath gets the plain constraints alone. The resolution itself is checked in the 2026-11-02 project log
+        // entry. AGP's tools and the tests declare their own dependencies, so they also get the BOMs.
         assertFalse(getsSecurityFloorBoms("swiftExportClasspath"))
         listOf(
             "unified-test-platform-core",
