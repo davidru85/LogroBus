@@ -228,9 +228,10 @@ Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, 
 
 **Before coding:**
 1. Make sure `scripts/bootstrap.sh` has been run in this clone, so the git hooks are installed. Agents without hooks run `scripts/agent/session-start.sh` themselves.
-2. **Resuming work** in a new session, after a restart for example: read the newest entry of `docs/project_log.md`, the hand-over. Its "Open / next" names any open pull request, the next task and what waits for the owner. Check each open pull request first and restart its watch, as described below.
-3. Find the story in `docs/backlog.md`, or add one if the owner asks for something new. Read its criteria in `docs/acceptance_criteria.md` and the requirement ids it cites.
-4. Check `docs/open_questions.md`. If the work depends on an open question, implement the documented fallback or ask.
+2. **Open pull requests come first, in every session.** `scripts/agent/session-start.sh` lists them, so the watch of each starts again after a restart or in a new chat. Before the owner's first task, whatever it is, start each watch in the background, as described below, unless the session already runs it.
+3. **Resuming work** after a break, a restart for example: read the newest entry of `docs/project_log.md`, the hand-over. Its "Open / next" names any open pull request, the next task and what waits for the owner.
+4. Find the story in `docs/backlog.md`, or add one if the owner asks for something new. Read its criteria in `docs/acceptance_criteria.md` and the requirement ids it cites.
+5. Check `docs/open_questions.md`. If the work depends on an open question, implement the documented fallback or ask.
 
 **While coding:**
 - Work in small vertical slices with tests in the same change, and keep logic in shared code unless it is inherently platform-specific.
@@ -246,7 +247,7 @@ Follow the playbooks in `docs/playbooks/`: `start-story.md`, `finish-story.md`, 
 
 **After opening the pull request (owner rule, 2026-10-25):**
 - The owner approves and merges without saying so in the conversation.
-- The agent that opened the pull request watches it until it is merged or closed, with `scripts/agent/watch-pr.sh <number>` in the background, which polls a few minutes apart. An agent that starts a session while its pull request is open does the same.
+- The agent that opened the pull request watches it until it is merged or closed, with `scripts/agent/watch-pr.sh <number>` in the background, which polls a few minutes apart. An agent that starts a session while a pull request is open does the same first: the session-start hook lists them.
 - **Failing checks (owner rule, 2026-10-30):** the agent fixes them on its own, without waiting for the owner, so that the pull request reaches review green. The watch reports them as `CHECKS_FAILED`.
   - Read the failed job's log (`gh run view <run> --log-failed`) and find the cause before acting.
   - **A fault in the branch:** fix it there like any other change (a regression test for a bug, the TDD commits, `scripts/checks/run-all.sh`), push, and watch the new run.
