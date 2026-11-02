@@ -44,6 +44,7 @@ struct LinesViewModelTests {
 
         // What `.task(id: viewModel.attempt)` does when the attempt changes: the old load stops, a new one starts.
         first.cancel()
+        await first.value
         let second = Task { await viewModel.observe() }
         defer { second.cancel() }
         try await waitUntil { viewModel.state is LinesUiStateContent }

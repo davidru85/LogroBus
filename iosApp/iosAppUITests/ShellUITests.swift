@@ -57,7 +57,10 @@ final class ShellUITests: XCTestCase {
 
         app.tabBars.buttons["Lines"].tap()
 
-        XCTAssertTrue(firstLine.waitForExistence(timeout: 5))
+        // The scroll animates: wait until the heading above line 1 can be tapped again.
+        let dayLines = app.staticTexts["Day lines"]
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: dayLines)
+        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: 5), .completed, "back at the top, with its heading")
         XCTAssertTrue(firstLine.isHittable, "re-selecting Lines scrolled back to line 1")
     }
 
@@ -69,6 +72,7 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(line("4", in: app).waitForExistence(timeout: 10))
         XCTAssertEqual(line("4", in: app).label, "Line 4, Casa Blanca - Yagüe")
         for _ in 0..<3 where !line("B1", in: app).exists { app.swipeUp() }
+        XCTAssertTrue(line("B1", in: app).waitForExistence(timeout: 5))
         XCTAssertEqual(line("B1", in: app).label, "Line B1, Varea - La Cava")
     }
 
