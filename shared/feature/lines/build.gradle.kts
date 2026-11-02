@@ -12,5 +12,9 @@ kotlin {
             implementation(projects.shared.core.telemetry)
             implementation(projects.shared.core.config)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
+        }
     }
 }
