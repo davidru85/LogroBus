@@ -101,6 +101,8 @@ You will need:
 
 ### Recent changes
 
+- **2026-11-02:**
+  - Security: the 8 open Dependabot alerts were all in libraries that the build and test tools of Android and Kotlin use, none of them part of the app: Guava, OpenTelemetry, Commons Lang, HttpClient, jose4j, JDOM and the Kotlin Gradle plugin. The build now uses the fixed versions of all but the last, which is the Kotlin built into Gradle itself and waits for a Gradle release that fixes it.
 - **2026-10-30:**
   - Workflow: the AI agent now fixes the failing CI checks of its own pull request, without waiting for the owner, so that each pull request reaches review green. It fixes a fault in the branch, or reruns a failure of the CI machine once, and it never weakens a check. The rule is in `AGENTS.md`, and `scripts/agent/watch-pr.sh` reports failed checks along with merges and comments.
     - The iOS tests now retry once when the CI simulator vanishes before they run, a fault of the CI machine seen three times.

@@ -103,6 +103,8 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **02-11-2026:**
+  - Seguridad: las 8 alertas abiertas de Dependabot estaban todas en bibliotecas que usan las herramientas de compilación y de test de Android y de Kotlin, ninguna en la app: Guava, OpenTelemetry, Commons Lang, HttpClient, jose4j, JDOM y el plugin de Gradle de Kotlin. La compilación usa ya las versiones corregidas de todas salvo la última, que es el Kotlin que lleva el propio Gradle y espera a una versión de Gradle que lo corrija.
 - **30-10-2026:**
   - Flujo de trabajo: el agente de IA corrige ahora él mismo los checks de CI que fallan en su pull request, sin esperar al propietario, para que cada pull request llegue a revisión en verde. Corrige el fallo en la rama, o relanza una vez un fallo de la máquina de CI, y nunca debilita un check. La regla está en `AGENTS.md`, y `scripts/agent/watch-pr.sh` avisa de los checks fallidos además de las fusiones y los comentarios.
     - Los tests de iOS se reintentan una vez cuando el simulador de CI desaparece antes de ejecutarlos, un fallo de la máquina de CI visto tres veces.

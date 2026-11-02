@@ -141,20 +141,33 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - **The equivalent that NFR-SEC-05 allows:** the dependency review on pull requests, plus Dependabot alerts on `main`, stand in for OWASP Dependency-Check, which was dropped from the plan (owner decision, 2026-10-25). Without an NVD API key it is slow, and with one it needs a repository secret.
   - Pushes to `main` submit the Gradle graph that pull requests are compared against. GitHub reads the actions in the workflows by itself.
   - The dependency review runs on pull requests that touch the Kotlin area, which holds every Gradle dependency. A pull request that only changes the actions of `ios-checks.yml` or `policy-checks.yml` is not reviewed: Dependabot alerts cover those actions once they reach `main`.
-  - **Security floors for AGP's tools.** The first reviews found three libraries with critical advisories in AGP 9.3's tools. None of them reaches the app.
-    | Library | Found | Fixed in | Where AGP brings it |
+  - **Security floors for the build's tools and tests.** The first reviews found three libraries with critical advisories in AGP 9.3's tools. The Dependabot alerts of 2026-11-02 found seven more, with high or moderate advisories, in the build's tools and tests; six of them get a floor. None of them reaches the app.
+    | Library | Found | Floor | Where it comes from |
     | --- | --- | --- | --- |
     | Netty | 4.1.93 and 4.1.110 (GHSA-c4c3-7fpv-j4q5) | 4.1.139.Final | the instrumented test runner (`unified-test-platform-*`) |
     | Bouncy Castle | 1.79 (GHSA-574f-3g2m-x479, GHSA-9pwp-9qqc-pr26) | 1.85 | Android lint (`androidLintTool`), the test runner and AGP's plugin classpath |
     | FreeMarker | 2.3.32 (GHSA-27j2-h3m2-8237) | 2.3.35 | AGP's plugin classpath |
+    | Guava | 32.0.1, 33.4.0 and 33.6.0 (GHSA-xxph-c9ww-hj94) | 33.7.2-jre | Android lint, the test runner, AGP's plugin classpath, and Robolectric in the unit and host tests |
+    | OpenTelemetry API | 1.41.0 (GHSA-rcgg-9c38-7xpx, GHSA-ccrj-gw8r-854m) | 1.67.0 | KGP's Swift export (`swiftExportClasspath`), which no build of ours runs |
+    | Commons Lang | 3.16.0 (GHSA-j288-q9x7-2f5v) | 3.18.0 | Android lint, the test runner and AGP's plugin classpath |
+    | HttpClient | 4.5.6 (GHSA-7r82-7xv7-xcpj) | 4.5.14 (fixed in 4.5.13; 4.5.14 is the last 4.5, which AGP's plugin classpath already uses) | Android lint and the test runner |
+    | jose4j | 0.9.5 (GHSA-3677-xxcr-wjqv) | 0.9.6 | AGP's plugin classpath, through bundletool |
+    | JDOM | 2.0.6 (GHSA-2363-cqg2-863c) | 2.0.6.1 | AGP's plugin classpath, through Jetifier |
 
-    The fixed versions are catalog entries (`netty`, `bouncycastle`, `freemarker`):
-    - in each module, the Android and KMP conventions add the Netty and Bouncy Castle BOMs to AGP's tool configurations (`AgpToolSecurityFloors.kt`);
-    - the root `build.gradle.kts` raises Bouncy Castle and FreeMarker on the plugin classpath.
+    The fixed versions are catalog entries, under one comment that explains the floors:
+    - in each module, the Android and KMP conventions add them to AGP's tool configurations, KGP's Swift export classpath and the test dependencies (`testImplementation`, `androidHostTestImplementation`), never to the app's own classpaths (`SecurityFloors.kt`);
+      - Netty, Bouncy Castle and Guava come as BOMs, the others as plain constraints;
+      - the Swift export classpath gets no BOM. KGP adds its tools there as default dependencies, which apply only while the configuration declares none, so a BOM would remove them instead of raising them;
+    - the root `build.gradle.kts` raises Bouncy Castle, FreeMarker, Guava, Commons Lang, jose4j and JDOM on the plugin classpath.
 
-    The floors are constraints, so a newer version from AGP always wins. **On every AGP upgrade:**
-    - drop the floors that AGP has caught up with;
+    The floors are constraints, so a newer version from a tool always wins. **On every AGP, Kotlin or Robolectric upgrade:**
+    - drop the floors that the tool has caught up with;
     - query the advisories for every resolved coordinate, as the PR #12 log entry describes.
+  - **One alert has no floor:** Kotlin Gradle plugin 2.4.0 (GHSA-r937-wjx7-w2jp, moderate, fixed in 2.4.20-Beta1).
+    - It is the Kotlin that Gradle 9.7.1 embeds, which `kotlin-dsl` uses to compile build-logic. The modules use KGP 2.4.20.
+    - Gradle 9.8 embeds Kotlin 2.4.10, which is still affected.
+    - A constraint raises it, but then `kotlin-dsl` runs outside the Kotlin version it is built for, and every build prints "Unsupported Kotlin plugin version". It is therefore not raised.
+    - The alert closes with the first Gradle release that embeds Kotlin 2.4.20 or later.
   - The first external Swift dependency is swift-snapshot-testing (LB-011, tests only). `iosApp/Package.resolved` pins it and its transitive packages.
     - `scripts/ios/generate-project.sh` copies the file into the generated workspace, and Xcode keeps those versions while they satisfy the requirements.
     - Builds do not pass `-onlyUsePackageVersionsFromResolvedFile`. The file's `originHash` differs between Xcode versions, and with that flag CI's Xcode 26.6 rejected a file written by Xcode 27.1 as out of date.
