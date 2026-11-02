@@ -6,6 +6,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.coroutines.core)
+            // TimeZone is part of this module's API: madridTimeZone (ADR-0015).
+            api(libs.kotlinx.datetime)
         }
         androidMain.dependencies {
             // Dispatchers.Main on Android.

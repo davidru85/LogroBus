@@ -37,7 +37,7 @@ LogroBus is built with several AI coding agents (Claude Code and others, such as
 | Other agents (Cursor and similar) | `AGENTS.md`, natively | None |
 
 **What agents without hooks must do manually**, as stated in `AGENTS.md` §10:
-- At session start: `scripts/agent/session-start.sh`.
+- At session start: `scripts/agent/session-start.sh`, then the watch of each open pull request it lists.
 - After editing a file, optionally: `scripts/agent/post-edit.sh <file>`.
 - Before finishing: `scripts/checks/run-all.sh`.
 
@@ -61,7 +61,7 @@ Personal overrides go in `.claude/settings.local.json`, which is gitignored and 
 
 | Event | Script | Behaviour |
 | --- | --- | --- |
-| `SessionStart` | `scripts/agent/session-start.sh` | Adds context: the language policy, the current branch, a warning when on `main`, a warning when git hooks are not installed |
+| `SessionStart` | `scripts/agent/session-start.sh` | Adds context: the language policy, the current branch, a warning when on `main`, a warning when git hooks are not installed, and the open pull requests, whose watch the agent starts before any other task (`AGENTS.md` §10). `gh` gets 6 s; when it fails, the context says to list them by hand |
 | `PostToolUse` (`Edit\|Write`) | `scripts/agent/post-edit.sh` | Formats and lints the edited file with ktlint, SwiftLint or shellcheck when installed. Exit code 2 feeds unfixable findings back to the agent |
 | `Stop` | `scripts/agent/stop-check.sh` | Blocks finishing when only one README was modified (the README rule); never blocks twice in a row |
 

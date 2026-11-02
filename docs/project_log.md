@@ -39,15 +39,127 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - A diff of the modules that every configuration resolves, before and after: only tool and test configurations change. The BOMs appear, Guava 33.7.2 trades `jsr305` and `checker-qual` for `jspecify`, and OpenTelemetry 1.67 adds `opentelemetry-common`. No app classpath and no iOS framework changes.
   - GitHub's advisory database has nothing against the new versions.
 - **A failing check fixed** (`AGENTS.md` §10): PR #35's SwiftLint job failed on `ubuntu-26.04`, which no longer ships `libxml2.so.2` (exit 127). PR #34 met and fixed the same change of runner image, but its fix has not reached `main`, so PR #35 cherry-picks that commit (pin `ubuntu-24.04`, and fail an install that cannot run). A rerun would have failed the same way. Whichever of the two merges second brings the same change twice, which merges cleanly.
+- **PR #34 merged first:** `main` was merged into this branch. The README and project log entries of both are combined under 2026-11-02, and the SwiftLint fix that both carry merged cleanly.
 
 **Decisions**
 - **The Kotlin Gradle plugin alert has no floor.** A constraint raises it, but `kotlin-dsl` then runs outside the Kotlin it is built for, and every build prints "Unsupported Kotlin plugin version". Gradle 9.8 embeds Kotlin 2.4.10, still affected, so the alert waits for a Gradle release that embeds 2.4.20 or later.
 
 **Open / next**
-- **Waiting on the owner:** keep the Kotlin Gradle plugin alert open until Gradle catches up, or dismiss it as a tolerable risk.
-- **Next, once PR #34 is merged:** LB-101 part 1 (`/start-story LB-101`): the Lines list over a repository contract and scripted lines.
+- **PR #35** (this entry, branch `fix/LB-002-dependabot-alerts`) is open, and its watch runs (`scripts/agent/watch-pr.sh 35 180`). A new session starts it again, as the hand-over entry below says.
+- **Next:** LB-101 part 1 (`/start-story LB-101`): the Lines list over a repository contract and scripted lines. It does not wait for PR #35.
+- **Waiting on the owner:**
+  - keep the Kotlin Gradle plugin alert open until Gradle catches up, or dismiss it as a tolerable risk;
+  - the other items of the hand-over entry below (PR #34's three points, OQ-11, OQ-10, OQ-16, DD-10's provisional saved stop, the limits of the rule on failing checks, WorkManager). Its eighth item, the Dependabot alerts, is this entry.
 
 ---
+
+## 2026-11-02: Hand-over: where work stands, and how to resume
+
+**Done**
+- **A restart of the owner's machine:** the owner asked for the docs to record where work stands, so that a new agent session can resume after the restart. This entry is that record.
+- **State at the hand-over:**
+  - **PR #34** (LB-006 part 1, branch `feat/LB-006-normalisation-rules`) is open. All 53 checks passed on `6fc65b5`, and there is no review, comment or change request yet. This entry's commits are pushed to the same branch, so the checks run again.
+  - **`main`** is at `94fa572`, the merge of PR #33.
+  - **Local state:** nothing is uncommitted, and no simulator or emulator started by the agent is running. The background watch of PR #34 (`scripts/agent/watch-pr.sh 34 180`) ends with the machine, so the next session starts it again.
+- **Docs:** `AGENTS.md` §10 and `finish-story.md` step 9 now say where a session resumes, and both READMEs record it.
+- **The watch starts again by itself** (the owner asked that a new chat resume it): `scripts/agent/session-start.sh`, which Claude Code runs at the start of every session, now lists the open pull requests with the command that watches each. `AGENTS.md` §10 says to start those watches before the owner's first task, whatever it is. `gh` gets 6 s, inside the hook's 10 s; when it fails or hangs, the context says to list the pull requests by hand. Checked with a fake `gh` that fails, hangs and finds nothing.
+  - **The limit:** an agent acts only once the owner writes, so the watch starts with the session's first message, whatever it says.
+- **A failing check fixed** (`AGENTS.md` §10): the run on `aba277b` failed in SwiftLint. `ubuntu-latest` has moved to Ubuntu 26.04, which no longer ships `libxml2.so.2`, and SwiftLint 0.65.1's Linux binary needs it. The same job had passed on `6fc65b5` on Ubuntu 24.04, and a rerun would fail the same way.
+  - The SwiftLint job pins `ubuntu-24.04`, until a SwiftLint release runs on 26.04 (`ci_cd.md` §5).
+  - `install-swiftlint.sh` had reported the broken binary as installed. It now fails with the binary's error; a fake `curl`, `sha256sum` and `unzip` show both paths.
+
+**Decisions**
+- **Open pull requests first:** every session starts the watch of each open pull request before anything else. The session-start hook lists them, so no session depends on remembering it.
+- **Where a session resumes:** the newest entry of this log is the hand-over. Its "Open / next" names any open pull request, the next task and what waits for the owner. A session that ends with a pull request open records them there before it ends.
+
+**Open / next**
+- **Resume, in this order:**
+  1. Run `scripts/agent/session-start.sh` (Claude Code's hook runs it), and start the watch of each open pull request it lists. Then run `git fetch` and `git status`. Expect `feat/LB-006-normalisation-rules`, clean and level with `origin`.
+  2. Check PR #34: `gh pr view 34 --json state,reviewDecision,reviews,comments` and `gh pr checks 34`.
+     - **Open:** the watch from step 1 (`scripts/agent/watch-pr.sh 34 180`, in the background) runs; act on its result as `AGENTS.md` §10 says. Failed checks are fixed without waiting for the owner.
+     - **Merged:** run `git checkout main && git pull --ff-only`, tell the owner in one line, and start the next task.
+     - **Closed without a merge, changes requested or new comments:** stop and report to the owner.
+  3. **The next task, once PR #34 is merged,** is LB-101 part 1, through `start-story.md` (`/start-story LB-101`): the Lines list over a repository contract and scripted lines.
+     - Part 1 covers every LB-101 criterion that scripted lines can show.
+     - Part 2 checks the list against `lines_2026-10-22.json`, once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008.
+- **Waiting on the owner.** None of these blocks LB-101 part 1.
+  - **PR #34's three points,** in its description and in `api_spec.md` §4 and §5:
+    - DD-05 takes the reading nearest the report around the changes of time;
+    - the readings of spec §5.6: `order` counts from 1, calls at one stop are placed by their order first, and only step 3's decisions across several stops are cached;
+    - line codes are `B` and up to three digits.
+  - **OQ-11,** the terms of reuse: it blocks LB-003, and through it the part 2s of LB-005, LB-006 and LB-008.
+  - **OQ-10,** the tile provider: it blocks LB-013.
+  - **OQ-16,** the analytics, crash-reporting and remote-config vendors: it blocks LB-014's last ADR and LB-015.
+  - **DD-10's provisional saved stop counts as served** (FR-FAV-04), in the 2026-10-30 LB-008 entry.
+  - **The limits of the rule on failing checks,** in the same entry.
+  - **WorkManager** for LB-008 part 2's daily job: a new dependency, with its ADR.
+  - **8 Dependabot alerts on `main`:** 3 high and 5 moderate.
+- **Still open from the 2026-10-31 entry:** LB-006 part 2's notes, and the notes for the planner and Near Me stories.
+
+---
+
+## 2026-10-31: LB-006, part 1: the DD rules that need no DTO shapes
+
+**Done**
+- **Merge:** the owner merged PR #33 (LB-008 part 1, the CI retry and the rule on failing checks), with all 53 checks green, and `main` was synced. The iOS job passed at its first attempt; the simulator did not vanish, so the new retry did not run.
+- **LB-006 split in two,** like LB-005 and LB-008. Part 1 is the rules that need no DTO shapes. Part 2 is the mappers over LB-005's DTOs and the rules that need them, checked against LB-003's fixtures (OQ-11).
+- **`:shared:core:network`:**
+  - `String?.trimmedOrNull()` (DD-07);
+  - `IdParser.stopId()` and `lineId()` (DD-01, DD-02, DD-06). They live here so the planner's mappers can read the same formats.
+- **`:shared:core:common`:**
+  - `madridTimeZone`, moved from `MadridDateTime` as ADR-0015 planned, with kotlinx-datetime now exposed as API;
+  - `parseCssColor()` (DD-08), beside `onColorFor()`.
+- **`:shared:transit:data`:**
+  - `DirectionMapper` (DD-04 words) and `EtDirectionInferrer` (spec §5.6 steps 2 to 5);
+  - `correctNextStopTime()` (DD-05);
+  - `NameNormaliser` (DD-11) and `LineNameParser` (spec §5.5);
+  - `ServiceArea` (spec §5.4, step 7).
+- **Tests:** 67 new tests on the Android host and the iOS simulator, named after their DD rule or `lb006_`. A mutation to `api_spec.md`'s DD-05 sketch fails exactly the October second-pass case.
+- **Reviews** (the code-reviewer and data-rules-reviewer subagents; no blockers, changes asked). Fixed, each with its own TDD cycle:
+  - **ET directions (major, both reviewers):** calls at one stop skipped the positional steps, although `order` still places them, so every stop on both patterns would have lost its direction in API-06's answers. Positions now come first, with membership as step 4's fallback.
+  - **The ±1 window (major):** it was symmetric only for an `order` counted from 0. `order` now counts from 1, as spec §4.6's example suggests, and fits one place either side.
+  - **The cache:** `infer()` now says whether its answer may be cached, so part 2 keeps only step 3's decisions across several stops.
+  - **DD-05:** March's skipped hour is read nearest the report too. New tests: that hour, a time across October's change, and a late bus 40 min after its report, which pins the threshold from above.
+  - **DD-11:**
+    - the overrides apply in one pass, so no fix is rewritten by another;
+    - a combining accent (NFD) is part of its word;
+    - the longest-first order is pinned.
+  - **Line names:**
+    - the outbound pattern's termini show as delivered ("Puente Madre-Hospital", "IES"), not title-cased;
+    - codes are checked against spec §5.5's form and upper-cased; a name with no code gives `null`;
+    - the parameter is `name`, as it comes after the overrides.
+  - **Smaller:** a test of 39 of 49 calls pins the rounding, and `DirectionMapper`'s comment names the real sources of its words.
+  - **Left, recorded below:**
+    - the planner's direction words;
+    - sharing the service box;
+    - the part 2 notes.
+
+**Decisions**
+- **DD-05 around the changes of time:** of the instants a wall-clock time can stand for, the one nearest the report wins: two in October's repeated hour, and the CET and CEST readings in March's skipped hour. The zone's default reading, which `api_spec.md` §4 sketched, would put a bus in the second 02:xx an hour early. Night lines run then.
+- **Spec §5.6 for calls at one stop:** steps 2 and 3 run first, and step 4, the stop's membership, is the fallback for any set of calls at a single stop, not only a single call. The cache keeps only step 3's decisions across several stops.
+- **`order` counts from 1** (spec §4.6's example), with a call fitting one place either side; the fixtures will confirm it.
+- **Overrides (DD-11)** replace whole words in their exact case, longest first, in one pass. A typo in another case needs its own key.
+- **The display name** takes the outbound pattern's first and last stops, as delivered, when a terminus holds a hyphen; with no patterns, it shows every part of the name. A line code is `B` and up to three digits, since no set of lines is fixed.
+- **Only the agency prefix `1:` is stripped from ids;** another prefix would be another feed's id space, so the id is `null`.
+
+**Open / next**
+- **LB-006 part 2,** with LB-005 part 2 and LB-003's fixtures (OQ-11):
+  - the DTO mappers;
+  - the `StaticNormaliser` for LB-008, with a fingerprint of its version and the overrides;
+  - DD-03, DD-09, DD-10's synthetic stops, DD-16 to DD-18;
+  - the persisted `direction_code_cache` with codes 401 and 402;
+  - the `DataQualityReport` with the dropped items.
+- **Notes for part 2, from the reviews:**
+  - **ET calls:** the ET mapper drops calls with no stop or `order` before grouping them.
+  - **Pattern lists:** the lists passed to `EtDirectionInferrer` include DD-10's provisional stops in sequence, or every later position shifts.
+  - **Colours:** `parseCssColor` keeps alpha, so a translucent line colour must be made opaque before `onColorFor`.
+  - **OTP line ids:** check in `route_ok.json` whether OTP names night lines by id or by code (`IdParser.lineId("1:B1-asc")` is `null`).
+  - **Line names:** a line whose name has no code falls back on its id, and is counted.
+- **For the planner and Near Me stories:**
+  - API-07's legs send `asc` and `desc`, but `DirectionMapper` is internal to `:shared:transit:data`, which features may not use. Move the word table to a core module then, or record a planner copy.
+  - The planner (5 km, FR-PLAN-10) and Near Me's camera need the stops' extent too. Move the unexpanded box where they can reach it.
+- **Still waiting on the owner:** OQ-11 (LB-003), OQ-10 (LB-013), the provisional saved stop of DD-10, the limits of the rule on failing checks, and the 8 Dependabot alerts.
+- **Next story:** everything left in M0 waits for an owner answer: OQ-11 (LB-003, and through it LB-005, LB-006 and LB-008 part 2), OQ-10 (LB-013) or OQ-16 (LB-014). The next task is LB-101 part 1: the Lines list over a repository contract and scripted lines, with `lines_2026-10-22.json` checked in part 2.
 
 ## 2026-10-30: LB-008, part 1: the static sync engine
 
