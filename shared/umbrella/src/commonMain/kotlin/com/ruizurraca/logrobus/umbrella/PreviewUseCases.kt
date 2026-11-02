@@ -70,7 +70,8 @@ class PreviewUseCases internal constructor() : UseCases {
      * Adds line [id] to the scripted favourite lines, last, as the user's toggle would. One line per call, so Swift
      * chains plain Ints: `preview().favouriteLine(id: 10).favouriteLine(id: 4)`.
      */
-    fun favouriteLine(id: Int): PreviewUseCases = apply { favouriteLineIds.update { ids -> ids + id } }
+    fun favouriteLine(id: Int): PreviewUseCases =
+        apply { favouriteLineIds.update { ids -> if (id in ids) ids else ids + id } }
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }
@@ -129,9 +130,10 @@ class PreviewUseCases internal constructor() : UseCases {
         object : FavouriteLinesRepository {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
 
-            override suspend fun add(lineId: Int): AppResult<Unit> {
+            override suspend fun add(lineId: Int): AppResult<Boolean> {
+                val saved = lineId !in favouriteLineIds.value
                 favouriteLineIds.update { ids -> if (lineId in ids) ids else ids + lineId }
-                return AppResult.Success(Unit)
+                return AppResult.Success(saved)
             }
 
             override suspend fun remove(lineId: Int): AppResult<Unit> {

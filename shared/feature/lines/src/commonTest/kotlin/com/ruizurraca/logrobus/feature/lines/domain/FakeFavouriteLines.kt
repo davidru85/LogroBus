@@ -17,9 +17,9 @@ internal class FakeFavouriteLines(
     override suspend fun add(lineId: Int): AppResult<Boolean> {
         val ids = (stored.value as? AppResult.Success)?.value
         if (failing || ids == null) return AppResult.Failure(AppError.Data)
-        if (lineId in ids) return AppResult.Success(false)
-        stored.value = AppResult.Success(ids + lineId)
-        return AppResult.Success(true)
+        val saved = lineId !in ids
+        if (saved) stored.value = AppResult.Success(ids + lineId)
+        return AppResult.Success(saved)
     }
 
     override suspend fun remove(lineId: Int): AppResult<Unit> {

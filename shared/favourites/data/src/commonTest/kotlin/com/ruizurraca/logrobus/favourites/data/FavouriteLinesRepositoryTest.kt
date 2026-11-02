@@ -10,6 +10,7 @@ import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope

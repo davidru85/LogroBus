@@ -17,7 +17,10 @@ fun interface SetFavouriteLine {
     ): AppResult<Unit>
 }
 
-/** Saves the line last, or removes it. A saved line counts `favourite_add` (NFR-OBS-03): its kind, never the line. */
+/**
+ * Saves the line last, or removes it. A line saved now counts `favourite_add` (NFR-OBS-03): its kind, never the line. A
+ * line that already was a favourite, after a double tap, counts nothing.
+ */
 class DefaultSetFavouriteLine(
     private val favourites: FavouriteLinesRepository,
     private val analytics: AnalyticsTracker,
@@ -27,8 +30,15 @@ class DefaultSetFavouriteLine(
         isFavourite: Boolean,
     ): AppResult<Unit> {
         if (!isFavourite) return favourites.remove(lineId)
-        val saved = favourites.add(lineId)
-        if (saved is AppResult.Success) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
-        return saved
+        return when (val saved = favourites.add(lineId)) {
+            is AppResult.Success -> {
+                if (saved.value) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
+                AppResult.Success(Unit)
+            }
+
+            is AppResult.Failure -> {
+                saved
+            }
+        }
     }
 }
