@@ -22,7 +22,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 ## 2026-11-02: LB-101, part 1: the Lines list over sample lines
 
 **Done**
-- **Merge:** the owner merged PR #34 (LB-006 part 1), and `main` was synced. PR #35 (the Dependabot alerts) is still open; `main` was merged into it, its 2026-11-02 entries combined with PR #34's.
+- **Merges:** the owner merged PR #34 (LB-006 part 1), then PR #35 (the Dependabot alerts), and `main` was synced each time. `main` was merged into PR #35 after PR #34, and into this branch after PR #35, with the 2026-11-02 entries combined.
 - **LB-101 split in two,** like LB-005, LB-006 and LB-008. Part 1 is the list over a repository contract and sample lines; part 2 checks it against `lines_2026-10-22.json` once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008.
 - **Shared (`architecture.md` §4.2, §4.6):**
   - `:shared:transit:domain`: `Line` (spec §5.1, without patterns) and `LinesRepository`;
@@ -52,7 +52,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The status chip says "Sin servicio" / "Not in service"** (`lines.not_operational`), and the Empty state "No hay líneas que mostrar." (`lines.empty`); both are in `design_guidelines.md` §9.
 
 **Open / next**
-- **PR #36** (this entry, branch `feat/LB-101-lines-list`) is open, and its watch runs (`scripts/agent/watch-pr.sh 36 180`). **PR #35** (the Dependabot alerts) is open too, with its own watch. Whichever merges second gets `main` merged into it: both add 2026-11-02 entries to this log and to both READMEs.
+- **PR #36** (this entry, branch `feat/LB-101-lines-list`) is open, and its watch runs (`scripts/agent/watch-pr.sh 36 180`). Its first CI run failed once in one job, outside the change: Gradle could not fetch `kotlin-stdlib:2.4.0` from the Gradle Plugin Portal while configuring build-logic, which every other job resolved. The merge of `main` started a new run.
 - **Next, once PR #36 is merged:** the next M1 story that needs neither OQ-11 nor OQ-10. LB-103 (favourite lines and their carousel) needs only the lines and the `favourite` table; LB-102's search also finds stops by name, so its part 1 would need sample stops too. Unless the owner chooses otherwise, LB-103 (`/start-story LB-103`).
 - **LB-101 part 2** waits for OQ-11 (LB-003), and with it the part 2s of LB-005, LB-006 and LB-008; LB-008 part 2 removes the sample lines.
 - **Follow-ups from the reviews:**
@@ -60,6 +60,38 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Android's top app bar** does not collapse yet (design_guidelines.md §4): a scroll to the top on re-selection is programmatic and would leave a collapsed bar hidden. Reset the bar with the scroll first.
   - **iOS's tab bar** does not minimise on scroll yet (`.tabBarMinimizeBehavior(.onScrollDown)`, design_guidelines.md §5): check first that re-selecting Lines on a minimised bar still scrolls to the top.
 - **Waiting on the owner:** the Kotlin Gradle plugin alert (PR #35), and the items of the hand-over entry below: PR #34's three points (now merged), OQ-11, OQ-10, OQ-16, DD-10's provisional saved stop, the limits of the rule on failing checks, and WorkManager.
+
+## 2026-11-02: The Dependabot alerts: security floors for the build's tools and tests
+
+**Done**
+- **The owner's go-ahead** for the 8 open Dependabot alerts on `main` (3 high, 5 moderate). PR #34 (LB-006 part 1) stays open meanwhile, and its watch runs.
+- **Where they come from:** an init script resolved every configuration, as the dependency graph does, and printed who brings each affected version. None of them reaches the app.
+  - AGP's tools (`androidLintTool`, `unified-test-platform-*`): Guava 32.0.1 and 33.4.0, Commons Lang 3.16.0, HttpClient 4.5.6.
+  - AGP's plugin classpath: Guava 33.4.0, Commons Lang 3.16.0, jose4j 0.9.5 (bundletool), JDOM 2.0.6 (Jetifier).
+  - KGP's Swift export (`swiftExportClasspath`): OpenTelemetry API 1.41.0, two advisories.
+  - The unit and host tests: Guava 33.6.0, which Robolectric 4.17 brings.
+  - build-logic's plugin classpath: Kotlin Gradle plugin 2.4.0, the Kotlin that Gradle 9.7.1 embeds for `kotlin-dsl`.
+- **The floors (`ci_cd.md` §6):**
+  - `SecurityFloors.kt` replaces `AgpToolSecurityFloors.kt`. The conventions add the floors to AGP's tools, the Swift export classpath and the test dependencies, never to the app's classpaths.
+  - The root build script raises Guava, Commons Lang, jose4j and JDOM on the plugin classpath, next to Bouncy Castle and FreeMarker.
+  - New catalog entries: `guava` (BOM), `opentelemetry` (API), `commons-lang3`, `httpclient`, `jose4j` and `jdom2`.
+- **A trap found on the way:** a BOM in `swiftExportClasspath` removed KGP's `swift-export-embeddable` instead of raising its OpenTelemetry. KGP adds it as a default dependency, which applies only while the configuration declares none. That classpath now gets plain constraints, and a test (`lb002_swiftExportClasspathGetsNoBoms`) keeps the BOMs out of it; the resolution itself was checked by hand, as below.
+- **Verified:**
+  - Every affected library now resolves to its fixed version or later, except the Kotlin Gradle plugin of build-logic.
+  - A diff of the modules that every configuration resolves, before and after: only tool and test configurations change. The BOMs appear, Guava 33.7.2 trades `jsr305` and `checker-qual` for `jspecify`, and OpenTelemetry 1.67 adds `opentelemetry-common`. No app classpath and no iOS framework changes.
+  - GitHub's advisory database has nothing against the new versions.
+- **A failing check fixed** (`AGENTS.md` §10): PR #35's SwiftLint job failed on `ubuntu-26.04`, which no longer ships `libxml2.so.2` (exit 127). PR #34 met and fixed the same change of runner image, but its fix has not reached `main`, so PR #35 cherry-picks that commit (pin `ubuntu-24.04`, and fail an install that cannot run). A rerun would have failed the same way. Whichever of the two merges second brings the same change twice, which merges cleanly.
+- **PR #34 merged first:** `main` was merged into this branch. The README and project log entries of both are combined under 2026-11-02, and the SwiftLint fix that both carry merged cleanly.
+
+**Decisions**
+- **The Kotlin Gradle plugin alert has no floor.** A constraint raises it, but `kotlin-dsl` then runs outside the Kotlin it is built for, and every build prints "Unsupported Kotlin plugin version". Gradle 9.8 embeds Kotlin 2.4.10, still affected, so the alert waits for a Gradle release that embeds 2.4.20 or later.
+
+**Open / next**
+- **PR #35** (this entry, branch `fix/LB-002-dependabot-alerts`) is open, and its watch runs (`scripts/agent/watch-pr.sh 35 180`). A new session starts it again, as the hand-over entry below says.
+- **Next:** LB-101 part 1 (`/start-story LB-101`): the Lines list over a repository contract and scripted lines. It does not wait for PR #35.
+- **Waiting on the owner:**
+  - keep the Kotlin Gradle plugin alert open until Gradle catches up, or dismiss it as a tolerable risk;
+  - the other items of the hand-over entry below (PR #34's three points, OQ-11, OQ-10, OQ-16, DD-10's provisional saved stop, the limits of the rule on failing checks, WorkManager). Its eighth item, the Dependabot alerts, is this entry.
 
 ---
 

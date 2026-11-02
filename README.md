@@ -112,6 +112,7 @@ You will need:
   - Workflow: a new AI agent session, after a restart for example, resumes from the newest entry of `docs/project_log.md`. It names the open pull request, the next task and the decisions waiting for the owner. `AGENTS.md` says so, and a session that ends with a pull request open writes that entry first.
     - Each new session also starts watching the open pull requests again, before anything else: `scripts/agent/session-start.sh` lists them when the session starts.
   - CI: the SwiftLint check runs on Ubuntu 24.04 again. GitHub's newest Linux machines lack a library that SwiftLint needs, and its install now fails clearly when that happens.
+  - Security: the 8 open Dependabot alerts were all in libraries that the build and test tools of Android and Kotlin use, none of them part of the app: Guava, OpenTelemetry, Commons Lang, HttpClient, jose4j, JDOM and the Kotlin Gradle plugin. The build now uses the fixed versions of all but the last, which is the Kotlin built into Gradle itself and waits for a Gradle release that fixes it.
 - **2026-10-31:**
   - LB-006, part 1: the rules that clean up the source's data, before any screen uses it.
     - Stops and lines are recognised whichever of the source's id formats they come in, and an empty value counts as missing.
