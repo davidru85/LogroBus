@@ -133,6 +133,16 @@ class LinesUiMapperTest {
     }
 
     @Test
+    fun dd08_favouriteCardsThatShareAColourKeepTheirOwnCodes() {
+        // Lines 4 and B1 share red: each card keeps its code beside the colour, as each row does.
+        val state = LinesUiMapper.state(success(listOf(line("4"), line("B1")), favouriteIds = listOf(idOf("B1"), 4)))
+
+        val cards = (state as LinesUiState.Content).favourites
+        assertEquals(listOf("B1", "4"), cards.map { it.code })
+        assertEquals(1, cards.map { it.color }.toSet().size)
+    }
+
+    @Test
     fun lb103_eachRowSaysWhetherItsLineIsAFavourite() {
         // FR-LINE-15: the row's toggle shows it and is labelled by it.
         val state = LinesUiMapper.state(success(listOf(line("1"), line("3"), line("B1")), favouriteIds = listOf(3)))

@@ -32,6 +32,16 @@ class SetFavouriteLineTest {
         }
 
     @Test
+    fun lb103_addingALineThatIsAlreadyAFavouriteCountsNothing() =
+        runTest {
+            // A double tap sends "add" twice before the toggle shows the first; only one favourite was added.
+            assertEquals(AppResult.Success(Unit), setFavourite(lineId = 10, isFavourite = true))
+
+            assertEquals(AppResult.Success(listOf(10)), favourites.stored.value)
+            assertEquals(emptyList(), tracked)
+        }
+
+    @Test
     fun lb103_removingALineRemovesIt_andCountsNothing() =
         runTest {
             assertEquals(AppResult.Success(Unit), setFavourite(lineId = 10, isFavourite = false))

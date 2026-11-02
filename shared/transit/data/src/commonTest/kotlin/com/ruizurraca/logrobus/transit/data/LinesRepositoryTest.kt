@@ -97,6 +97,19 @@ class LinesRepositoryTest {
         }
 
     @Test
+    fun lb103_aPatternOfAnUnknownDirectionHasNoHeadsign_andItsLineStaysOnce() =
+        runTest {
+            // A direction a later version adds: this version leaves its headsign out, never the line.
+            database.insert(line4, kind = "day")
+            database.lineQueries.insertPattern(4, "outbound", "Yagüe", "")
+            database.lineQueries.insertPattern(4, "circular", "Centro", "")
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(listOf(line4.copy(headsigns = listOf("Yagüe")))), awaitItem())
+            }
+        }
+
+    @Test
     fun lb101_aLineOfAnUnknownKindIsDroppedAndLogged() =
         runTest {
             database.insert(line4, kind = "day")

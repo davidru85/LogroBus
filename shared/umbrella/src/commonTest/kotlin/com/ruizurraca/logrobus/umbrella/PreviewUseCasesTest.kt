@@ -167,6 +167,17 @@ class PreviewUseCasesTest {
         }
 
     @Test
+    fun lb103_scriptingAFavouriteLineTwiceKeepsOne() =
+        runTest {
+            // As the toggle does: two cards with one id would break SwiftUI's ForEach and Compose's keys.
+            val preview = SharedDependencies.preview().favouriteLine(10).favouriteLine(10)
+
+            val favourites = preview.observeLinesWithFavourites()().first()
+
+            assertEquals(listOf(10), (favourites as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+        }
+
+    @Test
     fun lb103_aFavouriteSetInThePreviewShowsAtOnce() =
         runTest {
             val preview = SharedDependencies.preview().favouriteLine(10)

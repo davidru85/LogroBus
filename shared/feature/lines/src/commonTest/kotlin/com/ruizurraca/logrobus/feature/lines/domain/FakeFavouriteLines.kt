@@ -14,14 +14,18 @@ internal class FakeFavouriteLines(
 
     override fun observeFavouriteLineIds() = stored
 
-    override suspend fun add(lineId: Int): AppResult<Unit> = change { ids -> if (lineId in ids) ids else ids + lineId }
-
-    override suspend fun remove(lineId: Int): AppResult<Unit> = change { ids -> ids - lineId }
-
-    private fun change(update: (List<Int>) -> List<Int>): AppResult<Unit> {
+    override suspend fun add(lineId: Int): AppResult<Boolean> {
         val ids = (stored.value as? AppResult.Success)?.value
         if (failing || ids == null) return AppResult.Failure(AppError.Data)
-        stored.value = AppResult.Success(update(ids))
+        if (lineId in ids) return AppResult.Success(false)
+        stored.value = AppResult.Success(ids + lineId)
+        return AppResult.Success(true)
+    }
+
+    override suspend fun remove(lineId: Int): AppResult<Unit> {
+        val ids = (stored.value as? AppResult.Success)?.value
+        if (failing || ids == null) return AppResult.Failure(AppError.Data)
+        stored.value = AppResult.Success(ids - lineId)
         return AppResult.Success(Unit)
     }
 }

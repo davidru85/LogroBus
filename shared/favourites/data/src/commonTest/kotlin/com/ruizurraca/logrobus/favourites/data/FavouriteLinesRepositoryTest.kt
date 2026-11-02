@@ -8,9 +8,14 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
 import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,8 +51,8 @@ class FavouriteLinesRepositoryTest {
         runTest {
             val repository = repository()
 
-            assertEquals(AppResult.Success(Unit), repository.add(10))
-            assertEquals(AppResult.Success(Unit), repository.add(3))
+            assertEquals(AppResult.Success(true), repository.add(10))
+            assertEquals(AppResult.Success(true), repository.add(3))
 
             repository.observeFavouriteLineIds().test {
                 assertEquals(AppResult.Success(listOf(10, 3)), awaitItem())
@@ -88,11 +93,53 @@ class FavouriteLinesRepositoryTest {
             val repository = repository()
             listOf(10, 3).forEach { repository.add(it) }
 
-            assertEquals(AppResult.Success(Unit), repository.add(10))
+            // Nothing was saved: a double tap must not count favourite_add twice (NFR-OBS-03).
+            assertEquals(AppResult.Success(false), repository.add(10))
 
             repository.observeFavouriteLineIds().test {
                 assertEquals(AppResult.Success(listOf(10, 3)), awaitItem())
             }
+        }
+
+    @Test
+    fun lb103_changesApplyInTheOrderTheyWereMade() =
+        runTest {
+            // Two quick taps: a stale "add", then "remove". The writes run on a pool of threads, so without an order of
+            // their own the later one could land first. This dispatcher runs the newest write first.
+            val io = NewestFirstDispatcher()
+            val repository =
+                FavouriteLinesRepositoryImpl(
+                    database,
+                    AppDispatchers(main = io, default = io, io = io),
+                    AppClock { Instant.parse("2026-11-02T10:00:00Z") },
+                    logger,
+                )
+
+            val add = launch(start = CoroutineStart.UNDISPATCHED) { repository.add(3) }
+            val remove = launch(start = CoroutineStart.UNDISPATCHED) { repository.remove(3) }
+            while (add.isActive || remove.isActive) {
+                io.runNewestFirst()
+                runCurrent()
+            }
+
+            repository().observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(emptyList()), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb103_aSavedLineWhoseIdIsNotANumberIsDropped_andCountedInTheLog() =
+        runTest {
+            // Only this module writes line favourites, so such a row is damage: dropped, and logged by count only.
+            val yesterday = Instant.parse("2026-11-01T10:00:00Z")
+            database.favouriteQueries.insertFavourite("line:x", FavouriteTypes.LINE, "x", yesterday)
+            val repository = repository()
+            repository.add(10)
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(10)), awaitItem())
+            }
+            assertEquals(listOf("Dropped 1 favourite line with a malformed id"), logger.entries.map { it.message })
         }
 
     @Test
@@ -137,4 +184,20 @@ class FavouriteLinesRepositoryTest {
             }
             assertEquals(listOf(LogLevel.Warn), logger.entries.map { it.level }.distinct())
         }
+}
+
+/** Holds what it is given, and runs the newest first: the worst order for writes that a pool of threads can give. */
+private class NewestFirstDispatcher : CoroutineDispatcher() {
+    private val queued = ArrayDeque<Runnable>()
+
+    override fun dispatch(
+        context: CoroutineContext,
+        block: Runnable,
+    ) {
+        queued.addLast(block)
+    }
+
+    fun runNewestFirst() {
+        while (queued.isNotEmpty()) queued.removeLast().run()
+    }
 }
