@@ -31,7 +31,7 @@ class TelemetryGraphTest {
 
     private fun startGraph(debug: Boolean) {
         val platform = module { single<Logger> { ConsoleLogger(output = { line -> printed += line }) } }
-        startGraph(sharedModules(platform, telemetryModule(debug)))
+        startGraph(sharedModules(platform, telemetryModule(debug), debug))
     }
 
     private fun consentToEverything() =
