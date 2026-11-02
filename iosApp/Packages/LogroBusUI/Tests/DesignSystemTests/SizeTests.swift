@@ -28,6 +28,13 @@ struct SizeTests {
         #expect(size.width >= Tokens.minTouchTarget && size.height >= Tokens.minTouchTarget, "\(size)")
     }
 
+    @Test(arguments: [false, true])
+    func lb103_theFavouriteToggleIsAtLeast44PointsSquare(isFavourite: Bool) {
+        // FR-LINE-15 and NFR-A11Y-04: a star alone is far smaller than a finger.
+        let size = fittingSize(FavouriteToggle(isFavourite: isFavourite, label: Text(verbatim: "Add line 3")) { _ in })
+        #expect(size.width >= Tokens.minTouchTarget && size.height >= Tokens.minTouchTarget, "\(size)")
+    }
+
     @Test(arguments: LineBadgeSize.allCases)
     func lb011_aLineBadgeIsNeverSmallerThanItsCode(size: LineBadgeSize) {
         // At 200 % text, in a row that offers little height, the colour still holds the whole code.

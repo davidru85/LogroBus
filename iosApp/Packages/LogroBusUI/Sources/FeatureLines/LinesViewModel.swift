@@ -1,7 +1,10 @@
 import Observation
-import Shared
+// Kotlin types declare no Sendable conformance, so Swift 6 refuses to send a use case to the async function SKIE makes
+// of a `suspend` one. Kotlin/Native's memory model lets any thread call them (ADR-0004), so Shared's types are
+// imported as pre-concurrency here.
+@preconcurrency import Shared
 
-/// The Lines list (LB-101). It orchestrates only: the shared use case and mapper build the state (ADR-0007).
+/// The Lines tab (LB-101, LB-103). It orchestrates only: the shared use cases and mapper build the state (ADR-0007).
 @MainActor
 @Observable
 public final class LinesViewModel {
@@ -23,9 +26,14 @@ public final class LinesViewModel {
         case .retry:
             state = LinesUiStateLoading.shared
             attempt += 1
-        case .setFavourite:
-            // No row has a toggle yet.
-            break
+        case .setFavourite(let favourite):
+            // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a
+            // damaged database the repository has logged, leaves them as they were.
+            Task {
+                _ = try? await useCases.setFavouriteLine().invoke(
+                    lineId: favourite.lineId, isFavourite: favourite.isFavourite
+                )
+            }
         }
     }
 
