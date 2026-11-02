@@ -3,34 +3,33 @@ package com.ruizurraca.logrobus.feature.lines.presentation
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** LB-101 (FR-LINE-01, FR-LINE-02): the Lines list's state, from the lines or the failure to get them. */
+/**
+ * LB-101 (FR-LINE-01, FR-LINE-02) and LB-103 (FR-LINE-12 to 15): the Lines list's state, from the lines and the
+ * favourite ones, or the failure to get them.
+ */
 class LinesUiMapperTest {
     @Test
     fun lb101_dayLinesComeFirst_thenNightLines_eachSortedByCode() {
         // The network of lines_2026-10-22.json, shuffled: there is no line 8.
         val codes = listOf("10", "B2", "3", "1", "11", "B1", "9", "4", "7", "B3", "2", "6", "5")
 
-        val state = LinesUiMapper.state(AppResult.Success(codes.map(::line)))
+        val state = LinesUiMapper.state(success(codes.map(::line)))
 
-        assertEquals(
-            LinesUiState.Content(
-                listOf(
-                    LineGroupUi(LineKind.DAY, listOf("1", "2", "3", "4", "5", "6", "7", "9", "10", "11").map(::row)),
-                    LineGroupUi(LineKind.NIGHT, listOf("B1", "B2", "B3").map(::row)),
-                ),
-            ),
-            state,
-        )
+        val day = listOf("1", "2", "3", "4", "5", "6", "7", "9", "10", "11")
+        val night = listOf("B1", "B2", "B3")
+        val groups = listOf(LineGroupUi(LineKind.DAY, day.map(::row)), LineGroupUi(LineKind.NIGHT, night.map(::row)))
+        assertEquals(LinesUiState.Content(favourites = emptyList(), groups = groups), state)
     }
 
     @Test
     fun lb101_codesSortByTheirNumber_notAsText() {
-        val state = LinesUiMapper.state(AppResult.Success(listOf("B10", "B9", "100", "20").map(::line)))
+        val state = LinesUiMapper.state(success(listOf("B10", "B9", "100", "20").map(::line)))
 
         assertEquals(
             listOf(listOf("20", "100"), listOf("B9", "B10")),
@@ -51,7 +50,7 @@ class LinesUiMapperTest {
                 isOperational = false,
             )
 
-        val state = LinesUiMapper.state(AppResult.Success(listOf(stopped)))
+        val state = LinesUiMapper.state(success(listOf(stopped)))
 
         assertEquals(
             LineRowUi(
@@ -61,6 +60,7 @@ class LinesUiMapperTest {
                 color = 0xFF0FDCFC,
                 onColor = 0xFF000000,
                 isOperational = false,
+                isFavourite = false,
             ),
             (state as LinesUiState.Content)
                 .groups
@@ -73,7 +73,7 @@ class LinesUiMapperTest {
     @Test
     fun dd08_linesThatShareAColourKeepTheirOwnCodes() {
         // Lines 4 and B1 share red: each row keeps its code beside the colour, so a badge never stands for a colour.
-        val state = LinesUiMapper.state(AppResult.Success(listOf(line("4"), line("B1"))))
+        val state = LinesUiMapper.state(success(listOf(line("4"), line("B1"))))
 
         val rows = (state as LinesUiState.Content).groups.flatMap { it.lines }
         assertEquals(listOf("4", "B1"), rows.map { it.code })
@@ -82,14 +82,14 @@ class LinesUiMapperTest {
 
     @Test
     fun lb101_aKindWithNoLinesHasNoGroup() {
-        val state = LinesUiMapper.state(AppResult.Success(listOf(line("B1"))))
+        val state = LinesUiMapper.state(success(listOf(line("B1"))))
 
         assertEquals(listOf(LineKind.NIGHT), (state as LinesUiState.Content).groups.map { it.kind })
     }
 
     @Test
     fun lb101_noLinesIsTheEmptyState() {
-        assertEquals(LinesUiState.Empty, LinesUiMapper.state(AppResult.Success(emptyList())))
+        assertEquals(LinesUiState.Empty, LinesUiMapper.state(success(emptyList())))
     }
 
     @Test
@@ -99,6 +99,54 @@ class LinesUiMapperTest {
             LinesUiMapper.state(AppResult.Failure(AppError.Network)),
         )
         assertEquals(LinesUiState.Error(ErrorReason.DATA), LinesUiMapper.state(AppResult.Failure(AppError.Data)))
+    }
+
+    @Test
+    fun lb103_withNoFavouritesTheCarouselHasNoCards() {
+        // FR-LINE-14: each platform shows the hint card in their place; the section never disappears.
+        val state = LinesUiMapper.state(success(listOf(line("1"), line("3"))))
+
+        assertEquals(emptyList(), (state as LinesUiState.Content).favourites)
+    }
+
+    @Test
+    fun lb103_theCarouselHasTheFavouritesInTheUsersOrder_withBadgeNameAndHeadsigns() {
+        // FR-LINE-12, FR-LINE-13: the order they were added in, not the list's.
+        val line10 =
+            line("10").copy(displayName = "El Arco - Hospital San Pedro", headsigns = listOf("H. San Pedro", "El Arco"))
+        val state = LinesUiMapper.state(success(listOf(line("3"), line10), favouriteIds = listOf(10, 3)))
+
+        assertEquals(
+            listOf(
+                FavouriteLineCardUi(
+                    id = 10,
+                    code = "10",
+                    displayName = "El Arco - Hospital San Pedro",
+                    color = 0xFFE30613,
+                    onColor = 0xFFFFFFFF,
+                    headsigns = listOf("H. San Pedro", "El Arco"),
+                ),
+                FavouriteLineCardUi(3, "3", "Line 3", 0xFFE30613, 0xFFFFFFFF, headsigns = emptyList()),
+            ),
+            (state as LinesUiState.Content).favourites,
+        )
+    }
+
+    @Test
+    fun lb103_eachRowSaysWhetherItsLineIsAFavourite() {
+        // FR-LINE-15: the row's toggle shows it and is labelled by it.
+        val state = LinesUiMapper.state(success(listOf(line("1"), line("3"), line("B1")), favouriteIds = listOf(3)))
+
+        val rows = (state as LinesUiState.Content).groups.flatMap { it.lines }
+        assertEquals(listOf("3"), rows.filter { it.isFavourite }.map { it.code })
+    }
+
+    @Test
+    fun lb103_aFavouriteWhoseLineIsNoLongerInTheCatalogueHasNoCard() {
+        // It stays saved (FavouriteLinesRepository), and its card comes back if the line does.
+        val state = LinesUiMapper.state(success(listOf(line("3")), favouriteIds = listOf(99, 3)))
+
+        assertEquals(listOf("3"), (state as LinesUiState.Content).favourites.map { it.code })
     }
 
     private fun line(code: String) =
@@ -120,7 +168,13 @@ class LinesUiMapperTest {
             color = 0xFFE30613,
             onColor = 0xFFFFFFFF,
             isOperational = true,
+            isFavourite = false,
         )
+
+    private fun success(
+        lines: List<Line>,
+        favouriteIds: List<Int> = emptyList(),
+    ) = AppResult.Success(LinesWithFavourites(lines, favouriteIds))
 
     private fun idOf(code: String) = code.filter(Char::isDigit).toInt() + if (code.startsWith("B")) 1_000 else 0
 }
