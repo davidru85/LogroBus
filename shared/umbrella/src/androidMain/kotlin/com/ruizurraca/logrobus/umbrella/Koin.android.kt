@@ -15,7 +15,8 @@ import org.koin.dsl.onClose
 /**
  * Starts the dependency graph of the Android app, once per process, from the Application (ADR-0014). The app passes
  * its [appVersion] for the User-Agent (spec §8.7), whether it is a [debug] build, which sets the log level
- * (security_privacy.md §4) and the telemetry, and the [uiModules] of its feature modules, which hold their ViewModels.
+ * (security_privacy.md §4), the telemetry and, until LB-008 part 2, the sample lines, and the [uiModules] of its
+ * feature modules, which hold their ViewModels.
  *
  * [telemetry] is the injection point for the app's own telemetry, the vendor implementations of LB-409. It stays behind
  * the consent gates; without it, the build's no-op or logging telemetry is used (ADR-0009).
@@ -31,6 +32,7 @@ fun initKoin(
         sharedModules(
             androidModule(context.applicationContext, appVersion, debug),
             telemetryModule(debug, telemetry),
+            debug,
         ) + uiModules,
     )
 }

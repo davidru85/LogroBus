@@ -21,6 +21,13 @@ struct SizeTests {
         }
     }
 
+    @Test
+    func lb101_retryIsAtLeast44PointsTall() {
+        // FR-ERR-05: Retry is the only way out of an Error state, so it is a full touch target (NFR-A11Y-04).
+        let size = fittingSize(RetryButton {})
+        #expect(size.width >= Tokens.minTouchTarget && size.height >= Tokens.minTouchTarget, "\(size)")
+    }
+
     @Test(arguments: LineBadgeSize.allCases)
     func lb011_aLineBadgeIsNeverSmallerThanItsCode(size: LineBadgeSize) {
         // At 200 % text, in a row that offers little height, the colour still holds the whole code.

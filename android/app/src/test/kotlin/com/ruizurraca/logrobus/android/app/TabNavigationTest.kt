@@ -5,13 +5,17 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -141,6 +145,18 @@ class TabNavigationTest {
         compose.onNodeWithContentDescription("Back").performClick()
 
         compose.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb101_reselectingLinesAtItsRootScrollsTheListToItsTop() {
+        // FR-NAV-03 end to end through the shell, moved from LB-012: the debug build's sample lines fill more than a
+        // screen.
+        compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Line B3"))
+        compose.onNodeWithContentDescription("Line 1").assertIsNotDisplayed()
+
+        tab("Lines").performClick()
+
+        compose.onNodeWithContentDescription("Line 1").assertIsDisplayed()
     }
 
     private fun openAboutDataInLines() {

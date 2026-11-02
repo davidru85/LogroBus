@@ -13,7 +13,7 @@ import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
-/** The root of a tab until its feature lands (LB-101, LB-201, LB-301): its top app bar, with the More action. */
+/** The root of a tab until its feature lands (LB-201, LB-301): its top app bar, with the More action. */
 @Composable
 internal fun TabRootPlaceholder(
     destination: TopLevelDestination,

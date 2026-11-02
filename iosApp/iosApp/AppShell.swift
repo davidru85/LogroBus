@@ -1,4 +1,5 @@
 import DesignSystem
+import FeatureLines
 import FeatureSettings
 import Shared
 import SwiftUI
@@ -30,7 +31,7 @@ private struct TabStack: View {
     var body: some View {
         let path = Binding(get: { router.paths[destination, default: []] }, set: { router.paths[destination] = $0 })
         NavigationStack(path: path) {
-            TabRootPlaceholder(destination: destination)
+            root
                 .environment(\.scrollToTopRequests, router.scrollToTopRequests[destination, default: 0])
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -46,6 +47,14 @@ private struct TabStack: View {
                     case .aboutData: AboutDataView()
                     }
                 }
+        }
+    }
+
+    /// The tab's own screen: the Lines list (LB-101), and placeholders until Near Me and How to Get There land.
+    @ViewBuilder private var root: some View {
+        switch destination {
+        case .lines: LinesView()
+        case .nearMe, .planner: TabRootPlaceholder(destination: destination)
         }
     }
 }

@@ -1,7 +1,7 @@
 import XCTest
 
 /// LB-012: the three tabs (FR-NAV-01, FR-NAV-02), each with its own stack (FR-NAV-03), and More from every tab root
-/// (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
+/// (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data. LB-101: the Lines list at the Lines root.
 final class ShellUITests: XCTestCase {
 
     @MainActor
@@ -45,6 +45,45 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
+    func test_lb101_reselectingLinesAtItsRootScrollsTheListToItsTop() {
+        // FR-NAV-03 end to end through the shell, moved from LB-012. Debug builds list the sample lines, and the
+        // largest text makes them far longer than the screen.
+        let app = launch(textSize: "UICTContentSizeCategoryAccessibilityXL")
+        let firstLine = line("1", in: app)
+        XCTAssertTrue(firstLine.waitForExistence(timeout: 10))
+
+        for _ in 0..<4 { app.swipeUp() }
+        XCTAssertFalse(firstLine.exists && firstLine.isHittable, "the list scrolled away from line 1")
+
+        app.tabBars.buttons["Lines"].tap()
+
+        // The scroll animates: wait until the heading above line 1 can be tapped again.
+        let dayLines = app.staticTexts["Day lines"]
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: dayLines)
+        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: 5), .completed, "back at the top, with its heading")
+        XCTAssertTrue(firstLine.isHittable, "re-selecting Lines scrolled back to line 1")
+    }
+
+    @MainActor
+    func test_lb101_linesThatShareAColourAreSpokenByTheirCode_thenTheirName() {
+        // DD-08 and NFR-A11Y-02: lines 4 and B1 share red; VoiceOver reads each row as its line, never a colour.
+        let app = launch()
+
+        XCTAssertTrue(line("4", in: app).waitForExistence(timeout: 10))
+        XCTAssertEqual(line("4", in: app).label, "Line 4, Casa Blanca - Yagüe")
+        for _ in 0..<3 where !line("B1", in: app).exists { app.swipeUp() }
+        XCTAssertTrue(line("B1", in: app).waitForExistence(timeout: 5))
+        XCTAssertEqual(line("B1", in: app).label, "Line B1, Varea - La Cava")
+    }
+
+    /// The row of the line with `code`, read as one element that starts with its badge's spoken label.
+    @MainActor
+    private func line(_ code: String, in app: XCUIApplication) -> XCUIElement {
+        let row = NSPredicate(format: "label BEGINSWITH %@", "Line \(code), ")
+        return app.descendants(matching: .any).matching(row).firstMatch
+    }
+
+    @MainActor
     private func assertTabs(_ labels: [String], in app: XCUIApplication) {
         let tabs = app.tabBars.buttons
         XCTAssertTrue(tabs[labels[0]].waitForExistence(timeout: 10))
@@ -53,9 +92,14 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
-    private func launch(language: String = "en", region: String = "en_GB") -> XCUIApplication {
+    private func launch(
+        language: String = "en",
+        region: String = "en_GB",
+        textSize: String? = nil
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
+        if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
         app.launch()
         return app
     }

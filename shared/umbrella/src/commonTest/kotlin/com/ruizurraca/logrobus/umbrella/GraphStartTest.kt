@@ -22,7 +22,7 @@ class GraphStartTest {
         val platform = module { single<Logger> { NoOpLogger } }
         val duplicate = module { single<AppClock> { AppClock { Instant.DISTANT_PAST } } }
 
-        val modules = sharedModules(platform, telemetryModule(debug = false)) + duplicate
+        val modules = sharedModules(platform, telemetryModule(debug = false), debug = false) + duplicate
 
         assertFailsWith<DefinitionOverrideException> { startGraph(modules) }
     }

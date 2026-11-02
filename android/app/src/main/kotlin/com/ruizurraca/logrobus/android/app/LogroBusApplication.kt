@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.app
 
 import android.app.Application
+import com.ruizurraca.logrobus.android.feature.lines.linesUiModule
 import com.ruizurraca.logrobus.android.feature.settings.settingsUiModule
 import com.ruizurraca.logrobus.umbrella.initKoin
 
@@ -11,14 +12,15 @@ import com.ruizurraca.logrobus.umbrella.initKoin
 open class LogroBusApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        // The version for the User-Agent (spec §8.7), the build type for the log level and the telemetry
-        // (security_privacy.md §4, ADR-0009), and the ViewModels of each feature module. LB-409 passes the vendor's
+        // The version for the User-Agent (spec §8.7); the build type, which sets the log level and the telemetry
+        // (security_privacy.md §4, ADR-0009) and, until LB-008 part 2, the sample lines; and the ViewModels of each
+        // feature module. LB-409 passes the vendor's
         // analytics tracker and crash reporter here too, as `telemetry = PlatformTelemetry(…)`.
         initKoin(
             this,
             appVersion = BuildConfig.VERSION_NAME,
             debug = BuildConfig.DEBUG,
-            uiModules = listOf(settingsUiModule),
+            uiModules = listOf(linesUiModule, settingsUiModule),
         )
     }
 }

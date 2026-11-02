@@ -173,6 +173,7 @@ Done in LB-005 part 1 and the first half of part 2; the DTOs and services come w
   - `parseCssColor` (DD-08) sits in `:shared:core:common`, beside `onColorFor`, for the planner's colours too.
   - Part 2 adds the DTOs' mappers, the `StaticNormaliser`, DD-10's provisional stops, the direction cache and the `DataQualityReport`.
 - **Repositories:** `NetworkRepository` (lines, patterns, stops, search), `ArrivalsRepository`, `VehiclesRepository`.
+- **Lines (as built, LB-101 part 1):** `LinesRepositoryImpl` reads the `line` table for `LinesRepository` (`:shared:transit:domain`), whose `Line` is spec §5.1's line without its patterns. It emits again whenever a sync replaces the table, drops and logs a row of an unknown kind, and turns a failure to read into `Failure(Data)`.
 - **Sync status (as built, LB-010 part 2):** `SyncStatusRepositoryImpl` reads `sync_state` for `SyncStatusRepository` (`:shared:transit:domain`). It gives the last successful sync of each `StaticDataset` (spec §8.5: lines and stops in the MVP), stored under the keys `lines` and `stops`, which never change with the enum's names. The static sync (LB-008) writes `sync_state` with the same keys.
 
 ### 4.3 Persistence (`:shared:core:database`)
@@ -270,7 +271,7 @@ Each shared feature module contains three packages:
 
 | Feature | Use cases (examples) | Presentation models | Endpoints |
 | --- | --- | --- | --- |
-| `lines` | `ObserveLines`, `SearchLines`, `ObserveFavouriteLines`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | `LinesUiState`, `LineDetailUiState`, `LineRowUi`, `FavouriteLineCardUi` | API-01, 04, 05 |
+| `lines` | `ObserveLines` (built), `SearchLines`, `ObserveFavouriteLines`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | `LinesUiState`, `LineDetailUiState`, `LineRowUi`, `FavouriteLineCardUi` | API-01, 04, 05 |
 | `stops` | `ObserveStopArrivals`, `SearchStops`, `SaveStop` | `StopDetailUiState`, `ArrivalUi`, `StopSearchUiState` | API-02, 06 |
 | `nearme` | `GetNearbyStops`, `ObserveSavedStopArrivals`, `ObserveNetworkVehicles` | `NearMeUiState`, `SavedStopCardUi`, `NearbyStopRowUi`, map layer models | API-02, 03, 06, 08 |
 | `planner` | `SearchPlaces`, `PlanJourney`, `ObserveRecentPlans` | `PlannerUiState`, `ItineraryCardUi`, `ItineraryDetailUiState` | API-07, 08, 06, CartoCiudad |
@@ -338,7 +339,7 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
 ### 5.1 Android
 
 - `:android:app`:
-  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG, uiModules = listOf(settingsUiModule))` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. `initKoin` also takes a `PlatformTelemetry`, where LB-409 will pass the vendor's tracker and reporter (§4.7); until then the default leaves the build's telemetry. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
+  - `LogroBusApplication.onCreate` calls `initKoin(this, appVersion = BuildConfig.VERSION_NAME, debug = BuildConfig.DEBUG, uiModules = listOf(linesUiModule, settingsUiModule))` once per process. The Android module of the graph provides the platform pieces: the logger, `ProcessAppLifecycle`, the Fused location provider, the client identity and the SQLite driver. `initKoin` also takes a `PlatformTelemetry`, where LB-409 will pass the vendor's tracker and reporter (§4.7); until then the default leaves the build's telemetry. Robolectric tests run on `TestLogroBusApplication`, which stops the graph after each test.
   - A single activity draws edge-to-edge. `NavigationSuiteScaffold` holds the three tabs, and each tab keeps a Navigation 3 back stack of `@Serializable` `NavKey`s defined in `:android:core:navigation` (ADR-0005).
   - **As built (LB-012):**
     - `AppShell` chooses the `NavigationSuiteType` by width alone, as FR-NAV-05 says: a short navigation bar on compact widths, and a collapsed wide rail from the medium width up. Material's recommended type would keep a bar on a short window, such as a phone in landscape.
@@ -346,7 +347,8 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - `TabNavigator` holds the selected tab and one `NavBackStack` per tab, all saved across recreation and process death. It selects tabs, opens keys on the selected tab, pops a re-selected tab to its root, or asks a root to scroll to its top. On back, it pops the selected tab; at the root of another tab it returns to Lines.
     - `NavDisplay` shows the Lines stack under the selected one, so back from another tab's root has its predictive animation. Every screen change cross-fades on the motion scheme's effects spring (`ScreenTransitions` in the design system). Each tab decorates its entries with its own saveable-state and ViewModel decorators, so a popped screen's ViewModel is cleared. Each content key carries the tab, because More or About data can be on two stacks at once.
     - The shell resolves every key to its screen (`entryProvider`). A tab root receives the More action as `onOpenMore`, and its tab's re-selections through `LocalScrollToTopRequests`; a root with a list calls `ScrollToTopOnReselect(listState)`.
-    - Until LB-101, LB-201 and LB-301, the tab roots are placeholders: a top app bar with the More action. Every top app bar's title is a `ScreenTitle`, a heading for TalkBack.
+    - The Lines root is the Lines list (LB-101). Until LB-201 and LB-301, the other roots are placeholders: a top app bar with the More action. Every top app bar's title is a `ScreenTitle`, a heading for TalkBack.
+    - The shell's preview gives the Lines root its ViewModel through `KoinApplicationPreview`, over `SharedDependencies.preview()`.
 - `:android:feature:<x>`:
   - Each screen is an `XRoute` (wiring), a stateless `XScreen(UiState, onEvent)` and an `XViewModel : androidx.lifecycle.ViewModel`.
   - The ViewModel injects shared use cases (`koinViewModel()`), collects their flows in `viewModelScope`, maps them with the shared mappers and exposes `StateFlow<XUiState>`.
@@ -355,6 +357,11 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
     - `onEvent(AboutDataEvent)`: Retry bumps a counter that `flatMapLatest` turns into a new read, starting at Loading.
     - The screen draws Loading as the final layout with placeholders, and Error with its reason and Retry. Its states for previews and screenshots live in `AboutDataPreviewData`.
     - The route collects it with `collectAsStateWithLifecycle()`.
+  - **As built (LB-101 part 1, `LinesViewModel`):** the same shape over `ObserveLines`, so each Retry is a new collection and with it a new sync (ADR-0008).
+    - Only a new load, after Retry, starts at Loading. Coming back to the screen after the upstream stopped restarts the same load and keeps the list, as on iOS; About data's ViewModel still shows Loading then.
+    - `LinesScreen` is a `LazyColumn`: each group under a heading, each row a `ListItem` with the `LineBadge`, the display name, which wraps, and a status chip when the line is not operational. A row merges its semantics, so TalkBack reads "Line 11, Artesanos - Manuel de Falla, Not in service".
+    - Loading draws a heading and rows shaped like the list's, which TalkBack reads as "Loading lines". Empty and Error use the design system's `RetryMessage`. The list calls `ScrollToTopOnReselect`, and the top app bar takes its scrolled colour without collapsing (a programmatic scroll to the top would not bring a collapsed bar back).
+  - **Shared by every screen (`:android:core:designsystem`):** `RetryMessage`, one sentence and Retry that scrolls at large font sizes, with `ErrorReason.messageRes` and the `error_*` strings, which each feature module used to define again.
     - Each feature module exposes a Koin `<x>UiModule` that declares its ViewModels with `viewModelOf`, and the app passes the modules to `initKoin`.
 - Maps: MapLibre Native through `maplibre-compose` in `:android:core:map`.
 - Location uses the Fused Location Provider of Google Play services (`fusedLocationProvider`, in `:shared:core:location`; owner approval, 2026-10-26). Permission prompts use the Activity Result API in the UI.
@@ -373,7 +380,7 @@ Consent-gated wrappers live in shared code. In the MVP, release builds use no-op
   - The Xcode project is generated from `iosApp/project.yml` by XcodeGen and is never committed. The same script writes `Configuration/Version.xcconfig` from `version.properties`.
   - `SharedDependencies` (LB-001, LB-010) gives the start destination and `isReady`, whether the graph has started. It implements `UseCases`, the use cases a Swift ViewModel can ask for, from the graph. SKIE is applied (LB-010 part 1).
   - `SharedDependencies.shared.preview()` returns a new `PreviewUseCases`: the real use cases over scripted repositories.
-    - By default every dataset synced at 10:30 in Madrid; `loading()` and `neverSynced()` change the script.
+    - By default every dataset synced at 10:30 in Madrid, and the cache holds the sample lines (LB-101). `loading()`, `neverSynced()`, `offline()` (a first launch with no network), `synced()` (the default again) and `failing()` change the script.
     - `activeCollections` counts the collections running, for cancellation tests.
 - **Composition root.**
   - `LogroBusApp.init` calls `doInitKoin(appVersion:debug:telemetry:)`, a Swift global function through SKIE, with `CFBundleShortVersionString`, `#if DEBUG` and a `PlatformTelemetry`, on the main actor. The iOS module of the graph creates `NotificationAppLifecycle` and Core Location there. Swift implementations of platform contracts are passed the same way: LB-409's vendor telemetry, as Swift classes conforming to `AnalyticsTracker` and `CrashReporter` (subclasses of `NSObject`), goes in `PlatformTelemetry`, which passes `nil` until then (§4.7).
@@ -412,12 +419,17 @@ public final class AboutDataViewModel {
 - **Views** switch over the state with `switch onEnum(of: viewModel.state) { … }`.
 - **Previews and tests:** SwiftUI previews and Swift ViewModel tests use `SharedDependencies.shared.preview()`.
   - The tests live in a `Feature<X>Tests` target of `LogroBusUI`, with Swift Testing.
-  - The `iosApp` scheme runs them, so `scripts/ios/test.sh` does too, until LB-101's matrix job.
+  - The `iosApp` scheme runs them, so `scripts/ios/test.sh` does too. CI runs each test target in a job of its own (LB-101): `scripts/ios/test.sh <Target>Tests` builds and runs only that target.
   - A cancellation test cancels `observe()`, as `.task {}` does, and waits for `activeCollections` to fall back to 0.
 - **The view, as built:** Loading is the final list over sample content with `.redacted(reason: .placeholder)`, Error is a `ContentUnavailableView` with the reason and Retry, and times follow SwiftUI's environment locale.
+- **The Lines list, as built (LB-101 part 1):** `LinesView` and `LinesViewModel` in `FeatureLines`, on the same pattern. A `List` has a `Section` per group; a row combines its accessibility element, so VoiceOver reads "Line 4, Casa Blanca - Yagüe". The loading list reads as "Loading lines".
+  - Whenever `scrollToTopRequests` changes, a `ScrollPosition` scrolls the list to its top edge, its first heading included. A `ScrollViewReader` cannot reach a section header in a `List`.
+  - Its snapshots wait for the ViewModel's state before the capture, and the list's are as tall as the whole list.
+- **Shared by every screen (`DesignSystem`):** `RetryButton`, a large bordered button of at least 44 pt, and `ErrorReason.message`, with the `error.*` strings.
 - **The shell, as built (LB-012):**
   - `AppShell`, in the app target, is a `TabView` with one `Tab` per `TopLevelDestination` and a `NavigationStack` per tab.
   - `TabRouter` (`@MainActor @Observable`) holds the selection and one `[Route]` path per tab. The `TabView`'s selection setter also runs when the selected tab is tapped again. The router then pops that tab to its root or, at the root, counts a request to scroll to the top. The shell hands the count to the root as the `scrollToTopRequests` environment value of `DesignSystem`.
+  - The Lines tab's root is `LinesView` (LB-101); the other two are placeholders until LB-201 and LB-301.
     - The system pops a re-selected tab's stack by itself, after the setter, so the two agree. It does not scroll a root to its top, so the count is needed (checked on iOS 26.5 and 27.0; iOS 18 waits for LB-412).
   - The shell adds the More toolbar action to every tab root and resolves the routes: `MoreView` (app target), `SettingsView` and `AboutDataView` (`FeatureSettings`).
 - **Maps:** MapLibre Native iOS (Swift package) wrapped in `MapUI`. Floating controls use the `DesignSystem` glass helpers.
@@ -460,7 +472,7 @@ flowchart TD
 
 | Concern | Approach |
 | --- | --- |
-| Dependency injection | Koin (ADR-0014). `:shared:umbrella` holds the shared graph:<br>- the core, one instance of each service per process: one `ServerCorrectedClock` (also the `AppClock`), the source client, the polling engine on an application scope, and the database;<br>- one module per data and feature module in use (transit data and settings so far).<br>`startGraph` refuses a second definition of any type, and stopping the graph cancels its scope and closes the database. The app shells pass the version and the build type. Android adds each feature module's ViewModels through `initKoin(uiModules)`, and Swift gets use cases from `SharedDependencies` (LB-010) |
+| Dependency injection | Koin (ADR-0014). `:shared:umbrella` holds the shared graph:<br>- the core, one instance of each service per process: one `ServerCorrectedClock` (also the `AppClock`), the source client, the polling engine on an application scope, and the database;<br>- one module per data and feature module in use (transit data, settings and lines so far);<br>- until LB-008 part 2 binds the static sync over the source (owner decision, 2026-11-02): debug builds list the sample lines (`SampleLines`), as if a sync had stored them; release builds read the cache, which nothing fills yet, behind a sync that fails with `Data` (`NoSourceSync`).<br>`startGraph` refuses a second definition of any type, and stopping the graph cancels its scope and closes the database. The app shells pass the version and the build type. Android adds each feature module's ViewModels through `initKoin(uiModules)`, and Swift gets use cases from `SharedDependencies` (LB-010) |
 | Configuration | `RemoteConfig` in `:shared:core:config` with compiled defaults (NFR-REL-05). Backend deferred (OQ-16) |
 | Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
 | Settings | Multiplatform Settings (DataStore, `NSUserDefaults`), ADR-0018 |

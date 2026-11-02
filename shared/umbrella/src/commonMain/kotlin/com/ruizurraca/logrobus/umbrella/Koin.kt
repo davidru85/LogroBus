@@ -13,9 +13,13 @@ import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
+import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -35,12 +39,14 @@ internal val APPLICATION_SCOPE = named("application")
  * The shared graph (ADR-0014): the core, with one instance of each service for the whole process, then one module per
  * data and feature module. [platform] provides what only a platform can create: the [Logger], the app lifecycle, the
  * location provider, the client identity for the `User-Agent` and the SQLite driver. [telemetry] binds the telemetry
- * contracts for the build (ADR-0009).
+ * contracts for the build (ADR-0009). [debug] builds list sample lines until LB-008 part 2 (owner decision,
+ * 2026-11-02).
  */
 internal fun sharedModules(
     platform: Module,
     telemetry: Module,
-): List<Module> = listOf(platform, telemetry, coreModule, transitDataModule, settingsModule)
+    debug: Boolean,
+): List<Module> = listOf(platform, telemetry, coreModule, transitDataModule, settingsModule, linesModule(debug))
 
 /**
  * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of
@@ -74,11 +80,22 @@ private val coreModule =
 private val transitDataModule =
     module {
         single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get(), get()) }
+        single<LinesRepository> { LinesRepositoryImpl(get(), get(), get()) }
     }
 
 private val settingsModule =
     module {
         factory<ObserveLastSyncs> { DefaultObserveLastSyncs(get()) }
+    }
+
+// LB-008 part 2 binds the static sync engine over the source, and the sample lines go.
+private fun linesModule(debug: Boolean) =
+    module {
+        factory<ObserveLines> {
+            val sync = if (debug) SampleSync else NoSourceSync
+            val repository = if (debug) SampleLinesRepository else get<LinesRepository>()
+            DefaultObserveLines(sync, repository)
+        }
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */

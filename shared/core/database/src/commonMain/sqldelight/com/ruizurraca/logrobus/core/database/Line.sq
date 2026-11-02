@@ -52,3 +52,7 @@ INSERT INTO pattern (line_id, direction, headsign, shape_polyline) VALUES (?, ?,
 
 insertPatternStop:
 INSERT INTO pattern_stop (line_id, direction, seq, stop_id, shape_index) VALUES (?, ?, ?, ?, ?);
+
+-- LB-101: the Lines list, which groups and sorts them itself (FR-LINE-01).
+selectLines:
+SELECT id, code, display_name, color, on_color, kind, operational FROM line ORDER BY id;

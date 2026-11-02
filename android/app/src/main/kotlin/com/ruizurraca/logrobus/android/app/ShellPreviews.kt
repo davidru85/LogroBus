@@ -5,6 +5,10 @@ import androidx.compose.ui.tooling.preview.PreviewFontScale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
+import com.ruizurraca.logrobus.android.feature.lines.linesUiModule
+import com.ruizurraca.logrobus.umbrella.SharedDependencies
+import org.koin.compose.KoinApplicationPreview
+import org.koin.dsl.module
 
 // The shell and More have one state each; ShellScreenshotTest and RailScreenshotTest capture the same views.
 
@@ -13,7 +17,11 @@ import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 @PreviewScreenSizes
 @Composable
 private fun AppShellPreview() {
-    LogroBusTheme { AppShell() }
+    // The Lines root takes its ViewModel from the graph, here over the scripted use cases (architecture.md §5.2).
+    val lines = module { factory { SharedDependencies.preview().observeLines() } }
+    KoinApplicationPreview(application = { modules(lines, linesUiModule) }) {
+        LogroBusTheme { AppShell() }
+    }
 }
 
 @PreviewLightDark

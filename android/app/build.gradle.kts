@@ -21,6 +21,7 @@ dependencies {
     implementation(projects.shared.umbrella)
     implementation(projects.android.core.designsystem)
     implementation(projects.android.core.navigation)
+    implementation(projects.android.feature.lines)
     implementation(projects.android.feature.settings)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.material3)
@@ -29,6 +30,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    // KoinApplicationPreview: the shell's preview gives the Lines root its ViewModel (ADR-0014).
+    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)

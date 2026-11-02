@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
+import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -71,5 +72,89 @@ class PreviewUseCasesTest {
                 assertEquals(AppResult.Failure(AppError.Data), awaitItem())
                 awaitComplete()
             }
+        }
+
+    @Test
+    fun lb101_thePreviewListsTheSampleLines() =
+        runTest {
+            assertEquals(AppResult.Success(SampleLines.all), SharedDependencies.preview().observeLines()().first())
+        }
+
+    @Test
+    fun lb101_thePreviewCanScriptAFirstLaunchWithNoNetwork() =
+        runTest {
+            val preview = SharedDependencies.preview().offline()
+
+            assertEquals(AppResult.Failure(AppError.Network), preview.observeLines()().first())
+            assertEquals(
+                AppResult.Success(
+                    listOf(DatasetSync(StaticDataset.LINES, null), DatasetSync(StaticDataset.STOPS, null)),
+                ),
+                preview.observeLastSyncs()().first(),
+            )
+        }
+
+    @Test
+    fun lb101_thePreviewCanScriptTheNetworkComingBack() =
+        runTest {
+            val preview = SharedDependencies.preview().offline()
+
+            preview.synced()
+
+            assertEquals(AppResult.Success(SampleLines.all), preview.observeLines()().first())
+            assertEquals(
+                AppResult.Success(
+                    listOf(DatasetSync(StaticDataset.LINES, sample), DatasetSync(StaticDataset.STOPS, sample)),
+                ),
+                preview.observeLastSyncs()().first(),
+            )
+        }
+
+    @Test
+    fun lb101_thePreviewCanScriptASyncThatStoredNoLines() =
+        runTest {
+            assertEquals(
+                AppResult.Success(emptyList<Line>()),
+                SharedDependencies
+                    .preview()
+                    .neverSynced()
+                    .observeLines()()
+                    .first(),
+            )
+        }
+
+    @Test
+    fun lb101_thePreviewCanScriptLinesThatNeverLoad() =
+        runTest {
+            SharedDependencies.preview().loading().observeLines()().test {
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun lb101_thePreviewCanScriptACacheThatCannotBeRead() =
+        runTest {
+            assertEquals(
+                AppResult.Failure(AppError.Data),
+                SharedDependencies
+                    .preview()
+                    .failing()
+                    .observeLines()()
+                    .first(),
+            )
+        }
+
+    @Test
+    fun lb101_thePreviewCountsTheCollectionsOfTheLines() =
+        runTest {
+            val preview = SharedDependencies.preview()
+
+            preview.observeLines()().test {
+                awaitItem()
+                assertEquals(1, preview.activeCollections)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(0, preview.activeCollections)
         }
 }

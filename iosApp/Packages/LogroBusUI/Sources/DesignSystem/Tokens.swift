@@ -15,15 +15,20 @@ public enum Tokens {
         public let secondaryText: Int64
         /// Text that warns, such as "Actualizado hace N s" on stale data (spec §7.3).
         public let warning: Int64
+        /// Material's error container and its text, as on Android: the status chip of a line out of service.
+        public let errorContainer: Int64
+        public let onErrorContainer: Int64
     }
 
     public static let light = Palette(
         accent: 0xFF2F5D8A, onAccent: 0xFFFFFFFF, surface: 0xFFFCFCFC, onSurface: 0xFF1B1B1B,
-        surfaceContainer: 0xFFF0F0F0, secondaryText: 0xFF464646, warning: 0xFF8A5300
+        surfaceContainer: 0xFFF0F0F0, secondaryText: 0xFF464646, warning: 0xFF8A5300,
+        errorContainer: 0xFFF9DEDC, onErrorContainer: 0xFF410E0B
     )
     public static let dark = Palette(
         accent: 0xFFA7C8EC, onAccent: 0xFF0E2F4D, surface: 0xFF121212, onSurface: 0xFFE3E3E3,
-        surfaceContainer: 0xFF1F1F1F, secondaryText: 0xFFC6C6C6, warning: 0xFFF2B861
+        surfaceContainer: 0xFF1F1F1F, secondaryText: 0xFFC6C6C6, warning: 0xFFF2B861,
+        errorContainer: 0xFF8C1D18, onErrorContainer: 0xFFF9DEDC
     )
 
     /// The colours that follow light and dark mode.
@@ -34,6 +39,8 @@ public enum Tokens {
         public static let onSurface = Color(light: light.onSurface, dark: dark.onSurface)
         public static let secondaryText = Color(light: light.secondaryText, dark: dark.secondaryText)
         public static let warning = Color(light: light.warning, dark: dark.warning)
+        public static let errorContainer = Color(light: light.errorContainer, dark: dark.errorContainer)
+        public static let onErrorContainer = Color(light: light.onErrorContainer, dark: dark.onErrorContainer)
     }
 
     /// The spacing scale and the screen margin (design_guidelines.md §6.1).

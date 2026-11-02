@@ -43,4 +43,10 @@
     <!-- Top app bar actions (LB-012, design_guidelines.md §9, keys action.*): what TalkBack says for each icon. -->
     <string name="action_more">More</string>
     <string name="action_navigate_up">Back</string>
+
+    <!-- FR-ERR-05: the reason and action of the Error and Empty states (design_guidelines.md §7 and §9, keys error.*). -->
+    <string name="error_network">No connection. Check your network.</string>
+    <string name="error_server">The service isn’t responding. Try again later.</string>
+    <string name="error_data">The data couldn’t be read.</string>
+    <string name="error_retry">Retry</string>
 </resources>

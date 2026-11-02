@@ -19,6 +19,48 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-02: LB-101, part 1: the Lines list over sample lines
+
+**Done**
+- **Merges:** the owner merged PR #34 (LB-006 part 1), then PR #35 (the Dependabot alerts), and `main` was synced each time. `main` was merged into PR #35 after PR #34, and into this branch after PR #35, with the 2026-11-02 entries combined.
+- **LB-101 split in two,** like LB-005, LB-006 and LB-008. Part 1 is the list over a repository contract and sample lines; part 2 checks it against `lines_2026-10-22.json` once OQ-11 unblocks LB-003 and the part 2s of LB-005, LB-006 and LB-008.
+- **Shared (`architecture.md` §4.2, §4.6):**
+  - `:shared:transit:domain`: `Line` (spec §5.1, without patterns) and `LinesRepository`;
+  - `:shared:transit:data`: `LinesRepositoryImpl` over the `line` table, with the new `selectLines` query;
+  - `:shared:feature:lines`: `ObserveLines`, with a sync on every collection: an empty cache waits for it and shows its failure (FR-ERR-05), and a failed refresh of a full cache stays silent (FR-ERR-04). `LinesUiState`, `LineGroupUi`, `LineRowUi` and `LinesUiMapper`: day then night groups, sorted by the number in the code, with no fixed set of lines.
+  - `:shared:umbrella`: `observeLines()` for Swift, the sample lines, and `PreviewUseCases`' `offline()` and `synced()` scripts.
+- **Android:** `LinesViewModel`, `LinesRoute` and `LinesScreen` in `:android:feature:lines`, at the root of the Lines tab; strings in es and en; screenshots of the four states in light, dark and 200 %. The shell's screenshots were recorded again, since the Lines root now shows the list. The shell's preview gets its ViewModel through `KoinApplicationPreview`.
+- **iOS:** `LinesViewModel` and `LinesView` in `FeatureLines`, at the root of the Lines tab; `Localizable.xcstrings` in es and en; `FeatureLinesTests` with the ViewModel tests and snapshots of the four states in light, dark and large text.
+- **Scroll to top,** end to end through the shell: `TabNavigationTest` on Android, and `ShellUITests` on iOS at the largest text size, so the list is far longer than the screen.
+- **CI:** the "iOS ViewModel and snapshot tests" job, one per test target of `LogroBusUI` (`DesignSystemTests`, `FeatureLinesTests`, `FeatureSettingsTests`). `scripts/ios/test.sh` takes test targets, and the app's job runs only `iosAppTests` and `iosAppUITests`. An architecture test fails when the matrix and `Package.swift` differ. `:android:feature:lines` joined the Android screenshot matrix.
+- **A coverage gap found by the gates:** `:shared:transit:domain` fell to 42.9 % (floor 80 %), because Kover counts each module's own tests and `Line` had none there. `LineTest` covers it with a DD-08 case: two lines that share a colour are still two lines.
+- **The iOS green commit needed no refactor:** it follows About data's pattern. The snapshot appearances repeat `DesignSystemTests`' small enum rather than add a shared test target for one type.
+- **Reviews** (the code-reviewer, data-rules-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; two asked for changes). Fixed:
+  - **Android, Loading on every return (major, two reviewers):** after the upstream stopped, coming back to the list showed the skeleton again and lost the scroll position. Only a new load after Retry starts at Loading now, as on iOS; a test with a read that takes a moment pins it.
+  - **iOS, Retry (major):** a text button about 20 pt tall. `RetryButton` in `DesignSystem` is a large bordered button, at least 44 pt (`SizeTests`), and About data uses it too.
+  - **Screenshots at 200 % (major):** they showed only the first rows. The list's screenshots are now as tall as the list on both platforms, so every code, the chip and the night group show.
+  - **Shared:** a test with a repository that reads once pins that the first sync's lines are read after it ends (a mutant that combines the two fails it); a refresh with new lines; a real `dd08_` test in the mapper, with the data-only `dd08_` tests renamed `lb101_`; an exhaustive `when` instead of a cast; a cached line whose id is no `Int` is dropped and logged, not truncated.
+  - **Android:** the `error_*` strings, which both feature modules defined (resource merging keeps one silently), `ErrorReason.messageRes` and `RetryMessage` moved to `:android:core:designsystem`, and the message scrolls at large font sizes. The first load is announced as "Loading lines" and its skeleton has the list's heading and badge sizes. Every error reason is tested. The top app bar tints on scroll.
+  - **iOS:** the scroll to the top reaches the real top, the Day lines heading included, through `ScrollPosition`, since a `ScrollViewReader` could not reach a section header. The loading list reads as "Loading lines". The chip uses error container tokens, the values of Android's Material scheme. The UI tests wait for the scroll to settle. Dark previews for Loading and Empty.
+  - **CI and docs:** `ios-checks.yml` now runs the Kotlin jobs too, since the architecture tests read its matrix. Each matrix artifact is named after its target. The docs that still placed `DesignSystemTests` in the app's job are updated.
+  - **TDD deviations, for the record:** the first data cycle has no refactor commit or note; the iOS green commit (6261018) changed the snapshot layout of its own tests; `9a26339` and the review's race and DD-08 tests were written after the behaviour, as regression guards.
+
+**Decisions**
+- **Debug builds list sample lines** until LB-008 part 2 can download the real ones (owner decision, 2026-11-02). They have the network's codes, no line 8, and the shared colours of DD-08; their names and colours are placeholders, and line 11 is not operational so that the chip shows. Release builds read the empty cache behind a sync that fails with `Data` (`NoSourceSync`), so they show the error with Retry.
+- **One CI job per Swift test target** (owner decision, 2026-11-02), each building the framework again. "iOS build and tests" took 19 minutes on PR #35, against its 10-minute budget. A pull request now uses 5 macOS runners at once, GitHub Free's limit.
+- **`ObserveLines` reads the cache again after the sync,** with `flatMapLatest`, so the lines a sync stores are never read before its transaction.
+- **The status chip says "Sin servicio" / "Not in service"** (`lines.not_operational`), and the Empty state "No hay líneas que mostrar." (`lines.empty`); both are in `design_guidelines.md` §9.
+
+**Open / next**
+- **PR #36** (this entry, branch `feat/LB-101-lines-list`) is open, and its watch runs (`scripts/agent/watch-pr.sh 36 180`). Its first CI run failed once in one job, outside the change: Gradle could not fetch `kotlin-stdlib:2.4.0` from the Gradle Plugin Portal while configuring build-logic, which every other job resolved. The merge of `main` started a new run.
+- **Next, once PR #36 is merged:** the next M1 story that needs neither OQ-11 nor OQ-10. LB-103 (favourite lines and their carousel) needs only the lines and the `favourite` table; LB-102's search also finds stops by name, so its part 1 would need sample stops too. Unless the owner chooses otherwise, LB-103 (`/start-story LB-103`).
+- **LB-101 part 2** waits for OQ-11 (LB-003), and with it the part 2s of LB-005, LB-006 and LB-008; LB-008 part 2 removes the sample lines.
+- **Follow-ups from the reviews:**
+  - **About data on Android** shows Loading again whenever it comes back, as the Lines list did; give it the same rule.
+  - **Android's top app bar** does not collapse yet (design_guidelines.md §4): a scroll to the top on re-selection is programmatic and would leave a collapsed bar hidden. Reset the bar with the scroll first.
+  - **iOS's tab bar** does not minimise on scroll yet (`.tabBarMinimizeBehavior(.onScrollDown)`, design_guidelines.md §5): check first that re-selecting Lines on a minimised bar still scrolls to the top.
+- **Waiting on the owner:** the Kotlin Gradle plugin alert (PR #35), and the items of the hand-over entry below: PR #34's three points (now merged), OQ-11, OQ-10, OQ-16, DD-10's provisional saved stop, the limits of the rule on failing checks, and WorkManager.
+
 ## 2026-11-02: The Dependabot alerts: security floors for the build's tools and tests
 
 **Done**

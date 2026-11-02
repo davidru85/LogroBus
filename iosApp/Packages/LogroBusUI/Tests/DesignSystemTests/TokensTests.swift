@@ -15,7 +15,8 @@ struct TokensTests {
             ("secondary", palette.surface, palette.secondaryText),
             ("secondary on container", palette.surfaceContainer, palette.secondaryText),
             ("warning", palette.surface, palette.warning),
-            ("warning on container", palette.surfaceContainer, palette.warning)
+            ("warning on container", palette.surfaceContainer, palette.warning),
+            ("error container", palette.errorContainer, palette.onErrorContainer)
         ]
         for (role, background, text) in pairs {
             #expect(contrastRatio(first: background, second: text) >= 4.5, "\(name) \(role)")
@@ -40,5 +41,8 @@ struct TokensTests {
         #expect(Tokens.dark.surface == 0xFF121212)
         #expect(Tokens.light.warning == 0xFF8A5300)
         #expect(Tokens.dark.warning == 0xFFF2B861)
+        // Material's error container on Android, which the status chip of a line out of service uses (LB-101).
+        #expect(Tokens.light.errorContainer == 0xFFF9DEDC && Tokens.light.onErrorContainer == 0xFF410E0B)
+        #expect(Tokens.dark.errorContainer == 0xFF8C1D18 && Tokens.dark.onErrorContainer == 0xFFF9DEDC)
     }
 }

@@ -281,6 +281,54 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    fun lb101_aSwiftPackagesTestTargetsAreReadFromItsManifest() {
+        val manifest =
+            """
+            .target(name: "FeatureLines", dependencies: ["DesignSystem"], linkerSettings: linksShared),
+            package.targets.append(
+                .testTarget(name: "FeatureSettingsTests", dependencies: ["FeatureSettings"], linkerSettings: x)
+            )
+            package.targets.append(
+                .testTarget(
+                    name: "DesignSystemTests",
+                    dependencies: ["DesignSystem"]
+                )
+            )
+            """.trimIndent()
+
+        assertEquals(listOf("FeatureSettingsTests", "DesignSystemTests"), ArchitectureRules.swiftTestTargets(manifest))
+    }
+
+    @Test
+    fun lb101_aJobsMatrixItemsAreReadForThatJobOnly() {
+        val workflow =
+            """
+            jobs:
+              package-tests:
+                name: Package tests
+                strategy:
+                  matrix:
+                    target:
+                      - DesignSystemTests
+                      - "FeatureLinesTests"
+                steps:
+                  - uses: actions/checkout@v7
+                  - name: Test
+                    run: scripts/ios/test.sh "${'$'}TARGET"
+              other:
+                strategy:
+                  matrix:
+                    target:
+                      - OtherTests
+            """.trimIndent()
+
+        assertEquals(
+            listOf("DesignSystemTests", "FeatureLinesTests"),
+            ArchitectureRules.jobMatrixItems(workflow, "package-tests"),
+        )
+    }
+
+    @Test
     fun lb011_swiftPackagesPinnedTwiceMustAgree() {
         val manifest =
             """package.dependencies.append(.package(url: "https://github.com/pointfreeco/swift-snapshot-testing", exact: "1.19.7"))"""

@@ -187,6 +187,7 @@ jobs:
         module:
           - ":android:app"
           - ":android:core:designsystem"
+          - ":android:feature:lines"
           - ":android:feature:settings"
     steps:
       - uses: actions/checkout@v7
