@@ -5,8 +5,8 @@ import SwiftUI
 import Testing
 
 /// AGENTS.md §9 and spec §7.3: every state of the Lines list in light, dark and large text, in Spanish. At large text,
-/// no code is cut and names wrap (LB-101). References live in __Snapshots__; a missing one is recorded, and that run
-/// fails until it is committed.
+/// no code is cut and names wrap (LB-101). With no favourites, the carousel shows its hint (LB-103). References live in
+/// __Snapshots__; a missing one is recorded, and that run fails until it is committed.
 @MainActor
 struct LinesSnapshotTests {
     @Test(arguments: Appearance.allCases)
@@ -15,6 +15,15 @@ struct LinesSnapshotTests {
         let screen = try await screen(SharedDependencies.shared.preview(), settlesOn: LinesUiStateContent.self)
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy(height: appearance.wholeListHeight),
                        named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
+    func lb103_theFavouriteLines(appearance: Appearance) async throws {
+        // FR-LINE-13: the carousel's cards, in the order they were added, each as tall as the tallest.
+        let useCases = SharedDependencies.shared.preview()
+            .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 101)
+        let screen = try await screen(useCases, settlesOn: LinesUiStateContent.self)
+        assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
     @Test(arguments: Appearance.allCases)

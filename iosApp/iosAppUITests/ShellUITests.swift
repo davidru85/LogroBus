@@ -76,6 +76,65 @@ final class ShellUITests: XCTestCase {
         XCTAssertEqual(line("B1", in: app).label, "Line B1, Varea - La Cava")
     }
 
+    @MainActor
+    func test_lb103_aLineAddedFromItsRowGoesInTheCarousel_itsToggleSaysSo_andItsCardOpensIt() {
+        // FR-LINE-12 to 15, through the debug build's graph and the device's database. The simulator keeps the app's
+        // data between launches, so the test starts and ends with line 3 out of the favourites.
+        let app = launch()
+        XCTAssertTrue(line("3", in: app).waitForExistence(timeout: 10))
+        removeFavourite("3", in: app)
+
+        app.buttons["Add line 3 to favourites"].tap()
+
+        XCTAssertTrue(app.buttons["Remove line 3 from favourites"].waitForExistence(timeout: 5))
+        let card = favouriteCard("3", in: app)
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        XCTAssertTrue(app.navigationBars["Line 3"].waitForExistence(timeout: 5), "the card opened line 3")
+        back(in: app)
+        removeFavourite("3", in: app)
+        XCTAssertTrue(app.staticTexts["Tap ☆ on a line to pin it here"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func test_lb103_aLineAddedFromItsDetailIsInTheCarousel_backOnLines() {
+        // FR-LINE-09: the row opens the line's detail, whose toolbar has the toggle.
+        let app = launch()
+        XCTAssertTrue(line("3", in: app).waitForExistence(timeout: 10))
+        removeFavourite("3", in: app)
+
+        line("3", in: app).tap()
+        let detail = app.navigationBars["Line 3"]
+        XCTAssertTrue(detail.buttons["Add line 3 to favourites"].waitForExistence(timeout: 5))
+        detail.buttons["Add line 3 to favourites"].tap()
+        XCTAssertTrue(detail.buttons["Remove line 3 from favourites"].waitForExistence(timeout: 5))
+        back(in: app)
+
+        XCTAssertTrue(favouriteCard("3", in: app).waitForExistence(timeout: 5), "line 3 is in the carousel")
+        removeFavourite("3", in: app)
+    }
+
+    /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
+    @MainActor
+    private func removeFavourite(_ code: String, in app: XCUIApplication) {
+        let remove = app.buttons["Remove line \(code) from favourites"]
+        if remove.exists { remove.tap() }
+        XCTAssertTrue(app.buttons["Add line \(code) to favourites"].waitForExistence(timeout: 5))
+    }
+
+    /// The carousel's card of line `code`: like its row, it starts with the badge, and it alone says where it heads.
+    @MainActor
+    private func favouriteCard(_ code: String, in app: XCUIApplication) -> XCUIElement {
+        let card = NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", "Line \(code), ", "Towards")
+        return app.buttons.matching(card).firstMatch
+    }
+
+    /// The navigation bar's back button, to the previous screen of the tab.
+    @MainActor
+    private func back(in app: XCUIApplication) {
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+    }
+
     /// The row of the line with `code`, read as one element that starts with its badge's spoken label.
     @MainActor
     private func line(_ code: String, in app: XCUIApplication) -> XCUIElement {
