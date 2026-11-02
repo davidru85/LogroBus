@@ -38,6 +38,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - Every affected library now resolves to its fixed version or later, except the Kotlin Gradle plugin of build-logic.
   - A diff of the modules that every configuration resolves, before and after: only tool and test configurations change. The BOMs appear, Guava 33.7.2 trades `jsr305` and `checker-qual` for `jspecify`, and OpenTelemetry 1.67 adds `opentelemetry-common`. No app classpath and no iOS framework changes.
   - GitHub's advisory database has nothing against the new versions.
+- **A failing check fixed** (`AGENTS.md` §10): PR #35's SwiftLint job failed on `ubuntu-26.04`, which no longer ships `libxml2.so.2` (exit 127). PR #34 met and fixed the same change of runner image, but its fix has not reached `main`, so PR #35 cherry-picks that commit (pin `ubuntu-24.04`, and fail an install that cannot run). A rerun would have failed the same way. Whichever of the two merges second brings the same change twice, which merges cleanly.
 
 **Decisions**
 - **The Kotlin Gradle plugin alert has no floor.** A constraint raises it, but `kotlin-dsl` then runs outside the Kotlin it is built for, and every build prints "Unsupported Kotlin plugin version". Gradle 9.8 embeds Kotlin 2.4.10, still affected, so the alert waits for a Gradle release that embeds 2.4.20 or later.
