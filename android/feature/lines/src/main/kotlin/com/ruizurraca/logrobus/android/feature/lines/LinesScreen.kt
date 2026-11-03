@@ -77,8 +77,8 @@ import org.koin.androidx.compose.koinViewModel
 import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /**
- * The root of the Lines tab (LB-101, LB-103, LB-102), with its ViewModel from the graph (ADR-0014). [onOpenMore] opens
- * More, and [onOpenLine] a line's detail.
+ * The root of the Lines tab (LB-101, LB-103, LB-102, LB-110), with its ViewModel from the graph (ADR-0014).
+ * [onOpenMore] opens More, and [onOpenLine] a line's detail.
  */
 @Composable
 fun LinesRoute(
@@ -94,10 +94,11 @@ fun LinesRoute(
 
 /**
  * Renders [state] under the Lines top app bar, with the More action, and sends [onEvent]. A favourite card or a row
- * opens its line with [onOpenLine]. [search] holds the search field's text, which the screen sends as it changes
- * (FR-LINE-03); it survives configuration changes and process death.
+ * opens its line with [onOpenLine]. [favouriteLimit], when a star has just reached it, shows the limit message
+ * (FR-FAV-05). [search] holds the search field's text, which the screen sends as it changes (FR-LINE-03); it survives
+ * configuration changes and process death.
  */
-@Suppress("LongParameterList") // State and events, two ways out to the shell, the modifier, the field's hoisted state.
+@Suppress("LongParameterList") // State and events, two ways out to the shell, the modifier, the message, the field.
 @Composable
 fun LinesScreen(
     state: LinesUiState,

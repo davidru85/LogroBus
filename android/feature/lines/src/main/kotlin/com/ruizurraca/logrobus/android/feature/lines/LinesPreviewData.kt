@@ -124,6 +124,14 @@ private fun LinesNoMatchesPreview() {
     }
 }
 
+/** LB-110: the edit sheet's content; the modal sheet around it does not render in a preview. */
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun FavouriteLinesEditorPreview() {
+    PreviewTheme { FavouriteLinesEditor(LinesPreviewData.editable, onReorder = {}, onRemove = {}, onDone = {}) }
+}
+
 @PreviewLightDark
 @Composable
 private fun LinesEmptyPreview() {

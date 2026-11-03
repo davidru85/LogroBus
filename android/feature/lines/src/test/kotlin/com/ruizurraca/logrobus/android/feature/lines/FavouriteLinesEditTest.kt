@@ -45,9 +45,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * LB-110 (FR-FAV-02, FR-FAV-05, NFR-A11Y) on Android: the carousel's Edit opens a sheet with every favourite line in the
- * user's order, where a line is dragged by its handle, moved with TalkBack's actions, or removed, including one that
- * is no longer served. A star tapped at the limit shows why nothing was saved.
+ * LB-110 (FR-FAV-02, FR-FAV-05, NFR-A11Y) on Android: the carousel's Edit opens a sheet with every favourite line in
+ * the user's order, where a line is dragged by its handle, moved with TalkBack's actions, or removed, including one
+ * that is no longer served. A star tapped at the limit shows why nothing was saved.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -220,9 +220,13 @@ class FavouriteLinesEditTest {
     private fun rowsInTheSheet(): List<Int> =
         compose
             .onAllNodes(
-                SemanticsMatcher("an edit row") {
-                    it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(ROW) ==
-                        true
+                SemanticsMatcher(
+                    "an edit row",
+                ) {
+                    it.config
+                        .getOrNull(SemanticsProperties.TestTag)
+                        .orEmpty()
+                        .startsWith(ROW)
                 },
             ).fetchSemanticsNodes()
             .sortedBy { it.boundsInRoot.top }

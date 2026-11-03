@@ -137,57 +137,33 @@ private fun EditRow(
     onMoveDown: (() -> Unit)?,
     handle: Modifier,
 ) {
+    // At large text the badge goes above the name, as in the list's rows, so the name breaks between words.
     val stacked = LocalDensity.current.fontScale >= LARGE_TEXT_SCALE
-    val up = stringResource(R.string.lines_favourites_move_up)
-    val down = stringResource(R.string.lines_favourites_move_down)
-    val remove =
-        when (row) {
-            is EditableFavouriteLineUi.Served -> {
-                stringResource(R.string.lines_favourite_remove, row.code)
-            }
-
-            is EditableFavouriteLineUi.NoLongerServed -> {
-                stringResource(
-                    R.string.lines_favourites_remove_no_longer_served,
-                )
-            }
-        }
+    val badge = (row as? EditableFavouriteLineUi.Served)?.let { line -> @Composable { Badge(line) } }
+    val actions = moveActions(onMoveUp, onMoveDown)
     ListItem(
-        modifier =
-            Modifier.testTag(editRowTag(row.id)).semantics(mergeDescendants = true) {
-                customActions =
-                    listOfNotNull(
-                        onMoveUp?.let { CustomAccessibilityAction(up) { it().let { true } } },
-                        onMoveDown?.let { CustomAccessibilityAction(down) { it().let { true } } },
-                    )
-            },
+        modifier = Modifier.testTag(editRowTag(row.id)).semantics(mergeDescendants = true) { customActions = actions },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = {
             IconButton(onClick = onRemove) {
-                Icon(painterResource(DS.drawable.ic_remove), remove, tint = MaterialTheme.colorScheme.error)
+                Icon(painterResource(DS.drawable.ic_remove), removeLabel(row), tint = MaterialTheme.colorScheme.error)
             }
         },
-        // At large text the badge goes above the name, as in the list's rows, so the name breaks between words.
-        overlineContent =
-            if (stacked && row is EditableFavouriteLineUi.Served) {
-                { LineBadge(row.code, row.color, row.onColor) }
-            } else {
-                null
-            },
+        overlineContent = badge.takeIf { stacked },
         headlineContent = {
-            when (row) {
-                is EditableFavouriteLineUi.Served -> {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.m)) {
-                        if (!stacked) LineBadge(row.code, row.color, row.onColor)
+            Row(horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.m)) {
+                if (!stacked) badge?.invoke()
+                when (row) {
+                    is EditableFavouriteLineUi.Served -> {
                         Text(row.displayName)
                     }
-                }
 
-                is EditableFavouriteLineUi.NoLongerServed -> {
-                    Text(
-                        stringResource(R.string.lines_favourites_no_longer_served),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    is EditableFavouriteLineUi.NoLongerServed -> {
+                        Text(
+                            stringResource(R.string.lines_favourites_no_longer_served),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         },
@@ -199,6 +175,31 @@ private fun EditRow(
                 modifier = handle.testTag(dragHandleTag(row.id)).minimumInteractiveComponentSize(),
             )
         },
+    )
+}
+
+@Composable
+private fun Badge(line: EditableFavouriteLineUi.Served) = LineBadge(line.code, line.color, line.onColor)
+
+/** The remove button's label, which names the line as the list's toggle does (FR-LINE-15). */
+@Composable
+private fun removeLabel(row: EditableFavouriteLineUi): String =
+    when (row) {
+        is EditableFavouriteLineUi.Served -> stringResource(R.string.lines_favourite_remove, row.code)
+        is EditableFavouriteLineUi.NoLongerServed -> stringResource(R.string.lines_favourites_remove_no_longer_served)
+    }
+
+/** NFR-A11Y: "Move up" and "Move down", for the rows that can move that way, so TalkBack reorders without a drag. */
+@Composable
+private fun moveActions(
+    onMoveUp: (() -> Unit)?,
+    onMoveDown: (() -> Unit)?,
+): List<CustomAccessibilityAction> {
+    val up = stringResource(R.string.lines_favourites_move_up)
+    val down = stringResource(R.string.lines_favourites_move_down)
+    return listOfNotNull(
+        onMoveUp?.let { move -> CustomAccessibilityAction(up) { true.also { move() } } },
+        onMoveDown?.let { move -> CustomAccessibilityAction(down) { true.also { move() } } },
     )
 }
 
