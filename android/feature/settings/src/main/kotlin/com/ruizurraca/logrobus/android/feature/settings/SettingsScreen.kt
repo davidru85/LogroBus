@@ -9,19 +9,30 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
+import com.ruizurraca.logrobus.feature.settings.presentation.CacheMessage
+import com.ruizurraca.logrobus.feature.settings.presentation.SettingsEvent
+import com.ruizurraca.logrobus.feature.settings.presentation.SettingsUiState
 
-/**
- * Settings, opened from More (LB-012). Its preferences come with LB-403 (FR-SET-01): until then, its top app bar
- * alone. [onBack] leaves it.
- */
+/** Settings, opened from More (LB-012). [onBack] leaves it. */
 @Composable
-fun SettingsScreen(
+fun SettingsRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+) {
+    SettingsScreen(SettingsUiState.Loading, onEvent = {}, onBack = onBack, modifier = modifier)
+}
+
+/** Settings (LB-403, FR-SET-01): renders [state] under its top app bar, sends [onEvent], and shows [cacheMessage]. */
+@Suppress("UNUSED_PARAMETER", "UnusedParameter")
+@Composable
+fun SettingsScreen(
+    state: SettingsUiState,
+    onEvent: (SettingsEvent) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    cacheMessage: CacheMessage? = null,
 ) {
     Scaffold(
         modifier = modifier,
@@ -32,7 +43,6 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        // Empty until the content lands; the padding keeps it clear of the bars meanwhile.
         Box(
             Modifier
                 .fillMaxSize()
@@ -40,10 +50,4 @@ fun SettingsScreen(
                 .consumeWindowInsets(padding),
         )
     }
-}
-
-@PreviewLightDark
-@Composable
-private fun SettingsPreview() {
-    LogroBusTheme { SettingsScreen(onBack = {}) }
 }
