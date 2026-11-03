@@ -188,6 +188,34 @@ class LinesViewModelTest {
         }
 
     @Test
+    fun lb102_aSearchThatFindsNothingShowsNoMatches() =
+        runTest {
+            val viewModel = viewModel { flowOf(lines) }
+
+            viewModel.state.test {
+                awaitSettled()
+                viewModel.onEvent(LinesEvent.Search("tranvia"))
+
+                assertEquals(LinesUiState.NoMatches, awaitItem())
+            }
+        }
+
+    @Test
+    fun lb102_aSearchTypedBeforeTheLinesArriveFiltersThem() =
+        runTest {
+            val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
+            val viewModel = viewModel { observed }
+
+            viewModel.state.test {
+                assertEquals(LinesUiState.Loading, awaitItem())
+                viewModel.onEvent(LinesEvent.Search("varea"))
+                observed.emit(lines)
+
+                assertEquals(LinesUiMapper.state(lines, query = "varea"), awaitItem())
+            }
+        }
+
+    @Test
     fun lb102_aRetryKeepsTheSearch() =
         runTest {
             val viewModel = viewModel(Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))

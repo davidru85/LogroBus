@@ -1,6 +1,6 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
-import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -41,7 +41,7 @@ class LinesScreenshotTest(
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 LogroBusTheme(darkTheme = variant == DARK) {
                     Surface {
-                        val search = TextFieldState(queries[state].orEmpty())
+                        val search = rememberTextFieldState(queries[state].orEmpty())
                         LinesScreen(uiState, onEvent = {}, onOpenMore = {}, onOpenLine = {}, search = search)
                     }
                 }

@@ -2,6 +2,8 @@ package com.ruizurraca.logrobus.android.app
 
 import android.app.Activity
 import android.util.TypedValue
+import android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+import android.view.WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -43,6 +45,16 @@ class MainActivityTest {
     @Config(qualifiers = "es")
     fun lb001_appLaunchesOnTheLinesTab_inSpanish() {
         compose.onNode(hasText("Líneas") and isTab).assertIsSelected()
+    }
+
+    @Test
+    fun lb102_theWindowReportsTheKeyboardToCompose() {
+        // The Lines search is the app's first text field. Edge to edge, the window never resizes for the keyboard;
+        // with adjustResize it reports the keyboard as insets, which the list pads by (WindowInsets.ime).
+        val activity = compose.activity
+        val mode = activity.packageManager.getActivityInfo(activity.componentName, 0).softInputMode
+
+        assertEquals(SOFT_INPUT_ADJUST_RESIZE, mode and SOFT_INPUT_MASK_ADJUST)
     }
 
     @Test
