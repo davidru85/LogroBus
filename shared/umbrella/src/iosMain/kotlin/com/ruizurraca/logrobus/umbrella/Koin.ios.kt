@@ -1,12 +1,17 @@
 package com.ruizurraca.logrobus.umbrella
 
 import app.cash.sqldelight.db.SqlDriver
+import com.ruizurraca.logrobus.core.common.AppDispatchers
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.NotificationAppLifecycle
 import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.coreLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
+import com.ruizurraca.logrobus.core.preferences.PreferencesStore
+import com.ruizurraca.logrobus.core.preferences.userDefaultsPreferencesStore
+import com.ruizurraca.logrobus.feature.settings.data.appCaches
+import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 
@@ -38,4 +43,6 @@ private fun iosModule(
     single<LocationProvider>(createdAtStart = true) { coreLocationProvider(get()) }
     single { clientIdentity(appVersion) }
     single<SqlDriver> { logroBusDriver() } onClose { it?.close() }
+    single<PreferencesStore> { userDefaultsPreferencesStore(get()) }
+    single<AppCaches> { appCaches(get<AppDispatchers>().io, get()) }
 }

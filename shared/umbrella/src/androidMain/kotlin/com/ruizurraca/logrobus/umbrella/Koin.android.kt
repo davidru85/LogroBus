@@ -2,12 +2,17 @@ package com.ruizurraca.logrobus.umbrella
 
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
+import com.ruizurraca.logrobus.core.common.AppDispatchers
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.ProcessAppLifecycle
 import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
+import com.ruizurraca.logrobus.core.preferences.PreferencesStore
+import com.ruizurraca.logrobus.core.preferences.dataStorePreferencesStore
+import com.ruizurraca.logrobus.feature.settings.data.CacheDirectoryCaches
+import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.dsl.onClose
@@ -49,4 +54,7 @@ private fun androidModule(
     single<LocationProvider> { fusedLocationProvider(context, get()) }
     single { clientIdentity(appVersion) }
     single<SqlDriver> { logroBusDriver(context) } onClose { it?.close() }
+    // DataStore allows one instance per file in a process (ADR-0018).
+    single<PreferencesStore> { dataStorePreferencesStore(context, get()) }
+    single<AppCaches> { CacheDirectoryCaches(context.cacheDir, get<AppDispatchers>().io, get()) }
 }

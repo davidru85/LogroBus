@@ -14,6 +14,7 @@ kotlin {
         listOf(
             projects.shared.core.common,
             projects.shared.core.presentation,
+            projects.shared.core.preferences,
             projects.shared.core.telemetry,
             projects.shared.transit.domain,
             projects.shared.favourites.domain,

@@ -8,10 +8,26 @@ import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import platform.Foundation.NSBundle
+import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSString
 import platform.Foundation.NSURLCache
+import platform.Foundation.NSUserDomainMask
 import platform.Foundation.stringByAppendingPathComponent
+
+/** The app's caches on iOS: its `Library/Caches`, where the system's URL cache keeps a folder named after the bundle id. */
+fun appCaches(
+    io: CoroutineDispatcher,
+    logger: Logger,
+): AppCaches =
+    CachesDirectoryCaches(
+        directory = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true).first() as String,
+        ownedByUrlCache = setOfNotNull(NSBundle.mainBundle.bundleIdentifier),
+        io = io,
+        logger = logger,
+    )
 
 /**
  * iOS's caches: everything in the app's caches [directory], `Library/Caches` (FR-SET-01), where image and HTTP caches

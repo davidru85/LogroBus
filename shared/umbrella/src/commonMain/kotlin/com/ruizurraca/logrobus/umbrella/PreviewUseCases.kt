@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -54,6 +53,8 @@ class PreviewUseCases internal constructor() : UseCases {
     private val cachedLines = MutableStateFlow(SampleLines.all)
     private val favouriteLineIds = MutableStateFlow(emptyList<Int>())
     private val collections = MutableStateFlow(0)
+    private val preferences = MutableStateFlow(UserPreferences())
+    private val clears = MutableStateFlow(0)
 
     @Volatile private var failing = false
 
@@ -86,15 +87,14 @@ class PreviewUseCases internal constructor() : UseCases {
         apply { favouriteLineIds.update { ids -> if (id in ids) ids else ids + id } }
 
     /** Scripts the user's settings (LB-403), as if they had chosen them before. */
-    @Suppress("UNUSED_PARAMETER", "UnusedParameter")
     fun settings(
         theme: ThemePreference,
         etaFormat: EtaFormat,
-    ): PreviewUseCases = this
+    ): PreviewUseCases = apply { preferences.value = UserPreferences(theme, etaFormat) }
 
     /** How many times the cache was cleared, for a Swift test of Clear cache (LB-403). */
     val cacheClears: Int
-        get() = 0
+        get() = clears.value
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }
@@ -150,13 +150,28 @@ class PreviewUseCases internal constructor() : UseCases {
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
 
-    override fun observePreferences(): ObservePreferences = ObservePreferences { flowOf(UserPreferences()) }
+    // In memory, like the device's store: a setting changed in a preview or test shows at once.
+    override fun observePreferences(): ObservePreferences = ObservePreferences { preferences }
 
-    override fun setTheme(): SetTheme = SetTheme { AppResult.Success(Unit) }
+    override fun setTheme(): SetTheme = SetTheme { theme -> save { it.copy(theme = theme) } }
 
-    override fun setEtaFormat(): SetEtaFormat = SetEtaFormat { AppResult.Success(Unit) }
+    override fun setEtaFormat(): SetEtaFormat = SetEtaFormat { format -> save { it.copy(etaFormat = format) } }
 
-    override fun clearCache(): ClearCache = ClearCache { AppResult.Success(Unit) }
+    override fun clearCache(): ClearCache =
+        ClearCache {
+            if (failing) {
+                AppResult.Failure(AppError.Data)
+            } else {
+                clears.update { it + 1 }
+                AppResult.Success(Unit)
+            }
+        }
+
+    private fun save(change: (UserPreferences) -> UserPreferences): AppResult<Unit> {
+        if (failing) return AppResult.Failure(AppError.Data)
+        preferences.update(change)
+        return AppResult.Success(Unit)
+    }
 
     // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =
