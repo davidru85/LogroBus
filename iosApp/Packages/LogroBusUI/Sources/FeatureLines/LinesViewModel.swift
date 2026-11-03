@@ -4,8 +4,8 @@ import Observation
 // imported as pre-concurrency here.
 @preconcurrency import Shared
 
-/// The Lines tab (LB-101, LB-103, LB-102). It orchestrates only: the shared use cases and mapper build the state
-/// (ADR-0007).
+/// The Lines tab (LB-101, LB-103, LB-102, LB-110). It orchestrates only: the shared use cases and mapper build the
+/// state (ADR-0007).
 @MainActor
 @Observable
 public final class LinesViewModel {
@@ -15,6 +15,8 @@ public final class LinesViewModel {
     public private(set) var attempt = 0
     /// The search field's text (LB-102). It filters the lines already read, so a key never starts a load.
     public private(set) var query = ""
+    /// FR-FAV-05: the limit a star has just reached, for the screen's message, until the screen says it has shown it.
+    /// It lives beside the state, since a star can reach it in any state with rows.
     public private(set) var favouriteLimit: Int?
     // The use case's last result, which a new query maps again; none while a load has not answered yet.
     private var lines: AppResult<LinesWithFavourites>?
@@ -48,9 +50,10 @@ public final class LinesViewModel {
                 let toggle = try? await useCases.setFavouriteLine().invoke(
                     lineId: favourite.lineId, isFavourite: favourite.isFavourite
                 )
-                if let limit = Self.limit(reachedBy: toggle) { self.favouriteLimit = limit }
+                if let limit = limitReached(by: toggle) { self.favouriteLimit = limit }
             }
         case .reorderFavourites(let reorder):
+            // FR-FAV-02: the carousel follows through the same flow, in one change.
             Task { [useCases] in _ = try? await useCases.reorderFavouriteLines().invoke(lineIds: reorder.lineIds) }
         case .favouriteLimitShown:
             favouriteLimit = nil
@@ -63,13 +66,6 @@ public final class LinesViewModel {
             lines = result
             show()
         }
-    }
-
-    /// The limit a toggle reached, if it did (FR-FAV-05).
-    nonisolated static func limit(reachedBy toggle: AppResult<FavouriteToggle>?) -> Int? {
-        guard let saved = toggle as? AppResultSuccess<FavouriteToggle>,
-              let reached = saved.value as? FavouriteToggleLimitReached else { return nil }
-        return Int(reached.limit)
     }
 
     private func show() {

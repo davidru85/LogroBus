@@ -5,8 +5,8 @@ import Testing
 
 /// LB-101, ADR-0007 and architecture.md §5.2: the Lines ViewModel builds its state with the shared use case and mapper,
 /// retries on Retry, and leaving its screen stops the use case's collection. LB-103: a row's toggle sets its line as a
-/// favourite. LB-102: the search field's text filters the lines. LB-110: the edit sheet's new order is saved, and a star
-/// beyond the limit shows the limit message once.
+/// favourite. LB-102: the search field's text filters the lines. LB-110: the edit sheet's new order is saved, and a
+/// star beyond the limit shows the limit message once.
 @MainActor
 struct LinesViewModelTests {
     @Test
@@ -189,7 +189,8 @@ struct LinesViewModelTests {
     @Test
     func lb110_theEditSheetsNewOrderIsSaved_andTheCarouselFollows() async throws {
         // FR-FAV-02: the order persists through the use case, and the carousel shows it at once.
-        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 101)
+        let useCases = SharedDependencies.shared.preview()
+            .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 101)
         let viewModel = LinesViewModel(useCases: useCases)
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
