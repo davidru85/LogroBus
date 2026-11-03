@@ -1,8 +1,6 @@
 package com.ruizurraca.logrobus.android.feature.settings
 
 import android.content.Context
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -15,7 +13,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.preferences.EtaFormat
@@ -30,6 +27,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -96,12 +94,9 @@ class SettingsScreenTest {
     @Config(qualifiers = "en-rUS-w640dp-h360dp-land")
     fun lb403_theLanguageDialog_scrollsOnASmallScreenAtLargeText() {
         // A phone in landscape at 200 %: the three languages do not fit, and the last must still be reachable.
-        compose.setContent {
-            val density = LocalDensity.current
-            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 2f)) {
-                SettingsScreen(content, onEvent = { events += it }, onBack = {})
-            }
-        }
+        // The dialog is a window of its own, whose density comes from the configuration.
+        RuntimeEnvironment.setFontScale(2f)
+        show()
 
         text(R.string.settings_language).performClick()
         text(R.string.settings_language_english).performScrollTo().performClick()

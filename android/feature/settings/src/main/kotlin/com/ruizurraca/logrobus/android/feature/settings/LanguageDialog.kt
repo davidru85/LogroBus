@@ -2,8 +2,10 @@ package com.ruizurraca.logrobus.android.feature.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -18,6 +20,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.feature.settings.presentation.AppLanguage
 
 /** FR-SET-01: the three languages, the one in use selected. Choosing one applies it at once. */
@@ -32,7 +36,8 @@ internal fun LanguageDialog(
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) } },
         title = { Text(stringResource(R.string.settings_language)) },
         text = {
-            Column(Modifier.selectableGroup()) {
+            // On a small screen at large text the three languages do not fit, so they scroll.
+            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
                 AppLanguage.entries.forEach { language ->
                     ListItem(
                         headlineContent = { LanguageName(language) },
@@ -45,6 +50,12 @@ internal fun LanguageDialog(
             }
         },
     )
+}
+
+@PreviewLightDark
+@Composable
+private fun LanguageDialogPreview() {
+    LogroBusTheme { LanguageDialog(AppLanguage.SPANISH, onChoose = {}, onDismiss = {}) }
 }
 
 /** A language's name. Spanish and English are named in themselves, and TalkBack says each in its own language. */

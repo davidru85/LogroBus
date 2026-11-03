@@ -2,7 +2,6 @@ package com.ruizurraca.logrobus.android.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
@@ -60,9 +59,7 @@ class SettingsViewModel(
             }
 
             SettingsEvent.ClearCache -> {
-                viewModelScope.launch {
-                    message.value = if (clearCache() is AppResult.Success) CacheMessage.CLEARED else CacheMessage.FAILED
-                }
+                viewModelScope.launch { message.value = SettingsUiMapper.cacheMessage(clearCache()) }
             }
 
             SettingsEvent.CacheMessageShown -> {

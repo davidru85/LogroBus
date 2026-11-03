@@ -17,7 +17,9 @@ internal class AppCompatLanguages : AppLanguages {
     override val current: StateFlow<AppLanguage> = language.asStateFlow()
 
     /** Reads the language again, which Android's own settings may have changed since (ADR-0020). */
-    fun refresh() = Unit
+    fun refresh() {
+        language.value = languageOf(AppCompatDelegate.getApplicationLocales())
+    }
 
     override fun set(language: AppLanguage) {
         this.language.value = language

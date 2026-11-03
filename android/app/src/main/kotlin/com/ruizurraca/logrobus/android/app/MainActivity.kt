@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private val languages: AppCompatLanguages by inject()
 
     override fun attachBaseContext(newBase: Context) {
+        // ADR-0020, the one blocking read outside tests (code_style.md §2.2, owner decision, 2026-11-03): below Android
+        // 12, a few bytes once per process, so the first frame is in the saved theme.
         applySavedThemeBeforeTheFirstFrame { runBlocking { observePreferences().first().theme } }
         super.attachBaseContext(newBase)
     }
@@ -33,6 +35,7 @@ class MainActivity : AppCompatActivity() {
         // enforcement, a scrim behind the navigation bar keeps its icons readable.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // A language chosen in Android's own settings recreates the activity, while the process lives on.
         languages.refresh()
         // A theme chosen in Settings, which recreates this activity in it.
         lifecycleScope.launch {

@@ -31,9 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 import com.ruizurraca.logrobus.core.preferences.EtaFormat
@@ -175,14 +173,28 @@ private fun SectionHeading(
     )
 }
 
-/** A setting's name over its [choices], one of which is selected. */
+/**
+ * A setting's [choices], one of which is selected, under its name: a heading of their group, so TalkBack says whose
+ * choices they are, styled as a label rather than a row to tap.
+ */
 @Composable
 private fun Choices(
     @StringRes name: Int,
     choices: @Composable () -> Unit,
 ) {
-    ListItem(headlineContent = { Text(stringResource(name)) })
-    Column(Modifier.selectableGroup()) { choices() }
+    Column(Modifier.selectableGroup()) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    stringResource(name),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            },
+            modifier = Modifier.semantics { heading() },
+        )
+        choices()
+    }
 }
 
 /** One choice of a setting, a radio button with its [label] and, for the ETA format, an [example]. */
@@ -255,15 +267,3 @@ private val CacheMessage.textRes: Int
             CacheMessage.CLEARED -> R.string.settings_cache_cleared
             CacheMessage.FAILED -> R.string.settings_cache_failed
         }
-
-@PreviewLightDark
-@Composable
-private fun SettingsPreview() {
-    LogroBusTheme { SettingsScreen(SettingsPreviewData.content, onEvent = {}, onBack = {}) }
-}
-
-@PreviewLightDark
-@Composable
-private fun SettingsLoadingPreview() {
-    LogroBusTheme { SettingsScreen(SettingsUiState.Loading, onEvent = {}, onBack = {}) }
-}

@@ -15,6 +15,13 @@ android {
     }
     // VERSION_NAME and DEBUG reach the shared graph from here (LB-010).
     buildFeatures.buildConfig = true
+    // ADR-0020: the app's language is chosen in the app, so every language's strings must be installed. Play would
+    // otherwise install only the device's languages from the bundle.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 dependencies {

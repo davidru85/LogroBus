@@ -16,4 +16,10 @@ internal object SettingsPreviewData {
             EtaFormat.CLOCK_TIME,
             DataStatusUi.Synced(MadridDateTime(2026, 11, 3, 10, 30)),
         )
+
+    /** The data has never synced. */
+    val neverSynced = content.copy(dataStatus = DataStatusUi.NeverSynced)
+
+    /** The sync status could not be read: Settings' partial state. */
+    val unknown = content.copy(dataStatus = DataStatusUi.Unknown)
 }
