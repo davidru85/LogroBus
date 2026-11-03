@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -39,7 +40,10 @@ class LinesScreenshotTest(
             val fontScale = if (variant == FONT_SCALE_2) 2f else density.fontScale
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 LogroBusTheme(darkTheme = variant == DARK) {
-                    Surface { LinesScreen(uiState, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+                    Surface {
+                        val search = TextFieldState(queries[state].orEmpty())
+                        LinesScreen(uiState, onEvent = {}, onOpenMore = {}, onOpenLine = {}, search = search)
+                    }
                 }
             }
         }
@@ -57,9 +61,16 @@ class LinesScreenshotTest(
                 "content" to LinesPreviewData.content,
                 // LB-103: the carousel's cards, which "content" shows as its hint.
                 "favourites" to LinesPreviewData.favourites,
+                // LB-102: a search's results, without the carousel, and a search that found nothing.
+                "search" to LinesPreviewData.search,
+                "noMatches" to LinesPreviewData.noMatches,
                 "empty" to LinesPreviewData.empty,
                 "error" to LinesPreviewData.error,
             )
+
+        // What the search field shows in each state: the query that made it.
+        private val queries: Map<String, String> =
+            mapOf("search" to LinesPreviewData.SEARCH, "noMatches" to LinesPreviewData.NO_MATCHES)
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}_{1}")

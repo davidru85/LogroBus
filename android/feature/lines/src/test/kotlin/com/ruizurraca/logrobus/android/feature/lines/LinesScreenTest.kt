@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
 import android.content.Context
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +17,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -24,6 +26,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -45,7 +48,10 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
-/** LB-101 (FR-LINE-01, FR-LINE-02, NFR-A11Y-02) and spec §7.3 on Android: the Lines list and its states. */
+/**
+ * LB-101 (FR-LINE-01, FR-LINE-02, NFR-A11Y-02) and spec §7.3 on Android: the Lines list and its states. LB-103: the
+ * favourites. LB-102 (FR-LINE-03, FR-LINE-16): the search field.
+ */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 // Tall enough for the favourites section and every row: a lazy list composes only the rows it shows.
@@ -283,6 +289,82 @@ class LinesScreenTest {
 
         assertEquals(listOf(4), opened)
     }
+
+    @Test
+    fun lb102_theSearchFieldSendsWhatIsTyped() {
+        // FR-LINE-03: the ViewModel filters the lines by it.
+        val events = mutableListOf<LinesEvent>()
+        compose.setContent { LinesScreen(network, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {}) }
+
+        compose.onNode(hasSetTextAction() and hasText(context.getString(R.string.lines_search))).performTextInput("ca")
+        compose.waitForIdle()
+
+        assertEquals(LinesEvent.Search("ca"), events.filterIsInstance<LinesEvent.Search>().last())
+    }
+
+    @Test
+    fun lb102_searchResultsKeepTheDayAndNightGroups_withoutTheFavourites() {
+        // FR-LINE-16: "ca" finds Casa Blanca (4) and La Cava (B1); line 10 is a favourite, and its card hides too.
+        compose.setContent { LinesScreen(search(favouriteIds = listOf(10), "ca"), {}, {}, {}) }
+
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_favourites_title))).assertDoesNotExist()
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_group_day))).assertExists()
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_group_night))).assertExists()
+        compose.onNode(hasText("Casa Blanca - Yagüe") and hasClickAction()).assertExists()
+        compose.onNode(hasText("Varea - La Cava") and hasClickAction()).assertExists()
+        compose.onAllNodesWithText("El Arco - Hospital San Pedro").assertCountEquals(0)
+    }
+
+    @Test
+    fun lb102_aSearchThatFindsNothingSaysSo_andClearSearchEmptiesTheField() {
+        // Spec §7.3: one sentence and one action.
+        val events = mutableListOf<LinesEvent>()
+        val search = TextFieldState("tranvia")
+        compose.setContent {
+            LinesScreen(LinesUiState.NoMatches, { events += it }, onOpenMore = {}, onOpenLine = {}, search = search)
+        }
+
+        compose.onNodeWithText(context.getString(R.string.lines_no_matches)).assertExists()
+        compose.onNode(hasText(context.getString(DS.string.search_clear)) and hasClickAction()).performClick()
+        compose.waitForIdle()
+
+        assertEquals("", search.text.toString())
+        assertEquals(LinesEvent.Search(""), events.last())
+    }
+
+    @Test
+    fun lb102_theFieldKeepsItsTextAsTheResultsChange() {
+        // The field sits above every list state, so a new state never takes its text or the keyboard away.
+        var state by mutableStateOf(network)
+        compose.setContent { LinesScreen(state, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+        val field = compose.onNode(hasSetTextAction())
+        field.performTextInput("ca")
+
+        state = search(favouriteIds = emptyList(), "ca")
+        compose.waitForIdle()
+        field.assert(hasText("ca"))
+
+        state = LinesUiState.NoMatches
+        compose.waitForIdle()
+        field.assert(hasText("ca"))
+    }
+
+    @Test
+    fun lb102_withoutLinesThereIsNothingToSearch() {
+        // Loading, Empty and Error have no list to filter.
+        var state by mutableStateOf<LinesUiState>(LinesUiState.Empty)
+        compose.setContent { LinesScreen(state, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+
+        listOf(LinesUiState.Empty, LinesUiState.Error(ErrorReason.NETWORK), LinesUiState.Loading).forEach {
+            state = it
+            compose.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        }
+    }
+
+    private fun search(
+        favouriteIds: List<Int>,
+        query: String,
+    ) = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(networkLines, favouriteIds)), query)
 
     private fun favourites(vararg ids: Int) =
         LinesUiMapper.state(AppResult.Success(LinesWithFavourites(networkLines, favouriteIds = ids.toList())))
