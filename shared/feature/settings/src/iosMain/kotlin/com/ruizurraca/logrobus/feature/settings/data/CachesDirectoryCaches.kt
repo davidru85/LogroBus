@@ -33,12 +33,13 @@ fun appCaches(
     )
 
 /**
- * iOS's caches: everything in the app's caches [directory], `Library/Caches` (FR-SET-01), where image and HTTP caches
- * live. The entries [ownedByUrlCache], the folder the system's URL cache keeps its open database in, are left to the
- * URL cache, which empties itself. The database and the settings are in other directories, so they stay.
+ * iOS's caches: everything in the app's caches [directory], `Library/Caches` (FR-SET-01), where image caches will live,
+ * and any HTTP cache a system library keeps; the source client keeps none (`architecture.md` §4.1). The entries
+ * [ownedByUrlCache], the folder the system's URL cache keeps its open database in, are left to the URL cache, which
+ * empties itself. The database and the settings are in other directories, so they stay.
  */
 @OptIn(ExperimentalForeignApi::class)
-class CachesDirectoryCaches(
+internal class CachesDirectoryCaches(
     private val directory: String,
     private val ownedByUrlCache: Set<String>,
     private val io: CoroutineDispatcher,

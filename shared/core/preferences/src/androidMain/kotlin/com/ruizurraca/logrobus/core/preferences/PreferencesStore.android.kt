@@ -10,9 +10,6 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.datastore.DataStoreSettings
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.SupervisorJob
 import java.io.File
 
 /**
@@ -29,7 +26,7 @@ fun dataStorePreferencesStore(
 internal fun dataStorePreferencesStore(
     file: File,
     logger: Logger,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+    scope: CoroutineScope,
 ): PreferencesStore {
     val dataStore =
         PreferenceDataStoreFactory.create(

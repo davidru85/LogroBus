@@ -76,8 +76,11 @@ object SettingsUiMapper {
         SettingsUiState.Content(language, preferences.theme, preferences.etaFormat, dataStatusOf(syncs))
 
     /** What a "Clear cache" that ended with [result] leaves to say. */
-    @Suppress("UNUSED_PARAMETER", "UnusedParameter")
-    fun cacheMessage(result: AppResult<Unit>): CacheMessage = CacheMessage.CLEARED
+    fun cacheMessage(result: AppResult<Unit>): CacheMessage =
+        when (result) {
+            is AppResult.Success -> CacheMessage.CLEARED
+            is AppResult.Failure -> CacheMessage.FAILED
+        }
 
     private fun dataStatusOf(syncs: AppResult<List<DatasetSync>>): DataStatusUi =
         when (syncs) {

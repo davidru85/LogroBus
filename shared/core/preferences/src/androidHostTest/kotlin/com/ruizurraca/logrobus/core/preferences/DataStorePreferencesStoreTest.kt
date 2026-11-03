@@ -26,7 +26,7 @@ class DataStorePreferencesStoreTest {
     @Test
     fun lb403_dataStoreKeepsTheSettings_andSaysWhenTheyChange() =
         runTest {
-            val store = dataStorePreferencesStore(file, logger)
+            val store = dataStorePreferencesStore(file, logger, backgroundScope)
 
             store.preferences.test {
                 assertEquals(UserPreferences(), awaitItem())
@@ -42,7 +42,7 @@ class DataStorePreferencesStoreTest {
         runTest {
             file.parentFile?.mkdirs()
             file.writeText("not a preferences file")
-            val store = dataStorePreferencesStore(file, logger)
+            val store = dataStorePreferencesStore(file, logger, backgroundScope)
 
             assertEquals(UserPreferences(), store.preferences.first())
 

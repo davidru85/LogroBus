@@ -15,6 +15,11 @@ fun userDefaultsPreferencesStore(
     io: CoroutineDispatcher,
 ): PreferencesStore = SettingsPreferencesStore(NSUserDefaultsSettings(defaults).toFlowSettings(io), logger)
 
-/** The settings saved in [defaults], read at once, for the app's first frame. */
-@Suppress("UNUSED_PARAMETER", "UnusedParameter")
-fun savedPreferences(defaults: NSUserDefaults): UserPreferences = UserPreferences()
+/**
+ * The settings saved in [defaults], read at once: the app's first frame takes its theme from them, rather than wait
+ * for the store's first value (ADR-0020). User defaults are read synchronously, so nothing blocks on a thread.
+ */
+fun savedPreferences(defaults: NSUserDefaults): UserPreferences {
+    val saved = NSUserDefaultsSettings(defaults)
+    return preferencesOf(saved.getStringOrNull(PreferenceKeys.THEME), saved.getStringOrNull(PreferenceKeys.ETA_FORMAT))
+}

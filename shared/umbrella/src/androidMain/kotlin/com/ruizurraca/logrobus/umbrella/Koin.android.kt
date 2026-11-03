@@ -11,7 +11,7 @@ import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
 import com.ruizurraca.logrobus.core.preferences.PreferencesStore
 import com.ruizurraca.logrobus.core.preferences.dataStorePreferencesStore
-import com.ruizurraca.logrobus.feature.settings.data.CacheDirectoryCaches
+import com.ruizurraca.logrobus.feature.settings.data.appCaches
 import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -63,5 +63,5 @@ private fun androidModule(
         val graph = get<CoroutineScope>(APPLICATION_SCOPE).coroutineContext[Job]
         dataStorePreferencesStore(context, get(), CoroutineScope(get<AppDispatchers>().io + SupervisorJob(graph)))
     }
-    single<AppCaches> { CacheDirectoryCaches(context.cacheDir, get<AppDispatchers>().io, get()) }
+    single<AppCaches> { appCaches(context, get<AppDispatchers>().io, get()) }
 }
