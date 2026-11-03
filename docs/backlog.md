@@ -55,7 +55,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-107 | Vehicle animation along the shape between polls; removal after the grace period | FR-LINE-07 | P1 | todo |
 | LB-108 | Vehicle sheet: line, headsign, next stop, delay, report age | FR-LINE-08 | P1 | todo |
 | LB-109 | Provisional stops: "Provisional" tag and distinct marker | FR-LINE-11, DD-10 | P1 | todo |
-| LB-110 | Edit favourite lines: reorder by drag, remove; limit of 20 | FR-FAV-02, FR-FAV-05 | P1 | todo |
+| LB-110 | Edit favourite lines: reorder by drag, remove; limit of 20 | FR-FAV-02, FR-FAV-05 | P1 | in-progress |
 
 ## E2 Near Me (M2)
 
