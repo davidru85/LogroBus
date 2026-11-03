@@ -102,7 +102,7 @@ class PreviewUseCases internal constructor() : UseCases {
                         } else {
                             emitAll(lastSuccesses.filterNotNull().map { AppResult.Success(it) })
                         }
-                    }.counted()
+                    }.countedIn(collections)
             },
         )
 
@@ -120,7 +120,7 @@ class PreviewUseCases internal constructor() : UseCases {
                         } else {
                             emitAll(cachedLines.map { AppResult.Success(it) })
                         }
-                    }.counted()
+                    }.countedIn(collections)
             },
         )
 
@@ -166,10 +166,11 @@ class PreviewUseCases internal constructor() : UseCases {
             }
         }
 
-    private fun <T> Flow<T>.counted(): Flow<T> =
-        onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }
-
     private companion object {
         val SAMPLE_SYNC = Instant.parse("2026-10-28T09:30:00Z")
     }
 }
+
+/** Counts the collections of this flow that are running in [collections]. */
+private fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =
+    onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }
