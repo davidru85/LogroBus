@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.feature.settings.data
 
+import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
 import com.ruizurraca.logrobus.core.common.Logger
@@ -41,6 +42,22 @@ class CacheDirectoryCachesTest {
             assertTrue(cache.isDirectory)
             assertEquals("db", database.readText())
             assertEquals("settings", settings.readText())
+        }
+
+    @Test
+    fun lb403_aCacheThatCannotBeEmptied_isAFailure() =
+        runTest {
+            // A folder whose entries cannot be deleted, as one another process holds might be.
+            val locked = File(cache, "locked").apply { mkdirs() }
+            File(locked, "entry").writeText("kept")
+            locked.setWritable(false)
+            try {
+                val result = CacheDirectoryCaches(cache, StandardTestDispatcher(testScheduler), logger).clear()
+
+                assertEquals(AppResult.Failure(AppError.Data), result)
+            } finally {
+                locked.setWritable(true)
+            }
         }
 
     @Test

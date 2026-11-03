@@ -63,6 +63,12 @@ class SettingsUiMapperTest {
     }
 
     @Test
+    fun lb403_clearCache_saysItIsDone_orThatItCouldNot() {
+        assertEquals(CacheMessage.CLEARED, SettingsUiMapper.cacheMessage(AppResult.Success(Unit)))
+        assertEquals(CacheMessage.FAILED, SettingsUiMapper.cacheMessage(AppResult.Failure(AppError.Data)))
+    }
+
+    @Test
     fun lb403_aSyncStatusThatCannotBeRead_isUnknown_andTheSettingsStillShow() {
         assertEquals(
             SettingsUiState.Content(

@@ -80,7 +80,9 @@ class CachesDirectoryCachesTest {
             write(caches.path("images/0a1b"), "image")
 
             val kept = setOf("com.ruizurraca.logrobus")
-            CachesDirectoryCaches(caches, kept, StandardTestDispatcher(testScheduler), logger).clear()
+            val result = CachesDirectoryCaches(caches, kept, StandardTestDispatcher(testScheduler), logger).clear()
+
+            assertEquals(AppResult.Success(Unit), result)
 
             assertEquals(listOf<Any?>("com.ruizurraca.logrobus"), files.contentsOfDirectoryAtPath(caches, null))
         }

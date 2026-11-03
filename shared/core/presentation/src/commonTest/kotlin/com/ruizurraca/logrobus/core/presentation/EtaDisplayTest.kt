@@ -51,6 +51,17 @@ class EtaDisplayTest {
     }
 
     @Test
+    fun lb403_anArrivalAcrossTheEndOfSummerTime_isMinutesApart_andItsOwnClockTime() {
+        // 25 October 2026: at 01:00 UTC Madrid's clocks go back from 03:00 CEST to 02:00 CET. 00:55 UTC is 02:55 CEST,
+        // and 01:05 UTC, ten minutes later, is 02:05 CET: the gap is never counted on the wall clock.
+        val beforeTheChange = Instant.parse("2026-10-25T00:55:00Z")
+        val afterIt = Instant.parse("2026-10-25T01:05:00Z")
+
+        assertEquals(EtaDisplay.Minutes(10), EtaDisplay.of(afterIt, beforeTheChange, EtaFormat.MINUTES))
+        assertEquals(EtaDisplay.ClockTime(2, 5), EtaDisplay.of(afterIt, beforeTheChange, EtaFormat.CLOCK_TIME))
+    }
+
+    @Test
     fun lb403_clockTimes_areOnTheMadridClockInSummerTimeToo() {
         // 18:00 UTC is 20:00 in Madrid in CEST.
         val summer = Instant.parse("2026-07-01T18:00:00Z")

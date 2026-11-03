@@ -14,6 +14,7 @@ import com.ruizurraca.logrobus.feature.settings.data.appCaches
 import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import org.koin.dsl.module
 import org.koin.dsl.onClose
+import platform.Foundation.NSUserDefaults
 
 /**
  * Starts the dependency graph of the iOS app, once, from the app's initialiser on the main thread (ADR-0014). The app
@@ -43,6 +44,8 @@ private fun iosModule(
     single<LocationProvider>(createdAtStart = true) { coreLocationProvider(get()) }
     single { clientIdentity(appVersion) }
     single<SqlDriver> { logroBusDriver() } onClose { it?.close() }
-    single<PreferencesStore> { userDefaultsPreferencesStore(get()) }
+    single<PreferencesStore> {
+        userDefaultsPreferencesStore(get(), NSUserDefaults.standardUserDefaults, get<AppDispatchers>().io)
+    }
     single<AppCaches> { appCaches(get<AppDispatchers>().io, get()) }
 }
