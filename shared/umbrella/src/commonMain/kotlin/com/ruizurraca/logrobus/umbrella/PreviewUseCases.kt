@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.umbrella
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
@@ -130,16 +131,18 @@ class PreviewUseCases internal constructor() : UseCases {
         object : FavouriteLinesRepository {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
 
-            override suspend fun add(lineId: Int): AppResult<Boolean> {
+            override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
                 val saved = lineId !in favouriteLineIds.value
                 favouriteLineIds.update { ids -> if (lineId in ids) ids else ids + lineId }
-                return AppResult.Success(saved)
+                return AppResult.Success(if (saved) FavouriteAddition.ADDED else FavouriteAddition.ALREADY_SAVED)
             }
 
             override suspend fun remove(lineId: Int): AppResult<Unit> {
                 favouriteLineIds.update { ids -> ids - lineId }
                 return AppResult.Success(Unit)
             }
+
+            override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> = AppResult.Success(Unit)
         }
 
     private fun <T> Flow<T>.counted(): Flow<T> =

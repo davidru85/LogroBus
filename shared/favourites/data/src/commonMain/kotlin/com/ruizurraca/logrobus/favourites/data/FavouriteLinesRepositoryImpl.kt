@@ -11,6 +11,7 @@ import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.database.FavouriteQueries
 import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -44,17 +45,19 @@ class FavouriteLinesRepositoryImpl(
                 emit(AppResult.Failure(AppError.Data))
             }
 
-    override suspend fun add(lineId: Int): AppResult<Boolean> {
+    override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
         val now = clock.now()
         return write("Saving a favourite line failed") {
             // INSERT OR IGNORE changes no row for a line that is already saved.
-            insertFavourite(id = "${FavouriteTypes.LINE}:$lineId", type = FavouriteTypes.LINE, refId = "$lineId", now)
-                .value > 0
+            val rows = insertFavourite("${FavouriteTypes.LINE}:$lineId", FavouriteTypes.LINE, "$lineId", now).value
+            if (rows > 0) FavouriteAddition.ADDED else FavouriteAddition.ALREADY_SAVED
         }
     }
 
     override suspend fun remove(lineId: Int): AppResult<Unit> =
         write("Removing a favourite line failed") { deleteFavourite(FavouriteTypes.LINE, "$lineId") }
+
+    override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> = AppResult.Success(Unit)
 
     // Only this module writes line favourites: a ref that is not a number is damage, dropped and counted, never shown.
     private fun lineIdsOf(refs: List<String>): List<Int> {

@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent.FavouriteAdd.Kind
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 
 /**
@@ -32,7 +33,7 @@ class DefaultSetFavouriteLine(
         if (!isFavourite) return favourites.remove(lineId)
         return when (val saved = favourites.add(lineId)) {
             is AppResult.Success -> {
-                if (saved.value) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
+                if (saved.value == FavouriteAddition.ADDED) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
                 AppResult.Success(Unit)
             }
 
