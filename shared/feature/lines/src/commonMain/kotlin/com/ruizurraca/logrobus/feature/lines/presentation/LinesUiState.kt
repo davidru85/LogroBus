@@ -137,7 +137,13 @@ object LinesUiMapper {
         val byId = lines.associateBy { it.id }
         // A favourite whose line left the catalogue stays saved, without a card until the line comes back.
         val favourites = favouriteIds.mapNotNull { byId[it] }.map(::cardOf)
-        return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()), editable = emptyList())
+        val editable =
+            favouriteIds.map { id ->
+                byId[id]?.let { line ->
+                    EditableFavouriteLineUi.Served(line.id, line.code, line.displayName, line.color, line.onColor)
+                } ?: EditableFavouriteLineUi.NoLongerServed(id)
+            }
+        return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()), editable)
     }
 
     private fun searchResults(
