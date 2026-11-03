@@ -9,18 +9,27 @@ import com.ruizurraca.logrobus.core.common.warn
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.datastore.DataStoreSettings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import java.io.File
 
-/** The user's settings on Android, in DataStore in the app's files directory (ADR-0018). One per process. */
+/**
+ * The user's settings on Android, in DataStore in the app's files directory (ADR-0018). DataStore allows one active
+ * instance per file in a process, so there is one per graph, on a [scope] that ends with it.
+ */
 fun dataStorePreferencesStore(
     context: Context,
     logger: Logger,
-): PreferencesStore = dataStorePreferencesStore(File(context.filesDir, "datastore/$FILE_NAME"), logger)
+    scope: CoroutineScope,
+): PreferencesStore = dataStorePreferencesStore(File(context.filesDir, "datastore/$FILE_NAME"), logger, scope)
 
 @OptIn(ExperimentalSettingsApi::class, ExperimentalSettingsImplementation::class)
 internal fun dataStorePreferencesStore(
     file: File,
     logger: Logger,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
 ): PreferencesStore {
     val dataStore =
         PreferenceDataStoreFactory.create(
@@ -30,6 +39,7 @@ internal fun dataStorePreferencesStore(
                     logger.warn(TAG, "The settings file was damaged, so it starts again", cause)
                     emptyPreferences()
                 },
+            scope = scope,
             produceFile = { file },
         )
     return SettingsPreferencesStore(DataStoreSettings(dataStore), logger)
