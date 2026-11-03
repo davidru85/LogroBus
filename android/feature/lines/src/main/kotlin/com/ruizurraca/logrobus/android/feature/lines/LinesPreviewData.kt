@@ -47,6 +47,17 @@ internal object LinesPreviewData {
     /** LB-102: "ca" finds Casa Blanca, Polígono Cantabria and La Cava, without the favourites' carousel. */
     val search = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, listOf(10, 4, 101))), SEARCH)
     val noMatches = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, emptyList())), NO_MATCHES)
+
+    /**
+     * LB-110: the edit sheet's rows, in the user's order: lines 10, 4 and B1, and line 99, which has left the
+     * catalogue, so it is no longer served.
+     */
+    val editable =
+        (
+            LinesUiMapper.state(
+                AppResult.Success(LinesWithFavourites(lines, listOf(10, 4, 99, 101))),
+            ) as LinesUiState.Content
+        ).editable
     val empty: LinesUiState = LinesUiState.Empty
     val error: LinesUiState = LinesUiState.Error(ErrorReason.NETWORK)
 

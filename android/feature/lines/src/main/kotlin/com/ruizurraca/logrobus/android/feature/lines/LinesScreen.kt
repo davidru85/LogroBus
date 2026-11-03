@@ -98,6 +98,7 @@ fun LinesScreen(
     onOpenMore: () -> Unit,
     onOpenLine: (lineId: Int) -> Unit,
     modifier: Modifier = Modifier,
+    favouriteLimit: Int? = null,
     search: TextFieldState = rememberTextFieldState(),
 ) {
     val send by rememberUpdatedState(onEvent)

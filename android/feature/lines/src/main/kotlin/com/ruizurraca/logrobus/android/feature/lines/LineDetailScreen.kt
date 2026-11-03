@@ -57,6 +57,7 @@ fun LineDetailScreen(
     onEvent: (LineDetailEvent) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    favouriteLimit: Int? = null,
 ) {
     val line = (state as? LineDetailUiState.Content)?.line
     Scaffold(
