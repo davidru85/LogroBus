@@ -4,10 +4,13 @@ import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.core.os.LocaleListCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,6 +20,7 @@ import com.ruizurraca.logrobus.feature.settings.presentation.AppLanguage
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -64,9 +68,25 @@ class AppSettingsTest {
     fun lb403_choosingDarkInSettings_turnsTheAppDark() {
         compose.onNodeWithContentDescription("More").performClick()
         compose.onNodeWithText("Settings").performClick()
-        compose.onNodeWithText("Dark").performClick()
+        // The choices wait for Settings' first state, which reads the settings and the data status off the main thread.
+        eventually { compose.onAllNodes(hasText("Dark") and isEnabled()).fetchSemanticsNodes().size == 1 }
+        // On a small screen the row may sit under the navigation bar until it scrolls into view.
+        compose.onNodeWithText("Dark").performScrollTo().performClick()
 
-        compose.waitUntil(TIMEOUT_MILLIS) { AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES }
+        eventually { AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES }
+    }
+
+    /**
+     * Waits in real time for [condition]: the settings are saved on DataStore's own thread, which Compose's test clock,
+     * virtual under Robolectric, does not wait for.
+     */
+    private fun eventually(condition: () -> Boolean) {
+        var polls = 0
+        while (!condition() && polls++ < TIMEOUT_MILLIS / POLL_MILLIS) {
+            Thread.sleep(POLL_MILLIS)
+            compose.waitForIdle()
+        }
+        assertTrue("Still not so after $TIMEOUT_MILLIS ms", condition())
     }
 
     @Test
@@ -111,5 +131,6 @@ class AppSettingsTest {
     private companion object {
         const val ANDROID = "http://schemas.android.com/apk/res/android"
         const val TIMEOUT_MILLIS = 5_000L
+        const val POLL_MILLIS = 50L
     }
 }

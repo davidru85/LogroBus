@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
@@ -42,14 +43,18 @@ import com.ruizurraca.logrobus.feature.settings.presentation.CacheMessage
 import com.ruizurraca.logrobus.feature.settings.presentation.DataStatusUi
 import com.ruizurraca.logrobus.feature.settings.presentation.SettingsEvent
 import com.ruizurraca.logrobus.feature.settings.presentation.SettingsUiState
+import org.koin.androidx.compose.koinViewModel
 
-/** Settings, opened from More (LB-012). [onBack] leaves it. */
+/** Settings with its ViewModel from the graph (ADR-0014), opened from More (LB-012). [onBack] leaves it. */
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = koinViewModel(),
 ) {
-    SettingsScreen(SettingsUiState.Loading, onEvent = {}, onBack = onBack, modifier = modifier)
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val cacheMessage by viewModel.cacheMessage.collectAsStateWithLifecycle()
+    SettingsScreen(state, viewModel::onEvent, onBack, modifier, cacheMessage)
 }
 
 /**

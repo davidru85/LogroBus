@@ -20,7 +20,7 @@ open class LogroBusApplication : Application() {
             this,
             appVersion = BuildConfig.VERSION_NAME,
             debug = BuildConfig.DEBUG,
-            uiModules = listOf(linesUiModule, settingsUiModule),
+            uiModules = listOf(linesUiModule, settingsUiModule, shellModule),
         )
     }
 }

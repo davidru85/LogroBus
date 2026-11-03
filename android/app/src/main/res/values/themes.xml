@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        The window theme, shown before Compose draws (LB-011). Its light and dark variants follow the system, as
-        LogroBusTheme does; the brand colours live in the design system's Tokens, not here.
+        The window theme, shown before Compose draws (LB-011). AppCompat's DayNight, so that its light and dark
+        variants follow the app's theme, the system's or the one chosen in Settings, as LogroBusTheme does
+        (ADR-0020); the brand colours live in the design system's Tokens, not here.
     -->
-    <style name="Theme.LogroBus" parent="@android:style/Theme.Material.Light.NoActionBar" />
+    <style name="Theme.LogroBus" parent="Theme.AppCompat.DayNight.NoActionBar" />
 </resources>
