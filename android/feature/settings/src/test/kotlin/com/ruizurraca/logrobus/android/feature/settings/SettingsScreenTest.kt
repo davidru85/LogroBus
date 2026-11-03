@@ -110,7 +110,10 @@ class SettingsScreenTest {
 
         compose.onNode(isDialog()).assertExists()
         text(R.string.settings_language_spanish).assertExists()
-        compose.onNode(hasText(context.getString(R.string.settings_language_system)) and isInDialog()).assertIsSelected()
+        compose
+            .onNode(
+                hasText(context.getString(R.string.settings_language_system)) and isInDialog(),
+            ).assertIsSelected()
         text(R.string.settings_language_english).performClick()
 
         assertEquals(listOf(SettingsEvent.SetLanguage(AppLanguage.ENGLISH)), events)

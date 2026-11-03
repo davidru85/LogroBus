@@ -50,9 +50,13 @@ class SettingsViewModelTest {
         SettingsViewModel(
             observePreferences = { preferences },
             observeLastSyncs = { lastSyncs },
-            setTheme = { theme -> AppResult.Success(Unit).also { preferences.update { it.copy(theme = theme) } } },
+            setTheme = { theme ->
+                preferences.update { saved -> saved.copy(theme = theme) }
+                AppResult.Success(Unit)
+            },
             setEtaFormat = { format ->
-                AppResult.Success(Unit).also { preferences.update { it.copy(etaFormat = format) } }
+                preferences.update { saved -> saved.copy(etaFormat = format) }
+                AppResult.Success(Unit)
             },
             clearCache = { cacheClear.also { if (it is AppResult.Success) cacheClears++ } },
             languages = languages,

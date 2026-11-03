@@ -1,17 +1,9 @@
 package com.ruizurraca.logrobus.android.feature.settings
 
-import android.icu.text.SimpleDateFormat
-import android.icu.util.GregorianCalendar
-import android.icu.util.TimeZone
-import android.text.format.DateFormat
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,14 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,7 +24,6 @@ import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
-import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataEvent
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiState
 import com.ruizurraca.logrobus.feature.settings.presentation.LastSyncUi
@@ -147,24 +132,6 @@ private fun LastSyncs(
     }
 }
 
-/** A line-high bar where text will be, hidden from accessibility services. */
-@Composable
-internal fun TextPlaceholder() {
-    val lineHeight =
-        with(LocalDensity.current) {
-            MaterialTheme.typography.bodyMedium.lineHeight
-                .toDp()
-        }
-    Box(
-        Modifier
-            .fillMaxWidth(PLACEHOLDER_WIDTH)
-            .height(lineHeight)
-            .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clearAndSetSemantics {},
-    )
-}
-
 @get:StringRes
 private val StaticDataset.labelRes: Int
     get() =
@@ -172,31 +139,3 @@ private val StaticDataset.labelRes: Int
             StaticDataset.LINES -> R.string.about_dataset_lines
             StaticDataset.STOPS -> R.string.about_dataset_stops
         }
-
-/** Formats a Madrid wall-clock time in the device locale, as a medium date and a time in the device's 12/24-h style. */
-internal class DateTimeFormat(
-    pattern: String,
-    locale: java.util.Locale,
-) {
-    // The fields are already on the Madrid clock (AGENTS.md §5.5), so one fixed zone carries them through unchanged.
-    private val formatter = SimpleDateFormat(pattern, locale).apply { timeZone = TimeZone.GMT_ZONE }
-
-    fun format(time: MadridDateTime): String {
-        val calendar = GregorianCalendar(TimeZone.GMT_ZONE)
-        calendar.clear()
-        calendar.set(time.year, time.month - 1, time.day, time.hour, time.minute)
-        return formatter.format(calendar.time)
-    }
-}
-
-@Composable
-internal fun rememberDateTimeFormat(): DateTimeFormat {
-    val locale = LocalConfiguration.current.locales[0]
-    val twentyFourHour = DateFormat.is24HourFormat(LocalContext.current)
-    return remember(locale, twentyFourHour) {
-        DateTimeFormat(DateFormat.getBestDateTimePattern(locale, if (twentyFourHour) "yMMMdHm" else "yMMMdhm"), locale)
-    }
-}
-
-// A placeholder spans this share of its row: long enough to read as text, short enough not to look like content.
-private const val PLACEHOLDER_WIDTH = 0.4f

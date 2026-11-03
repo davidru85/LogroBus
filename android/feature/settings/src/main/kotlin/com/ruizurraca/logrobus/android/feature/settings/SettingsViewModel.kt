@@ -72,7 +72,8 @@ class SettingsViewModel(
     }
 
     private companion object {
-        // The reads outlive a configuration change, a new language included, and stop this long after the screen leaves.
+        // The reads outlive a configuration change, a new language's included, and stop this long after the screen
+        // leaves.
         const val STOP_DELAY_MILLIS = 5_000L
     }
 }
