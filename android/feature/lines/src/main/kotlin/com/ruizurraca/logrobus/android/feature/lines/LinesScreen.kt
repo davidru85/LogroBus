@@ -99,6 +99,7 @@ fun LinesRoute(
  * opens its line with [onOpenLine]. [search] holds the search field's text, which the screen sends as it changes
  * (FR-LINE-03); it survives configuration changes and process death.
  */
+@Suppress("LongParameterList") // State and events, two ways out to the shell, the modifier, the field's hoisted state.
 @Composable
 fun LinesScreen(
     state: LinesUiState,
@@ -221,95 +222,6 @@ private fun NoMatches(onClear: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Button(onClick = onClear) { Text(stringResource(DS.string.search_clear)) }
-    }
-}
-
-/**
- * FR-LINE-12: the favourite lines' cards in the user's order, in a carousel of fixed-width cards. With none, one hint
- * card, so the section never disappears (FR-LINE-14).
- */
-@Composable
-private fun FavouriteLines(
-    cards: List<FavouriteLineCardUi>,
-    onOpenLine: (lineId: Int) -> Unit,
-) {
-    if (cards.isEmpty()) {
-        val spoken = stringResource(R.string.lines_favourites_hint_spoken)
-        OutlinedCard(Modifier.padding(horizontal = Tokens.Spacing.l).fillMaxWidth()) {
-            Text(
-                stringResource(R.string.lines_favourites_hint),
-                // TalkBack reads words, never "white star".
-                modifier = Modifier.padding(Tokens.Spacing.l).semantics { contentDescription = spoken },
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        return
-    }
-    val carousel = rememberCarouselState { cards.size }
-    val fontScale = LocalDensity.current.fontScale
-    // The carousel centres each card in its height, so every card takes the tallest one's: a copy of each, measured at
-    // the card width and hidden from TalkBack, sets it. Names and headsigns then wrap at 200 % without a ragged row.
-    // Cards widen with the text, up to most of the row, so at 200 % a name keeps more than a word per line.
-    SubcomposeLayout { constraints ->
-        val cardWidth =
-            minOf(CARD_WIDTH.toPx() * fontScale.coerceAtLeast(1f), constraints.maxWidth * MAX_CARD_SHARE).toInt()
-        val tallest =
-            subcompose(MEASURED_CARDS) {
-                cards.forEach { card -> Box(Modifier.clearAndSetSemantics {}) { FavouriteCard(card, onOpen = null) } }
-            }.maxOf { it.measure(Constraints(maxWidth = cardWidth)).height }
-        val shown =
-            subcompose(SHOWN_CARDS) {
-                HorizontalUncontainedCarousel(
-                    state = carousel,
-                    itemWidth = cardWidth.toDp(),
-                    modifier = Modifier.height(tallest.toDp()),
-                    itemSpacing = Tokens.Spacing.s,
-                    contentPadding = PaddingValues(horizontal = Tokens.Spacing.l),
-                ) { index ->
-                    val card = cards[index]
-                    FavouriteCard(card, { onOpenLine(card.id) }, Modifier.fillMaxHeight().maskClip(CardDefaults.shape))
-                }
-            }.single().measure(constraints)
-        layout(shown.width, shown.height) { shown.place(0, 0) }
-    }
-}
-
-/**
- * FR-LINE-13: the badge, the display name in at most two lines, and both headsigns, "→ Hospital San Pedro · → Lardero".
- * TalkBack reads the card as one, the headsigns as "Towards …", and opens the line on a double tap ("open line"). With
- * no [onOpen], the copy that is only measured, it takes no input.
- */
-@Composable
-private fun FavouriteCard(
-    card: FavouriteLineCardUi,
-    onOpen: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-) {
-    val towards = card.headsigns.map { stringResource(R.string.lines_towards, it) }.joinToString(", ")
-    val open = stringResource(R.string.lines_open_line)
-    val clickable =
-        onOpen?.let { action ->
-            Modifier.clip(CardDefaults.shape).clickable(onClickLabel = open, role = Role.Button, onClick = action)
-        } ?: Modifier
-    Card(modifier = modifier.fillMaxWidth().then(clickable)) {
-        Column(Modifier.padding(Tokens.Spacing.m), verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.s)) {
-            LineBadge(card.code, card.color, card.onColor)
-            Text(
-                card.displayName,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleSmall,
-            )
-            if (card.headsigns.isNotEmpty()) {
-                Text(
-                    card.headsigns.joinToString(HEADSIGN_SEPARATOR) { "$HEADSIGN_ARROW$NO_BREAK_SPACE$it" },
-                    modifier = Modifier.semantics { contentDescription = towards },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
     }
 }
 
@@ -445,26 +357,12 @@ private const val SEARCH = "search"
 private const val NO_MATCHES = "no-matches"
 private const val FAVOURITES_HEADING = "favourites-heading"
 private const val FAVOURITES = "favourites"
-private const val MEASURED_CARDS = "measured-cards"
-private const val SHOWN_CARDS = "shown-cards"
 
 // The search field lines up with the rows' content, and keeps its distance from the first heading.
 private val SearchFieldPadding = Modifier.padding(horizontal = Tokens.Spacing.l, vertical = Tokens.Spacing.s)
 
-// Wide enough for a two-line name and a short headsign; a phone shows two cards and the edge of a third.
-private val CARD_WIDTH = 168.dp
-
-// At large text, cards widen with it, up to this share of the row, so the next card's edge still shows.
-private const val MAX_CARD_SHARE = 0.8f
-
 // From this font scale, a row puts its badge above its name (Android's 200 % is 2).
 private const val LARGE_TEXT_SCALE = 1.5f
-
-// Symbols, the same in every language; TalkBack reads the headsigns as words (lines_towards). No-break spaces keep
-// each arrow with its headsign, and the dot with the headsign before it, when the text wraps.
-private const val NO_BREAK_SPACE = '\u00A0'
-private const val HEADSIGN_ARROW = "→"
-private const val HEADSIGN_SEPARATOR = "$NO_BREAK_SPACE· "
 
 // Enough rows to fill a phone's first screen.
 private const val PLACEHOLDER_ROWS = 8
