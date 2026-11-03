@@ -125,3 +125,23 @@ struct FavouriteLinesSheet: View {
         )
     }
 }
+
+/// The edit sheet over lines 10, 4 and B1, and line 99, which has left the catalogue, so it is no longer served.
+@MainActor
+private func editing() -> some View {
+    let viewModel = LinesViewModel(
+        useCases: SharedDependencies.shared.preview()
+            .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 99).favouriteLine(id: 101)
+    )
+    return FavouriteLinesSheet(viewModel: viewModel).task { await viewModel.observe() }
+}
+
+#Preview("Edit favourite lines") {
+    editing()
+}
+
+#Preview("Edit favourite lines, dark, large text") {
+    editing()
+        .preferredColorScheme(.dark)
+        .dynamicTypeSize(.accessibility3)
+}
