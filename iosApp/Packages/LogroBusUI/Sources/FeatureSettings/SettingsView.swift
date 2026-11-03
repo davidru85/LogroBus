@@ -1,8 +1,13 @@
+import Shared
 import SwiftUI
 
-/// Settings, opened from More (LB-012). Its preferences come with LB-403 (FR-SET-01): until then, its title alone.
+/// Settings, opened from More (LB-012, LB-403).
 public struct SettingsView: View {
-    public init() {}
+    @State private var viewModel: SettingsViewModel
+
+    public init(viewModel: SettingsViewModel = SettingsViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
 
     public var body: some View {
         List {}
@@ -12,6 +17,6 @@ public struct SettingsView: View {
 
 #Preview {
     NavigationStack {
-        SettingsView()
+        SettingsView(viewModel: SettingsViewModel(useCases: SharedDependencies.shared.preview(), language: .spanish))
     }
 }

@@ -1,11 +1,13 @@
 import FeatureSettings
 @testable import LogroBus
+import Shared
 import SnapshotTesting
 import SwiftUI
 import Testing
 
-/// AGENTS.md §9: More and the Settings placeholder in light, dark and at 200 % text, in Spanish: the scheme runs the
-/// hosted tests in Spanish, because the app's strings follow the process language.
+/// AGENTS.md §9: More, and Settings' first load and content (LB-403), in light, dark and at 200 % text, in Spanish: the
+/// scheme runs the hosted tests in Spanish, because the app's strings follow the process language. Settings reads
+/// scripted use cases, not the device's settings, which a UI test may have changed.
 @MainActor
 struct ShellSnapshotTests {
     @Test(arguments: ShellScreen.allCases, ShellLook.allCases)
@@ -15,12 +17,13 @@ struct ShellSnapshotTests {
 }
 
 enum ShellScreen: CaseIterable, CustomStringConvertible, Sendable {
-    case more, settings
+    case more, settingsLoading, settingsContent
 
     var description: String {
         switch self {
         case .more: "more"
-        case .settings: "settings"
+        case .settingsLoading: "settingsLoading"
+        case .settingsContent: "settingsContent"
         }
     }
 
@@ -30,10 +33,21 @@ enum ShellScreen: CaseIterable, CustomStringConvertible, Sendable {
         NavigationStack {
             switch self {
             case .more: MoreView()
-            case .settings: SettingsView()
+            case .settingsLoading: SettingsView(viewModel: settings(SharedDependencies.shared.preview().loading()))
+            // The theme and clock times chosen, and the preview's data synced at 10:30 in Madrid.
+            case .settingsContent:
+                SettingsView(
+                    viewModel: settings(SharedDependencies.shared.preview().settings(theme: .dark, etaFormat: .clockTime))
+                )
             }
         }
     }
+}
+
+/// Settings' ViewModel over `useCases`, in Spanish, as the scheme runs the hosted tests.
+@MainActor
+private func settings(_ useCases: PreviewUseCases) -> SettingsViewModel {
+    SettingsViewModel(useCases: useCases, language: .spanish)
 }
 
 enum ShellLook: CaseIterable, CustomStringConvertible, Sendable {
