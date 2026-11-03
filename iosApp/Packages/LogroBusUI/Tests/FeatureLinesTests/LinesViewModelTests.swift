@@ -202,6 +202,24 @@ struct LinesViewModelTests {
     }
 
     @Test
+    func lb110_twoQuickNewOrdersLeaveTheLastOne() async throws {
+        // Two VoiceOver moves in a row: SKIE may start the two writes in either order unless they queue.
+        let useCases = SharedDependencies.shared.preview()
+            .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 101)
+        let viewModel = LinesViewModel(useCases: useCases)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { favourites(of: viewModel) == ["10", "4", "B1"] }
+
+        for order: [Int32] in [[4, 10, 101], [4, 101, 10], [101, 4, 10]] {
+            viewModel.onEvent(LinesEventReorderFavourites(lineIds: order.map { KotlinInt(value: $0) }))
+        }
+        try await Task.sleep(for: .milliseconds(300))
+
+        #expect(favourites(of: viewModel) == ["B1", "4", "10"])
+    }
+
+    @Test
     func lb110_aStarBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() async throws {
         // FR-FAV-05: 20 lines are favourites, ids the catalogue need not have; the toggle stays off, and says why once.
         let useCases = (201...220).reduce(SharedDependencies.shared.preview()) { $0.favouriteLine(id: Int32($1)) }

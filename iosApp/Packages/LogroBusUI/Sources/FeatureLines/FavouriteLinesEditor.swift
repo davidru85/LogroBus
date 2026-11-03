@@ -77,6 +77,10 @@ struct FavouriteLinesList: View {
         .onChange(of: rows.map(\.id)) { shown = rows }
     }
 
+    static func moving<Row>(_ rows: [Row], at index: Int, by step: Int) -> [Row] {
+        rows
+    }
+
     private func move(_ index: Int, to target: Int) {
         // `move(fromOffsets:toOffset:)` takes the place before which the row lands.
         shown.move(fromOffsets: IndexSet(integer: index), toOffset: target > index ? target + 1 : target)

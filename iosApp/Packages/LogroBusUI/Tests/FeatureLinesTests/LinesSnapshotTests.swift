@@ -64,6 +64,13 @@ struct LinesSnapshotTests {
     }
 
     @Test(arguments: Appearance.allCases)
+    func lb110_theEditSheetOnceEveryFavouriteIsRemoved(appearance: Appearance) {
+        // Spec §7.3: the carousel's hint, never a blank sheet.
+        let list = FavouriteLinesList(rows: [], onReorder: { _ in }, onRemove: { _ in })
+        assertSnapshot(of: appearance.apply(to: list), as: appearance.strategy, named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
     func lb101_theFirstLoad(appearance: Appearance) async throws {
         let useCases = SharedDependencies.shared.preview().loading()
         let screen = try await screen(useCases, settlesOn: LinesUiStateLoading.self)
