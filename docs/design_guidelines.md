@@ -99,8 +99,9 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 - A row shows the badge, the display name, a status chip when the line is not operational (FR-LINE-02), and a trailing favourite toggle with an accessible label ("Añadir línea 3 a favoritas", "Quitar línea 3 de favoritas"). Tapping the row opens Line detail ("abrir línea" to TalkBack); the toggle is its own element, a star filled in the accent colour once the line is a favourite, at least 48 dp or 44 pt to touch. It is a button, not a checkbox: its label already says the state (LB-103).
 - At large text sizes (Android from a 1.5 font scale, iOS at accessibility sizes) a row puts its badge above its name, so the name has the row's width beside the toggle and breaks between words.
 - Search filters by code, terminus or any stop name, ignoring accents and case. Results keep the grouping, and the carousel hides while a query is active.
-  - **As built (LB-102 part 1):** each word of the query must begin a word of the line's code, display name or headsigns, folded as the stop search folds them (`architecture.md` §4.3); stop names come with part 2, once the stops are cached, and the prompt says "Buscar línea" until then. Both platforms filter the list in place (owner decision, 2026-11-03): on Android the field is the list's first item, on iOS the system search field under the large title, always shown.
-  - A search that finds nothing shows one sentence, "Ninguna línea coincide con tu búsqueda." (`lines.no_matches`), which screen readers announce without moving their focus, and one action, "Borrar búsqueda" (`search.clear`), which empties the field.
+  - **As built (LB-102 part 1):** each word of the query must begin a word of the line's code, display name or headsigns, folded as the stop search folds them (`architecture.md` §4.3), and a code typed with a space or a dash ("B 1") still finds its line; stop names come with part 2, once the stops are cached, and the prompt says "Buscar línea" until then. Both platforms filter the list in place (owner decision, 2026-11-03): on Android the field is the list's first item, on iOS the system search field under the large title, always shown.
+  - A search that finds nothing shows one sentence, "Ninguna línea coincide con tu búsqueda." (`lines.no_matches`), and one action, "Borrar búsqueda" (`search.clear`), which empties the field. Screen readers announce the sentence without moving their focus: on Android it is the title of a pane that appears, since a live region speaks only when an existing node changes; on iOS, an announcement. On iOS the state keeps the grouped list's background, so the screen keeps its colour between results and none.
+  - Clearing the search, with the field's clear button or "Borrar búsqueda", leaves the focus in the field, since each button goes with the text. With text, the field keeps its prompt as its spoken name. On Android the list ends above the keyboard (`adjustResize` and the keyboard's insets), as the field heads the list and the window never pans.
   - Android shows the field only with lines to filter, and its first-load skeleton has the field's shape. On iOS the search field belongs to the navigation stack and shows in every state; a query typed during the first load filters the lines once they arrive.
 
 **Line detail**
@@ -219,7 +220,7 @@ Results                                   Itinerary detail
     - `MoreActionButton` and `UpButton`: the More action of every tab root and the back action of a pushed screen, with their spoken labels ("Más", "Atrás") and 48 dp touch targets;
     - `ScreenTitle`, a top app bar's title as a heading;
     - `ScreenTransitions`, the cross-fade between screens.
-  - Since LB-102: `SearchField`, a search field that filters what is under it as the user types: a `TextField` in the search bar's shape and colours, with Material Symbols' search icon, a 48 dp clear button once it has text ("Borrar búsqueda"), and the keyboard's search key, which closes the keyboard.
+  - Since LB-102: `SearchField`, a search field that filters what is under it as the user types: a `TextField` in the search bar's shape and colours, with Material Symbols' search icon, a 48 dp clear button once it has text ("Borrar búsqueda"), and the keyboard's search key, which closes the keyboard; and `SearchFieldPlaceholder`, its shape for a first load, as tall as the field at every text size.
 
 | Need | Component |
 | --- | --- |
@@ -252,7 +253,7 @@ Liquid Glass is the navigation and control layer that floats above content. Cont
   - `AdaptiveGlassProminentButtonStyle`, whose enabled label is `onAccent`;
 - `Tokens.Typography`.
 
-`GlassRendering` in the environment forces the iOS 18–25 fallback, for snapshots and previews.
+`GlassRendering` in the environment forces the iOS 18–25 fallback, for snapshots and previews. `Tokens.Colors.cardBackground` (LB-103) and `groupedBackground` (LB-102) are the system's grouped list colours until the brand palette (LB-413).
 
 Since LB-012, the `scrollToTopRequests` environment value counts the re-selections of a tab at its root. The shell sets it on every tab root, and a root with a scrolling list scrolls to its top whenever it changes.
 
