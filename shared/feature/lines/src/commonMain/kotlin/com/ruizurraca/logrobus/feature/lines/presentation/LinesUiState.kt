@@ -21,6 +21,7 @@ sealed interface LinesUiState {
     data class Content(
         val favourites: List<FavouriteLineCardUi>,
         val groups: List<LineGroupUi>,
+        val editable: List<EditableFavouriteLineUi>,
     ) : LinesUiState
 
     /** FR-LINE-16: the lines a search found, in the list's groups, without the favourites carousel. */
@@ -91,6 +92,22 @@ data class FavouriteLineCardUi(
     val headsigns: List<String>,
 )
 
+sealed interface EditableFavouriteLineUi {
+    val id: Int
+
+    data class Served(
+        override val id: Int,
+        val code: String,
+        val displayName: String,
+        val color: Long,
+        val onColor: Long,
+    ) : EditableFavouriteLineUi
+
+    data class NoLongerServed(
+        override val id: Int,
+    ) : EditableFavouriteLineUi
+}
+
 object LinesUiMapper {
     /** The state of [result] for the search field's [query]; with no query, the whole list and its favourites. */
     fun state(
@@ -120,7 +137,7 @@ object LinesUiMapper {
         val byId = lines.associateBy { it.id }
         // A favourite whose line left the catalogue stays saved, without a card until the line comes back.
         val favourites = favouriteIds.mapNotNull { byId[it] }.map(::cardOf)
-        return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()))
+        return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()), editable = emptyList())
     }
 
     private fun searchResults(
