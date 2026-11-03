@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.umbrella
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
@@ -136,9 +137,15 @@ class PreviewUseCases internal constructor() : UseCases {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
 
             override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
-                val saved = lineId !in favouriteLineIds.value
-                favouriteLineIds.update { ids -> if (lineId in ids) ids else ids + lineId }
-                return AppResult.Success(if (saved) FavouriteAddition.ADDED else FavouriteAddition.ALREADY_SAVED)
+                val ids = favouriteLineIds.value
+                val addition =
+                    when {
+                        lineId in ids -> FavouriteAddition.ALREADY_SAVED
+                        ids.size >= FAVOURITES_PER_TYPE -> FavouriteAddition.LIMIT_REACHED
+                        else -> FavouriteAddition.ADDED
+                    }
+                if (addition == FavouriteAddition.ADDED) favouriteLineIds.value = ids + lineId
+                return AppResult.Success(addition)
             }
 
             override suspend fun remove(lineId: Int): AppResult<Unit> {
@@ -146,7 +153,13 @@ class PreviewUseCases internal constructor() : UseCases {
                 return AppResult.Success(Unit)
             }
 
-            override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> = AppResult.Success(Unit)
+            override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> {
+                favouriteLineIds.update { ids ->
+                    val named = lineIds.filter { it in ids }.distinct()
+                    named + (ids - named.toSet())
+                }
+                return AppResult.Success(Unit)
+            }
         }
 
     private fun <T> Flow<T>.counted(): Flow<T> =

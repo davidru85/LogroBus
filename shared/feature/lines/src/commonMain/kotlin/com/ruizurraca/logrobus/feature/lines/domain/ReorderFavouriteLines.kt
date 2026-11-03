@@ -11,5 +11,5 @@ fun interface ReorderFavouriteLines {
 class DefaultReorderFavouriteLines(
     private val favourites: FavouriteLinesRepository,
 ) : ReorderFavouriteLines {
-    override suspend fun invoke(lineIds: List<Int>): AppResult<Unit> = AppResult.Success(Unit)
+    override suspend fun invoke(lineIds: List<Int>): AppResult<Unit> = favourites.reorder(lineIds)
 }

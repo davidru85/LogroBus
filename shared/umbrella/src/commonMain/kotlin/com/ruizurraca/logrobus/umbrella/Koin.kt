@@ -17,9 +17,11 @@ import com.ruizurraca.logrobus.favourites.data.FavouriteLinesRepositoryImpl
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -111,6 +113,7 @@ private fun linesModule(debug: Boolean) =
         }
         factory<ObserveLinesWithFavourites> { DefaultObserveLinesWithFavourites(get(), get()) }
         factory<SetFavouriteLine> { DefaultSetFavouriteLine(get(), get()) }
+        factory<ReorderFavouriteLines> { DefaultReorderFavouriteLines(get()) }
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */

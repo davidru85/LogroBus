@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent.FavouriteAdd.Kind
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 
@@ -47,8 +48,20 @@ class DefaultSetFavouriteLine(
         }
         return when (val saved = favourites.add(lineId)) {
             is AppResult.Success -> {
-                if (saved.value == FavouriteAddition.ADDED) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
-                AppResult.Success(FavouriteToggle.Done)
+                when (saved.value) {
+                    FavouriteAddition.ADDED -> {
+                        analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
+                        AppResult.Success(FavouriteToggle.Done)
+                    }
+
+                    FavouriteAddition.ALREADY_SAVED -> {
+                        AppResult.Success(FavouriteToggle.Done)
+                    }
+
+                    FavouriteAddition.LIMIT_REACHED -> {
+                        AppResult.Success(FavouriteToggle.LimitReached(FAVOURITES_PER_TYPE))
+                    }
+                }
             }
 
             is AppResult.Failure -> {
