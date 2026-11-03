@@ -5,7 +5,7 @@ import Testing
 
 /// LB-101, ADR-0007 and architecture.md §5.2: the Lines ViewModel builds its state with the shared use case and mapper,
 /// retries on Retry, and leaving its screen stops the use case's collection. LB-103: a row's toggle sets its line as a
-/// favourite.
+/// favourite. LB-102: the search field's text filters the lines.
 @MainActor
 struct LinesViewModelTests {
     @Test
@@ -104,6 +104,51 @@ struct LinesViewModelTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(favourites(of: viewModel) == [])
+    }
+
+    @Test
+    func lb102_aSearchFiltersTheList_andClearingItBringsTheListBack() async throws {
+        // FR-LINE-03, FR-LINE-16: the shared mapper makes the results of the search field's text, without a new load.
+        let useCases = SharedDependencies.shared.preview()
+        let viewModel = LinesViewModel(useCases: useCases)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state is LinesUiStateContent }
+
+        viewModel.onEvent(LinesEventSearch(query: "varea"))
+
+        #expect(viewModel.query == "varea")
+        let results = try #require(viewModel.state as? LinesUiStateSearchResults)
+        #expect(results.groups.map { $0.lines.map(\.code) } == [["2"], ["B1"]])
+
+        viewModel.onEvent(LinesEventSearch(query: ""))
+
+        #expect(viewModel.state is LinesUiStateContent)
+        #expect(useCases.activeCollections == 1)
+    }
+
+    @Test
+    func lb102_aSearchTypedBeforeTheLinesArriveFiltersThem() async throws {
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview())
+        viewModel.onEvent(LinesEventSearch(query: "varea"))
+        #expect(viewModel.state is LinesUiStateLoading)
+
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+
+        try await waitUntil { viewModel.state is LinesUiStateSearchResults }
+    }
+
+    @Test
+    func lb102_aSearchThatFindsNothingShowsNoMatches() async throws {
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview())
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state is LinesUiStateContent }
+
+        viewModel.onEvent(LinesEventSearch(query: "tranvia"))
+
+        #expect(viewModel.state is LinesUiStateNoMatches)
     }
 
     /// The carousel's cards, by code.
