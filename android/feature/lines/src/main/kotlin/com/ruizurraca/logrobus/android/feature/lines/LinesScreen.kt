@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,43 +21,34 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.FavouriteToggle
 import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
@@ -66,10 +57,10 @@ import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
 import com.ruizurraca.logrobus.android.core.designsystem.RetryMessage
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.SearchField
+import com.ruizurraca.logrobus.android.core.designsystem.SearchFieldPlaceholder
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.android.core.navigation.ScrollToTopOnReselect
-import com.ruizurraca.logrobus.feature.lines.presentation.FavouriteLineCardUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineGroupUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineRowUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
@@ -167,10 +158,18 @@ private fun LineList(
     onOpenLine: (lineId: Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val field = remember { FocusRequester() }
     ScrollToTopOnReselect(listState)
-    // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them.
-    LazyColumn(Modifier.consumeWindowInsets(contentPadding), listState, contentPadding) {
-        item(key = SEARCH) { SearchField(search, stringResource(R.string.lines_search), SearchFieldPadding) }
+    // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them. The list
+    // ends above the keyboard: its first item is the field, so the window never pans to show the last results.
+    LazyColumn(Modifier.consumeWindowInsets(contentPadding).imePadding(), listState, contentPadding) {
+        item(key = SEARCH) {
+            SearchField(
+                search,
+                stringResource(R.string.lines_search),
+                SearchFieldPadding.fillMaxWidth().focusRequester(field),
+            )
+        }
         when (state) {
             is LinesUiState.Content -> {
                 item(key = FAVOURITES_HEADING) { GroupHeading(R.string.lines_favourites_title) }
@@ -183,7 +182,15 @@ private fun LineList(
             }
 
             LinesUiState.NoMatches -> {
-                item(key = NO_MATCHES) { NoMatches(onClear = { search.clearText() }) }
+                item(key = NO_MATCHES) {
+                    // The button goes with this state, so the focus moves to the field rather than get lost.
+                    NoMatches(
+                        onClear = {
+                            search.clearText()
+                            field.requestFocus()
+                        },
+                    )
+                }
             }
 
             // Not a list: LinesScreen shows them on their own.
@@ -206,21 +213,22 @@ private fun LazyListScope.groups(
 }
 
 /**
- * Spec §7.3: a search that found no line says so in one sentence, which TalkBack announces without moving its focus
- * (NFR-A11Y), and offers one action, which empties the field.
+ * Spec §7.3: a search that found no line says so in one sentence and offers one action, which empties the field.
+ * TalkBack announces the sentence as the pane's title when it appears, without moving its focus (NFR-A11Y): a live
+ * region would not speak, since TalkBack only hears one whose content changes, and this node is new.
  */
 @Composable
 private fun NoMatches(onClear: () -> Unit) {
+    val message = stringResource(R.string.lines_no_matches)
     Column(
-        Modifier.fillMaxWidth().padding(Tokens.Spacing.xl),
+        Modifier
+            .fillMaxWidth()
+            .padding(Tokens.Spacing.xl)
+            .semantics { paneTitle = message },
         verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            stringResource(R.string.lines_no_matches),
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            textAlign = TextAlign.Center,
-        )
+        Text(message, textAlign = TextAlign.Center)
         Button(onClick = onClear) { Text(stringResource(DS.string.search_clear)) }
     }
 }
@@ -315,12 +323,7 @@ private fun PlaceholderRows(contentPadding: PaddingValues) {
             .padding(contentPadding)
             .clearAndSetSemantics { contentDescription = loading },
     ) {
-        Placeholder(
-            SearchFieldPadding
-                .fillMaxWidth()
-                .height(TextFieldDefaults.MinHeight)
-                .clip(SearchBarDefaults.inputFieldShape),
-        )
+        SearchFieldPlaceholder(SearchFieldPadding.fillMaxWidth())
         ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
         Placeholder(
             Modifier
