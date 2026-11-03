@@ -28,6 +28,8 @@ class LineDetailViewModel(
     observeLines: ObserveLinesWithFavourites,
     private val setFavourite: SetFavouriteLine,
 ) : ViewModel() {
+    val favouriteLimit: StateFlow<Int?> = MutableStateFlow(null)
+
     // Each Retry bumps it, which starts a new load.
     private val loads = MutableStateFlow(0)
 
@@ -55,6 +57,8 @@ class LineDetailViewModel(
 
             // FR-LINE-09: the toggle changes through the use case's flow.
             is LineDetailEvent.SetFavourite -> viewModelScope.launch { setFavourite(lineId, event.isFavourite) }
+
+            LineDetailEvent.FavouriteLimitShown -> Unit
         }
     }
 

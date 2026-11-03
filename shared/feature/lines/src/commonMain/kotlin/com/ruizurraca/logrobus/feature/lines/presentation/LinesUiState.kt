@@ -57,6 +57,12 @@ sealed interface LinesEvent {
         val lineId: Int,
         val isFavourite: Boolean,
     ) : LinesEvent
+
+    data class ReorderFavourites(
+        val lineIds: List<Int>,
+    ) : LinesEvent
+
+    data object FavouriteLimitShown : LinesEvent
 }
 
 /** The lines of one [kind], sorted by code. Each platform words the group's title. */

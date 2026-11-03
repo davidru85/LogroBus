@@ -30,6 +30,8 @@ sealed interface LineDetailEvent {
     data class SetFavourite(
         val isFavourite: Boolean,
     ) : LineDetailEvent
+
+    data object FavouriteLimitShown : LineDetailEvent
 }
 
 /** The line's badge ([code] on [color] in [onColor], ARGB), its display name, and whether it is a favourite. */

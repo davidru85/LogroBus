@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.android.feature.lines
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
@@ -26,7 +27,10 @@ import kotlinx.coroutines.launch
 class LinesViewModel(
     observeLines: ObserveLinesWithFavourites,
     private val setFavourite: SetFavouriteLine,
+    private val reorderFavourites: ReorderFavouriteLines,
 ) : ViewModel() {
+    val favouriteLimit: StateFlow<Int?> = MutableStateFlow(null)
+
     // Each Retry bumps it, which starts a new load, and with it a new sync (ADR-0008).
     private val loads = MutableStateFlow(0)
 
@@ -60,6 +64,10 @@ class LinesViewModel(
             // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a damaged
             // database the repository has logged, leaves them as they were.
             is LinesEvent.SetFavourite -> viewModelScope.launch { setFavourite(event.lineId, event.isFavourite) }
+
+            is LinesEvent.ReorderFavourites -> Unit
+
+            LinesEvent.FavouriteLimitShown -> Unit
         }
     }
 

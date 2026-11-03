@@ -77,6 +77,22 @@ class LineDetailViewModelTest {
         }
 
     @Test
+    fun lb110_aToggleBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() =
+        runTest {
+            val viewModel =
+                LineDetailViewModel(lineId = 3, { flowOf(lines) }) { _, _ ->
+                    AppResult.Success(FavouriteToggle.LimitReached(20))
+                }
+            assertEquals(null, viewModel.favouriteLimit.value)
+
+            viewModel.onEvent(LineDetailEvent.SetFavourite(isFavourite = true))
+            assertEquals(20, viewModel.favouriteLimit.value)
+
+            viewModel.onEvent(LineDetailEvent.FavouriteLimitShown)
+            assertEquals(null, viewModel.favouriteLimit.value)
+        }
+
+    @Test
     fun lb103_retryLoadsTheLineAgain() =
         runTest {
             val loads = ArrayDeque(listOf(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
