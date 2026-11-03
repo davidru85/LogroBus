@@ -14,8 +14,18 @@ public final class AppAppearance {
     }
 
     /// Runs for as long as the app: the root view calls it from `.task {}`.
-    public func observe() async {}
+    public func observe() async {
+        for await preferences in useCases.observePreferences().invoke() {
+            colorScheme = Self.colorScheme(of: preferences.theme)
+        }
+    }
 
-    /// The color scheme of [theme].
-    static func colorScheme(of theme: ThemePreference) -> ColorScheme? { nil }
+    /// The color scheme of `theme`.
+    static func colorScheme(of theme: ThemePreference) -> ColorScheme? {
+        switch theme {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
 }
