@@ -149,7 +149,7 @@ private fun LastSyncs(
 
 /** A line-high bar where text will be, hidden from accessibility services. */
 @Composable
-private fun TextPlaceholder() {
+internal fun TextPlaceholder() {
     val lineHeight =
         with(LocalDensity.current) {
             MaterialTheme.typography.bodyMedium.lineHeight
@@ -174,7 +174,7 @@ private val StaticDataset.labelRes: Int
         }
 
 /** Formats a Madrid wall-clock time in the device locale, as a medium date and a time in the device's 12/24-h style. */
-private class DateTimeFormat(
+internal class DateTimeFormat(
     pattern: String,
     locale: java.util.Locale,
 ) {
@@ -190,7 +190,7 @@ private class DateTimeFormat(
 }
 
 @Composable
-private fun rememberDateTimeFormat(): DateTimeFormat {
+internal fun rememberDateTimeFormat(): DateTimeFormat {
     val locale = LocalConfiguration.current.locales[0]
     val twentyFourHour = DateFormat.is24HourFormat(LocalContext.current)
     return remember(locale, twentyFourHour) {
