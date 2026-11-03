@@ -20,8 +20,9 @@ public struct LinesView: View {
     public var body: some View {
         content
             .navigationTitle(Text("lines.title", bundle: .module))
-            // Under the title and always shown, as Android's heads the list. A query typed during the first load
-            // filters the lines once they arrive.
+            // Under the title, always shown and in every state: the system's search belongs to the navigation stack,
+            // unlike Android's, which heads the list and shows with lines only (design_guidelines.md §3.1). A query
+            // typed during the first load filters the lines once they arrive.
             .searchable(
                 text: query,
                 placement: .navigationBarDrawer(displayMode: .always),
@@ -76,7 +77,10 @@ public struct LinesView: View {
             .buttonStyle(.bordered)
             .controlSize(.large)
         }
+        // The list's background, so the screen keeps its colour as each key moves between results and none.
+        .background(Tokens.Colors.groupedBackground)
         .onAppear {
+            // In the app's language, which the process follows; a preview forced to another locale may differ.
             AccessibilityNotification.Announcement(String(localized: "lines.no_matches", bundle: .module)).post()
         }
     }
