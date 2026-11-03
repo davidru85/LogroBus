@@ -20,21 +20,25 @@ enum class FavouriteAddition {
 
 /**
  * The user's favourite lines (FR-FAV-01, FR-LINE-12), kept on the device. They are stored by line id, so a line that
- * leaves the catalogue stays saved, with no card, until it comes back; LB-110's edit mode lets the user remove it.
- * Changes apply in the order they are made. Failures are values, never exceptions (AGENTS.md §5, rule 11).
+ * leaves the catalogue stays saved, with no card, until it comes back or the user removes it in the edit sheet
+ * (LB-110); it still counts towards the limit. Changes apply in the order they are made. Failures are values, never
+ * exceptions (AGENTS.md §5, rule 11).
  */
 interface FavouriteLinesRepository {
-    /** The favourite lines' ids in the user's order: the order they were added in, until LB-110 lets them reorder. */
+    /** The favourite lines' ids in the user's order (FR-FAV-02): each new one last, until the user reorders them. */
     fun observeFavouriteLineIds(): Flow<AppResult<List<Int>>>
 
     /**
-     * Saves [lineId] at the end (FR-LINE-15): `true`. A line that is already a favourite keeps its place, and nothing
-     * is saved: `false`.
+     * Saves [lineId] last (FR-LINE-15). A line that is already a favourite keeps its place; with
+     * [FAVOURITES_PER_TYPE] lines saved, another one is not saved (FR-FAV-05). Either way nothing changes.
      */
     suspend fun add(lineId: Int): AppResult<FavouriteAddition>
 
     suspend fun remove(lineId: Int): AppResult<Unit>
 
-    /** FR-FAV-02: puts the favourite lines in the order of [lineIds]. */
+    /**
+     * FR-FAV-02: puts the favourite lines in the order of [lineIds], in one change. A line it leaves out, one saved
+     * since the user started reordering, keeps its order after them; an id that is no longer saved is skipped.
+     */
     suspend fun reorder(lineIds: List<Int>): AppResult<Unit>
 }

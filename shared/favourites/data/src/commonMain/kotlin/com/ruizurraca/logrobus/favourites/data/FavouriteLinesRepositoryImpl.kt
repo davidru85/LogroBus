@@ -49,6 +49,7 @@ class FavouriteLinesRepositoryImpl(
     override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
         val now = clock.now()
         return write("Saving a favourite line failed") {
+            // One transaction, so the count and the insert see the same favourites.
             transactionWithResult {
                 val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList()
                 when {
@@ -74,6 +75,7 @@ class FavouriteLinesRepositoryImpl(
 
     override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> =
         write("Reordering the favourite lines failed") {
+            // One transaction: the favourites are emitted once, in their new order, never half-moved.
             transaction {
                 val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList()
                 val named = lineIds.map(Int::toString).filter { it in saved }.distinct()
