@@ -5,7 +5,8 @@ import Testing
 
 /// LB-101, ADR-0007 and architecture.md §5.2: the Lines ViewModel builds its state with the shared use case and mapper,
 /// retries on Retry, and leaving its screen stops the use case's collection. LB-103: a row's toggle sets its line as a
-/// favourite. LB-102: the search field's text filters the lines.
+/// favourite. LB-102: the search field's text filters the lines. LB-110: the edit sheet's new order is saved, and a star
+/// beyond the limit shows the limit message once.
 @MainActor
 struct LinesViewModelTests {
     @Test
@@ -183,6 +184,47 @@ struct LinesViewModelTests {
         viewModel.onEvent(LinesEventSearch(query: "va"))
 
         #expect(viewModel.state is LinesUiStateLoading)
+    }
+
+    @Test
+    func lb110_theEditSheetsNewOrderIsSaved_andTheCarouselFollows() async throws {
+        // FR-FAV-02: the order persists through the use case, and the carousel shows it at once.
+        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 101)
+        let viewModel = LinesViewModel(useCases: useCases)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { favourites(of: viewModel) == ["10", "4", "B1"] }
+
+        viewModel.onEvent(LinesEventReorderFavourites(lineIds: [101, 10, 4].map { KotlinInt(value: $0) }))
+
+        try await waitUntil { favourites(of: viewModel) == ["B1", "10", "4"] }
+    }
+
+    @Test
+    func lb110_aStarBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() async throws {
+        // FR-FAV-05: 20 lines are favourites, ids the catalogue need not have; the toggle stays off, and says why once.
+        let useCases = (201...220).reduce(SharedDependencies.shared.preview()) { $0.favouriteLine(id: Int32($1)) }
+        let viewModel = LinesViewModel(useCases: useCases)
+        #expect(viewModel.favouriteLimit == nil)
+
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: true))
+        try await waitUntil { viewModel.favouriteLimit == 20 }
+
+        viewModel.onEvent(LinesEventFavouriteLimitShown.shared)
+        #expect(viewModel.favouriteLimit == nil)
+    }
+
+    @Test
+    func lb110_aStarThatSavesShowsNoLimit() async throws {
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview())
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { favourites(of: viewModel) == [] }
+
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: true))
+        try await waitUntil { favourites(of: viewModel) == ["3"] }
+
+        #expect(viewModel.favouriteLimit == nil)
     }
 
     /// The carousel's cards, by code.

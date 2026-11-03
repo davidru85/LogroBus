@@ -15,6 +15,7 @@ public final class LinesViewModel {
     public private(set) var attempt = 0
     /// The search field's text (LB-102). It filters the lines already read, so a key never starts a load.
     public private(set) var query = ""
+    public private(set) var favouriteLimit: Int?
     // The use case's last result, which a new query maps again; none while a load has not answered yet.
     private var lines: AppResult<LinesWithFavourites>?
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
@@ -48,6 +49,10 @@ public final class LinesViewModel {
                     lineId: favourite.lineId, isFavourite: favourite.isFavourite
                 )
             }
+        case .reorderFavourites:
+            break
+        case .favouriteLimitShown:
+            break
         }
     }
 

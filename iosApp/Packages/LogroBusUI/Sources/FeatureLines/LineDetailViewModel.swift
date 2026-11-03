@@ -12,6 +12,7 @@ public final class LineDetailViewModel {
     public private(set) var state: any LineDetailUiState = LineDetailUiStateLoading.shared
     /// Bumped by Retry. The view keys its `.task` on it, so a new value starts a new `observe()`.
     public private(set) var attempt = 0
+    public private(set) var favouriteLimit: Int?
     private let lineId: Int32
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap.
@@ -38,6 +39,8 @@ public final class LineDetailViewModel {
                 await previous?.value
                 _ = try? await useCases.setFavouriteLine().invoke(lineId: lineId, isFavourite: favourite.isFavourite)
             }
+        case .favouriteLimitShown:
+            break
         }
     }
 
