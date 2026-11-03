@@ -115,6 +115,33 @@ final class ShellUITests: XCTestCase {
         removeFavourite("3", in: app)
     }
 
+    @MainActor
+    func test_lb102_aSearchFiltersTheLines_withoutTheFavourites_andClearSearchBringsThemBack() {
+        // FR-LINE-03 and FR-LINE-16, through the debug build's sample lines: "varea" finds lines 2 and B1.
+        let app = launch()
+        XCTAssertTrue(line("3", in: app).waitForExistence(timeout: 10))
+        let favourites = app.staticTexts["Your favourite lines"]
+        XCTAssertTrue(favourites.exists)
+
+        let search = app.searchFields.firstMatch
+        search.tap()
+        search.typeText("varea")
+
+        XCTAssertTrue(line("B1", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(line("2", in: app).exists)
+        XCTAssertTrue(line("3", in: app).waitForNonExistence(timeout: 5), "line 3 does not match")
+        XCTAssertFalse(favourites.exists, "the favourites hide while a search is active")
+
+        // A search that finds nothing offers one action, which empties the field.
+        search.typeText("x")
+        let clear = app.buttons["Clear search"]
+        XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        clear.tap()
+
+        XCTAssertTrue(favourites.waitForExistence(timeout: 5), "the favourites are back")
+        XCTAssertTrue(line("3", in: app).exists)
+    }
+
     /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
     @MainActor
     private func removeFavourite(_ code: String, in app: XCUIApplication) {

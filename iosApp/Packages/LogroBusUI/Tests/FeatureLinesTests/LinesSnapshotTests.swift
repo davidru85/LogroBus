@@ -5,8 +5,9 @@ import SwiftUI
 import Testing
 
 /// AGENTS.md §9 and spec §7.3: every state of the Lines list in light, dark and large text, in Spanish. At large text,
-/// no code is cut and names wrap (LB-101). With no favourites, the carousel shows its hint (LB-103). References live in
-/// __Snapshots__; a missing one is recorded, and that run fails until it is committed.
+/// no code is cut and names wrap (LB-101). With no favourites, the carousel shows its hint (LB-103). A search shows its
+/// results without the carousel, or a sentence and Clear search (LB-102). References live in __Snapshots__; a missing
+/// one is recorded, and that run fails until it is committed.
 @MainActor
 struct LinesSnapshotTests {
     @Test(arguments: Appearance.allCases)
@@ -23,6 +24,22 @@ struct LinesSnapshotTests {
         let useCases = SharedDependencies.shared.preview()
             .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 101)
         let screen = try await screen(useCases, settlesOn: LinesUiStateContent.self)
+        assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
+    func lb102_aSearch(appearance: Appearance) async throws {
+        // FR-LINE-16: the lines it found, in their groups, without the favourites; line 10 is one of them.
+        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 10)
+        let screen = try await screen(useCases, searching: "ca", settlesOn: LinesUiStateSearchResults.self)
+        assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
+    func lb102_aSearchThatFindsNothing(appearance: Appearance) async throws {
+        let screen = try await screen(
+            SharedDependencies.shared.preview(), searching: "tranvía", settlesOn: LinesUiStateNoMatches.self
+        )
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
@@ -47,9 +64,14 @@ struct LinesSnapshotTests {
     }
 
     /// The screen in its navigation stack, once its view model shows a `State`, so that the capture never races the
-    /// first load. The view's own `.task` then finds the same state.
-    private func screen<State>(_ useCases: PreviewUseCases, settlesOn _: State.Type) async throws -> some View {
+    /// first load. The view's own `.task` then finds the same state. With `query`, the search field holds it.
+    private func screen<State>(
+        _ useCases: PreviewUseCases,
+        searching query: String = "",
+        settlesOn _: State.Type
+    ) async throws -> some View {
         let viewModel = LinesViewModel(useCases: useCases)
+        viewModel.onEvent(LinesEventSearch(query: query))
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
         try await waitUntil { viewModel.state is State }
