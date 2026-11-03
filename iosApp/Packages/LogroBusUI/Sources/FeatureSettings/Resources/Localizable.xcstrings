@@ -91,6 +91,420 @@
         }
       }
     },
+    "settings.appearance": {
+      "comment": "Settings: the section with the language and the theme (LB-403).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apariencia"
+          }
+        }
+      }
+    },
+    "settings.arrivals": {
+      "comment": "Settings: the section with the ETA format (LB-403).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrivals"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Llegadas"
+          }
+        }
+      }
+    },
+    "settings.cache_cleared": {
+      "comment": "Settings: the alert once the cache is cleared (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache cleared"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caché borrada"
+          }
+        }
+      }
+    },
+    "settings.cache_failed": {
+      "comment": "Settings: the alert when the cache could not be cleared (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't clear the cache"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha podido borrar la caché"
+          }
+        }
+      }
+    },
+    "settings.clear_cache": {
+      "comment": "Settings: the action that empties the app's caches (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear cache"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar caché"
+          }
+        }
+      }
+    },
+    "settings.clear_cache.detail": {
+      "comment": "Settings: what Clear cache keeps (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your favourites and the lines and stops data are kept."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus favoritas y los datos de líneas y paradas se conservan."
+          }
+        }
+      }
+    },
+    "settings.data": {
+      "comment": "Settings: the section with the data status and Clear cache (LB-403).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos"
+          }
+        }
+      }
+    },
+    "settings.data_status": {
+      "comment": "Settings: the static data's status, by the lines and stops' last sync (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines and stops"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas y paradas"
+          }
+        }
+      }
+    },
+    "settings.data_status.never": {
+      "comment": "Settings: lines or stops have never synced (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not synced yet"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no se han sincronizado"
+          }
+        }
+      }
+    },
+    "settings.data_status.synced %@": {
+      "comment": "Settings: the date and time of the oldest last successful sync, on the Madrid clock (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizados: %@"
+          }
+        }
+      }
+    },
+    "settings.data_status.unknown": {
+      "comment": "Settings: the sync status could not be read (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't be checked right now"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se puede consultar ahora"
+          }
+        }
+      }
+    },
+    "settings.eta_format": {
+      "comment": "Settings: how arrival times show, minutes or clock time (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrival times"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formato de las llegadas"
+          }
+        }
+      }
+    },
+    "settings.eta_format.clock_time": {
+      "comment": "Settings: arrival times as clock times (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clock time"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora"
+          }
+        }
+      }
+    },
+    "settings.eta_format.footer": {
+      "comment": "Settings: an example of each ETA format (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes: “5 min”. Clock time: “10:42”."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutos: «5 min». Hora: «10:42»."
+          }
+        }
+      }
+    },
+    "settings.eta_format.minutes": {
+      "comment": "Settings: arrival times as minutes (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minutos"
+          }
+        }
+      }
+    },
+    "settings.language": {
+      "comment": "Settings: the app's language, which the row opens in the system's Settings (FR-SET-01, ADR-0020).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma"
+          }
+        }
+      }
+    },
+    "settings.language.footer": {
+      "comment": "Settings: where the app's language is changed (ADR-0020).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app's language is changed in the iPhone's Settings."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El idioma de la app se cambia en Ajustes del iPhone."
+          }
+        }
+      }
+    },
+    "settings.language.hint": {
+      "comment": "Settings: VoiceOver's hint on the language row, which opens the system's Settings (ADR-0020).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the iPhone's Settings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre Ajustes del iPhone"
+          }
+        }
+      }
+    },
+    "settings.language.system": {
+      "comment": "Settings: the language that follows the device's (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System language"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idioma del sistema"
+          }
+        }
+      }
+    },
+    "settings.theme": {
+      "comment": "Settings: the app's theme (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tema"
+          }
+        }
+      }
+    },
+    "settings.theme.dark": {
+      "comment": "Settings: the dark theme (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscuro"
+          }
+        }
+      }
+    },
+    "settings.theme.light": {
+      "comment": "Settings: the light theme (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
+          }
+        }
+      }
+    },
+    "settings.theme.system": {
+      "comment": "Settings: the theme that follows the device's (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
+          }
+        }
+      }
+    },
     "settings.title": {
       "comment": "Settings' screen title (LB-012, design_guidelines.md §9).",
       "extractionState": "manual",

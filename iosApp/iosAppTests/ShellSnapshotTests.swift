@@ -11,8 +11,17 @@ import Testing
 @MainActor
 struct ShellSnapshotTests {
     @Test(arguments: ShellScreen.allCases, ShellLook.allCases)
-    func lb012_theScreensMoreOpens(screen: ShellScreen, look: ShellLook) {
-        assertSnapshot(of: look.apply(to: screen.view), as: look.strategy, named: "\(screen)-\(look)")
+    func lb012_theScreensMoreOpens(screen: ShellScreen, look: ShellLook) async throws {
+        // Settings' content once its ViewModel has read the scripted use cases, as the screen's own task would.
+        let settings = screen.settings
+        let observation = settings.map { viewModel in Task { await viewModel.observe() } }
+        defer { observation?.cancel() }
+        if screen == .settingsContent, let settings {
+            try await waitUntil { settings.state is SettingsUiStateContent }
+        }
+
+        let view = look.apply(to: screen.view(settings: settings))
+        assertSnapshot(of: view, as: look.strategy, named: "\(screen)-\(look)")
     }
 }
 
@@ -27,27 +36,32 @@ enum ShellScreen: CaseIterable, CustomStringConvertible, Sendable {
         }
     }
 
+    /// Settings' ViewModel over scripted use cases, in Spanish, as the scheme runs the hosted tests: a first load that
+    /// never ends, or the theme and clock times chosen with the preview's data synced at 10:30 in Madrid.
+    @MainActor var settings: SettingsViewModel? {
+        switch self {
+        case .more: nil
+        case .settingsLoading:
+            SettingsViewModel(useCases: SharedDependencies.shared.preview().loading(), language: .spanish)
+        case .settingsContent:
+            SettingsViewModel(
+                useCases: SharedDependencies.shared.preview().settings(theme: .dark, etaFormat: .clockTime),
+                language: .spanish
+            )
+        }
+    }
+
     /// The screen at the root of a stack, under its navigation bar's large title. As a root it has no back button,
     /// whose Liquid Glass would need the key window; the glass is GlassSnapshotTests' concern.
-    @MainActor var view: some View {
+    @MainActor func view(settings: SettingsViewModel?) -> some View {
         NavigationStack {
-            switch self {
-            case .more: MoreView()
-            case .settingsLoading: SettingsView(viewModel: settings(SharedDependencies.shared.preview().loading()))
-            // The theme and clock times chosen, and the preview's data synced at 10:30 in Madrid.
-            case .settingsContent:
-                SettingsView(
-                    viewModel: settings(SharedDependencies.shared.preview().settings(theme: .dark, etaFormat: .clockTime))
-                )
+            if let settings {
+                SettingsView(viewModel: settings)
+            } else {
+                MoreView()
             }
         }
     }
-}
-
-/// Settings' ViewModel over `useCases`, in Spanish, as the scheme runs the hosted tests.
-@MainActor
-private func settings(_ useCases: PreviewUseCases) -> SettingsViewModel {
-    SettingsViewModel(useCases: useCases, language: .spanish)
 }
 
 enum ShellLook: CaseIterable, CustomStringConvertible, Sendable {
@@ -77,5 +91,22 @@ enum ShellLook: CaseIterable, CustomStringConvertible, Sendable {
 
     @MainActor func apply(to view: some View) -> AnyView {
         AnyView(view.environment(\.dynamicTypeSize, self == .largeText ? .accessibility3 : .large))
+    }
+}
+
+/// Waits on the main actor until `condition` holds, failing after `timeout`.
+@MainActor
+private func waitUntil(
+    timeout: Duration = .seconds(5),
+    _ condition: () -> Bool,
+    sourceLocation: SourceLocation = #_sourceLocation
+) async throws {
+    let deadline = ContinuousClock.now + timeout
+    while !condition() {
+        guard ContinuousClock.now < deadline else {
+            Issue.record("The condition did not hold within \(timeout)", sourceLocation: sourceLocation)
+            return
+        }
+        try await Task.sleep(for: .milliseconds(10))
     }
 }

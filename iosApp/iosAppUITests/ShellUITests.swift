@@ -190,7 +190,8 @@ final class ShellUITests: XCTestCase {
         let language = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Language")).firstMatch
         XCTAssertTrue(language.waitForExistence(timeout: 5))
         XCTAssertTrue(language.label.contains("English"), "the language row says English: \(language.label)")
-        XCTAssertTrue(app.buttons["Arrival times"].exists, "the ETA format's picker")
+        // A menu picker reads as its name and the choice in use.
+        XCTAssertTrue(app.buttons["Arrival times, Minutes"].exists, "the ETA format's picker")
 
         choose("Dark", in: "Theme", app: app)
         choose("System", in: "Theme", app: app)
@@ -202,15 +203,15 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(cleared.waitForNonExistence(timeout: 5))
     }
 
-    /// Chooses `option` in the menu of the picker labelled `picker`, and waits until the picker shows it.
+    /// Chooses `option` in the menu of the picker named `picker`, which reads as its name and the choice in use, and
+    /// waits until the picker shows it.
     @MainActor
     private func choose(_ option: String, in picker: String, app: XCUIApplication) {
-        let button = app.buttons[picker]
+        let button = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "\(picker), ")).firstMatch
         XCTAssertTrue(button.waitForExistence(timeout: 5))
         button.tap()
         app.buttons[option].firstMatch.tap()
-        let chosen = NSPredicate(format: "value == %@", option)
-        XCTAssertTrue(app.buttons.matching(chosen).matching(identifier: picker).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["\(picker), \(option)"].waitForExistence(timeout: 5), "\(picker) shows \(option)")
     }
 
     /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
