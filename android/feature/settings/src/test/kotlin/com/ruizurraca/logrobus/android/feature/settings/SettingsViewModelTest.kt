@@ -71,7 +71,11 @@ class SettingsViewModelTest {
     @Test
     fun lb403_theViewModelShowsWhatTheSharedMapperMakesOfTheSettings() =
         runTest {
-            viewModel().state.test {
+            val viewModel = viewModel()
+            // Before the screen reads it, Settings is loading.
+            assertEquals(SettingsUiState.Loading, viewModel.state.value)
+
+            viewModel.state.test {
                 assertEquals(
                     SettingsUiMapper.state(UserPreferences(), synced, AppLanguage.SYSTEM),
                     awaitSettled(),
