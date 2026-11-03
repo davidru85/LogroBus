@@ -101,6 +101,10 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
 - **Graphics:** test classes that assert on Compose UI use `@GraphicsMode(GraphicsMode.Mode.NATIVE)`. In the default LEGACY mode, text measures a few pixels wide and `assertIsDisplayed()` fails. Roborazzi needs NATIVE too.
 - **Espresso:** Compose UI Test brings Espresso 3.5.0, which calls `InputManager.getInstance()`, removed in API 37. Modules with Compose UI tests add `libs.androidx.test.espresso.core` (3.7.0).
 
+Two more things the app's tests learned with Settings (LB-403):
+- **Work on another thread:** Compose's test clock is virtual under Robolectric, so `waitUntil` does not wait for work on DataStore's own thread. A test that waits for a saved setting polls in real time (`AppSettingsTest.eventually`).
+- **Process-wide state:** Robolectric runs a module's tests in one process, and AppCompat keeps its night mode and application locales for the whole process. A test that sets them resets them after itself. DataStore allows one active instance per file in a process, which is why the graph gives it a scope that ends with the graph.
+
 ### 4.6 Screenshots
 
 - **Android:** Roborazzi (1.77.0) on the JVM, with Robolectric's native graphics.

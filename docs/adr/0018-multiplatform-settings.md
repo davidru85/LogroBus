@@ -23,6 +23,7 @@ Favourites and saved places are relational and live in SQLDelight (ADR-0013). Th
 - **Values:** only non-sensitive ones. No secrets or tokens (`security_privacy.md`), and no coordinates or free text.
 - **No dependency yet.** The library enters the version catalog with the first story that persists a setting, likely LB-017.
   - *Update, 2026-10-30 (LB-017):* LB-017 persists nothing. Its `ConsentStore` is held in memory and starts undecided, because no screen can record consent before LB-409's dialog and toggles. The first story that persists a setting is therefore LB-409 or LB-410 (onboarding), whichever comes first.
+  - *Update, 2026-11-03 (LB-403):* LB-403, Settings, came first. Multiplatform Settings 1.3.0 is in the version catalog, behind `PreferencesStore` in `:shared:core:preferences` (`architecture.md` §4.3), which keeps the theme and the ETA format. The Android store is the library's DataStore implementation over AndroidX DataStore 1.3.0; the iOS one is `NSUserDefaultsSettings` with the coroutines extension's flows. The app's language is the platform's own (ADR-0020).
 
 ## Consequences
 

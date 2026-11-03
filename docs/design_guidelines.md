@@ -41,7 +41,7 @@ This document covers how LogroBus looks and behaves: the three sections screen b
   - A tab root's title is its tab label, except How to Get There's, "How to get there" (`plan.title`).
   - Screen titles are headings, for TalkBack's heading navigation as for VoiceOver's (`ScreenTitle` on Android).
   - Screens cross-fade on the motion scheme's effects spring (`ScreenTransitions` on Android).
-  - Settings is a titled placeholder until LB-403. The tab roots are placeholders with their title and the More action until LB-101, LB-201 and LB-301.
+  - Settings is §2.3's (LB-403). The tab roots are placeholders with their title and the More action until LB-101, LB-201 and LB-301.
 
 ### 2.2 Where the spec screens went (ADR-0002)
 
@@ -58,6 +58,34 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 | SC-15 Manage favourites | A modal sheet from the favourite lines carousel's "Edit" (LB-110, owner decision, 2026-11-03); saved stops from the Near Me sheet's "Edit" |
 | SC-16 Settings | More → Settings (MVP) |
 | SC-18 Onboarding | Before the first tab: 3 cards (value, favourites, location rationale) |
+
+### 2.3 Settings (SC-16, FR-SET-01)
+
+```
+┌─────────────────────────────────────┐
+│ ← Ajustes                           │
+│ APARIENCIA                          │
+│ Idioma                  Español  ›  │  Android: a dialog; iOS: the iPhone's Settings
+│ Tema         Sistema · Claro · Oscuro│
+│ LLEGADAS                            │
+│ Formato de las llegadas  Minutos · Hora │  with an example of each
+│ DATOS                               │
+│ Líneas y paradas                    │
+│ Actualizados: 3 nov 2026, 10:30     │  the oldest last sync, Madrid clock
+│ Borrar caché                        │  "Tus favoritas … se conservan."
+└─────────────────────────────────────┘
+```
+
+Three sections, in the order of the owner's sketch (owner decision, 2026-11-03), and no new navigation: the data status is text, and About data stays in More.
+
+- **Language (ADR-0020):**
+  - **Android:** a row with the language in use, which opens a dialog of radio buttons: the system language, Español and English, each language named in itself and spoken by TalkBack in its own language. Choosing one applies it at once (AppCompat recreates the screen); Cancel changes nothing.
+  - **iOS:** a row with the language the app runs in, which opens the app's page in the iPhone's Settings (owner decision, 2026-11-03): iOS keeps the per-app language there and relaunches the app after a change. A footer and a VoiceOver hint say so.
+- **Theme:** System, Light or Dark, for the whole app, sheets and dialogs included. Android: radio buttons, which never cut their labels at 200 %, where segmented buttons would. iOS: a menu picker.
+- **ETA format (§6.3):** minutes or clock time, with an example of each ("5 min", "10:42").
+- **Data status:** "Lines and stops", updated at the oldest of their last successful syncs on the Madrid clock, "Not synced yet" while either has never synced, or "Can't be checked right now".
+- **Clear cache:** empties the app's caches and says what it keeps, the favourites and the lines and stops data. Its outcome is a short snackbar on Android and an alert on iOS, shown once.
+- **First load:** the same layout with nothing chosen and placeholders for the values; Android's choices are disabled, iOS's form redacted.
 
 ## 3. The three sections
 
@@ -328,6 +356,7 @@ The MVP is **iPhone only** (NFR-PLAT-03): no iPad layouts.
 | Expired data (over 120 s) | All ETAs as clock times + "Toca para actualizar" ("Tap to refresh") | none |
 
 Settings → ETA format switches between minutes and clock time (FR-SET-01).
+- **As built (LB-403):** shared code's `EtaDisplay.of(expected, now, format)` applies the rule above: Now under a minute, minutes rounded down below an hour, the Madrid clock time from an hour; in the clock-time format, every ETA is the Madrid clock time. The arrival screens (LB-205) build their `EtaUi` with it.
 
 As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minutes`, `ClockTime`), `lowConfidence`, `scheduled`, an `EtaDelay` and `cancelled`, and each platform's `EtaText` draws and speaks it.
 - The spoken label leaves out the line, which the row's `LineBadge` says, for example "approximately in 4 minutes, 3 minutes late".
@@ -412,6 +441,21 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | `more.settings` | Ajustes | Settings |
 | `more.about_data` | Sobre los datos | About data |
 | `settings.title` | Ajustes | Settings |
+| `settings.appearance`, `settings.arrivals`, `settings.data` (section headings, LB-403) | Apariencia, Llegadas, Datos | Appearance, Arrivals, Data |
+| `settings.language` | Idioma | Language |
+| `settings.language.system` | Idioma del sistema | System language |
+| Language names (never translated) | Español, English | Español, English |
+| `settings.language.footer` (iOS) | El idioma de la app se cambia en Ajustes del iPhone. | The app's language is changed in the iPhone's Settings. |
+| `settings.language.hint` (spoken, iOS) | Abre Ajustes del iPhone | Opens the iPhone's Settings |
+| `settings.cancel` (Android's language dialog) | Cancelar | Cancel |
+| `settings.theme`; `.system`, `.light`, `.dark` | Tema; Sistema, Claro, Oscuro | Theme; System, Light, Dark |
+| `settings.eta_format`; `.minutes`, `.clock_time` | Formato de las llegadas; Minutos, Hora | Arrival times; Minutes, Clock time |
+| The ETA format's examples: Android under each choice; iOS `settings.eta_format.footer` | Por ejemplo, 5 min; Por ejemplo, 10:42. iOS: Minutos: «5 min». Hora: «10:42». | For example, 5 min; For example, 10:42. iOS: Minutes: "5 min". Clock time: "10:42". |
+| `settings.data_status` | Líneas y paradas | Lines and stops |
+| `settings.data_status.synced` | Actualizados: %s | Updated: %s |
+| `settings.data_status.never`, `.unknown` | Aún no se han sincronizado; No se puede consultar ahora | Not synced yet; Can't be checked right now |
+| `settings.clear_cache`; its detail | Borrar caché; Tus favoritas y los datos de líneas y paradas se conservan. | Clear cache; Your favourites and the lines and stops data are kept. |
+| `settings.cache_cleared`, `settings.cache_failed` | Caché borrada; No se ha podido borrar la caché | Cache cleared; Couldn't clear the cache |
 | `about.title` | Sobre los datos | About data |
 | `plan.origin.current` | Mi ubicación | My location |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |

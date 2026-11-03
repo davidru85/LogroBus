@@ -97,7 +97,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | --- | --- | --- | --- | --- |
 | LB-401 | Network error handling on every screen: retry with backoff, previous data kept with its freshness, error state with reason and Retry, silent static-refresh failures (no offline mode, ADR-0008) | FR-ERR-03, FR-ERR-04, FR-ERR-05 | P0 | todo |
 | LB-402 | Standard UX states on every data-driven screen, with screenshot tests (light, dark, 200 % font) | Spec §7.3, §10.6 | P0 | todo |
-| LB-403 | Settings: language, theme, ETA format, data refresh status, clear cache | FR-SET-01 | P0 | in-progress |
+| LB-403 | Settings: language, theme, ETA format, data refresh status, clear cache. Done: three sections; the language through AppCompat on Android and the system's Settings on iOS (ADR-0020); the theme and the ETA format in `:shared:core:preferences` (ADR-0018); `EtaDisplay.of` applies the ETA format, for LB-205 | FR-SET-01 | P0 | done |
 | LB-404 | About data: data source, last sync per dataset, prediction disclaimer, attributions. Done early, with LB-010 part 2: the last sync per dataset (shared use case and mapper, both screens), reachable from More since LB-012 | FR-SET-03, NFR-PRIV-05 | P0 | in-progress |
 | LB-405 | Localisation es and en, plurals, Madrid time display, locale formatting | NFR-I18N-01 to 03 | P0 | todo |
 | LB-406 | Accessibility pass: spoken labels, 200 % font, contrast, polite announcements, list equivalents, glass legibility | NFR-A11Y-01 to 06 | P0 | todo |
