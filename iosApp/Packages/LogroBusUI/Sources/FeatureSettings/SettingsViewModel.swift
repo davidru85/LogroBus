@@ -41,8 +41,12 @@ public final class SettingsViewModel {
             queue { [useCases] in _ = try? await useCases.setEtaFormat().invoke(format: setEtaFormat.format) }
         case .clearCache:
             queue { [useCases] in
-                let cleared = try? await useCases.clearCache().invoke()
-                self.cacheMessage = cleared is AppResultSuccess<KotlinUnit> ? .cleared : .failed
+                if let result = try? await useCases.clearCache().invoke() {
+                    self.cacheMessage = SettingsUiMapper.shared.cacheMessage(result: result)
+                } else {
+                    // A clear that could not even be asked for says what a failure the platform reports says.
+                    self.cacheMessage = .failed
+                }
             }
         case .cacheMessageShown:
             cacheMessage = nil
@@ -92,8 +96,10 @@ extension AppLanguage {
     /// The language the app runs in, which iOS picks from the device's languages or the app's own (ADR-0020).
     public static var current: AppLanguage { of(localization: Bundle.main.preferredLocalizations.first) }
 
-    /// The app's language for a bundle `localization`. Spanish is the development language, which iOS falls back to.
+    /// The app's language for a bundle `localization`, whatever its region. Spanish is the development language,
+    /// which iOS falls back to.
     static func of(localization: String?) -> AppLanguage {
-        localization == "en" ? .english : .spanish
+        guard let localization else { return .spanish }
+        return Locale.Language(identifier: localization).languageCode == .english ? .english : .spanish
     }
 }

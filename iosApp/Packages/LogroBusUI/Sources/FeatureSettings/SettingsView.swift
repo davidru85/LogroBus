@@ -26,10 +26,13 @@ public struct SettingsView: View {
     @ViewBuilder private var content: some View {
         switch onEnum(of: viewModel.state) {
         case .loading:
-            // Spec §7.3: the final layout with placeholders, never a lone spinner.
+            // Spec §7.3: the final layout with placeholders, never a lone spinner. VoiceOver hears that Settings is
+            // loading rather than the sample values.
             form(Self.placeholder)
                 .redacted(reason: .placeholder)
                 .disabled(true)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("settings.loading", bundle: .module))
         case .content(let content):
             form(content)
         }
@@ -93,7 +96,13 @@ public struct SettingsView: View {
             if let settings = URL(string: UIApplication.openSettingsURLString) { openURL(settings) }
         } label: {
             LabeledContent {
-                language.name
+                HStack {
+                    language.name
+                    // The row opens the iPhone's Settings, outside the app.
+                    Image(systemName: "arrow.up.forward.app")
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                }
             } label: {
                 Text("settings.language", bundle: .module)
                     .foregroundStyle(Color.primary)
@@ -123,12 +132,13 @@ public struct SettingsView: View {
 }
 
 extension AppLanguage {
-    /// The language's name. Spanish and English are named in themselves, in every language.
+    /// The language's name. Spanish and English are named in themselves, in every language (the catalogue marks them
+    /// as not translated).
     var name: Text {
         switch self {
         case .system: Text("settings.language.system", bundle: .module)
-        case .spanish: Text(verbatim: "Español")
-        case .english: Text(verbatim: "English")
+        case .spanish: Text("settings.language.spanish", bundle: .module)
+        case .english: Text("settings.language.english", bundle: .module)
         }
     }
 }
@@ -202,6 +212,14 @@ private func settings(_ useCases: PreviewUseCases) -> some View {
     settings(SharedDependencies.shared.preview())
         .preferredColorScheme(.dark)
         .dynamicTypeSize(.accessibility3)
+}
+
+#Preview("Never synced") {
+    settings(SharedDependencies.shared.preview().neverSynced())
+}
+
+#Preview("Sync status unknown") {
+    settings(SharedDependencies.shared.preview().failing())
 }
 
 #Preview("Loading") {

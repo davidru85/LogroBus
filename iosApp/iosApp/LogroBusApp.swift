@@ -5,8 +5,8 @@ import UIKit
 
 @main
 struct LogroBusApp: App {
-    // FR-SET-01: the theme chosen in Settings. Its init only keeps the use cases, so it may come before the graph.
-    @State private var appearance = AppAppearance()
+    // FR-SET-01: the theme chosen in Settings, from the saved one, so the first frame is in it (ADR-0020).
+    @State private var appearance: AppAppearance
 
     init() {
         // ADR-0014: the shared dependency graph starts once, on the main thread, before any screen. It gets the
@@ -18,15 +18,9 @@ struct LogroBusApp: App {
             debug: Self.isDebugBuild,
             telemetry: PlatformTelemetry(analytics: nil, crashReporter: nil)
         )
-    }
-
-    /// The window style of a color scheme; nil follows the system.
-    private static func style(of scheme: ColorScheme?) -> UIUserInterfaceStyle {
-        switch scheme {
-        case .light: .light
-        case .dark: .dark
-        default: .unspecified
-        }
+        // User defaults are read synchronously, so the saved theme is known before the first frame.
+        let saved = savedPreferences(defaults: .standard)
+        _appearance = State(initialValue: AppAppearance(initial: saved.theme))
     }
 
     #if DEBUG
@@ -39,10 +33,10 @@ struct LogroBusApp: App {
         WindowGroup {
             AppShell()
                 .task { await appearance.observe() }
-                // The window's own style, so sheets and alerts follow it too, and nil gives the system's back.
-                .onChange(of: appearance.colorScheme, initial: true) { _, scheme in
+                // The windows' own style, so sheets and alerts follow it too.
+                .onChange(of: appearance.interfaceStyle, initial: true) { _, style in
                     for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
-                        for window in scene.windows { window.overrideUserInterfaceStyle = Self.style(of: scheme) }
+                        AppAppearance.apply(style, to: scene.windows)
                     }
                 }
         }

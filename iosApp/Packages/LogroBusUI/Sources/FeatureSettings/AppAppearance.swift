@@ -14,10 +14,17 @@ public final class AppAppearance {
     /// it; `observe()` then follows the changes.
     public init(useCases: any UseCases = SharedDependencies.shared, initial: ThemePreference = .system) {
         self.useCases = useCases
+        colorScheme = Self.colorScheme(of: initial)
     }
 
     /// The windows' interface style for the theme; unspecified follows the system.
-    public var interfaceStyle: UIUserInterfaceStyle { .unspecified }
+    public var interfaceStyle: UIUserInterfaceStyle {
+        switch colorScheme {
+        case .light: .light
+        case .dark: .dark
+        default: .unspecified
+        }
+    }
 
     /// Runs for as long as the app: the root view calls it from `.task {}`.
     public func observe() async {
@@ -26,8 +33,11 @@ public final class AppAppearance {
         }
     }
 
-    /// Gives `windows` the interface `style`, so their sheets and alerts follow it too.
-    public static func apply(_ style: UIUserInterfaceStyle, to windows: [UIWindow]) {}
+    /// Gives `windows` the interface `style`, so their sheets and alerts follow it too; unspecified gives the
+    /// system's back, which `.preferredColorScheme(nil)` would not.
+    public static func apply(_ style: UIUserInterfaceStyle, to windows: [UIWindow]) {
+        for window in windows { window.overrideUserInterfaceStyle = style }
+    }
 
     /// The color scheme of `theme`.
     static func colorScheme(of theme: ThemePreference) -> ColorScheme? {

@@ -379,6 +379,25 @@
         }
       }
     },
+    "settings.language.english": {
+      "comment": "Settings: English, named in itself in every language (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "settings.language.footer": {
       "comment": "Settings: where the app's language is changed (ADR-0020).",
       "extractionState": "manual",
@@ -415,6 +434,25 @@
         }
       }
     },
+    "settings.language.spanish": {
+      "comment": "Settings: Spanish, named in itself in every language (FR-SET-01).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Español"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Español"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "settings.language.system": {
       "comment": "Settings: the language that follows the device's (FR-SET-01).",
       "extractionState": "manual",
@@ -429,6 +467,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Idioma del sistema"
+          }
+        }
+      }
+    },
+    "settings.loading": {
+      "comment": "Settings: spoken while Settings loads, instead of its sample values (spec §7.3).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading settings"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando ajustes"
           }
         }
       }

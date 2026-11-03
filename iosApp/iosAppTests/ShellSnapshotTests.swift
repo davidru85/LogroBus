@@ -28,7 +28,7 @@ struct ShellSnapshotTests {
         }
 
         let view = look.apply(to: NavigationStack { SettingsView(viewModel: settings) })
-        let strategy = look == .largeText ? look.strategy(height: 1_400) : look.strategy
+        let strategy = look == .largeText ? look.strategy(height: 1_600) : look.strategy
         assertSnapshot(of: view, as: strategy, named: "\(state)-\(look)")
     }
 }
