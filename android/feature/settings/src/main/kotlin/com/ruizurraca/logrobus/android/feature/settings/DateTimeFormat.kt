@@ -34,5 +34,3 @@ internal fun rememberDateTimeFormat(): DateTimeFormat {
         DateTimeFormat(DateFormat.getBestDateTimePattern(locale, if (twentyFourHour) "yMMMdHm" else "yMMMdhm"), locale)
     }
 }
-
-// A placeholder spans this share of its row: long enough to read as text, short enough not to look like content.

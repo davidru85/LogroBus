@@ -73,8 +73,8 @@ class SettingsScreenTest {
             R.string.settings_theme_light,
             R.string.settings_theme_dark,
             R.string.settings_eta_format,
-            R.string.settings_eta_minutes,
-            R.string.settings_eta_clock_time,
+            R.string.settings_eta_format_minutes,
+            R.string.settings_eta_format_clock_time,
             R.string.settings_data_status,
             R.string.settings_clear_cache,
         ).forEach { text(it).performScrollTo().assertExists() }
@@ -110,8 +110,8 @@ class SettingsScreenTest {
 
         text(R.string.settings_theme_dark).assertIsSelected()
         text(R.string.settings_theme_system).assertIsNotSelected()
-        text(R.string.settings_eta_clock_time).assertIsSelected()
-        text(R.string.settings_eta_minutes).assertIsNotSelected()
+        text(R.string.settings_eta_format_clock_time).assertIsSelected()
+        text(R.string.settings_eta_format_minutes).assertIsNotSelected()
     }
 
     @Test
@@ -119,7 +119,7 @@ class SettingsScreenTest {
         show()
 
         text(R.string.settings_theme_light).performClick()
-        text(R.string.settings_eta_minutes).performScrollTo().performClick()
+        text(R.string.settings_eta_format_minutes).performScrollTo().performClick()
 
         assertEquals(
             listOf(SettingsEvent.SetTheme(ThemePreference.LIGHT), SettingsEvent.SetEtaFormat(EtaFormat.MINUTES)),
@@ -164,15 +164,15 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun lb403_theDataStatus_saysWhenTheDataHasNotSyncedOrCannotBeChecked() {
+    fun lb403_theDataStatus_saysWhenTheDataHasNotSynced() {
         show(content.copy(dataStatus = DataStatusUi.NeverSynced))
-        text(R.string.settings_data_never_synced).performScrollTo().assertExists()
+        text(R.string.settings_data_status_never).performScrollTo().assertExists()
     }
 
     @Test
     fun lb403_aStatusThatCannotBeRead_saysSo() {
         show(content.copy(dataStatus = DataStatusUi.Unknown))
-        text(R.string.settings_data_unknown).performScrollTo().assertExists()
+        text(R.string.settings_data_status_unknown).performScrollTo().assertExists()
     }
 
     @Test

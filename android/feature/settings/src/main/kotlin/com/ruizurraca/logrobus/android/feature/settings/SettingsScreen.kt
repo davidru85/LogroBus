@@ -18,6 +18,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -70,18 +72,27 @@ fun SettingsScreen(
 ) {
     val snackbars = remember { SnackbarHostState() }
     CacheMessageSnackbar(cacheMessage, snackbars) { onEvent(SettingsEvent.CacheMessageShown) }
+    // The bar takes its scrolled colour while the rows run under it, as on Lines.
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = { ScreenTitle(stringResource(R.string.settings_title)) },
                 navigationIcon = { UpButton(onClick = onBack) },
+                scrollBehavior = scrollBehavior,
             )
         },
         snackbarHost = { SnackbarHost(snackbars) },
     ) { padding ->
-        // Spec §7.3: the first load shows the final layout, with nothing chosen yet.
-        SettingsContent(state as? SettingsUiState.Content, onEvent, padding)
+        val content =
+            when (state) {
+                // Spec §7.3: the first load shows the final layout, with nothing chosen yet.
+                SettingsUiState.Loading -> null
+
+                is SettingsUiState.Content -> state
+            }
+        SettingsContent(content, onEvent, padding)
     }
 }
 
@@ -149,9 +160,9 @@ private fun DataStatus(status: DataStatusUi) {
     val format = rememberDateTimeFormat()
     Text(
         when (status) {
-            is DataStatusUi.Synced -> stringResource(R.string.settings_data_synced, format.format(status.at))
-            DataStatusUi.NeverSynced -> stringResource(R.string.settings_data_never_synced)
-            DataStatusUi.Unknown -> stringResource(R.string.settings_data_unknown)
+            is DataStatusUi.Synced -> stringResource(R.string.settings_data_status_synced, format.format(status.at))
+            DataStatusUi.NeverSynced -> stringResource(R.string.settings_data_status_never)
+            DataStatusUi.Unknown -> stringResource(R.string.settings_data_status_unknown)
         },
     )
 }
@@ -248,16 +259,16 @@ private val ThemePreference.labelRes: Int
 private val EtaFormat.labelRes: Int
     get() =
         when (this) {
-            EtaFormat.MINUTES -> R.string.settings_eta_minutes
-            EtaFormat.CLOCK_TIME -> R.string.settings_eta_clock_time
+            EtaFormat.MINUTES -> R.string.settings_eta_format_minutes
+            EtaFormat.CLOCK_TIME -> R.string.settings_eta_format_clock_time
         }
 
 @get:StringRes
 private val EtaFormat.exampleRes: Int
     get() =
         when (this) {
-            EtaFormat.MINUTES -> R.string.settings_eta_minutes_example
-            EtaFormat.CLOCK_TIME -> R.string.settings_eta_clock_time_example
+            EtaFormat.MINUTES -> R.string.settings_eta_format_minutes_example
+            EtaFormat.CLOCK_TIME -> R.string.settings_eta_format_clock_time_example
         }
 
 @get:StringRes

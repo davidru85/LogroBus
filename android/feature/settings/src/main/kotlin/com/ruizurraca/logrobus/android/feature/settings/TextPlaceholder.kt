@@ -29,4 +29,5 @@ internal fun TextPlaceholder() {
     )
 }
 
+// A placeholder spans this share of its row: long enough to read as text, short enough not to look like content.
 private const val PLACEHOLDER_WIDTH = 0.4f

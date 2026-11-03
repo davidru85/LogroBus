@@ -24,16 +24,16 @@
     <string name="settings_theme_dark">Oscuro</string>
     <string name="settings_arrivals">Llegadas</string>
     <string name="settings_eta_format">Formato de las llegadas</string>
-    <string name="settings_eta_minutes">Minutos</string>
-    <string name="settings_eta_minutes_example">Por ejemplo, 5 min</string>
-    <string name="settings_eta_clock_time">Hora</string>
-    <string name="settings_eta_clock_time_example">Por ejemplo, 10:42</string>
+    <string name="settings_eta_format_minutes">Minutos</string>
+    <string name="settings_eta_format_minutes_example">Por ejemplo, 5 min</string>
+    <string name="settings_eta_format_clock_time">Hora</string>
+    <string name="settings_eta_format_clock_time_example">Por ejemplo, 10:42</string>
     <string name="settings_data">Datos</string>
     <string name="settings_data_status">Líneas y paradas</string>
     <!-- %1$s: the date and time of the oldest last successful sync, on the Madrid clock. -->
-    <string name="settings_data_synced">Actualizados: %1$s</string>
-    <string name="settings_data_never_synced">Aún no se han sincronizado</string>
-    <string name="settings_data_unknown">No se puede consultar ahora</string>
+    <string name="settings_data_status_synced">Actualizados: %1$s</string>
+    <string name="settings_data_status_never">Aún no se han sincronizado</string>
+    <string name="settings_data_status_unknown">No se puede consultar ahora</string>
     <string name="settings_clear_cache">Borrar caché</string>
     <string name="settings_clear_cache_detail">Tus favoritas y los datos de líneas y paradas se conservan.</string>
     <string name="settings_cache_cleared">Caché borrada</string>
