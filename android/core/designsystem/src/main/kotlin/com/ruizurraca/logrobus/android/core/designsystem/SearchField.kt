@@ -90,7 +90,8 @@ fun SearchField(
 @Composable
 fun SearchFieldPlaceholder(modifier: Modifier = Modifier) {
     // A single-line field is its text's line between its vertical padding, and never shorter than its minimum height.
-    // Text sets a line at the line height's share of the scaled font size, which grows less than linearly at large text.
+    // Text sets a line at the line height's share of the scaled font size, which grows less than linearly at large
+    // text.
     val style = MaterialTheme.typography.bodyLarge
     val line = with(LocalDensity.current) { style.fontSize.toDp() * (style.lineHeight.value / style.fontSize.value) }
     Box(
