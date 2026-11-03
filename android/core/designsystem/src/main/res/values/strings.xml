@@ -49,4 +49,7 @@
     <string name="error_server">El servicio no responde. Inténtalo más tarde.</string>
     <string name="error_data">No se han podido leer los datos.</string>
     <string name="error_retry">Reintentar</string>
+
+    <!-- LB-102: a search field's clear button, and the action of a search that found nothing (key search.clear). -->
+    <string name="search_clear">Borrar búsqueda</string>
 </resources>
