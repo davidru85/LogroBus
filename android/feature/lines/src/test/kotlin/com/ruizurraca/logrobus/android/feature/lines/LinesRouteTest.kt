@@ -5,7 +5,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.common.AppResult
-import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import kotlinx.coroutines.flow.flowOf
@@ -29,9 +31,13 @@ class LinesRouteTest {
     @Before
     fun startGraph() {
         val line = Line(4, "4", "Casa Blanca - Yagüe", 0xFFE30613, 0xFFFFFFFF, LineKind.DAY, isOperational = true)
+        val lines = AppResult.Success(LinesWithFavourites(listOf(line), favouriteIds = emptyList()))
         startKoin {
             modules(
-                module { factory { ObserveLines { flowOf(AppResult.Success(listOf(line))) } } },
+                module {
+                    factory { ObserveLinesWithFavourites { flowOf(lines) } }
+                    factory { SetFavouriteLine { _, _ -> AppResult.Success(Unit) } }
+                },
                 linesUiModule,
             )
         }
@@ -42,7 +48,7 @@ class LinesRouteTest {
 
     @Test
     fun lb101_theRouteShowsTheLinesOfItsViewModelFromTheGraph() {
-        compose.setContent { LinesRoute(onOpenMore = {}) }
+        compose.setContent { LinesRoute(onOpenMore = {}, onOpenLine = {}) }
 
         compose
             .onNodeWithContentDescription(

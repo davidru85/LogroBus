@@ -437,4 +437,26 @@ class ArchitectureRulesTest {
             ArchitectureRules.vendorTelemetryPackages(manifest),
         )
     }
+
+    @Test
+    fun lb002_pluginRepositoriesAreReadFromPluginManagementOnly_inOrder() {
+        val settings =
+            """
+            pluginManagement {
+                includeBuild("build-logic")
+                repositories {
+                    google { content { includeGroupByRegex("androidx.*") } }
+                    mavenCentral()
+                    gradlePluginPortal()
+                }
+            }
+            dependencyResolutionManagement {
+                repositories { gradlePluginPortal() }
+            }
+            """.trimIndent()
+
+        val expected = listOf("google", "mavenCentral()", "gradlePluginPortal()")
+        assertEquals(expected, ArchitectureRules.pluginRepositories(settings))
+        assertEquals(emptyList<String>(), ArchitectureRules.pluginRepositories("rootProject.name = \"x\""))
+    }
 }

@@ -87,14 +87,17 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 ```
 
 **Favourite lines carousel**
-- A card shows the line badge, the display name in 2 lines (ellipsised), and both headsigns ("→ Hospital San Pedro · → Lardero") in secondary text. Tapping a card opens Line detail.
+- A card shows the line badge, the display name in 2 lines (ellipsised), and both headsigns ("→ Hospital San Pedro · → Lardero") in secondary text, which wrap rather than clip. Screen readers read a card as one, the headsigns as "Hacia Hospital San Pedro, Hacia Lardero" (`lines.towards`). Tapping a card opens Line detail.
+- Every card has the tallest card's height, so the row is never ragged at large text sizes. Cards are 168 dp wide on Android and 150 pt on iOS, where the inset list row clips its content: either way a phone shows two cards and the edge of a third, which shows that the row scrolls. They widen with the text size, up to 80 % of the row, so at 200 % a name keeps more than a word per line. No-break spaces keep each arrow with its headsign when the text wraps (LB-103).
+- The hint shows the ☆ symbol, and screen readers read it as words: "Marca la estrella de una línea para tenerla aquí" (`lines.favourites.hint_spoken`).
 - Order: the user's manual order (FR-FAV-02), adjusted through "Edit" (drag to reorder, remove).
 - Empty state: one compact hint card, "Marca ☆ en una línea para tenerla aquí" ("Tap ☆ on a line to pin it here"). The section never disappears entirely, so the feature stays discoverable.
 - With more than 20 favourites, adding another shows the limit message (FR-FAV-05).
 
 **Full list**
 - Two groups, Day lines then Night lines (Búho), each sorted numerically by code: 1, 2, 3 … 11, then B1, B2, B3. The list is data-driven; there is no line 8.
-- A row shows the badge, the display name, a status chip when the line is not operational (FR-LINE-02), and a trailing favourite toggle with an accessible label ("Añadir línea 3 a favoritas").
+- A row shows the badge, the display name, a status chip when the line is not operational (FR-LINE-02), and a trailing favourite toggle with an accessible label ("Añadir línea 3 a favoritas", "Quitar línea 3 de favoritas"). Tapping the row opens Line detail ("abrir línea" to TalkBack); the toggle is its own element, a star filled in the accent colour once the line is a favourite, at least 48 dp or 44 pt to touch. It is a button, not a checkbox: its label already says the state (LB-103).
+- At large text sizes (Android from a 1.5 font scale, iOS at accessibility sizes) a row puts its badge above its name, so the name has the row's width beside the toggle and breaks between words.
 - Search filters by code, terminus or any stop name, ignoring accents and case. Results keep the grouping, and the carousel hides while a query is active.
 
 **Line detail**
@@ -116,6 +119,8 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 
 - Tapping a stop opens Stop detail, and tapping a bus opens the Vehicle sheet (FR-LINE-08).
 - Vehicles whose direction is unknown show a neutral marker in both direction views.
+- **Until LB-104 (LB-103, owner decision, 2026-11-02):** the detail shows the line's badge and whole name under the title "Línea 10" (`line.title`), with the favourite toggle in the toolbar (FR-LINE-09), the same toggle and labels as the rows'. The title is "Línea" (`line.title.generic`) until the line's code is known, so the screen is never untitled. Its first load draws the header's shape and is announced as "Cargando línea" (`line.loading`), and an error shows its reason and Retry.
+  - A deliberate exception to §6.2: the bar names the line in words, and the badge is in the body. LB-104 designs the bar of the sketch above, with the badge in it.
 
 ### 3.2 Near Me
 
@@ -217,7 +222,7 @@ Results                                   Itinerary detail
 | Top-level navigation | `NavigationSuiteScaffold`: a short navigation bar on phones, a navigation rail on tablets and foldables |
 | Tab roots | `LargeFlexibleTopAppBar` / `TopAppBar` collapsing on scroll, with the More action |
 | Lines search | `SearchBar` with `rememberSearchBarState()`; it expands to full screen on focus |
-| Favourite lines | `HorizontalMultiBrowseCarousel` (or `HorizontalUncontainedCarousel` for fixed-width cards) |
+| Favourite lines | `HorizontalUncontainedCarousel` of fixed-width cards (LB-103). The carousel centres its items vertically, so each card takes the tallest one's height, measured on copies hidden from TalkBack |
 | Direction toggle, layer switcher | Connected `ButtonGroup` with `ToggleButton`s |
 | Map controls | `HorizontalFloatingToolbar` / `VerticalFloatingToolbar` over the map; a medium FAB for "recenter" |
 | Near Me sheet | `BottomSheetScaffold` with a partially expanded peek and `skipHiddenState = true` |
@@ -256,7 +261,7 @@ Since LB-012, the `scrollToTopRequests` environment value counts the re-selectio
 | Lines search | `.searchable(text:placement:)` on the Lines stack |
 | Near Me sheet | `.sheet` with `.presentationDetents([.height(peek), .medium, .large])`, `.presentationBackgroundInteraction(.enabled(upThrough: .medium))` and `.interactiveDismissDisabled()`. Don't set `.presentationBackground`, so the system glass stays |
 | Direction toggle | `Picker(.segmented)` |
-| Favourite lines | `ScrollView(.horizontal)` + `LazyHStack` with `.scrollTargetBehavior(.viewAligned)` |
+| Favourite lines | `ScrollView(.horizontal)` + `HStack` with `.scrollTargetBehavior(.viewAligned)` (LB-103): at most 20 cards (FR-FAV-05), and a stack of fixed height gives every card the tallest one's |
 | Refreshing | `.refreshable`; skeletons via `.redacted(reason: .placeholder)` for the first load |
 
 The MVP is **iPhone only** (NFR-PLAT-03): no iPad layouts.
@@ -357,6 +362,15 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | `tab.near_me` | Cerca de mí | Near me |
 | `tab.directions` | Cómo llegar | Directions |
 | `lines.favourites.title` | Tus líneas favoritas | Your favourite lines |
+| `lines.favourites.hint` (FR-LINE-14) | Marca ☆ en una línea para tenerla aquí | Tap ☆ on a line to pin it here |
+| `lines.favourites.hint_spoken` (spoken, the hint) | Marca la estrella de una línea para tenerla aquí | Tap the star on a line to pin it here |
+| `lines.open_line` (spoken, a row's or a card's action, Android) | abrir línea | open line |
+| `lines.favourite.add` (spoken, the toggle, FR-LINE-15) | Añadir línea 3 a favoritas | Add line 3 to favourites |
+| `lines.favourite.remove` (spoken, the toggle) | Quitar línea 3 de favoritas | Remove line 3 from favourites |
+| `lines.towards` (spoken, each headsign of a card) | Hacia Hospital San Pedro | Towards Hospital San Pedro |
+| `line.title` (line detail) | Línea 10 | Line 10 |
+| `line.title.generic` (line detail, before the code is known) | Línea | Line |
+| `line.loading` (spoken, line detail's first load) | Cargando línea | Loading line |
 | `lines.group.day` | Líneas diurnas | Day lines |
 | `lines.group.night` | Líneas nocturnas (Búho) | Night lines (Búho) |
 | `lines.not_operational` (status chip, FR-LINE-02) | Sin servicio | Not in service |

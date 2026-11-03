@@ -39,7 +39,7 @@ class LinesScreenshotTest(
             val fontScale = if (variant == FONT_SCALE_2) 2f else density.fontScale
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 LogroBusTheme(darkTheme = variant == DARK) {
-                    Surface { LinesScreen(uiState, onEvent = {}, onOpenMore = {}) }
+                    Surface { LinesScreen(uiState, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
                 }
             }
         }
@@ -55,6 +55,8 @@ class LinesScreenshotTest(
             mapOf(
                 "loading" to LinesPreviewData.loading,
                 "content" to LinesPreviewData.content,
+                // LB-103: the carousel's cards, which "content" shows as its hint.
+                "favourites" to LinesPreviewData.favourites,
                 "empty" to LinesPreviewData.empty,
                 "error" to LinesPreviewData.error,
             )

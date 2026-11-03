@@ -20,7 +20,8 @@ class IosGraphTest {
         // The path a Swift ViewModel takes by default. Kotlin/Native has no reflection, so each use case is listed;
         // the Android host test checks every function of UseCases.
         SharedDependencies.observeLastSyncs()
-        SharedDependencies.observeLines()
+        SharedDependencies.observeLinesWithFavourites()
+        SharedDependencies.setFavouriteLine()
     }
 
     @Test

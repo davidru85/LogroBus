@@ -4,7 +4,8 @@ import Shared
 import Testing
 
 /// LB-101, ADR-0007 and architecture.md §5.2: the Lines ViewModel builds its state with the shared use case and mapper,
-/// retries on Retry, and leaving its screen stops the use case's collection.
+/// retries on Retry, and leaving its screen stops the use case's collection. LB-103: a row's toggle sets its line as a
+/// favourite.
 @MainActor
 struct LinesViewModelTests {
     @Test
@@ -71,6 +72,43 @@ struct LinesViewModelTests {
         try await waitUntil { useCases.activeCollections == 1 }
 
         #expect(viewModel.state is LinesUiStateLoading)
+    }
+
+    @Test
+    func lb103_aRowsToggleAddsItsLineAtTheEndOfTheCarousel_andRemovesIt() async throws {
+        // FR-LINE-12 and FR-LINE-15: the carousel changes through the use case's flow, at once.
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview().favouriteLine(id: 10))
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { favourites(of: viewModel) == ["10"] }
+
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: true))
+        try await waitUntil { favourites(of: viewModel) == ["10", "3"] }
+        let row = try #require((viewModel.state as? LinesUiStateContent)?.groups[0].lines.first { $0.code == "3" })
+        #expect(row.isFavourite)
+
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 10, isFavourite: false))
+        try await waitUntil { favourites(of: viewModel) == ["3"] }
+    }
+
+    @Test
+    func lb103_twoQuickOppositeTapsLeaveTheLastOne() async throws {
+        // Each tap's write runs in its own task; the repository applies them in the order they were made.
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview())
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { favourites(of: viewModel) == [] }
+
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: true))
+        viewModel.onEvent(LinesEventSetFavourite(lineId: 3, isFavourite: false))
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(favourites(of: viewModel) == [])
+    }
+
+    /// The carousel's cards, by code.
+    private func favourites(of viewModel: LinesViewModel) -> [String]? {
+        (viewModel.state as? LinesUiStateContent)?.favourites.map(\.code)
     }
 
     @Test

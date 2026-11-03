@@ -10,6 +10,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object LinesKey : NavKey
 
+/** A line's detail (SC-04), opened from the Lines list or a favourite card (LB-103). */
+@Serializable
+data class LineDetailKey(
+    val lineId: Int,
+) : NavKey
+
 /** The root of the Near Me tab. */
 @Serializable
 data object NearMeKey : NavKey

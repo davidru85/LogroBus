@@ -13,8 +13,14 @@ import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
+import com.ruizurraca.logrobus.favourites.data.FavouriteLinesRepositoryImpl
+import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
@@ -46,7 +52,8 @@ internal fun sharedModules(
     platform: Module,
     telemetry: Module,
     debug: Boolean,
-): List<Module> = listOf(platform, telemetry, coreModule, transitDataModule, settingsModule, linesModule(debug))
+): List<Module> =
+    listOf(platform, telemetry, coreModule, transitDataModule, favouritesDataModule, settingsModule, linesModule(debug))
 
 /**
  * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of
@@ -83,6 +90,12 @@ private val transitDataModule =
         single<LinesRepository> { LinesRepositoryImpl(get(), get(), get()) }
     }
 
+// Favourites are the user's own, so debug builds keep them in the real database too.
+private val favouritesDataModule =
+    module {
+        single<FavouriteLinesRepository> { FavouriteLinesRepositoryImpl(get(), get(), get<AppClock>(), get()) }
+    }
+
 private val settingsModule =
     module {
         factory<ObserveLastSyncs> { DefaultObserveLastSyncs(get()) }
@@ -96,6 +109,8 @@ private fun linesModule(debug: Boolean) =
             val repository = if (debug) SampleLinesRepository else get<LinesRepository>()
             DefaultObserveLines(sync, repository)
         }
+        factory<ObserveLinesWithFavourites> { DefaultObserveLinesWithFavourites(get(), get()) }
+        factory<SetFavouriteLine> { DefaultSetFavouriteLine(get(), get()) }
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */

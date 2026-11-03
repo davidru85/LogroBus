@@ -2,21 +2,26 @@ package com.ruizurraca.logrobus.android.app
 
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -26,6 +31,7 @@ import org.robolectric.annotation.Config
 /**
  * LB-012: each tab keeps its own back stack, and re-selecting a tab pops it to its root (FR-NAV-03). Each tab root
  * opens More, with Settings and About data (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
+ * LB-103: favourite lines, end to end through the shell, from the Lines rows and a line's detail.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "en")
@@ -159,6 +165,82 @@ class TabNavigationTest {
         compose.onNodeWithContentDescription("Line 1").assertIsDisplayed()
     }
 
+    @Test
+    fun lb103_aLineAddedToFavouritesShowsAtTheEndOfTheCarousel_andItsToggleSaysSo() {
+        // FR-LINE-12, FR-LINE-15, through the debug build's graph and the device's database.
+        rowToggle("Add line 10 to favourites").performClick()
+        awaitNode(hasContentDescription("Remove line 10 from favourites"))
+        rowToggle("Add line 3 to favourites").performClick()
+
+        awaitNode(hasContentDescription("Remove line 3 from favourites"))
+        awaitCarousel(listOf("Line 10", "Line 3"))
+    }
+
+    @Test
+    fun lb103_aFavouriteCardOpensItsLine_andBackReturnsToLines() {
+        rowToggle("Add line 10 to favourites").performClick()
+        awaitNode(hasContentDescription("Remove line 10 from favourites"))
+
+        card("Line 10").performClick()
+        awaitNode(hasText("Line 10") and isHeading()).assertIsDisplayed()
+        back()
+
+        awaitNode(hasText("Lines") and isHeading()).assertIsDisplayed()
+    }
+
+    @Test
+    fun lb103_aLineAddedFromItsDetailIsInTheCarousel_backOnLines() {
+        // FR-LINE-09: the row opens the line's detail, whose toolbar has the toggle once the line has loaded.
+        compose.onNode(hasText("Campillo - El Cubo") and hasClickAction()).performClick()
+        awaitNode(hasContentDescription("Add line 3 to favourites")).performClick()
+        awaitNode(hasContentDescription("Remove line 3 from favourites"))
+        back()
+
+        awaitCarousel(listOf("Line 3"))
+    }
+
+    /**
+     * A row's toggle, scrolled into view: a lazy list composes only the rows it shows. The list scrolls down from its
+     * top, so the row ends up above the tab bar, never under the top app bar, which the list runs behind.
+     */
+    private fun rowToggle(label: String): SemanticsNodeInteraction {
+        compose.onNode(isLinesList).performScrollToIndex(0).performScrollToNode(hasContentDescription(label))
+        return compose.onNodeWithContentDescription(label)
+    }
+
+    /**
+     * The node [matcher] finds, once it exists. The lines and the favourites are read and written on the I/O threads,
+     * which the test's idle sync does not wait for: on a slow CI runner the screen shows the change a moment later.
+     */
+    private fun awaitNode(matcher: SemanticsMatcher): SemanticsNodeInteraction {
+        compose.waitUntil(AWAIT_MILLIS) { compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        return compose.onNode(matcher)
+    }
+
+    /** A favourite line's card: it alone says where the line heads ("Towards …"). */
+    private fun card(badge: String): SemanticsNodeInteraction {
+        compose.onNode(isLinesList).performScrollToIndex(0)
+        return awaitNode(hasContentDescription(badge) and hasContentDescription("Towards", substring = true))
+    }
+
+    /** Waits until the carousel shows [badges], then checks them, in their order. */
+    private fun awaitCarousel(badges: List<String>) {
+        compose.onNode(isLinesList).performScrollToIndex(0)
+        runCatching { compose.waitUntil(AWAIT_MILLIS) { carouselCards() == badges } }
+        assertEquals(badges, carouselCards())
+    }
+
+    /**
+     * The carousel's cards, by their badge, from left to right: the order the user sees and TalkBack reads, which sorts
+     * siblings by position. The carousel adds its items to the semantics tree in another order.
+     */
+    private fun carouselCards(): List<String?> =
+        compose
+            .onAllNodes(hasContentDescription("Towards", substring = true) and hasClickAction())
+            .fetchSemanticsNodes()
+            .sortedBy { it.boundsInRoot.left }
+            .map { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }
+
     private fun openAboutDataInLines() {
         moreAction().performClick()
         compose.onNodeWithText("About data").performClick()
@@ -183,7 +265,14 @@ class TabNavigationTest {
 
     private val isTab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
+    // The Lines list is the lazy list that scrolls vertically; the favourites carousel inside it scrolls horizontally.
+    private val isLinesList =
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and hasScrollToIndexAction()
+
     private companion object {
         const val SETTLED_MILLIS = 400L
+
+        // Far longer than a read or a write takes, even on a busy runner.
+        const val AWAIT_MILLIS = 5_000L
     }
 }

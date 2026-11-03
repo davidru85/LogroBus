@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.flowOf
  * Sample lines for previews, Swift tests and debug builds, until LB-008 part 2 downloads the real catalogue (owner
  * decision, 2026-11-02). They have the network's shape: its codes, no line 8, and lines 4 and B1, and 9 and B2, sharing
  * a colour (DD-08). Their ids, names and colours are placeholders, not the source's (OQ-11). Line 11 is not
- * operational, so its status chip shows (FR-LINE-02).
+ * operational, so its status chip shows (FR-LINE-02). Each heads for each end of its name, outbound first, so a
+ * favourite card shows both headsigns (FR-LINE-13).
  */
 internal object SampleLines {
     private const val RED = 0xFFE30613
@@ -51,6 +52,8 @@ internal object SampleLines {
         onColor = onColorFor(color),
         kind = if (code.startsWith("B")) LineKind.NIGHT else LineKind.DAY,
         isOperational = isOperational,
+        // "Lardero - Hospital San Pedro" runs towards Hospital San Pedro, then back towards Lardero.
+        headsigns = displayName.split(" - ").reversed(),
     )
 }
 

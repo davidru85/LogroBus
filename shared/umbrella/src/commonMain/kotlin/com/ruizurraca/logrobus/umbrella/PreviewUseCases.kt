@@ -2,8 +2,14 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.transit.domain.Line
@@ -26,14 +32,15 @@ import kotlin.time.Instant
 
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
- * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, and the cache holds the sample
- * lines; each script replaces the last.
+ * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
+ * lines and there are no favourite lines; each script replaces the last, except [favouriteLine].
  */
 class PreviewUseCases internal constructor() : UseCases {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
     private val cachedLines = MutableStateFlow(SampleLines.all)
+    private val favouriteLineIds = MutableStateFlow(emptyList<Int>())
     private val collections = MutableStateFlow(0)
 
     @Volatile private var failing = false
@@ -58,6 +65,13 @@ class PreviewUseCases internal constructor() : UseCases {
     /** Scripts the default again: every dataset synced, with the sample lines. Retry then loads them. */
     fun synced(): PreviewUseCases =
         script(lastSuccesses = StaticDataset.entries.associateWith { SAMPLE_SYNC }, lines = SampleLines.all)
+
+    /**
+     * Adds line [id] to the scripted favourite lines, last, as the user's toggle would. One line per call, so Swift
+     * chains plain Ints: `preview().favouriteLine(id: 10).favouriteLine(id: 4)`.
+     */
+    fun favouriteLine(id: Int): PreviewUseCases =
+        apply { favouriteLineIds.update { ids -> if (id in ids) ids else ids + id } }
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }
@@ -88,7 +102,7 @@ class PreviewUseCases internal constructor() : UseCases {
             },
         )
 
-    override fun observeLines(): ObserveLines =
+    private val lines: ObserveLines =
         DefaultObserveLines(
             object : StaticSyncEngine {
                 override suspend fun syncIfStale() = sync ?: awaitCancellation()
@@ -105,6 +119,28 @@ class PreviewUseCases internal constructor() : UseCases {
                     }.counted()
             },
         )
+
+    override fun observeLinesWithFavourites(): ObserveLinesWithFavourites =
+        DefaultObserveLinesWithFavourites(lines, favourites)
+
+    override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
+
+    // In memory, like the database: a toggle in a preview or test shows at once.
+    private val favourites =
+        object : FavouriteLinesRepository {
+            override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
+
+            override suspend fun add(lineId: Int): AppResult<Boolean> {
+                val saved = lineId !in favouriteLineIds.value
+                favouriteLineIds.update { ids -> if (lineId in ids) ids else ids + lineId }
+                return AppResult.Success(saved)
+            }
+
+            override suspend fun remove(lineId: Int): AppResult<Unit> {
+                favouriteLineIds.update { ids -> ids - lineId }
+                return AppResult.Success(Unit)
+            }
+        }
 
     private fun <T> Flow<T>.counted(): Flow<T> =
         onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }

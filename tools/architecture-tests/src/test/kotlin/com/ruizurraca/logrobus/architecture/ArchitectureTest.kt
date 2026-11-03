@@ -171,6 +171,34 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb002_buildLogicsPluginsResolveKotlinFromMavenCentral_beforeThePluginPortal() {
+        // The Plugin Portal proxies Maven Central for Kotlin's artifacts and has answered "not found" for them twice
+        // (PR #36 and PR #38, docs/ci_cd.md §5). With no pluginManagement, build-logic's plugins had only the Portal.
+        for (settings in listOf("settings.gradle.kts", "build-logic/settings.gradle.kts")) {
+            val repositories = ArchitectureRules.pluginRepositories(File(root, settings).readText())
+            assertTrue(
+                "mavenCentral()" in repositories &&
+                    repositories.indexOf("mavenCentral()") < repositories.indexOf("gradlePluginPortal()"),
+                "$settings: $repositories",
+            )
+        }
+    }
+
+    @Test
+    fun lb002_everyGradleStepOfTheWorkflowsRetriesDependenciesThatWereNotServed() {
+        // A step that ran ./gradlew directly would fail on a repository's 429 or "not found" (docs/ci_cd.md §5).
+        val direct =
+            File(root, ".github/workflows")
+                .listFiles { file -> file.extension == "yml" }
+                .orEmpty()
+                .flatMap { file ->
+                    file.readLines().filter { "./gradlew" in it }.map { "${file.name}: ${it.trim()}" }
+                }
+        assertEquals(emptyList<String>(), direct)
+        assertTrue("scripts/ci/gradle-retry.sh" in File(root, "scripts/ios/generate-project.sh").readText())
+    }
+
+    @Test
     fun lb002_jobNamesReadWellWhenSkipped() {
         // A skipped job shows its name unexpanded; GitHub appends the matrix values to a plain name by itself.
         val offenders =

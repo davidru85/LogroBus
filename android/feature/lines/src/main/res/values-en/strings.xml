@@ -10,4 +10,20 @@
     <string name="lines_loading">Loading lines</string>
     <!-- Spec §7.3: the Empty state, one sentence and Retry. -->
     <string name="lines_empty">There are no lines to show.</string>
+    <!-- LB-103: the favourite lines carousel (FR-LINE-12 to 14) and the toggle of each row and line detail (FR-LINE-15). -->
+    <string name="lines_favourites_title">Your favourite lines</string>
+    <string name="lines_favourites_hint">Tap ☆ on a line to pin it here</string>
+    <!-- How TalkBack reads the hint: words, never the star symbol. -->
+    <string name="lines_favourites_hint_spoken">Tap the star on a line to pin it here</string>
+    <!-- What a double tap on a row or a card does, as TalkBack says it. -->
+    <string name="lines_open_line">open line</string>
+    <string name="lines_favourite_add">Add line %1$s to favourites</string>
+    <string name="lines_favourite_remove">Remove line %1$s from favourites</string>
+    <!-- How TalkBack reads each headsign of a favourite card, which shows "→ Hospital San Pedro". -->
+    <string name="lines_towards">Towards %1$s</string>
+    <!-- The line detail (SC-04), until LB-104 adds its map, directions and stops. -->
+    <string name="line_detail_title">Line %1$s</string>
+    <!-- The detail's title while it loads or fails, before the line's code is known. -->
+    <string name="line_detail_title_generic">Line</string>
+    <string name="line_detail_loading">Loading line</string>
 </resources>

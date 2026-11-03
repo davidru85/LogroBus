@@ -1,7 +1,10 @@
 import Observation
-import Shared
+// Kotlin types declare no Sendable conformance, so Swift 6 refuses to send a use case to the async function SKIE makes
+// of a `suspend` one. Kotlin/Native's memory model lets any thread call them (ADR-0004), so Shared's types are
+// imported as pre-concurrency here.
+@preconcurrency import Shared
 
-/// The Lines list (LB-101). It orchestrates only: the shared use case and mapper build the state (ADR-0007).
+/// The Lines tab (LB-101, LB-103). It orchestrates only: the shared use cases and mapper build the state (ADR-0007).
 @MainActor
 @Observable
 public final class LinesViewModel {
@@ -12,6 +15,9 @@ public final class LinesViewModel {
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap.
     private let useCases: any UseCases
+    // The last toggle's write. Each waits for the one before: SKIE may start two Kotlin calls in either order, so two
+    // quick taps could otherwise land the wrong way round.
+    private var favouriteWrite: Task<Void, Never>?
 
     /// Takes the use cases from the graph, or from `SharedDependencies.shared.preview()` in previews and tests.
     public init(useCases: any UseCases = SharedDependencies.shared) {
@@ -23,12 +29,22 @@ public final class LinesViewModel {
         case .retry:
             state = LinesUiStateLoading.shared
             attempt += 1
+        case .setFavourite(let favourite):
+            // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a
+            // damaged database the repository has logged, leaves them as they were.
+            let previous = favouriteWrite
+            favouriteWrite = Task { [useCases] in
+                await previous?.value
+                _ = try? await useCases.setFavouriteLine().invoke(
+                    lineId: favourite.lineId, isFavourite: favourite.isFavourite
+                )
+            }
         }
     }
 
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
     public func observe() async {
-        for await result in useCases.observeLines().invoke() {
+        for await result in useCases.observeLinesWithFavourites().invoke() {
             state = LinesUiMapper.shared.state(result: result)
         }
     }

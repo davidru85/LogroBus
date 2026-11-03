@@ -30,12 +30,14 @@ import androidx.window.core.layout.WindowSizeClass
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.rememberScreenTransitions
 import com.ruizurraca.logrobus.android.core.navigation.AboutDataKey
+import com.ruizurraca.logrobus.android.core.navigation.LineDetailKey
 import com.ruizurraca.logrobus.android.core.navigation.LinesKey
 import com.ruizurraca.logrobus.android.core.navigation.LocalScrollToTopRequests
 import com.ruizurraca.logrobus.android.core.navigation.MoreKey
 import com.ruizurraca.logrobus.android.core.navigation.NearMeKey
 import com.ruizurraca.logrobus.android.core.navigation.PlannerKey
 import com.ruizurraca.logrobus.android.core.navigation.SettingsKey
+import com.ruizurraca.logrobus.android.feature.lines.LineDetailRoute
 import com.ruizurraca.logrobus.android.feature.lines.LinesRoute
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataRoute
 import com.ruizurraca.logrobus.android.feature.settings.SettingsScreen
@@ -139,7 +141,7 @@ internal fun screens(
     navigator: TabNavigator,
 ): (NavKey) -> NavEntry<NavKey> {
     val onTab: (NavKey) -> Any = { "${tab.name}/$it" }
-    val openMore = { navigator.open(MoreKey) }
+    val openMore = { navigator.open(MoreKey, from = tab.rootKey) }
     // A tab root hears its tab's re-selections, to scroll to its top.
     val root: @Composable (@Composable () -> Unit) -> Unit = { content ->
         CompositionLocalProvider(
@@ -148,13 +150,17 @@ internal fun screens(
         )
     }
     return entryProvider {
-        entry<LinesKey>(onTab) { root { LinesRoute(onOpenMore = openMore) } }
+        entry<LinesKey>(onTab) {
+            val openLine = { lineId: Int -> navigator.open(LineDetailKey(lineId), from = LinesKey) }
+            root { LinesRoute(onOpenMore = openMore, onOpenLine = openLine) }
+        }
+        entry<LineDetailKey>(onTab) { key -> LineDetailRoute(key.lineId, onBack = navigator::goBack) }
         entry<NearMeKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.NEAR_ME, onOpenMore = openMore) } }
         entry<PlannerKey>(onTab) { root { TabRootPlaceholder(TopLevelDestination.PLANNER, onOpenMore = openMore) } }
         entry<MoreKey>(onTab) {
             MoreScreen(
-                onOpenSettings = { navigator.open(SettingsKey) },
-                onOpenAboutData = { navigator.open(AboutDataKey) },
+                onOpenSettings = { navigator.open(SettingsKey, from = MoreKey) },
+                onOpenAboutData = { navigator.open(AboutDataKey, from = MoreKey) },
                 onBack = navigator::goBack,
             )
         }

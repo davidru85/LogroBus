@@ -4,6 +4,8 @@ import Shared
 /// The screens a tab can push onto its stack. The shell resolves each to its view, so a feature names another
 /// feature's screen without depending on it (architecture.md §6).
 enum Route: Hashable {
+    /// A line's detail (SC-04), opened from the Lines list or a favourite card (LB-103).
+    case line(Int32)
     case more
     case settings
     case aboutData

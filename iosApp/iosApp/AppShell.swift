@@ -42,6 +42,7 @@ private struct TabStack: View {
                 }
                 .navigationDestination(for: Route.self) { route in
                     switch route {
+                    case .line(let lineId): LineDetailView(lineId: lineId)
                     case .more: MoreView()
                     case .settings: SettingsView()
                     case .aboutData: AboutDataView()
@@ -50,10 +51,11 @@ private struct TabStack: View {
         }
     }
 
-    /// The tab's own screen: the Lines list (LB-101), and placeholders until Near Me and How to Get There land.
+    /// The tab's own screen: the Lines list (LB-101), which opens a line's detail on this stack (LB-103), and
+    /// placeholders until Near Me and How to Get There land.
     @ViewBuilder private var root: some View {
         switch destination {
-        case .lines: LinesView()
+        case .lines: LinesView { lineId in router.paths[destination, default: []].append(.line(lineId)) }
         case .nearMe, .planner: TabRootPlaceholder(destination: destination)
         }
     }

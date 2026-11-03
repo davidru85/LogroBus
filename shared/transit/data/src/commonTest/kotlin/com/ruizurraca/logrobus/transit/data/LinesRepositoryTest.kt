@@ -82,6 +82,34 @@ class LinesRepositoryTest {
         }
 
     @Test
+    fun lb103_eachLineHasTheHeadsignOfEachDirection_outboundFirst() =
+        runTest {
+            // FR-LINE-13: a favourite line's card shows both headsigns. A line with no patterns has none.
+            database.insert(line4, kind = "day")
+            database.insert(lineB1, kind = "night")
+            database.lineQueries.insertPattern(4, "inbound", "Casa Blanca", "")
+            database.lineQueries.insertPattern(4, "outbound", "Yagüe", "")
+
+            repository().observeLines().test {
+                val expected = listOf(line4.copy(headsigns = listOf("Yagüe", "Casa Blanca")), lineB1)
+                assertEquals(AppResult.Success(expected), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb103_aPatternOfAnUnknownDirectionHasNoHeadsign_andItsLineStaysOnce() =
+        runTest {
+            // A direction a later version adds: this version leaves its headsign out, never the line.
+            database.insert(line4, kind = "day")
+            database.lineQueries.insertPattern(4, "outbound", "Yagüe", "")
+            database.lineQueries.insertPattern(4, "circular", "Centro", "")
+
+            repository().observeLines().test {
+                assertEquals(AppResult.Success(listOf(line4.copy(headsigns = listOf("Yagüe")))), awaitItem())
+            }
+        }
+
+    @Test
     fun lb101_aLineOfAnUnknownKindIsDroppedAndLogged() =
         runTest {
             database.insert(line4, kind = "day")

@@ -74,6 +74,49 @@ object ArchitectureRules {
             .flatMap { call -> quoted.findAll(call.groupValues[1]).map { it.groupValues[1] } }
             .toSet()
 
+    /**
+     * The repositories of a settings script's `pluginManagement` block, in order: `mavenCentral()`,
+     * `gradlePluginPortal()`, or a repository's name, such as `google`, when it has a configuration block.
+     */
+    fun pluginRepositories(settings: String): List<String> {
+        val pluginManagement = blockAfter(settings, "pluginManagement") ?: return emptyList()
+        val repositories = blockAfter(pluginManagement, "repositories") ?: return emptyList()
+        return topLevelStatements(repositories).mapNotNull { statement ->
+            repositoryCall.find(statement)?.let { it.groupValues[1] + it.groupValues[2] }
+        }
+    }
+
+    // The body of the first `name { … }` block in `source`, matching its braces.
+    private fun blockAfter(
+        source: String,
+        name: String,
+    ): String? {
+        val start = Regex("\\b$name\\s*\\{").find(source) ?: return null
+        var depth = 1
+        var index = start.range.last + 1
+        while (index < source.length && depth > 0) {
+            when (source[index]) {
+                '{' -> depth++
+                '}' -> depth--
+            }
+            index++
+        }
+        return source.substring(start.range.last + 1, index - 1)
+    }
+
+    // The lines of `block` outside any nested braces, trimmed and non-blank.
+    private fun topLevelStatements(block: String): List<String> {
+        val statements = mutableListOf<String>()
+        var depth = 0
+        block.lines().forEach { line ->
+            if (depth == 0 && line.isNotBlank()) statements += line.trim()
+            depth += line.count { it == '{' } - line.count { it == '}' }
+        }
+        return statements
+    }
+
+    private val repositoryCall = Regex("^(\\w+)(\\(\\))?")
+
     /** Version literals in a build script or build-logic source: coordinates, `version`, rich versions. */
     fun versionLiterals(source: String): List<String> =
         versionPatterns.flatMap { pattern -> pattern.findAll(source).map { it.value }.toList() }

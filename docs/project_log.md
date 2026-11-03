@@ -19,6 +19,77 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-02: LB-103, favourite lines, with a minimal line detail
+
+**Done**
+- **PR #36 (LB-101 part 1) merged,** and `main` was synced. Seven of the eight Dependabot alerts closed; the Kotlin Gradle plugin's stays open, waiting for the owner.
+- **PR #37** (Gradle's longer retries for rate-limited downloads, LB-002) is open. Its first run's iOS gate failed outside the change: "iOS ViewModel and snapshot tests (FeatureSettingsTests)" never got a macOS runner, queued for 16 minutes while `main`'s full run after PR #36 held them (GitHub Free allows 5 at once), and ended cancelled. The failed jobs were rerun once; it is the first time, so the pipeline is unchanged. Recorded here rather than on PR #37's branch, since a push there would have cancelled the rerun.
+- **LB-103 (`feat/LB-103-favourite-lines`):**
+  - **Shared:**
+    - `FavouriteLinesRepository` (`:shared:favourites:domain`) and its implementation over the `favourite` table (`:shared:favourites:data`): a favourite line goes last, one already saved keeps its place, and the favourites survive a restart. `FavouriteTypes.LINE`; `logroBusDatabase` passes favourite's Instant adapter.
+    - `Line.headsigns`: `selectLines` joins the patterns, outbound first.
+    - `:shared:feature:lines`: `ObserveLinesWithFavourites`, which wraps `ObserveLines`, and `SetFavouriteLine`, which counts `favourite_add` of kind LINE once a line is saved. `LinesUiState.Content` has the carousel's `FavouriteLineCardUi`s in the user's order, and each `LineRowUi` says whether it is a favourite. `LineDetailUiState` and its mapper are the minimal detail.
+    - `:shared:umbrella`: the graph binds the repository and both use cases, keeping favourites in the real database in debug builds too. The sample lines head for each end of their names. `PreviewUseCases.favouriteLine(id:)` scripts favourites. `UseCases.observeLines()` gave way to `observeLinesWithFavourites()` and `setFavouriteLine()`.
+  - **Android:** `FavouriteToggle` in the design system (Material Symbols' star). `LinesScreen` has the favourites heading, the hint card or a `HorizontalUncontainedCarousel` whose cards share the tallest one's height, and a toggle on each row; a row or a card opens `LineDetailKey`. `LineDetailRoute`, `LineDetailScreen` and `LineDetailViewModel`, which takes its line through `koinViewModel`'s parameters. Strings in es and en; screenshots recorded and reviewed.
+  - **iOS:** `FavouriteToggle` in `DesignSystem`; `LinesView`'s favourites `Section` with an `HStack` of cards that share the tallest one's height, rows that are buttons beside their toggles, `LineDetailView` and `LineDetailViewModel`, and `Route.line` in the shell. Strings in es and en; snapshots recorded and reviewed.
+  - **End to end through both shells:** a line added from its row goes at the end of the carousel and its toggle says so; a card opens its line; a line added from its detail is in the carousel back on Lines.
+
+**Reviews** (the code-reviewer, data-rules-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; no blockers or majors; the UI reviewers asked for changes). Fixed, test first where a test could show it:
+- **Shared:**
+  - `favourite_add` was counted when a double tap saved nothing: `add` now says whether it saved the line.
+  - Two quick opposite taps could land in the wrong order on the I/O threads: the repository writes behind a `Mutex`, and both Swift ViewModels chain their writes, since SKIE may start two Kotlin calls in either order. The Swift test failed now and then before the chain.
+  - A malformed saved id is dropped and counted in the log; `favouriteLine(id:)` keeps one entry per line; `dd08_` covers the cards, and a test covers a pattern of an unknown direction (both regression guards).
+- **Android:**
+  - The shell's preview had lost its binding for `SetFavouriteLine`.
+  - A quick second tap could push a second detail: `TabNavigator.open` now takes the screen it opens from.
+  - The toggle was a checkbox, so TalkBack said "checked" beside "Remove…": it is a button now, with a 48 dp test.
+  - The detail flashed Loading on return after a Retry, and drew nothing while loading: it keeps its load and draws a skeleton, titled "Línea", with a Loading preview.
+  - At 200 %, the star left "Valdegastea" too narrow: the badge goes above the name.
+  - Cards widen with the text; rows and cards say "abrir línea"; the hint is read without its ☆; no-break spaces keep arrows with their headsigns; the skeleton has the favourites section; the measured copies take no input.
+- **iOS:**
+  - The same large-text, card width, skeleton, title, no-break space and spoken hint fixes.
+  - Content margins replace padding, which view-aligned snapping ignores.
+  - The headsigns' spoken label uses `Text` interpolation, since `Text + Text` is deprecated in the iOS 26 SDK.
+  - The card colour is a token, and the toggle has previews and snapshots.
+- **UI tests:** both shells' favourites tests no longer depend on favourites left by a manual run: rows are found without cards, a test checks only line 3's card, and Back is the button labelled Lines.
+- **Docs:**
+  - LB-110 lists the favourites whose line left the catalogue, which have no card now, so that the user can remove them.
+  - LB-008 part 2 clears the favourites saved against the sample lines' ids in debug builds.
+- **Not changed:**
+  - The detail's bar names the line in words, with the badge in the body: a deliberate exception until LB-104 designs the bar (`design_guidelines.md` §3.1).
+  - A second tap that arrives before the first one's state shows sends the same value again, so it does nothing; the writes keep their order.
+  - On iOS the third card is cut by the inset row's rounded corner.
+  - The green commits before the review say "No refactor needed." instead of the exact line `TDD: refactor not needed` (`testing_strategy.md` §7.1); pushed history is not rewritten for it, and the review's commits use the line.
+
+**CI fixes**
+- **PR #38's first run** failed in "Shared unit tests (:shared:transit:data)", outside the change: configuring build-logic, the Gradle Plugin Portal answered "not found" for `kotlin-stdlib:2.4.0`, as in PR #36's nearme job. It recurred, so the pipeline was made resilient in this pull request, test first: build-logic's `pluginManagement` lists Maven Central before the Portal, as the root settings do (`ci_cd.md` §5).
+- **PR #38's second run:** "iOS ViewModel and snapshot tests (FeatureSettingsTests)" reached its 20-minute limit and was cancelled. With cold caches and the five macOS runners busy, it spent 625 s generating the framework and 469 s building, and the other matrix jobs took 17 to 18 minutes. It is the first time this job timed out (in PR #37 it never got a runner), so the failed jobs were rerun once.
+  - The rerun's job never got a runner: GitHub's annotation says "not acquired … capacity constraints" for macOS arm64, as in PR #37. Asked, the owner chose to rerun and to raise the matrix jobs' limit from 20 to 30 minutes (owner decision, 2026-11-02), done in this pull request (`ios-checks.yml`, `ci_cd.md` §3 and §5). A job that gets no runner cannot be prevented from the pipeline.
+- **PR #38's fourth run** failed in "Shared unit tests (:shared:feature:stops)", outside the change: the Plugin Portal answered "not found" for `kotlin-dsl`'s own plugin marker, which only it serves, so Maven Central first could not help. Pull request jobs restore no Gradle cache ("no match found"), and some thirty jobs download everything at once. It is the third such failure in two days, so the pipeline was made resilient, test first: every Gradle step of the workflows, and `generate-project.sh`, runs through `scripts/ci/gradle-retry.sh`, which runs Gradle again, up to three runs, when it failed only because a repository did not serve a dependency (`ci_cd.md` §5).
+  - **Why pull request jobs find no cache:** the basic provider keys the Gradle User Home on a hash of the Gradle files, with no fallback key (`ci_cd.md` §5), and this pull request changes them, so every run starts cold. The repository's cache is also at its 10 GB quota with `main`'s entries.
+- **PR #38's fifth run** failed in "Android screenshots (:android:feature:lines)", outside the change. Maven Central did not serve compose ui 1.10.2's module metadata, so Gradle read its POM, whose iOS artifact matches no Android variant. Gradle remembered the missing file, and the script's reruns failed the same way. The reruns now pass `--refresh-dependencies` and treat that variant error as a dependency that was not served, test first.
+  - **For the owner:** a cache that survives a change to the Gradle files needs a fallback key, which the basic provider lacks; the "enhanced" provider has one, but it is proprietary (`ci_cd.md` §5).
+- **PR #38's sixth run** passed every Kotlin and Android check, with the refreshed reruns. Only the iOS gate failed: "iOS ViewModel and snapshot tests (DesignSystemTests)" never got a macOS runner ("not acquired … capacity constraints"). As agreed with the owner, such a job is only rerun; the rerun passed, and all 57 checks were green.
+- **PR #38's third run** failed in "Android screenshots (:android:app)", a fault in the branch: `TabNavigationTest.lb103_aFavouriteCardOpensItsLine_andBackReturnsToLines` found no "Line 10" heading right after tapping the card. The detail reads its line on the I/O threads, which the test's idle sync does not wait for, and is titled "Line" until then. Locally and in the earlier runs it had always been quick enough. The three favourites tests now wait, up to 5 s, for the state they check (e9f32ad).
+
+**Decisions**
+- **A minimal line detail now** (owner decision, 2026-11-02): two criteria need line detail, which LB-104 builds. LB-103 adds its route, ViewModel and toolbar toggle, with the line's badge and name; LB-104 adds the map, directions and stops.
+- **Rows open their line** too, so a line can be added from its detail before it is a favourite (FR-LINE-09).
+- **`ObserveLinesWithFavourites` wraps `ObserveLines`,** whose sync logic and tests stay as they were. Favourites that cannot be read leave the lines with none: the list still shows (spec §7.3).
+- **Equal-height cards on both platforms,** so the carousel is never ragged at large text sizes, and headsigns wrap rather than clip. Android measures copies of the cards hidden from TalkBack, since its carousel centres its items; iOS uses an `HStack` of fixed height rather than the `LazyHStack` that `design_guidelines.md` named, which it now names instead. iOS cards are 150 pt, so the next card's edge shows inside the inset row; Android's are 168 dp.
+- **A Gradle rerun step after all,** which PR #37's entry below had decided against: the Portal's "not found" is a 404, which no backoff retries. The script reruns only a failure whose output names a dependency that was not served; a failing test or a compile error fails at once, so it hides no failing check. PR #37's longer backoff stays, and spares a rerun when a 429 passes within a minute.
+- **Swift calls a `suspend` use case** through `@preconcurrency import Shared`: Swift 6 refuses to send a Kotlin object, which declares no `Sendable` conformance, to SKIE's `async` function (`architecture.md` §5.2).
+- **iOS UI tests that change favourites start and end with them removed:** the simulator keeps the app's database between launches, unlike Robolectric.
+- **Test fixtures adapted while going green** (each in its commit body): `LinesScreenTest` runs on a taller window, since the favourites section comes first and a lazy list composes only what it shows; `TabNavigationTest` scrolls the list from its top before a tap, so a row is never under the top app bar, which the list runs behind, and reads the cards from left to right, as TalkBack does; `AndroidGraphTest`'s restart test is a regression guard written after the wiring.
+
+**Open / next**
+- **The pull request of this entry** (branch `feat/LB-103-favourite-lines`) is open, and its watch runs. PR #37 was merged on 2026-11-03, and `main` was merged into this branch.
+- **Next, once it is merged:** LB-102 part 1, the search bar over the lines' codes and termini; finding lines by a stop's name waits for the stops (LB-008 part 2) or sample stops. LB-110 (edit favourite lines: reorder, remove, the limit of 20) needs nothing else either. Unless the owner chooses otherwise, LB-102 (`/start-story LB-102`).
+- **LB-104** builds on this detail; its map needs a style for development, where OQ-10's documented fallback names a free OSM-based style whose terms are still to be verified: that check is the owner's.
+- **For LB-104:** a shared `ObserveLine(lineId)` use case, so the detail stops collecting every line and syncing on each opening, and the badge in the detail's bar.
+- **Follow-ups from LB-101's reviews** stay open, as listed in its entry below.
+- **Waiting on the owner:** as in the entries below.
+
 ## 2026-11-02: Gradle waits out rate-limited downloads
 
 **Done**

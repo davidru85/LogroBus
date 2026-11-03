@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Module rules and convention helpers
-        run: ./gradlew :build-logic:convention:test
+        run: scripts/ci/gradle-retry.sh :build-logic:convention:test
 
   ktlint:
     name: ktlint
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Kotlin style (ktlint_official)
-        run: ./gradlew ktlintCheck
+        run: scripts/ci/gradle-retry.sh ktlintCheck
 
   detekt:
     name: detekt
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Static analysis with type resolution
-        run: ./gradlew ciDetekt
+        run: scripts/ci/gradle-retry.sh ciDetekt
 
   coverage:
     name: Coverage
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Line coverage of shared domain, data and feature code (NFR-MNT-01)
-        run: ./gradlew koverVerify
+        run: scripts/ci/gradle-retry.sh koverVerify
 
   architecture:
     name: Architecture rules
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Module layout and package boundaries
-        run: ./gradlew :tools:architecture-tests:test
+        run: scripts/ci/gradle-retry.sh :tools:architecture-tests:test
 
   shared-unit-tests:
     # GitHub appends the matrix value: "Shared unit tests (:shared:core:common)".
@@ -140,7 +140,7 @@ jobs:
       - name: Unit tests
         env:
           MODULE: ${{ matrix.module }}
-        run: ./gradlew "$MODULE:ciUnitTest"
+        run: scripts/ci/gradle-retry.sh "$MODULE:ciUnitTest"
 
   android-unit-tests:
     # GitHub appends the matrix value: "Android unit tests (:android:app)".
@@ -170,7 +170,7 @@ jobs:
       - name: Unit tests (Robolectric)
         env:
           MODULE: ${{ matrix.module }}
-        run: ./gradlew "$MODULE:ciUnitTest"
+        run: scripts/ci/gradle-retry.sh "$MODULE:ciUnitTest"
 
   android-screenshots:
     # GitHub appends the matrix value: "Android screenshots (:android:core:designsystem)".
@@ -195,7 +195,7 @@ jobs:
       - name: Compare with the reference images (Roborazzi)
         env:
           MODULE: ${{ matrix.module }}
-        run: ./gradlew "$MODULE:verifyRoborazziDebug"
+        run: scripts/ci/gradle-retry.sh "$MODULE:verifyRoborazziDebug"
       # The actual and diff images of a failed comparison, to see what changed.
       - name: Upload the comparison images
         if: ${{ failure() }}
@@ -215,7 +215,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/gradle-setup
       - name: Debug APK
-        run: ./gradlew :android:app:assembleDebug
+        run: scripts/ci/gradle-retry.sh :android:app:assembleDebug
 
   android-lint:
     name: Android lint
@@ -229,7 +229,7 @@ jobs:
       # Every Android module: the app does not depend on the core and feature modules yet, so linting
       # the app alone would skip them.
       - name: Lint (debug, every Android module)
-        run: ./gradlew lintDebug
+        run: scripts/ci/gradle-retry.sh lintDebug
 
   dependency-graph:
     name: Dependency graph

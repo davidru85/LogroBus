@@ -397,6 +397,13 @@ Refs: FR-LINE-09, FR-LINE-12 to 15, FR-FAV-01
 - **Given** the user adds line 3 to favourites from line detail, **when** they go back to Lines, **then** the carousel includes line 3.
 - **Given** the app is restarted, **when** Lines opens, **then** the favourites and their order are preserved.
 
+Done (2026-11-02) with this evidence. Line detail itself is LB-104: until then, a card or a row opens a minimal detail with the line's badge, its name and the favourite toggle (owner decision, 2026-11-02). Debug builds use the sample lines, whose headsigns are the two ends of their names:
+- The hint with no favourites: `LinesUiMapperTest`, `LinesScreenTest` on Android, and the screenshots of both platforms (the list with no favourites).
+- Toggling line 3: `SetFavouriteLineTest` and `FavouriteLinesRepositoryTest` (a new favourite goes last); the ViewModel tests of both platforms; `LinesScreenTest` ("Add line 4 to favourites", "Remove line 10 from favourites"); end to end, `TabNavigationTest` on Android and `ShellUITests` on iOS, where the card appears at the end of the carousel and the label changes.
+- Line 10's card: `LinesUiMapperTest` (badge, name and both headsigns, in the user's order), `LinesRepositoryTest` (the headsigns of each direction, outbound first), `LinesScreenTest` (the headsigns spoken as "Towards …", and the card opens line 10), the screenshots with favourite lines, and both shells' UI tests (a card opens its line's detail).
+- Adding from line detail: `LineDetailUiMapperTest`, `LineDetailScreenTest`, the ViewModel tests of both platforms, and end to end through both shells (a row opens line 3, its toolbar adds it, and the carousel has it back on Lines).
+- A restart: `FavouriteLinesRepositoryTest` (a new repository over the same database) and `AndroidGraphTest` (the favourites survive stopping and starting the graph over the device's database).
+
 ### LB-104 Line detail
 Refs: FR-LINE-04, FR-NAV-07, DD-16
 
@@ -450,6 +457,7 @@ Refs: FR-FAV-02, FR-FAV-05
 - **Given** three favourite lines, **when** the user opens Edit and drags the third to the first position, **then** the carousel order updates and persists across restarts.
 - **Given** edit mode, **when** a line is removed, **then** it leaves the carousel and the toggle on its row becomes unselected.
 - **Given** 20 favourite lines, **when** the user tries to add a 21st, **then** a limit message is shown and nothing is added.
+- **Given** a favourite line that has left the catalogue, which since LB-103 stays saved with no card, **when** edit mode opens, **then** it is listed as no longer served and can be removed, and it counts towards the limit of 20 (from LB-103's data review).
 - **Given** a screen reader, **when** reordering, **then** "Move up" and "Move down" accessibility actions work without dragging. `[manual: TalkBack, VoiceOver]`
 
 ---

@@ -40,7 +40,8 @@ fi
 
 echo "== Shared XCFramework ($configuration, Gradle) =="
 # Without the configuration cache and file-system watching, which can miss new source directories.
-./gradlew ":shared:umbrella:$gradle_task" --quiet --console=plain --no-configuration-cache --no-watch-fs
+# Through gradle-retry.sh, which runs Gradle again when a repository did not serve a dependency (docs/ci_cd.md §5).
+scripts/ci/gradle-retry.sh ":shared:umbrella:$gradle_task" --quiet --console=plain --no-configuration-cache --no-watch-fs
 framework_dir="iosApp/Packages/LogroBusUI/Frameworks"
 mkdir -p "$framework_dir"
 rm -rf "$framework_dir/Shared.xcframework"
