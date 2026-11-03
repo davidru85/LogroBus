@@ -7,7 +7,10 @@ import com.ruizurraca.logrobus.core.preferences.ThemePreference
 import com.ruizurraca.logrobus.core.preferences.UserPreferences
 import kotlinx.coroutines.flow.Flow
 
-/** FR-SET-01: the user's settings now, then every change. An interface, because Swift calls it and its tests replace it. */
+/**
+ * FR-SET-01: the user's settings now, then every change. An interface, because Swift calls it and its tests replace
+ * it.
+ */
 fun interface ObservePreferences {
     operator fun invoke(): Flow<UserPreferences>
 }

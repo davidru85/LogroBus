@@ -48,7 +48,13 @@ class CachesDirectoryCachesTest {
             val database = app.path("Library/Application Support/databases/logrobus.db")
             write(database, "db")
 
-            val result = CachesDirectoryCaches(caches, emptySet(), StandardTestDispatcher(testScheduler), logger).clear()
+            val result =
+                CachesDirectoryCaches(
+                    caches,
+                    emptySet(),
+                    StandardTestDispatcher(testScheduler),
+                    logger,
+                ).clear()
 
             assertEquals(AppResult.Success(Unit), result)
             assertEquals(emptyList(), files.contentsOfDirectoryAtPath(caches, null).orEmpty())

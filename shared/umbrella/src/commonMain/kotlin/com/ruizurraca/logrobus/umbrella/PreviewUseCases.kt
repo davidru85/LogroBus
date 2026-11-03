@@ -4,7 +4,6 @@ import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.preferences.EtaFormat
 import com.ruizurraca.logrobus.core.preferences.ThemePreference
-import com.ruizurraca.logrobus.core.preferences.UserPreferences
 import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
@@ -17,12 +16,8 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
-import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
-import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
-import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
-import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -44,17 +39,19 @@ import kotlin.time.Instant
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
- * lines and there are no favourite lines; each script replaces the last, except [favouriteLine].
+ * lines, there are no favourite lines, and the settings are the defaults; each script replaces the last, except
+ * [favouriteLine] and [settings]. Settings' own use cases come from [PreviewSettings].
  */
-class PreviewUseCases internal constructor() : UseCases {
+class PreviewUseCases internal constructor(
+    internal val settingsPreview: PreviewSettings = PreviewSettings(),
+) : UseCases,
+    SettingsUseCases by settingsPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
     private val cachedLines = MutableStateFlow(SampleLines.all)
     private val favouriteLineIds = MutableStateFlow(emptyList<Int>())
     private val collections = MutableStateFlow(0)
-    private val preferences = MutableStateFlow(UserPreferences())
-    private val clears = MutableStateFlow(0)
 
     @Volatile private var failing = false
 
@@ -86,18 +83,16 @@ class PreviewUseCases internal constructor() : UseCases {
     fun favouriteLine(id: Int): PreviewUseCases =
         apply { favouriteLineIds.update { ids -> if (id in ids) ids else ids + id } }
 
-    /** Scripts the user's settings (LB-403), as if they had chosen them before. */
-    fun settings(
-        theme: ThemePreference,
-        etaFormat: EtaFormat,
-    ): PreviewUseCases = apply { preferences.value = UserPreferences(theme, etaFormat) }
-
     /** How many times the cache was cleared, for a Swift test of Clear cache (LB-403). */
     val cacheClears: Int
-        get() = clears.value
+        get() = settingsPreview.cacheClears
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
-    fun failing(): PreviewUseCases = apply { failing = true }
+    fun failing(): PreviewUseCases =
+        apply {
+            failing = true
+            settingsPreview.failing = true
+        }
 
     private fun script(
         lastSuccesses: Map<StaticDataset, Instant>?,
@@ -105,6 +100,7 @@ class PreviewUseCases internal constructor() : UseCases {
         sync: AppResult<Unit>? = AppResult.Success(Unit),
     ) = apply {
         failing = false
+        settingsPreview.failing = false
         this.sync = sync
         this.lastSuccesses.value = lastSuccesses
         cachedLines.value = lines
@@ -150,29 +146,6 @@ class PreviewUseCases internal constructor() : UseCases {
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
 
-    // In memory, like the device's store: a setting changed in a preview or test shows at once.
-    override fun observePreferences(): ObservePreferences = ObservePreferences { preferences }
-
-    override fun setTheme(): SetTheme = SetTheme { theme -> save { it.copy(theme = theme) } }
-
-    override fun setEtaFormat(): SetEtaFormat = SetEtaFormat { format -> save { it.copy(etaFormat = format) } }
-
-    override fun clearCache(): ClearCache =
-        ClearCache {
-            if (failing) {
-                AppResult.Failure(AppError.Data)
-            } else {
-                clears.update { it + 1 }
-                AppResult.Success(Unit)
-            }
-        }
-
-    private fun save(change: (UserPreferences) -> UserPreferences): AppResult<Unit> {
-        if (failing) return AppResult.Failure(AppError.Data)
-        preferences.update(change)
-        return AppResult.Success(Unit)
-    }
-
     // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =
         object : FavouriteLinesRepository {
@@ -212,6 +185,15 @@ class PreviewUseCases internal constructor() : UseCases {
         val SAMPLE_SYNC = Instant.parse("2026-10-28T09:30:00Z")
     }
 }
+
+/**
+ * Scripts the user's settings (LB-403), as if they had chosen them before. An extension, so Swift chains it like the
+ * other scripts: `preview().settings(theme: .dark, etaFormat: .clockTime)`.
+ */
+fun PreviewUseCases.settings(
+    theme: ThemePreference,
+    etaFormat: EtaFormat,
+): PreviewUseCases = apply { settingsPreview.script(theme, etaFormat) }
 
 /** Counts the collections of this flow that are running in [collections]. */
 private fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =

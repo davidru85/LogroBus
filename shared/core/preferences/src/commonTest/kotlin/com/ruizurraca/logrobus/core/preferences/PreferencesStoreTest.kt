@@ -9,6 +9,7 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.MapSettings
 import com.russhwolf.settings.coroutines.FlowSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -18,7 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalSettingsApi::class)
+@OptIn(ExperimentalSettingsApi::class, ExperimentalCoroutinesApi::class)
 class PreferencesStoreTest {
     private val saved = MapSettings()
     private val logger = RecordingLogger()
@@ -96,12 +97,12 @@ class PreferencesStoreTest {
 private class BrokenSettings(
     delegate: FlowSettings,
 ) : FlowSettings by delegate {
-    override fun getStringOrNullFlow(key: String): Flow<String?> = flow { throw IllegalStateException("damaged") }
+    override fun getStringOrNullFlow(key: String): Flow<String?> = flow { error("damaged") }
 
     override suspend fun putString(
         key: String,
         value: String,
-    ): Unit = throw IllegalStateException("damaged")
+    ): Unit = error("damaged")
 }
 
 private class RecordingLogger : Logger {

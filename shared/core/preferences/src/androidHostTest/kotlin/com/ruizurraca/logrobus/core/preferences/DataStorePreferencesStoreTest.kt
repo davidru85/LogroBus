@@ -40,7 +40,7 @@ class DataStorePreferencesStoreTest {
     @Test
     fun lb403_aDamagedSettingsFile_startsAgainFromTheDefaults_andCanBeSavedTo() =
         runTest {
-            file.parentFile.mkdirs()
+            file.parentFile?.mkdirs()
             file.writeText("not a preferences file")
             val store = dataStorePreferencesStore(file, logger)
 

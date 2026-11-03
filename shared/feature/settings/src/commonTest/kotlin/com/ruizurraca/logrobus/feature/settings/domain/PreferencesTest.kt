@@ -17,7 +17,10 @@ class PreferencesTest {
     @Test
     fun lb403_settingsShowTheStoredPreferences() =
         runTest {
-            assertEquals(UserPreferences(ThemePreference.DARK, EtaFormat.MINUTES), DefaultObservePreferences(store)().first())
+            assertEquals(
+                UserPreferences(ThemePreference.DARK, EtaFormat.MINUTES),
+                DefaultObservePreferences(store)().first(),
+            )
         }
 
     @Test

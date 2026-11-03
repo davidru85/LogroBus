@@ -28,10 +28,10 @@ class CacheDirectoryCachesTest {
     @Test
     fun lb403_clearCache_emptiesTheCacheDirectory_andKeepsTheDatabaseAndSettings() =
         runTest {
-            File(cache, "image_cache/0a1b").apply { parentFile.mkdirs() }.writeText("image")
+            File(cache, "image_cache/0a1b").apply { parentFile?.mkdirs() }.writeText("image")
             File(cache, "response").writeText("live")
-            val database = File(app, "databases/logrobus.db").apply { parentFile.mkdirs() }.apply { writeText("db") }
-            val settings = File(app, "files/datastore/settings.preferences_pb").apply { parentFile.mkdirs() }
+            val database = File(app, "databases/logrobus.db").apply { parentFile?.mkdirs() }.apply { writeText("db") }
+            val settings = File(app, "files/datastore/settings.preferences_pb").apply { parentFile?.mkdirs() }
             settings.writeText("settings")
 
             val result = CacheDirectoryCaches(cache, StandardTestDispatcher(testScheduler), logger).clear()

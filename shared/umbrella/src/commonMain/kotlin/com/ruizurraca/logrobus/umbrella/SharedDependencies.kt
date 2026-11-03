@@ -11,19 +11,8 @@ import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import org.koin.mp.KoinPlatform
 
-/**
- * The use cases a Swift ViewModel can ask for (architecture.md §5.2). [SharedDependencies] resolves them from the
- * graph; [SharedDependencies.preview] scripts them for previews and tests.
- */
-interface UseCases {
-    fun observeLastSyncs(): ObserveLastSyncs
-
-    fun observeLinesWithFavourites(): ObserveLinesWithFavourites
-
-    fun setFavouriteLine(): SetFavouriteLine
-
-    fun reorderFavouriteLines(): ReorderFavouriteLines
-
+/** Settings' own use cases for Swift (LB-403): the user's preferences and Clear cache. */
+interface SettingsUseCases {
     fun observePreferences(): ObservePreferences
 
     fun setTheme(): SetTheme
@@ -31,6 +20,20 @@ interface UseCases {
     fun setEtaFormat(): SetEtaFormat
 
     fun clearCache(): ClearCache
+}
+
+/**
+ * The use cases a Swift ViewModel can ask for (architecture.md §5.2), grouped by feature as they grow.
+ * [SharedDependencies] resolves them from the graph; [SharedDependencies.preview] scripts them for previews and tests.
+ */
+interface UseCases : SettingsUseCases {
+    fun observeLastSyncs(): ObserveLastSyncs
+
+    fun observeLinesWithFavourites(): ObserveLinesWithFavourites
+
+    fun setFavouriteLine(): SetFavouriteLine
+
+    fun reorderFavouriteLines(): ReorderFavouriteLines
 }
 
 /**
