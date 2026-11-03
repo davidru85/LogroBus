@@ -2,6 +2,8 @@ package com.ruizurraca.logrobus.android.feature.lines
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
@@ -12,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
@@ -29,7 +32,8 @@ class LinesViewModel(
     private val setFavourite: SetFavouriteLine,
     private val reorderFavourites: ReorderFavouriteLines,
 ) : ViewModel() {
-    val favouriteLimit: StateFlow<Int?> = MutableStateFlow(null)
+    private val limit = MutableStateFlow<Int?>(null)
+    val favouriteLimit: StateFlow<Int?> = limit.asStateFlow()
 
     // Each Retry bumps it, which starts a new load, and with it a new sync (ADR-0008).
     private val loads = MutableStateFlow(0)
@@ -63,11 +67,20 @@ class LinesViewModel(
 
             // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a damaged
             // database the repository has logged, leaves them as they were.
-            is LinesEvent.SetFavourite -> viewModelScope.launch { setFavourite(event.lineId, event.isFavourite) }
+            is LinesEvent.SetFavourite -> {
+                viewModelScope.launch {
+                    val toggle = (setFavourite(event.lineId, event.isFavourite) as? AppResult.Success)?.value
+                    if (toggle is FavouriteToggle.LimitReached) limit.value = toggle.limit
+                }
+            }
 
-            is LinesEvent.ReorderFavourites -> Unit
+            is LinesEvent.ReorderFavourites -> {
+                viewModelScope.launch { reorderFavourites(event.lineIds) }
+            }
 
-            LinesEvent.FavouriteLimitShown -> Unit
+            LinesEvent.FavouriteLimitShown -> {
+                limit.value = null
+            }
         }
     }
 
