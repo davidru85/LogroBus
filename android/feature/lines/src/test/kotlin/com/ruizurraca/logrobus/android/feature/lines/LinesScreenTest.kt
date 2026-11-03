@@ -1,11 +1,14 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
 import android.content.Context
+import android.view.View
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -13,18 +16,27 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
@@ -45,7 +57,10 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
-/** LB-101 (FR-LINE-01, FR-LINE-02, NFR-A11Y-02) and spec §7.3 on Android: the Lines list and its states. */
+/**
+ * LB-101 (FR-LINE-01, FR-LINE-02, NFR-A11Y-02) and spec §7.3 on Android: the Lines list and its states. LB-103: the
+ * favourites. LB-102 (FR-LINE-03, FR-LINE-16): the search field.
+ */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 // Tall enough for the favourites section and every row: a lazy list composes only the rows it shows.
@@ -284,6 +299,145 @@ class LinesScreenTest {
         assertEquals(listOf(4), opened)
     }
 
+    @Test
+    fun lb102_theSearchFieldSendsWhatIsTyped() {
+        // FR-LINE-03: the ViewModel filters the lines by it.
+        val events = mutableListOf<LinesEvent>()
+        compose.setContent { LinesScreen(network, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {}) }
+
+        compose.onNode(hasSetTextAction() and hasText(context.getString(R.string.lines_search))).performTextInput("ca")
+        compose.waitForIdle()
+
+        assertEquals(LinesEvent.Search("ca"), events.filterIsInstance<LinesEvent.Search>().last())
+    }
+
+    @Test
+    fun lb102_searchResultsKeepTheDayAndNightGroups_withoutTheFavourites() {
+        // FR-LINE-16: "ca" finds Casa Blanca (4) and La Cava (B1); line 10 is a favourite, and its card hides too.
+        compose.setContent { LinesScreen(search(favouriteIds = listOf(10), "ca"), {}, {}, {}) }
+
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_favourites_title))).assertDoesNotExist()
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_group_day))).assertExists()
+        compose.onNode(isHeading() and hasText(context.getString(R.string.lines_group_night))).assertExists()
+        compose.onNode(hasText("Casa Blanca - Yagüe") and hasClickAction()).assertExists()
+        compose.onNode(hasText("Varea - La Cava") and hasClickAction()).assertExists()
+        compose.onAllNodesWithText("El Arco - Hospital San Pedro").assertCountEquals(0)
+    }
+
+    @Test
+    fun lb102_aSearchThatFindsNothingSaysSo_andClearSearchEmptiesTheField() {
+        // Spec §7.3: one sentence and one action.
+        val events = mutableListOf<LinesEvent>()
+        val search = TextFieldState("tranvia")
+        compose.setContent {
+            LinesScreen(LinesUiState.NoMatches, { events += it }, onOpenMore = {}, onOpenLine = {}, search = search)
+        }
+
+        compose.onNodeWithText(context.getString(R.string.lines_no_matches)).assertExists()
+        compose.onNode(hasText(context.getString(DS.string.search_clear)) and hasClickAction()).performClick()
+        compose.waitForIdle()
+
+        assertEquals("", search.text.toString())
+        assertEquals(LinesEvent.Search(""), events.last())
+    }
+
+    @Test
+    fun lb102_theFieldKeepsItsTextAsTheResultsChange() {
+        // The field sits above every list state, so a new state never takes its text or the keyboard away.
+        var state by mutableStateOf(network)
+        compose.setContent { LinesScreen(state, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+        val field = compose.onNode(hasSetTextAction())
+        field.performTextInput("ca")
+
+        state = search(favouriteIds = emptyList(), "ca")
+        compose.waitForIdle()
+        field.assert(hasText("ca"))
+
+        state = LinesUiState.NoMatches
+        compose.waitForIdle()
+        field.assert(hasText("ca")).assertIsFocused()
+    }
+
+    @Test
+    fun lb102_aSearchThatFindsNothingIsAnnounced_withoutMovingTheFocus() {
+        // A pane that appears is announced by its title (design_guidelines.md §8); a live region would not be, since
+        // TalkBack only hears one whose content changes, and this node is new.
+        compose.setContent { LinesScreen(LinesUiState.NoMatches, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+
+        val message = context.getString(R.string.lines_no_matches)
+        compose.onNode(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, message)).assertExists()
+    }
+
+    @Test
+    fun lb102_clearSearchLeavesTheFocusInTheField() {
+        // The button goes with the NoMatches state, so the focus moves to the field rather than get lost.
+        val search = TextFieldState("tranvia")
+        compose.setContent {
+            LinesScreen(LinesUiState.NoMatches, onEvent = {}, onOpenMore = {}, onOpenLine = {}, search = search)
+        }
+
+        compose.onNode(hasText(context.getString(DS.string.search_clear)) and hasClickAction()).performClick()
+
+        compose.onNode(hasSetTextAction()).assertIsFocused()
+    }
+
+    @Test
+    fun lb102_aFieldRestoredWithTextFiltersTheListAgain() {
+        // After a configuration change or process death, the field's saved text is the search again.
+        val events = mutableListOf<LinesEvent>()
+        val restoration = StateRestorationTester(compose)
+        restoration.setContent { LinesScreen(network, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {}) }
+        compose.onNode(hasSetTextAction()).performTextInput("ca")
+        compose.waitForIdle()
+        events.clear()
+
+        restoration.emulateSavedInstanceStateRestore()
+        compose.waitForIdle()
+
+        assertEquals(listOf(LinesEvent.Search("ca")), events)
+    }
+
+    @Test
+    fun lb102_theListEndsAboveTheKeyboard() {
+        // The field is the list's first item, so the window never pans: the list must make room for the keyboard, or
+        // the last results stay under it.
+        lateinit var view: View
+        compose.setContent {
+            view = LocalView.current
+            LinesScreen(network, onEvent = {}, onOpenMore = {}, onOpenLine = {})
+        }
+        val keyboard =
+            WindowInsetsCompat
+                .Builder()
+                .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, KEYBOARD_PX))
+                .setVisible(WindowInsetsCompat.Type.ime(), true)
+                .build()
+
+        compose.runOnUiThread { ViewCompat.dispatchApplyWindowInsets(view, keyboard) }
+        compose.waitForIdle()
+
+        val list = compose.onNode(isLinesList).fetchSemanticsNode().boundsInRoot
+        val window = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        assertTrue("the list ends at ${list.bottom}", list.bottom <= window.bottom - KEYBOARD_PX)
+    }
+
+    @Test
+    fun lb102_withoutLinesThereIsNothingToSearch() {
+        // Loading, Empty and Error have no list to filter.
+        var state by mutableStateOf<LinesUiState>(LinesUiState.Empty)
+        compose.setContent { LinesScreen(state, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+
+        listOf(LinesUiState.Empty, LinesUiState.Error(ErrorReason.NETWORK), LinesUiState.Loading).forEach {
+            state = it
+            compose.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        }
+    }
+
+    private fun search(
+        favouriteIds: List<Int>,
+        query: String,
+    ) = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(networkLines, favouriteIds)), query)
+
     private fun favourites(vararg ids: Int) =
         LinesUiMapper.state(AppResult.Success(LinesWithFavourites(networkLines, favouriteIds = ids.toList())))
 
@@ -308,7 +462,13 @@ class LinesScreenTest {
         isOperational,
     )
 
+    // The Lines list is the lazy list that scrolls vertically; the carousel and the search field scroll horizontally.
+    private val isLinesList =
+        SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and hasScrollToIndexAction()
+
     private companion object {
+        // Taller than the window less the rows, so that it would cover some (the window is 1000 dp at 1 px per dp).
+        const val KEYBOARD_PX = 700
         val BADGE_LABEL = DS.string.line_badge
         val MORE_ACTION = DS.string.action_more
     }

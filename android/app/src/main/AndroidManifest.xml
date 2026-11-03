@@ -10,9 +10,12 @@
         android:theme="@style/Theme.LogroBus"
         tools:ignore="MissingApplicationIcon">
 
+        <!-- adjustResize: edge to edge, the window never resizes for the keyboard, but reports it as insets, which
+             the Lines list pads by (LB-102). -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

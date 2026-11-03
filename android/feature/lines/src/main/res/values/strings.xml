@@ -10,6 +10,9 @@
     <string name="lines_loading">Cargando líneas</string>
     <!-- Spec §7.3: the Empty state, one sentence and Retry. -->
     <string name="lines_empty">No hay líneas que mostrar.</string>
+    <!-- LB-102 (FR-LINE-03): the search field over the list, and the sentence of a search that found nothing. -->
+    <string name="lines_search">Buscar línea</string>
+    <string name="lines_no_matches">Ninguna línea coincide con tu búsqueda.</string>
     <!-- LB-103: the favourite lines carousel (FR-LINE-12 to 14) and the toggle of each row and line detail (FR-LINE-15). -->
     <string name="lines_favourites_title">Tus líneas favoritas</string>
     <string name="lines_favourites_hint">Marca ☆ en una línea para tenerla aquí</string>

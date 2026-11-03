@@ -272,7 +272,7 @@ Each shared feature module contains three packages:
 
 | Feature | Use cases (examples) | Presentation models | Endpoints |
 | --- | --- | --- | --- |
-| `lines` | `ObserveLines`, `ObserveLinesWithFavourites` and `SetFavouriteLine` (built), `SearchLines`, `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals` | `LinesUiState`, `LineRowUi`, `FavouriteLineCardUi` (built), `LineDetailUiState` (built minimal in LB-103) | API-01, 04, 05 |
+| `lines` | `ObserveLines`, `ObserveLinesWithFavourites` and `SetFavouriteLine` (built), `ObserveLineDetail`, `ObserveLineVehicles`, `ObserveLineArrivals`. The search by code, name and headsigns (LB-102 part 1) is `LineQuery`, which `LinesUiMapper` applies to the lines already read, so a key never starts a load; part 2's stop names need a query of the stops | `LinesUiState` (with `SearchResults` and `NoMatches`), `LineRowUi`, `FavouriteLineCardUi` (built), `LineDetailUiState` (built minimal in LB-103) | API-01, 04, 05 |
 | `stops` | `ObserveStopArrivals`, `SearchStops`, `SaveStop` | `StopDetailUiState`, `ArrivalUi`, `StopSearchUiState` | API-02, 06 |
 | `nearme` | `GetNearbyStops`, `ObserveSavedStopArrivals`, `ObserveNetworkVehicles` | `NearMeUiState`, `SavedStopCardUi`, `NearbyStopRowUi`, map layer models | API-02, 03, 06, 08 |
 | `planner` | `SearchPlaces`, `PlanJourney`, `ObserveRecentPlans` | `PlannerUiState`, `ItineraryCardUi`, `ItineraryDetailUiState` | API-07, 08, 06, CartoCiudad |

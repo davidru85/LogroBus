@@ -388,6 +388,14 @@ Refs: FR-LINE-03, FR-LINE-16, NFR-I18N-03
 - **Given** an active query, **when** results show, **then** the favourites carousel is hidden and the Day / Night grouping is kept. **When** the query is cleared, **then** the carousel returns.
 - **Given** a query with no matches, **when** results update, **then** an empty state is shown with a single "Clear search" action.
 
+Part 1 (2026-11-03), the search by a line's code, name and headsigns, done with this evidence. A stop's name needs the stops, which LB-008 part 2 caches, so the third criterion is part 2 (owner decision, 2026-11-03):
+- "pradoviejo": `LineQueryTest` (the lines whose names end at Pradoviejo, and no other). The sample lines' names are placeholders (OQ-11): the real ones come with LB-003's fixture, and if Pradoviejo is only a stop of lines 4 and 9, part 2's stop search finds them.
+- "yague": `LineQueryTest` ("yague" and "YAGÜE" find "Yagüe - Varea"), with the stop search's folding (NFR-I18N-03).
+- An active query: `LinesUiMapperTest` (the results in their groups, without the carousel; an empty or blank query brings it back), the ViewModel tests of both platforms (a key never loads the lines again; a Retry keeps the query), `LinesScreenTest` on Android (the field keeps its text as the results change), the screenshots of both platforms, and end to end `ShellUITests` on iOS ("varea" finds lines 2 and B1 without the favourites, and Clear search brings them back).
+- No matches: `LinesUiMapperTest`, `LinesScreenTest` (one sentence and Clear search, which empties the field), the screenshots of both platforms, and `ShellUITests`.
+
+Part 2, also done when: the third criterion holds, a line found by the stop names of its patterns, folded as the stop search folds them (`architecture.md` §4.3), once LB-008 part 2 caches the stops; and the first holds with the real line names.
+
 ### LB-103 Favourite lines
 Refs: FR-LINE-09, FR-LINE-12 to 15, FR-FAV-01
 

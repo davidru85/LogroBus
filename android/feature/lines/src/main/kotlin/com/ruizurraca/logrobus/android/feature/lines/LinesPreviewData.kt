@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewFontScale
@@ -38,6 +39,14 @@ internal object LinesPreviewData {
 
     /** LB-103: lines 10, 4 and B1 are favourites, in the order they were added; "content" has the hint instead. */
     val favourites = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, listOf(10, 4, 101))))
+
+    /** LB-102: what [search] and [noMatches] searched for. */
+    const val SEARCH = "ca"
+    const val NO_MATCHES = "tranvía"
+
+    /** LB-102: "ca" finds Casa Blanca, Polígono Cantabria and La Cava, without the favourites' carousel. */
+    val search = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, listOf(10, 4, 101))), SEARCH)
+    val noMatches = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(lines, emptyList())), NO_MATCHES)
     val empty: LinesUiState = LinesUiState.Empty
     val error: LinesUiState = LinesUiState.Error(ErrorReason.NETWORK)
 
@@ -83,6 +92,25 @@ private fun LinesContentPreview() {
 @Composable
 private fun LinesFavouritesPreview() {
     PreviewTheme { LinesScreen(LinesPreviewData.favourites, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+}
+
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun LinesSearchPreview() {
+    PreviewTheme {
+        val search = rememberTextFieldState(LinesPreviewData.SEARCH)
+        LinesScreen(LinesPreviewData.search, onEvent = {}, onOpenMore = {}, onOpenLine = {}, search = search)
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun LinesNoMatchesPreview() {
+    PreviewTheme {
+        val search = rememberTextFieldState(LinesPreviewData.NO_MATCHES)
+        LinesScreen(LinesPreviewData.noMatches, onEvent = {}, onOpenMore = {}, onOpenLine = {}, search = search)
+    }
 }
 
 @PreviewLightDark

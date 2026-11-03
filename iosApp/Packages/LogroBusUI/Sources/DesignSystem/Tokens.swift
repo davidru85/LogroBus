@@ -44,6 +44,9 @@ public enum Tokens {
         /// A card on a grouped list's background, such as a favourite line's (LB-103): the system's colour until the
         /// brand palette (LB-413).
         public static let cardBackground = Color(uiColor: .secondarySystemGroupedBackground)
+        /// A grouped list's own background, for a state that takes the list's place, such as a search that found
+        /// nothing (LB-102), so the screen keeps its colour: the system's until the brand palette (LB-413).
+        public static let groupedBackground = Color(uiColor: .systemGroupedBackground)
     }
 
     /// The spacing scale and the screen margin (design_guidelines.md §6.1).

@@ -103,6 +103,12 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **03-11-2026:**
+  - LB-102, parte 1: un buscador sobre la lista de Líneas.
+    - La lista se filtra según escribes, por el código de una línea ("B1"), su nombre o hacia dónde va, sin importar tildes ni mayúsculas: "yague" encuentra "Yagüe - Varea". Cada palabra tiene que ser el principio de una palabra de la línea, así que "hosp lard" encuentra la línea 1.
+    - Mientras hay una búsqueda, el carrusel de favoritas se oculta y los resultados mantienen los grupos diurno y nocturno; al borrar la búsqueda, el carrusel vuelve. Una búsqueda sin resultados lo dice y ofrece "Borrar búsqueda".
+    - Buscar por el nombre de una parada llegará cuando se descarguen las paradas (LB-008 parte 2).
+    - Las dos apps filtran la lista en el sitio. En Android el campo es un componente nuevo del sistema de diseño, porque la barra de búsqueda de Material solo abre una búsqueda a pantalla completa.
 - **02-11-2026:**
   - CI: cuando un repositorio no sirve una dependencia que tiene (el "demasiadas peticiones" de Maven Central o el "no encontrado" del Gradle Plugin Portal), Gradle vuelve a ejecutarse, hasta tres veces y con un minuto de espera. Pasó en un job distinto en casi cada ejecución del 2 de noviembre. Un test que falla sigue fallando en el acto.
   - LB-103: líneas favoritas.

@@ -35,7 +35,7 @@ import org.junit.Test
 /**
  * LB-101, ADR-0007 and testing_strategy.md §3: the Lines ViewModel builds every state with the shared use case and
  * mapper, retries on Retry, and stops its upstream after the screen leaves. LB-103: a row's toggle sets its line as a
- * favourite.
+ * favourite. LB-102: the search field's text filters the lines.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LinesViewModelTest {
@@ -151,6 +151,82 @@ class LinesViewModelTest {
             viewModel.onEvent(LinesEvent.SetFavourite(lineId = 10, isFavourite = false))
 
             assertEquals(listOf(3 to true, 10 to false), set)
+        }
+
+    @Test
+    fun lb102_aSearchFiltersTheList_andClearingItBringsTheListBack() =
+        runTest {
+            // FR-LINE-03, FR-LINE-16: the shared mapper makes the results of the search field's text.
+            val viewModel = viewModel { flowOf(lines) }
+
+            viewModel.state.test {
+                assertEquals(LinesUiMapper.state(lines), awaitSettled())
+
+                viewModel.onEvent(LinesEvent.Search("varea"))
+                assertEquals(LinesUiMapper.state(lines, query = "varea"), awaitItem())
+
+                viewModel.onEvent(LinesEvent.Search(""))
+                assertEquals(LinesUiMapper.state(lines), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb102_aSearchFiltersTheLinesItHas_withoutLoadingThemAgain() =
+        runTest {
+            // One load: a second call of the use case would start a sync, and Loading would flash at each key.
+            val viewModel = viewModel(Scripted(flowOf(lines)))
+
+            viewModel.state.test {
+                awaitSettled()
+                // "b" finds both lines (Blanca, B1), and "b1" only the night one.
+                viewModel.onEvent(LinesEvent.Search("b"))
+                assertEquals(LinesUiMapper.state(lines, query = "b"), awaitItem())
+
+                viewModel.onEvent(LinesEvent.Search("b1"))
+                assertEquals(LinesUiMapper.state(lines, query = "b1"), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb102_aSearchThatFindsNothingShowsNoMatches() =
+        runTest {
+            val viewModel = viewModel { flowOf(lines) }
+
+            viewModel.state.test {
+                awaitSettled()
+                viewModel.onEvent(LinesEvent.Search("tranvia"))
+
+                assertEquals(LinesUiState.NoMatches, awaitItem())
+            }
+        }
+
+    @Test
+    fun lb102_aSearchTypedBeforeTheLinesArriveFiltersThem() =
+        runTest {
+            val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
+            val viewModel = viewModel { observed }
+
+            viewModel.state.test {
+                assertEquals(LinesUiState.Loading, awaitItem())
+                viewModel.onEvent(LinesEvent.Search("varea"))
+                observed.emit(lines)
+
+                assertEquals(LinesUiMapper.state(lines, query = "varea"), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb102_aRetryKeepsTheSearch() =
+        runTest {
+            val viewModel = viewModel(Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
+
+            viewModel.state.test {
+                awaitSettled()
+                viewModel.onEvent(LinesEvent.Search("varea"))
+                viewModel.onEvent(LinesEvent.Retry)
+
+                assertEquals(LinesUiMapper.state(lines, query = "varea"), awaitSettled())
+            }
         }
 
     private fun viewModel(observe: ObserveLinesWithFavourites) =

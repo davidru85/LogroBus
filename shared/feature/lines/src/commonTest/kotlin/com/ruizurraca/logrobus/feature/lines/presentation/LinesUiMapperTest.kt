@@ -8,10 +8,11 @@ import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 /**
- * LB-101 (FR-LINE-01, FR-LINE-02) and LB-103 (FR-LINE-12 to 15): the Lines list's state, from the lines and the
- * favourite ones, or the failure to get them.
+ * LB-101 (FR-LINE-01, FR-LINE-02), LB-103 (FR-LINE-12 to 15) and LB-102 (FR-LINE-03, FR-LINE-16): the Lines list's
+ * state, from the lines, the favourite ones and the search, or the failure to get them.
  */
 class LinesUiMapperTest {
     @Test
@@ -158,6 +159,71 @@ class LinesUiMapperTest {
 
         assertEquals(listOf("3"), (state as LinesUiState.Content).favourites.map { it.code })
     }
+
+    @Test
+    fun lb102_aSearchHidesTheFavourites_andKeepsTheDayAndNightGroups() {
+        // FR-LINE-16: the results are the list's own rows, without the carousel.
+        val lines = listOf(line("2", "Yagüe - Varea"), line("3", "Campillo - El Cubo"), line("B1", "Varea - La Cava"))
+
+        val state = LinesUiMapper.state(success(lines, favouriteIds = listOf(3)), query = "varea")
+
+        assertEquals(
+            LinesUiState.SearchResults(
+                listOf(
+                    LineGroupUi(LineKind.DAY, listOf(row("2", "Yagüe - Varea"))),
+                    LineGroupUi(LineKind.NIGHT, listOf(row("B1", "Varea - La Cava"))),
+                ),
+            ),
+            state,
+        )
+    }
+
+    @Test
+    fun lb102_aRowThatASearchFindsKeepsItsFavouriteStar() {
+        val state = LinesUiMapper.state(success(listOf(line("1"), line("3")), favouriteIds = listOf(3)), query = "3")
+
+        assertEquals(
+            LinesUiState.SearchResults(listOf(LineGroupUi(LineKind.DAY, listOf(row("3").copy(isFavourite = true))))),
+            state,
+        )
+    }
+
+    @Test
+    fun lb102_aClearedSearchBringsTheFavouritesBack() {
+        // A query of spaces or punctuation searches nothing, as an empty one.
+        val result = success(listOf(line("1"), line("3")), favouriteIds = listOf(3))
+        val list = LinesUiMapper.state(result)
+
+        assertIs<LinesUiState.Content>(list)
+        assertEquals(list, LinesUiMapper.state(result, query = ""))
+        assertEquals(list, LinesUiMapper.state(result, query = " - "))
+    }
+
+    @Test
+    fun lb102_aSearchThatFindsNothingIsTheNoMatchesState() {
+        val state = LinesUiMapper.state(success(listOf(line("1"), line("B1"))), query = "tranvia")
+
+        assertEquals(LinesUiState.NoMatches, state)
+    }
+
+    @Test
+    fun lb102_withNoLinesOrAFailure_aSearchChangesNothing() {
+        assertEquals(LinesUiState.Empty, LinesUiMapper.state(success(emptyList()), query = "varea"))
+        assertEquals(
+            LinesUiState.Error(ErrorReason.NETWORK),
+            LinesUiMapper.state(AppResult.Failure(AppError.Network), query = "varea"),
+        )
+    }
+
+    private fun line(
+        code: String,
+        displayName: String,
+    ) = line(code).copy(displayName = displayName)
+
+    private fun row(
+        code: String,
+        displayName: String,
+    ) = row(code).copy(displayName = displayName)
 
     private fun line(code: String) =
         Line(

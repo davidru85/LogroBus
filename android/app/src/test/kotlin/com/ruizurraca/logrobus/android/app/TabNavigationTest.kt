@@ -10,7 +10,6 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -157,7 +156,7 @@ class TabNavigationTest {
     fun lb101_reselectingLinesAtItsRootScrollsTheListToItsTop() {
         // FR-NAV-03 end to end through the shell, moved from LB-012: the debug build's sample lines fill more than a
         // screen.
-        compose.onNode(hasScrollAction()).performScrollToNode(hasContentDescription("Line B3"))
+        compose.onNode(isLinesList).performScrollToNode(hasContentDescription("Line B3"))
         compose.onNodeWithContentDescription("Line 1").assertIsNotDisplayed()
 
         tab("Lines").performClick()
@@ -191,6 +190,7 @@ class TabNavigationTest {
     @Test
     fun lb103_aLineAddedFromItsDetailIsInTheCarousel_backOnLines() {
         // FR-LINE-09: the row opens the line's detail, whose toolbar has the toggle once the line has loaded.
+        compose.onNode(isLinesList).performScrollToNode(hasText("Campillo - El Cubo"))
         compose.onNode(hasText("Campillo - El Cubo") and hasClickAction()).performClick()
         awaitNode(hasContentDescription("Add line 3 to favourites")).performClick()
         awaitNode(hasContentDescription("Remove line 3 from favourites"))
@@ -265,7 +265,8 @@ class TabNavigationTest {
 
     private val isTab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
-    // The Lines list is the lazy list that scrolls vertically; the favourites carousel inside it scrolls horizontally.
+    // The Lines list is the lazy list that scrolls vertically; the favourites carousel inside it and the search field
+    // above its rows scroll horizontally.
     private val isLinesList =
         SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and hasScrollToIndexAction()
 

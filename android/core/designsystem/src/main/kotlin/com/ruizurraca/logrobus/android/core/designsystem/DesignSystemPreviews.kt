@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -93,6 +94,20 @@ private fun FavouriteTogglePreview() {
             Row {
                 FavouriteToggle(isFavourite = false, onToggle = {}, label = "Añadir línea 3 a favoritas")
                 FavouriteToggle(isFavourite = true, onToggle = {}, label = "Quitar línea 3 de favoritas")
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun SearchFieldPreview() {
+    LogroBusTheme {
+        Surface {
+            Column(Modifier.padding(Tokens.Spacing.l), verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.s)) {
+                SearchField(rememberTextFieldState(), placeholder = "Buscar línea")
+                SearchField(rememberTextFieldState("varea"), placeholder = "Buscar línea")
             }
         }
     }

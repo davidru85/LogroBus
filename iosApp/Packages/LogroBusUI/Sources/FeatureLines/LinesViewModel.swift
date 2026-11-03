@@ -4,7 +4,8 @@ import Observation
 // imported as pre-concurrency here.
 @preconcurrency import Shared
 
-/// The Lines tab (LB-101, LB-103). It orchestrates only: the shared use cases and mapper build the state (ADR-0007).
+/// The Lines tab (LB-101, LB-103, LB-102). It orchestrates only: the shared use cases and mapper build the state
+/// (ADR-0007).
 @MainActor
 @Observable
 public final class LinesViewModel {
@@ -12,6 +13,10 @@ public final class LinesViewModel {
     /// Bumped by Retry. The view keys its `.task` on it, so a new value starts a new `observe()`, and with it a new
     /// sync (ADR-0008).
     public private(set) var attempt = 0
+    /// The search field's text (LB-102). It filters the lines already read, so a key never starts a load.
+    public private(set) var query = ""
+    // The use case's last result, which a new query maps again; none while a load has not answered yet.
+    private var lines: AppResult<LinesWithFavourites>?
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap.
     private let useCases: any UseCases
@@ -27,8 +32,12 @@ public final class LinesViewModel {
     public func onEvent(_ event: any LinesEvent) {
         switch onEnum(of: event) {
         case .retry:
+            lines = nil
             state = LinesUiStateLoading.shared
             attempt += 1
+        case .search(let search):
+            query = search.query
+            show()
         case .setFavourite(let favourite):
             // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a
             // damaged database the repository has logged, leaves them as they were.
@@ -45,7 +54,13 @@ public final class LinesViewModel {
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
     public func observe() async {
         for await result in useCases.observeLinesWithFavourites().invoke() {
-            state = LinesUiMapper.shared.state(result: result)
+            lines = result
+            show()
         }
+    }
+
+    private func show() {
+        guard let lines else { return }
+        state = LinesUiMapper.shared.state(result: lines, query: query)
     }
 }
