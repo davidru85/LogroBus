@@ -1,5 +1,8 @@
 package com.ruizurraca.logrobus.core.presentation
 
+import com.ruizurraca.logrobus.core.preferences.EtaFormat
+import kotlin.time.Instant
+
 /**
  * When an arrival comes, as spec §5.7 shows it. Shared code decides the case; each platform words it, draws it and
  * speaks it (AGENTS.md §5, rule 4; design_guidelines.md §6.3).
@@ -18,6 +21,16 @@ sealed interface EtaDisplay {
         val hour: Int,
         val minute: Int,
     ) : EtaDisplay
+
+    companion object {
+        /** Spec §5.7: how an arrival [expected] at that instant shows at [now], in the user's ETA [format] (FR-SET-01). */
+        @Suppress("UNUSED_PARAMETER", "UnusedParameter")
+        fun of(
+            expected: Instant,
+            now: Instant,
+            format: EtaFormat,
+        ): EtaDisplay = Now
+    }
 }
 
 /** How far an arrival runs from its schedule, once it is worth saying (spec §5.7). */
