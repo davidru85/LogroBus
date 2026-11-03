@@ -151,6 +151,40 @@ struct LinesViewModelTests {
         #expect(viewModel.state is LinesUiStateNoMatches)
     }
 
+    @Test
+    func lb102_aRetryKeepsTheSearch() async throws {
+        let useCases = SharedDependencies.shared.preview().offline()
+        let viewModel = LinesViewModel(useCases: useCases)
+        let first = Task { await viewModel.observe() }
+        try await waitUntil { viewModel.state is LinesUiStateError }
+        viewModel.onEvent(LinesEventSearch(query: "varea"))
+
+        useCases.synced()
+        viewModel.onEvent(LinesEventRetry.shared)
+        first.cancel()
+        await first.value
+        let second = Task { await viewModel.observe() }
+        defer { second.cancel() }
+
+        try await waitUntil { viewModel.state is LinesUiStateSearchResults }
+        #expect(viewModel.query == "varea")
+    }
+
+    @Test
+    func lb102_aKeyDuringARetrysLoadKeepsLoading() async throws {
+        // Retry forgets the failed result, so a key cannot map it again and bring the error back over Loading.
+        let viewModel = LinesViewModel(useCases: SharedDependencies.shared.preview().offline())
+        let observation = Task { await viewModel.observe() }
+        try await waitUntil { viewModel.state is LinesUiStateError }
+        observation.cancel()
+        await observation.value
+
+        viewModel.onEvent(LinesEventRetry.shared)
+        viewModel.onEvent(LinesEventSearch(query: "va"))
+
+        #expect(viewModel.state is LinesUiStateLoading)
+    }
+
     /// The carousel's cards, by code.
     private func favourites(of viewModel: LinesViewModel) -> [String]? {
         (viewModel.state as? LinesUiStateContent)?.favourites.map(\.code)

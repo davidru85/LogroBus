@@ -131,6 +131,8 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(line("2", in: app).exists)
         XCTAssertTrue(line("3", in: app).waitForNonExistence(timeout: 5), "line 3 does not match")
         XCTAssertFalse(favourites.exists, "the favourites hide while a search is active")
+        XCTAssertTrue(app.staticTexts["Day lines"].exists, "the results keep the day group")
+        XCTAssertTrue(app.staticTexts["Night lines (Búho)"].exists, "and the night group")
 
         // A search that finds nothing offers one action, which empties the field.
         search.typeText("x")
@@ -140,6 +142,8 @@ final class ShellUITests: XCTestCase {
 
         XCTAssertTrue(favourites.waitForExistence(timeout: 5), "the favourites are back")
         XCTAssertTrue(line("3", in: app).exists)
+        // An empty search field reports its prompt as its value.
+        XCTAssertEqual(search.value as? String, "Search lines", "Clear search emptied the field")
     }
 
     /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
