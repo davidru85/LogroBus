@@ -48,7 +48,9 @@ struct LinesSnapshotTests {
     @Test(arguments: Appearance.allCases)
     func lb110_theEditSheet(appearance: Appearance) async throws {
         // FR-FAV-02: in the user's order, each row's delete control, its badge and name, or "no longer served" for line
-        // 99, which has left the catalogue, and its reorder control.
+        // 99, which has left the catalogue, and its reorder control. The list without its navigation bar: rendered off
+        // screen, iOS 26's bar draws its title and Done in fixed colours whatever the appearance. The UI tests check
+        // the title and Done (ShellUITests).
         let useCases = SharedDependencies.shared.preview()
             .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 99).favouriteLine(id: 101)
         let viewModel = LinesViewModel(useCases: useCases)
@@ -57,8 +59,8 @@ struct LinesSnapshotTests {
         try await waitUntil { viewModel.state is LinesUiStateContent }
         let content = try #require(viewModel.state as? LinesUiStateContent)
 
-        let editor = FavouriteLinesEditor(rows: content.editable, onReorder: { _ in }, onRemove: { _ in })
-        assertSnapshot(of: appearance.apply(to: editor), as: appearance.strategy, named: appearance.name)
+        let list = FavouriteLinesList(rows: content.editable, onReorder: { _ in }, onRemove: { _ in })
+        assertSnapshot(of: appearance.apply(to: list), as: appearance.strategy, named: appearance.name)
     }
 
     @Test(arguments: Appearance.allCases)

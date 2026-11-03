@@ -2,14 +2,16 @@ import DesignSystem
 import Shared
 import SwiftUI
 
-/// The root of the Lines tab (LB-101, LB-103, LB-102): the search field (FR-LINE-03), the favourite lines (FR-LINE-12),
-/// then day lines and night (Búho) lines, each sorted by code (FR-LINE-01). While a search is active, its results in
-/// the same groups, without the favourites (FR-LINE-16). A card or a row opens its line through `onOpenLine`, which the
-/// app shell pushes; the shell adds the More action too.
+/// The root of the Lines tab (LB-101, LB-103, LB-102, LB-110): the search field (FR-LINE-03), the favourite lines
+/// (FR-LINE-12) with Edit, which opens their edit sheet (FR-FAV-02), then day lines and night (Búho) lines, each sorted
+/// by code (FR-LINE-01). While a search is active, its results in the same groups, without the favourites
+/// (FR-LINE-16). A card or a row opens its line through `onOpenLine`, which the app shell pushes; the shell adds the
+/// More action too.
 public struct LinesView: View {
     @State private var viewModel: LinesViewModel
     @Environment(\.scrollToTopRequests) private var scrollToTopRequests
     @State private var scrollPosition = ScrollPosition(edge: .top)
+    @State private var editing = false
     private let onOpenLine: (Int32) -> Void
 
     public init(viewModel: LinesViewModel = LinesViewModel(), onOpenLine: @escaping (Int32) -> Void = { _ in }) {
@@ -28,6 +30,10 @@ public struct LinesView: View {
                 placement: .navigationBarDrawer(displayMode: .always),
                 prompt: Text("lines.search", bundle: .module)
             )
+            .sheet(isPresented: $editing) { FavouriteLinesSheet(viewModel: viewModel) }
+            .favouriteLimitAlert(viewModel.favouriteLimit) {
+                viewModel.onEvent(LinesEventFavouriteLimitShown.shared)
+            }
             // Cancelled when the screen leaves, which stops the use case's collection; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }
@@ -43,7 +49,7 @@ public struct LinesView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("lines.loading", bundle: .module))
         case .content(let content):
-            lineList(content.groups, favourites: content.favourites)
+            lineList(content.groups, favourites: content.favourites, editable: content.editable)
         case .empty:
             message(Text("lines.empty", bundle: .module))
         case .error(let error):
@@ -87,13 +93,28 @@ public struct LinesView: View {
 
     /// The favourite lines, if any are known yet (FR-LINE-12), then each group under its heading (FR-LINE-01).
     /// Re-selecting the tab at this root scrolls it to the top, its first heading included (FR-NAV-03).
-    private func lineList(_ groups: [LineGroupUi], favourites: [FavouriteLineCardUi]?) -> some View {
+    private func lineList(
+        _ groups: [LineGroupUi],
+        favourites: [FavouriteLineCardUi]?,
+        editable: [any EditableFavouriteLineUi] = []
+    ) -> some View {
         List {
             if let favourites {
                 Section {
                     FavouriteLines(cards: favourites, onOpenLine: onOpenLine)
                 } header: {
-                    Text("lines.favourites.title", bundle: .module)
+                    HStack {
+                        // The title's width is the header's when there is no Edit, as before LB-110.
+                        Text("lines.favourites.title", bundle: .module)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        // LB-110: Edit, while there is a favourite to edit, even one with no card.
+                        if !editable.isEmpty {
+                            Button { editing = true } label: { Text("lines.favourites.edit", bundle: .module) }
+                                // VoiceOver names it by what it edits; the name keeps the word it shows (WCAG 2.5.3).
+                                .accessibilityLabel(Text("lines.favourites.edit_title", bundle: .module))
+                                .textCase(nil)
+                        }
+                    }
                 }
             }
             ForEach(groups, id: \.kind) { group in

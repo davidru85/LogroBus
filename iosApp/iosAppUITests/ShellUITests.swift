@@ -160,10 +160,14 @@ final class ShellUITests: XCTestCase {
         app.buttons["Edit favourite lines"].tap()
         let sheet = app.navigationBars["Edit favourite lines"]
         XCTAssertTrue(sheet.waitForExistence(timeout: 5))
-        let row = app.cells.containing(NSPredicate(format: "label BEGINSWITH %@", "Line 3, ")).firstMatch
+        // The sheet's row of line 3: the list's own row, behind the sheet, has no delete control.
+        let row = app.cells
+            .containing(.image, identifier: "minus.circle.fill")
+            .containing(NSPredicate(format: "label == %@", "Line 3"))
+            .firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5), "line 3 is in the sheet")
         // Edit mode's delete control, then the Delete button it reveals.
-        row.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Delete")).firstMatch.tap()
+        row.images["minus.circle.fill"].tap()
         app.buttons["Delete"].firstMatch.tap()
         XCTAssertTrue(row.waitForNonExistence(timeout: 5), "line 3 left the sheet")
         sheet.buttons["Done"].tap()
