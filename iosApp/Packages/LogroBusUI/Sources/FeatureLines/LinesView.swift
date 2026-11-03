@@ -109,10 +109,14 @@ public struct LinesView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         // LB-110: Edit, while there is a favourite to edit, even one with no card.
                         if !editable.isEmpty {
-                            Button { editing = true } label: { Text("lines.favourites.edit", bundle: .module) }
-                                // VoiceOver names it by what it edits; the name keeps the word it shows (WCAG 2.5.3).
-                                .accessibilityLabel(Text("lines.favourites.edit_title", bundle: .module))
-                                .textCase(nil)
+                            Button { editing = true } label: {
+                                Text("lines.favourites.edit", bundle: .module)
+                                    .frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
+                                    .contentShape(Rectangle())
+                            }
+                            // VoiceOver names it by what it edits; the name keeps the word it shows (WCAG 2.5.3).
+                            .accessibilityLabel(Text("lines.favourites.edit_title", bundle: .module))
+                            .textCase(nil)
                         }
                     }
                 }

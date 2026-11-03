@@ -146,7 +146,6 @@ final class ShellUITests: XCTestCase {
         XCTAssertEqual(search.value as? String, "Search lines", "Clear search emptied the field")
     }
 
-    /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
     @MainActor
     func test_lb110_editListsTheFavourites_andALineRemovedThereLeavesTheCarousel_andItsStarGoesOff() {
         // FR-FAV-02, through the debug build's graph and the device's database: line 3 is added from its row, then
@@ -177,6 +176,7 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Add line 3 to favourites"].exists, "line 3's star is off")
     }
 
+    /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
     @MainActor
     private func removeFavourite(_ code: String, in app: XCUIApplication) {
         let remove = app.buttons["Remove line \(code) from favourites"]

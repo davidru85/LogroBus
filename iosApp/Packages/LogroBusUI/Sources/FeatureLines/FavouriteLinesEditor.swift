@@ -48,16 +48,24 @@ struct FavouriteLinesList: View {
 
     var body: some View {
         List {
+            // Spec §7.3: with the last favourite removed, the carousel's hint, rather than a blank sheet.
+            if shown.isEmpty {
+                Text("lines.favourites.hint", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
+                    .accessibilityLabel(Text("lines.favourites.hint_spoken", bundle: .module))
+            }
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, row in
                 EditRow(row: row)
+                    // The row's place, which VoiceOver says on the row and again after each move.
+                    .accessibilityValue(Text("lines.favourites.position \(index + 1) \(shown.count)", bundle: .module))
                     .accessibilityActions {
                         if index > 0 {
-                            Button { move(index, to: index - 1) } label: {
+                            Button { move(index, by: -1) } label: {
                                 Text("lines.favourites.move_up", bundle: .module)
                             }
                         }
                         if index < shown.count - 1 {
-                            Button { move(index, to: index + 1) } label: {
+                            Button { move(index, by: 1) } label: {
                                 Text("lines.favourites.move_down", bundle: .module)
                             }
                         }
@@ -74,16 +82,22 @@ struct FavouriteLinesList: View {
             }
         }
         .environment(\.editMode, .constant(.active))
-        .onChange(of: rows.map(\.id)) { shown = rows }
+        // Whole rows, not their ids: a line that leaves the catalogue keeps its id but becomes "no longer served".
+        // Kotlin's data classes compare by value through NSObject's isEqual.
+        .onChange(of: rows.compactMap { $0 as? NSObject }) { shown = rows }
     }
 
+    /// `rows` with the row at `index` moved `step` places, up when negative; a move past either end changes nothing.
     static func moving<Row>(_ rows: [Row], at index: Int, by step: Int) -> [Row] {
-        rows
+        let target = index + step
+        guard rows.indices.contains(index), rows.indices.contains(target) else { return rows }
+        var moved = rows
+        moved.insert(moved.remove(at: index), at: target)
+        return moved
     }
 
-    private func move(_ index: Int, to target: Int) {
-        // `move(fromOffsets:toOffset:)` takes the place before which the row lands.
-        shown.move(fromOffsets: IndexSet(integer: index), toOffset: target > index ? target + 1 : target)
+    private func move(_ index: Int, by step: Int) {
+        shown = Self.moving(shown, at: index, by: step)
         onReorder(shown.map(\.id))
     }
 }

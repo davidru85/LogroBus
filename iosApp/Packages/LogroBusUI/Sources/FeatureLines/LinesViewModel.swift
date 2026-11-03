@@ -23,8 +23,8 @@ public final class LinesViewModel {
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap.
     private let useCases: any UseCases
-    // The last toggle's write. Each waits for the one before: SKIE may start two Kotlin calls in either order, so two
-    // quick taps could otherwise land the wrong way round.
+    // The last favourites write, a toggle or a new order. Each waits for the one before: SKIE may start two Kotlin
+    // calls in either order, so two quick taps or moves could otherwise land the wrong way round.
     private var favouriteWrite: Task<Void, Never>?
 
     /// Takes the use cases from the graph, or from `SharedDependencies.shared.preview()` in previews and tests.
@@ -53,8 +53,14 @@ public final class LinesViewModel {
                 if let limit = limitReached(by: toggle) { self.favouriteLimit = limit }
             }
         case .reorderFavourites(let reorder):
-            // FR-FAV-02: the carousel follows through the same flow, in one change.
-            Task { [useCases] in _ = try? await useCases.reorderFavouriteLines().invoke(lineIds: reorder.lineIds) }
+            // FR-FAV-02: the carousel follows through the same flow, in one change. In the same queue as the toggles,
+            // so two quick moves land in order. One that fails, a damaged database the repository has logged, changes
+            // nothing: the carousel keeps the saved order, which the sheet shows again when it next opens.
+            let previous = favouriteWrite
+            favouriteWrite = Task { [useCases] in
+                await previous?.value
+                _ = try? await useCases.reorderFavouriteLines().invoke(lineIds: reorder.lineIds)
+            }
         case .favouriteLimitShown:
             favouriteLimit = nil
         }

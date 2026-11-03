@@ -1,249 +1,251 @@
 {
-  "sourceLanguage" : "es",
-  "strings" : {
-    "%@, %@" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@, %2$@"
+  "sourceLanguage": "es",
+  "strings": {
+    "%@, %@": {
+      "comment": "The favourite card's spoken headsigns, joined: already localised, so not translated (FavouriteLines.swift).",
+      "shouldTranslate": false,
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@, %2$@"
           }
         }
       }
     },
-    "line.loading" : {
-      "comment" : "What VoiceOver says while the line detail's first load runs (spec §7.3, design_guidelines.md §8).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading line"
+    "line.loading": {
+      "comment": "What VoiceOver says while the line detail's first load runs (spec §7.3, design_guidelines.md §8).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading line"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cargando línea"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando línea"
           }
         }
       }
     },
-    "line.title %@" : {
-      "comment" : "The line detail's title; the argument is the line's code (SC-04).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Line %@"
+    "line.title %@": {
+      "comment": "The line detail's title; the argument is the line's code (SC-04).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line %@"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Línea %@"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Línea %@"
           }
         }
       }
     },
-    "line.title.generic" : {
-      "comment" : "The line detail's title while it loads or fails, before the line's code is known (SC-04).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Line"
+    "line.title.generic": {
+      "comment": "The line detail's title while it loads or fails, before the line's code is known (SC-04).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Línea"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Línea"
           }
         }
       }
     },
-    "lines.empty" : {
-      "comment" : "Spec §7.3: the Lines list's Empty state, one sentence above Retry (LB-101).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There are no lines to show."
+    "lines.empty": {
+      "comment": "Spec §7.3: the Lines list's Empty state, one sentence above Retry (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are no lines to show."
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No hay líneas que mostrar."
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay líneas que mostrar."
           }
         }
       }
     },
-    "lines.favourite.add %@" : {
-      "comment" : "The favourite toggle of a line that is not one; the argument is the line's code (FR-LINE-15).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add line %@ to favourites"
+    "lines.favourite.add %@": {
+      "comment": "The favourite toggle of a line that is not one; the argument is the line's code (FR-LINE-15).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add line %@ to favourites"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir línea %@ a favoritas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir línea %@ a favoritas"
           }
         }
       }
     },
-    "lines.favourite.remove %@" : {
-      "comment" : "The favourite toggle of a favourite line; the argument is the line's code (FR-LINE-15).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove line %@ from favourites"
+    "lines.favourite.remove %@": {
+      "comment": "The favourite toggle of a favourite line; the argument is the line's code (FR-LINE-15).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove line %@ from favourites"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quitar línea %@ de favoritas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar línea %@ de favoritas"
           }
         }
       }
     },
-    "lines.favourites.done" : {
-      "comment" : "LB-110: closes the edit sheet.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Done"
+    "lines.favourites.done": {
+      "comment": "LB-110: closes the edit sheet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Listo"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo"
           }
         }
       }
     },
-    "lines.favourites.edit" : {
-      "comment" : "LB-110: the carousel's button that opens the edit sheet; VoiceOver reads lines.favourites.edit_title.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit"
+    "lines.favourites.edit": {
+      "comment": "LB-110: the carousel's button that opens the edit sheet; VoiceOver reads lines.favourites.edit_title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar"
           }
         }
       }
     },
-    "lines.favourites.edit_title" : {
-      "comment" : "LB-110: the edit sheet's title, and the carousel's Edit button as VoiceOver reads it (FR-FAV-02).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit favourite lines"
+    "lines.favourites.edit_title": {
+      "comment": "LB-110: the edit sheet's title, and the carousel's Edit button as VoiceOver reads it (FR-FAV-02).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit favourite lines"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar líneas favoritas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar líneas favoritas"
           }
         }
       }
     },
-    "lines.favourites.hint" : {
-      "comment" : "The favourite lines section with none, one hint (FR-LINE-14).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap ☆ on a line to pin it here"
+    "lines.favourites.hint": {
+      "comment": "The favourite lines section with none, one hint (FR-LINE-14).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap ☆ on a line to pin it here"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marca ☆ en una línea para tenerla aquí"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca ☆ en una línea para tenerla aquí"
           }
         }
       }
     },
-    "lines.favourites.hint_spoken" : {
-      "comment" : "How VoiceOver reads the favourite lines hint: words, never the star symbol (FR-LINE-14).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap the star on a line to pin it here"
+    "lines.favourites.hint_spoken": {
+      "comment": "How VoiceOver reads the favourite lines hint: words, never the star symbol (FR-LINE-14).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the star on a line to pin it here"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marca la estrella de una línea para tenerla aquí"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marca la estrella de una línea para tenerla aquí"
           }
         }
       }
     },
-    "lines.favourites.limit %lld" : {
-      "comment" : "FR-FAV-05: the alert's title when a star is tapped with the most favourite lines saved; the argument is the limit.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "You already have %lld favourite line, the most you can save."
+    "lines.favourites.limit %lld": {
+      "comment": "FR-FAV-05: the alert's title when a star is tapped with the most favourite lines saved; the argument is the limit.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You already have %lld favourite line, the most you can save."
                 }
               },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "You already have %lld favourite lines, the most you can save."
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You already have %lld favourite lines, the most you can save."
                 }
               }
             }
           }
         },
-        "es" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Ya tienes %lld línea favorita, el máximo."
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ya tienes %lld línea favorita, el máximo."
                 }
               },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Ya tienes %lld líneas favoritas, el máximo."
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ya tienes %lld líneas favoritas, el máximo."
                 }
               }
             }
@@ -251,258 +253,276 @@
         }
       }
     },
-    "lines.favourites.limit_hint" : {
-      "comment" : "FR-FAV-05: the limit alert's message.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove one to add another."
+    "lines.favourites.limit_hint": {
+      "comment": "FR-FAV-05: the limit alert's message.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove one to add another."
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quita alguna para añadir otra."
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quita alguna para añadir otra."
           }
         }
       }
     },
-    "lines.favourites.move_down" : {
-      "comment" : "LB-110: VoiceOver's action that moves a favourite line down without dragging (NFR-A11Y).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move down"
+    "lines.favourites.move_down": {
+      "comment": "LB-110: VoiceOver's action that moves a favourite line down without dragging (NFR-A11Y).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bajar"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bajar"
           }
         }
       }
     },
-    "lines.favourites.move_up" : {
-      "comment" : "LB-110: VoiceOver's action that moves a favourite line up without dragging (NFR-A11Y).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move up"
+    "lines.favourites.move_up": {
+      "comment": "LB-110: VoiceOver's action that moves a favourite line up without dragging (NFR-A11Y).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Subir"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subir"
           }
         }
       }
     },
-    "lines.favourites.no_longer_served" : {
-      "comment" : "LB-110: a favourite whose line has left the catalogue; the app no longer knows its code or name.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Line no longer in service"
+    "lines.favourites.no_longer_served": {
+      "comment": "LB-110: a favourite whose line has left the catalogue; the app no longer knows its code or name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line that no longer runs"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Línea que ya no circula"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Línea que ya no circula"
           }
         }
       }
     },
-    "lines.favourites.title" : {
-      "comment" : "The favourite lines section over the list (LB-103, FR-LINE-12).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your favourite lines"
+    "lines.favourites.position %lld %lld": {
+      "comment": "LB-110: a row's place in the edit sheet, which VoiceOver says as the row's value, so each move is heard. The arguments are the place and the number of rows.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tus líneas favoritas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld"
           }
         }
       }
     },
-    "lines.group.day" : {
-      "comment" : "FR-LINE-01: the heading of the day lines (LB-101).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Day lines"
+    "lines.favourites.title": {
+      "comment": "The favourite lines section over the list (LB-103, FR-LINE-12).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your favourite lines"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Líneas diurnas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus líneas favoritas"
           }
         }
       }
     },
-    "lines.group.night" : {
-      "comment" : "FR-LINE-01: the heading of the night (Búho) lines; Búho is a name, not translated (LB-101).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Night lines (Búho)"
+    "lines.group.day": {
+      "comment": "FR-LINE-01: the heading of the day lines (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day lines"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Líneas nocturnas (Búho)"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas diurnas"
           }
         }
       }
     },
-    "lines.loading" : {
-      "comment" : "What VoiceOver says while the Lines list's first load runs (spec §7.3, design_guidelines.md §8).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading lines"
+    "lines.group.night": {
+      "comment": "FR-LINE-01: the heading of the night (Búho) lines; Búho is a name, not translated (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night lines (Búho)"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cargando líneas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas nocturnas (Búho)"
           }
         }
       }
     },
-    "lines.no_matches" : {
-      "comment" : "Spec §7.3: a search of the Lines list that found nothing, one sentence above Clear search (LB-102).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No lines match your search."
+    "lines.loading": {
+      "comment": "What VoiceOver says while the Lines list's first load runs (spec §7.3, design_guidelines.md §8).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading lines"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ninguna línea coincide con tu búsqueda."
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando líneas"
           }
         }
       }
     },
-    "lines.not_operational" : {
-      "comment" : "FR-LINE-02: the status chip of a line that is not operational (LB-101).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not in service"
+    "lines.no_matches": {
+      "comment": "Spec §7.3: a search of the Lines list that found nothing, one sentence above Clear search (LB-102).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lines match your search."
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin servicio"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna línea coincide con tu búsqueda."
           }
         }
       }
     },
-    "lines.search" : {
-      "comment" : "The search field's prompt over the Lines list (LB-102, FR-LINE-03).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search lines"
+    "lines.not_operational": {
+      "comment": "FR-LINE-02: the status chip of a line that is not operational (LB-101).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not in service"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Buscar línea"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin servicio"
           }
         }
       }
     },
-    "lines.title" : {
-      "comment" : "The Lines screen's title (design_guidelines.md §9, key tab.lines).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lines"
+    "lines.search": {
+      "comment": "The search field's prompt over the Lines list (LB-102, FR-LINE-03).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search lines"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Líneas"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar línea"
           }
         }
       }
     },
-    "lines.towards %@" : {
-      "comment" : "How VoiceOver reads each headsign of a favourite card, which shows \"→ Hospital San Pedro\" (FR-LINE-13).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Towards %@"
+    "lines.title": {
+      "comment": "The Lines screen's title (design_guidelines.md §9, key tab.lines).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hacia %@"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas"
           }
         }
       }
     },
-    "search.clear" : {
-      "comment" : "The one action of a search that found nothing: it empties the search field (LB-102).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear search"
+    "lines.towards %@": {
+      "comment": "How VoiceOver reads each headsign of a favourite card, which shows \"→ Hospital San Pedro\" (FR-LINE-13).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Towards %@"
           }
         },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Borrar búsqueda"
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hacia %@"
+          }
+        }
+      }
+    },
+    "search.clear": {
+      "comment": "The one action of a search that found nothing: it empties the search field (LB-102).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar búsqueda"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
