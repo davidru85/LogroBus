@@ -2,9 +2,10 @@ import DesignSystem
 import Shared
 import SwiftUI
 
-/// The root of the Lines tab (LB-101, LB-103): the favourite lines (FR-LINE-12), then day lines and night (Búho) lines,
-/// each sorted by code (FR-LINE-01). A card or a row opens its line through `onOpenLine`, which the app shell pushes;
-/// the shell adds the More action too.
+/// The root of the Lines tab (LB-101, LB-103, LB-102): the search field (FR-LINE-03), the favourite lines (FR-LINE-12),
+/// then day lines and night (Búho) lines, each sorted by code (FR-LINE-01). While a search is active, its results in
+/// the same groups, without the favourites (FR-LINE-16). A card or a row opens its line through `onOpenLine`, which the
+/// app shell pushes; the shell adds the More action too.
 public struct LinesView: View {
     @State private var viewModel: LinesViewModel
     @Environment(\.scrollToTopRequests) private var scrollToTopRequests
@@ -19,6 +20,13 @@ public struct LinesView: View {
     public var body: some View {
         content
             .navigationTitle(Text("lines.title", bundle: .module))
+            // Under the title and always shown, as Android's heads the list. A query typed during the first load
+            // filters the lines once they arrive.
+            .searchable(
+                text: query,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: Text("lines.search", bundle: .module)
+            )
             // Cancelled when the screen leaves, which stops the use case's collection; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }
@@ -39,9 +47,37 @@ public struct LinesView: View {
             message(Text("lines.empty", bundle: .module))
         case .error(let error):
             message(error.reason.message)
-        case .searchResults, .noMatches:
-            // LB-102: the screen has no search field yet.
-            EmptyView()
+        case .searchResults(let results):
+            lineList(results.groups, favourites: nil)
+        case .noMatches:
+            noMatches
+        }
+    }
+
+    /// The search field's text is the view model's, which each key sends as an event (ADR-0007).
+    private var query: Binding<String> {
+        Binding(
+            get: { viewModel.query },
+            set: { viewModel.onEvent(LinesEventSearch(query: $0)) }
+        )
+    }
+
+    /// Spec §7.3: a search that found no line says so in one sentence, which VoiceOver announces without moving its
+    /// focus (NFR-A11Y), and offers one action, which empties the field.
+    private var noMatches: some View {
+        ContentUnavailableView {
+            Text("lines.no_matches", bundle: .module)
+        } actions: {
+            Button {
+                viewModel.onEvent(LinesEventSearch(query: ""))
+            } label: {
+                Text("search.clear", bundle: .module)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+        }
+        .onAppear {
+            AccessibilityNotification.Announcement(String(localized: "lines.no_matches", bundle: .module)).post()
         }
     }
 
@@ -290,6 +326,39 @@ extension LineKind {
         .preferredColorScheme(.dark)
         .dynamicTypeSize(.accessibility3)
     }
+}
+
+#Preview("Search") {
+    NavigationStack {
+        LinesView(viewModel: searching("ca", useCases: SharedDependencies.shared.preview().favouriteLine(id: 4)))
+    }
+}
+
+#Preview("Search, dark, large text") {
+    NavigationStack {
+        LinesView(viewModel: searching("ca"))
+            .preferredColorScheme(.dark)
+            .dynamicTypeSize(.accessibility3)
+    }
+}
+
+#Preview("No matches") {
+    NavigationStack { LinesView(viewModel: searching("tranvía")) }
+}
+
+#Preview("No matches, dark") {
+    NavigationStack { LinesView(viewModel: searching("tranvía")).preferredColorScheme(.dark) }
+}
+
+/// A view model whose search field holds `query` (LB-102).
+@MainActor
+private func searching(
+    _ query: String,
+    useCases: PreviewUseCases = SharedDependencies.shared.preview()
+) -> LinesViewModel {
+    let viewModel = LinesViewModel(useCases: useCases)
+    viewModel.onEvent(LinesEventSearch(query: query))
+    return viewModel
 }
 
 #Preview("Loading") {

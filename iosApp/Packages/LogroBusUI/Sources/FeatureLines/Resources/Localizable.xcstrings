@@ -217,6 +217,24 @@
         }
       }
     },
+    "lines.no_matches": {
+      "comment": "Spec §7.3: a search of the Lines list that found nothing, one sentence above Clear search (LB-102).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lines match your search."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna línea coincide con tu búsqueda."
+          }
+        }
+      }
+    },
     "lines.not_operational": {
       "comment": "FR-LINE-02: the status chip of a line that is not operational (LB-101).",
       "extractionState": "manual",
@@ -231,6 +249,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sin servicio"
+          }
+        }
+      }
+    },
+    "lines.search": {
+      "comment": "The search field's prompt over the Lines list (LB-102, FR-LINE-03).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar línea"
           }
         }
       }
@@ -267,6 +303,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hacia %@"
+          }
+        }
+      }
+    },
+    "search.clear": {
+      "comment": "The one action of a search that found nothing: it empties the search field (LB-102).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar búsqueda"
           }
         }
       }

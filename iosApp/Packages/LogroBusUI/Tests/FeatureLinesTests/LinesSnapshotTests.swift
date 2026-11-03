@@ -29,8 +29,8 @@ struct LinesSnapshotTests {
 
     @Test(arguments: Appearance.allCases)
     func lb102_aSearch(appearance: Appearance) async throws {
-        // FR-LINE-16: the lines it found, in their groups, without the favourites; line 10 is one of them.
-        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 10)
+        // FR-LINE-16: the lines it found, in their groups, without the favourites; line 4 keeps its filled star.
+        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 4)
         let screen = try await screen(useCases, searching: "ca", settlesOn: LinesUiStateSearchResults.self)
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
