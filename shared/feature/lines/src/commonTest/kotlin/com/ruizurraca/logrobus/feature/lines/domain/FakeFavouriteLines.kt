@@ -39,7 +39,7 @@ internal class FakeFavouriteLines(
     override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> {
         val ids = (stored.value as? AppResult.Success)?.value
         if (failing || ids == null) return AppResult.Failure(AppError.Data)
-        val named = lineIds.filter { it in ids }
+        val named = lineIds.filter { it in ids }.distinct()
         stored.value = AppResult.Success(named + (ids - named.toSet()))
         return AppResult.Success(Unit)
     }

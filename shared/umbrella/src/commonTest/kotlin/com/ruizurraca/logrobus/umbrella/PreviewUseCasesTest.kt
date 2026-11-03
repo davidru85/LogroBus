@@ -233,6 +233,28 @@ class PreviewUseCasesTest {
         }
 
     @Test
+    fun lb110_aNewOrderInThePreviewKeepsALineNamedTwiceOnce() =
+        runTest {
+            // Two rows with one id would break SwiftUI's ForEach.
+            val preview = SharedDependencies.preview().favouriteLine(10).favouriteLine(3)
+
+            preview.reorderFavouriteLines()(listOf(3, 3, 10))
+
+            val favourites = preview.observeLinesWithFavourites()().first()
+            assertEquals(listOf(3, 10), (favourites as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+        }
+
+    @Test
+    fun lb110_aFailingPreviewFailsToSaveOrReorderAFavourite() =
+        runTest {
+            // failing() scripts a database that cannot be used, for reads and writes alike.
+            val preview = SharedDependencies.preview().favouriteLine(10).failing()
+
+            assertEquals(AppResult.Failure(AppError.Data), preview.setFavouriteLine()(lineId = 3, isFavourite = true))
+            assertEquals(AppResult.Failure(AppError.Data), preview.reorderFavouriteLines()(listOf(10)))
+        }
+
+    @Test
     fun lb101_thePreviewCountsTheCollectionsOfTheLines() =
         runTest {
             val preview = SharedDependencies.preview()

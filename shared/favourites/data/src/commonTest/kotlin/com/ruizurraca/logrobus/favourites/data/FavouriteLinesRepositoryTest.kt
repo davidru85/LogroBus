@@ -231,6 +231,58 @@ class FavouriteLinesRepositoryTest {
         }
 
     @Test
+    fun lb110_aSavedLineWhoseIdIsNotANumberDoesNotCountTowardsTheLimit() =
+        runTest {
+            // Such a row is damage the app never shows, so the user could never free its place.
+            database.favouriteQueries.insertFavourite("line:x", FavouriteTypes.LINE, "x", Instant.DISTANT_PAST)
+            val repository = repository()
+            (1 until FAVOURITES_PER_TYPE).forEach { repository.add(it) }
+
+            assertEquals(AppResult.Success(FavouriteAddition.ADDED), repository.add(101))
+            assertEquals(AppResult.Success(FavouriteAddition.LIMIT_REACHED), repository.add(102))
+        }
+
+    @Test
+    fun lb110_aLineSavedWithItsIdInAnotherFormIsAlreadySaved() =
+        runTest {
+            // "07" reads as line 7, so adding line 7 must neither save it twice nor count favourite_add.
+            database.favouriteQueries.insertFavourite("line:07", FavouriteTypes.LINE, "07", Instant.DISTANT_PAST)
+            val repository = repository()
+
+            assertEquals(AppResult.Success(FavouriteAddition.ALREADY_SAVED), repository.add(7))
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(7)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderMovesALineSavedWithItsIdInAnotherForm() =
+        runTest {
+            val repository = repository()
+            repository.add(10)
+            database.favouriteQueries.insertFavourite("line:07", FavouriteTypes.LINE, "07", Instant.DISTANT_PAST)
+
+            repository.reorder(listOf(7, 10))
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(7, 10)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderThatNamesALineTwiceKeepsItOnce() =
+        runTest {
+            val repository = repository()
+            listOf(10, 3).forEach { repository.add(it) }
+
+            repository.reorder(listOf(3, 3, 10))
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(3, 10)), awaitItem())
+            }
+        }
+
+    @Test
     fun lb110_aNewOrderIsSaved_andSurvivesARestart() =
         runTest {
             val repository = repository()
