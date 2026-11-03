@@ -45,14 +45,15 @@ public final class LinesViewModel {
             let previous = favouriteWrite
             favouriteWrite = Task { [useCases] in
                 await previous?.value
-                _ = try? await useCases.setFavouriteLine().invoke(
+                let toggle = try? await useCases.setFavouriteLine().invoke(
                     lineId: favourite.lineId, isFavourite: favourite.isFavourite
                 )
+                if let limit = Self.limit(reachedBy: toggle) { self.favouriteLimit = limit }
             }
-        case .reorderFavourites:
-            break
+        case .reorderFavourites(let reorder):
+            Task { [useCases] in _ = try? await useCases.reorderFavouriteLines().invoke(lineIds: reorder.lineIds) }
         case .favouriteLimitShown:
-            break
+            favouriteLimit = nil
         }
     }
 
@@ -62,6 +63,13 @@ public final class LinesViewModel {
             lines = result
             show()
         }
+    }
+
+    /// The limit a toggle reached, if it did (FR-FAV-05).
+    nonisolated static func limit(reachedBy toggle: AppResult<FavouriteToggle>?) -> Int? {
+        guard let saved = toggle as? AppResultSuccess<FavouriteToggle>,
+              let reached = saved.value as? FavouriteToggleLimitReached else { return nil }
+        return Int(reached.limit)
     }
 
     private func show() {

@@ -37,10 +37,13 @@ public final class LineDetailViewModel {
             let previous = favouriteWrite
             favouriteWrite = Task { [useCases, lineId] in
                 await previous?.value
-                _ = try? await useCases.setFavouriteLine().invoke(lineId: lineId, isFavourite: favourite.isFavourite)
+                let toggle = try? await useCases.setFavouriteLine().invoke(
+                    lineId: lineId, isFavourite: favourite.isFavourite
+                )
+                if let limit = LinesViewModel.limit(reachedBy: toggle) { self.favouriteLimit = limit }
             }
         case .favouriteLimitShown:
-            break
+            favouriteLimit = nil
         }
     }
 
