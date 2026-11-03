@@ -83,7 +83,9 @@ class LinesViewModel(
                 }
             }
 
-            // The carousel follows through the same flow, in one change.
+            // The carousel follows through the same flow, in one change. Writes queue in the order they were sent, so
+            // two quick moves land in order. One that fails, a damaged database the repository has logged, changes
+            // nothing: the carousel keeps the saved order, which the sheet shows again when it next opens.
             is LinesEvent.ReorderFavourites -> {
                 viewModelScope.launch { reorderFavourites(event.lineIds) }
             }

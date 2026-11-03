@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -107,23 +108,16 @@ internal fun FavouriteLinesEditor(
     val list = rememberLazyListState()
     val reorderable = rememberReorderableLazyListState(list) { from, to -> shown = shown.moved(from.index, to.index) }
     Column(modifier) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = Tokens.Spacing.l, end = Tokens.Spacing.s),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(R.string.lines_favourites_edit_title),
-                modifier = Modifier.weight(1f).semantics { heading() },
-                style = MaterialTheme.typography.titleLarge,
-            )
-            TextButton(onClick = onDone, modifier = Modifier.focusRequester(done).focusable()) {
-                Text(stringResource(R.string.lines_favourites_done))
-            }
-        }
+        EditorTitle(done, onDone)
         LazyColumn(Modifier.testTag(FAVOURITE_LINES_EDITOR), list) {
             // Spec §7.3: with the last favourite removed, the carousel's hint, rather than a blank sheet.
             if (shown.isEmpty()) item(key = EMPTY) { EmptyHint() }
             itemsIndexed(shown, key = { _, row -> row.id }) { index, row ->
+                val removeButton = remember { FocusRequester() }
+                DisposableEffect(row.id) {
+                    removeButtons[row.id] = removeButton
+                    onDispose { removeButtons.remove(row.id) }
+                }
                 ReorderableItem(reorderable, key = row.id) { isDragging ->
                     // The line under the finger rises above the others.
                     Surface(
@@ -133,7 +127,7 @@ internal fun FavouriteLinesEditor(
                         EditRow(
                             row,
                             position = stringResource(R.string.lines_favourites_position, index + 1, shown.size),
-                            removeButton = removeButtons.getOrPut(row.id) { FocusRequester() },
+                            removeButton = removeButton,
                             onRemove = { remove(index) },
                             onMoveUp = if (index > 0) ({ move(index, index - 1) }) else null,
                             onMoveDown = if (index < shown.lastIndex) ({ move(index, index + 1) }) else null,
@@ -149,6 +143,27 @@ internal fun FavouriteLinesEditor(
                     }
                 }
             }
+        }
+    }
+}
+
+/** The sheet's title, as a heading, and Done, which [done] can focus. */
+@Composable
+private fun EditorTitle(
+    done: FocusRequester,
+    onDone: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = Tokens.Spacing.l, end = Tokens.Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.lines_favourites_edit_title),
+            modifier = Modifier.weight(1f).semantics { heading() },
+            style = MaterialTheme.typography.titleLarge,
+        )
+        TextButton(onClick = onDone, modifier = Modifier.focusRequester(done).focusable()) {
+            Text(stringResource(R.string.lines_favourites_done))
         }
     }
 }

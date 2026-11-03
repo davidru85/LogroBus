@@ -175,13 +175,7 @@ private fun LineList(
     val listState = rememberLazyListState()
     val field = remember { FocusRequester() }
     var editing by rememberSaveable { mutableStateOf(false) }
-    // Closing the sheet gives the focus back to Edit, which opened it (design_guidelines.md §8).
     val edit = remember { FocusRequester() }
-    var editClosed by remember { mutableStateOf(false) }
-    LaunchedEffect(editClosed) {
-        if (editClosed && state is LinesUiState.Content && state.editable.isNotEmpty()) edit.requestFocus()
-        editClosed = false
-    }
     ScrollToTopOnReselect(listState)
     // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them. The list
     // ends above the keyboard: its first item is the field, so the window never pans to show the last results.
@@ -196,15 +190,7 @@ private fun LineList(
         when (state) {
             is LinesUiState.Content -> {
                 item(key = FAVOURITES_HEADING) {
-                    // LB-110: Edit, while there is a favourite to edit, even one with no card.
-                    // The heading keeps Edit's height without it, so the list never moves when Edit comes or goes.
-                    GroupHeading(R.string.lines_favourites_title) {
-                        if (state.editable.isNotEmpty()) {
-                            EditButton(Modifier.focusRequester(edit).focusable()) { editing = true }
-                        } else {
-                            Spacer(Modifier.size(Tokens.minTouchTarget))
-                        }
-                    }
+                    FavouritesHeading(canEdit = state.editable.isNotEmpty(), edit) { editing = true }
                 }
                 item(key = FAVOURITES) { FavouriteLines(state.favourites, onOpenLine) }
                 groups(state.groups, onEvent, onOpenLine)
@@ -232,16 +218,7 @@ private fun LineList(
             }
         }
     }
-    if (editing && state is LinesUiState.Content) {
-        FavouriteLinesSheet(
-            state.editable,
-            onEvent,
-            onDismiss = {
-                editing = false
-                editClosed = true
-            },
-        )
-    }
+    FavouritesEditSheet(state, editing, edit, onEvent) { editing = false }
 }
 
 private fun LazyListScope.groups(
@@ -277,7 +254,7 @@ private fun NoMatches(onClear: () -> Unit) {
 }
 
 @Composable
-private fun GroupHeading(
+internal fun GroupHeading(
     @StringRes title: Int,
     action: (@Composable () -> Unit)? = null,
 ) {
@@ -292,18 +269,6 @@ private fun GroupHeading(
         },
         trailingContent = action,
     )
-}
-
-/** LB-110: opens the edit sheet. TalkBack names it by what it edits, a name that keeps the word it shows. */
-@Composable
-private fun EditButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val name = stringResource(R.string.lines_favourites_edit_title)
-    TextButton(onClick = onClick, modifier = modifier.semantics { contentDescription = name }) {
-        Text(stringResource(R.string.lines_favourites_edit))
-    }
 }
 
 /**
