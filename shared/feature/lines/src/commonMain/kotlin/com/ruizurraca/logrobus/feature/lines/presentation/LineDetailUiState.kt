@@ -31,6 +31,7 @@ sealed interface LineDetailEvent {
         val isFavourite: Boolean,
     ) : LineDetailEvent
 
+    /** LB-110 (FR-FAV-05): the limit message has been shown and dismissed, so it does not show again. */
     data object FavouriteLimitShown : LineDetailEvent
 }
 

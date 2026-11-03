@@ -58,10 +58,12 @@ sealed interface LinesEvent {
         val isFavourite: Boolean,
     ) : LinesEvent
 
+    /** LB-110 (FR-FAV-02): the edit sheet's order of the favourite lines, once a drag or a move has ended. */
     data class ReorderFavourites(
         val lineIds: List<Int>,
     ) : LinesEvent
 
+    /** LB-110 (FR-FAV-05): the limit message has been shown and dismissed, so it does not show again. */
     data object FavouriteLimitShown : LinesEvent
 }
 

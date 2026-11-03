@@ -32,6 +32,11 @@ class LineDetailViewModel(
     private val setFavourite: SetFavouriteLine,
 ) : ViewModel() {
     private val limit = MutableStateFlow<Int?>(null)
+
+    /**
+     * FR-FAV-05: the limit a toggle has just reached, for the screen's message, until the screen says it has shown it.
+     * It lives beside the state, since a toggle can reach it in any state with rows.
+     */
     val favouriteLimit: StateFlow<Int?> = limit.asStateFlow()
 
     // Each Retry bumps it, which starts a new load.
@@ -57,10 +62,13 @@ class LineDetailViewModel(
 
     fun onEvent(event: LineDetailEvent) {
         when (event) {
-            LineDetailEvent.Retry -> loads.update { it + 1 }
+            LineDetailEvent.Retry -> {
+                loads.update { it + 1 }
+            }
 
             // FR-LINE-09: the toggle changes through the use case's flow.
             is LineDetailEvent.SetFavourite -> {
+                // A save that fails, a damaged database the repository has logged, leaves the toggle as it was.
                 viewModelScope.launch {
                     val toggle = (setFavourite(lineId, event.isFavourite) as? AppResult.Success)?.value
                     if (toggle is FavouriteToggle.LimitReached) limit.value = toggle.limit

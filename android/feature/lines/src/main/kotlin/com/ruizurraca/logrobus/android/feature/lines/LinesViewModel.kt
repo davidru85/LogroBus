@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * The Lines tab (LB-101, LB-103, LB-102). It orchestrates only: the shared use cases and mapper build the state
+ * The Lines tab (LB-101, LB-103, LB-102, LB-110). It orchestrates only: the shared use cases and mapper build the state
  * (ADR-0007).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,6 +33,11 @@ class LinesViewModel(
     private val reorderFavourites: ReorderFavouriteLines,
 ) : ViewModel() {
     private val limit = MutableStateFlow<Int?>(null)
+
+    /**
+     * FR-FAV-05: the limit a toggle has just reached, for the screen's message, until the screen says it has shown it.
+     * It lives beside the state, since a toggle can reach it in any state with rows.
+     */
     val favouriteLimit: StateFlow<Int?> = limit.asStateFlow()
 
     // Each Retry bumps it, which starts a new load, and with it a new sync (ADR-0008).
@@ -61,9 +66,13 @@ class LinesViewModel(
 
     fun onEvent(event: LinesEvent) {
         when (event) {
-            LinesEvent.Retry -> loads.update { it + 1 }
+            LinesEvent.Retry -> {
+                loads.update { it + 1 }
+            }
 
-            is LinesEvent.Search -> query.value = event.query
+            is LinesEvent.Search -> {
+                query.value = event.query
+            }
 
             // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a damaged
             // database the repository has logged, leaves them as they were.
@@ -74,6 +83,7 @@ class LinesViewModel(
                 }
             }
 
+            // The carousel follows through the same flow, in one change.
             is LinesEvent.ReorderFavourites -> {
                 viewModelScope.launch { reorderFavourites(event.lineIds) }
             }
