@@ -69,6 +69,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Why pull request jobs find no cache:** the basic provider keys the Gradle User Home on a hash of the Gradle files, with no fallback key (`ci_cd.md` §5), and this pull request changes them, so every run starts cold. The repository's cache is also at its 10 GB quota with `main`'s entries.
 - **PR #38's fifth run** failed in "Android screenshots (:android:feature:lines)", outside the change. Maven Central did not serve compose ui 1.10.2's module metadata, so Gradle read its POM, whose iOS artifact matches no Android variant. Gradle remembered the missing file, and the script's reruns failed the same way. The reruns now pass `--refresh-dependencies` and treat that variant error as a dependency that was not served, test first.
   - **For the owner:** a cache that survives a change to the Gradle files needs a fallback key, which the basic provider lacks; the "enhanced" provider has one, but it is proprietary (`ci_cd.md` §5).
+- **PR #38's sixth run** passed every Kotlin and Android check, with the refreshed reruns. Only the iOS gate failed: "iOS ViewModel and snapshot tests (DesignSystemTests)" never got a macOS runner ("not acquired … capacity constraints"). As agreed with the owner, such a job is only rerun; the rerun passed, and all 57 checks were green.
 - **PR #38's third run** failed in "Android screenshots (:android:app)", a fault in the branch: `TabNavigationTest.lb103_aFavouriteCardOpensItsLine_andBackReturnsToLines` found no "Line 10" heading right after tapping the card. The detail reads its line on the I/O threads, which the test's idle sync does not wait for, and is titled "Line" until then. Locally and in the earlier runs it had always been quick enough. The three favourites tests now wait, up to 5 s, for the state they check (e9f32ad).
 
 **Decisions**
@@ -76,17 +77,37 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Rows open their line** too, so a line can be added from its detail before it is a favourite (FR-LINE-09).
 - **`ObserveLinesWithFavourites` wraps `ObserveLines`,** whose sync logic and tests stay as they were. Favourites that cannot be read leave the lines with none: the list still shows (spec §7.3).
 - **Equal-height cards on both platforms,** so the carousel is never ragged at large text sizes, and headsigns wrap rather than clip. Android measures copies of the cards hidden from TalkBack, since its carousel centres its items; iOS uses an `HStack` of fixed height rather than the `LazyHStack` that `design_guidelines.md` named, which it now names instead. iOS cards are 150 pt, so the next card's edge shows inside the inset row; Android's are 168 dp.
+- **A Gradle rerun step after all,** which PR #37's entry below had decided against: the Portal's "not found" is a 404, which no backoff retries. The script reruns only a failure whose output names a dependency that was not served; a failing test or a compile error fails at once, so it hides no failing check. PR #37's longer backoff stays, and spares a rerun when a 429 passes within a minute.
 - **Swift calls a `suspend` use case** through `@preconcurrency import Shared`: Swift 6 refuses to send a Kotlin object, which declares no `Sendable` conformance, to SKIE's `async` function (`architecture.md` §5.2).
 - **iOS UI tests that change favourites start and end with them removed:** the simulator keeps the app's database between launches, unlike Robolectric.
 - **Test fixtures adapted while going green** (each in its commit body): `LinesScreenTest` runs on a taller window, since the favourites section comes first and a lazy list composes only what it shows; `TabNavigationTest` scrolls the list from its top before a tap, so a row is never under the top app bar, which the list runs behind, and reads the cards from left to right, as TalkBack does; `AndroidGraphTest`'s restart test is a regression guard written after the wiring.
 
 **Open / next**
-- **The pull request of this entry** (branch `feat/LB-103-favourite-lines`) is open, and its watch runs. So does PR #37's.
+- **The pull request of this entry** (branch `feat/LB-103-favourite-lines`) is open, and its watch runs. PR #37 was merged on 2026-11-03, and `main` was merged into this branch.
 - **Next, once it is merged:** LB-102 part 1, the search bar over the lines' codes and termini; finding lines by a stop's name waits for the stops (LB-008 part 2) or sample stops. LB-110 (edit favourite lines: reorder, remove, the limit of 20) needs nothing else either. Unless the owner chooses otherwise, LB-102 (`/start-story LB-102`).
 - **LB-104** builds on this detail; its map needs a style for development, where OQ-10's documented fallback names a free OSM-based style whose terms are still to be verified: that check is the owner's.
 - **For LB-104:** a shared `ObserveLine(lineId)` use case, so the detail stops collecting every line and syncing on each opening, and the badge in the detail's bar.
-- **Follow-ups from LB-101's reviews** stay open, as listed in the entry below.
+- **Follow-ups from LB-101's reviews** stay open, as listed in its entry below.
 - **Waiting on the owner:** as in the entries below.
+
+## 2026-11-02: Gradle waits out rate-limited downloads
+
+**Done**
+- **PR #36 (LB-101 part 1) merged,** and `main` was synced. Seven of the eight Dependabot alerts closed once `main` submitted its dependency graph; the Kotlin Gradle plugin's (GHSA-r937-wjx7-w2jp) stays open.
+- **A runner flake that recurred, made harmless (`ci_cd.md` §5):** Maven Central answered `429 Too Many Requests` for Robolectric's `nativeruntime-dist-compat` jar twice in a few minutes: in "Android unit tests (:android:feature:settings)" on PR #36's first run, and in "Coverage" on `main` after PR #35 (7266c7f). Both runs had started with an empty Gradle cache, since PR #35 changed the dependencies, so every job downloaded at once.
+  - Gradle 9.7.1 already retries 408, 429 and 5xx answers, but 3 times from 1 s. `gradle.properties` now sets `org.gradle.internal.repository.max.tentatives=6` and `initial.backoff=2000`: about a minute of backoff.
+  - `ArchitectureTest.lb002_gradleWaitsOutRateLimitedDownloads` keeps those floors (red, then green; no refactor needed).
+  - **Checked against a local server that answers 429 to everything:** Gradle made 3 requests over 3 s by default, and 6 over 62 s with the settings. The wrapper also copies the `systemProp.` entries of its own project's `gradle.properties`, so a probe run through this repository's `gradlew` gets them even with `-p`; the comparison used Gradle's own launcher.
+- **Not covered:** the other failure of PR #36's first run, in "Android unit tests (:android:feature:nearme)": the Gradle Plugin Portal answered that `kotlin-stdlib:2.4.0` did not exist, a 404 that Gradle does not retry.
+
+**Decisions**
+- **Retries rather than a rerun step:** a longer backoff only waits when a repository refuses a download, while rerunning a whole Gradle step after a failure could also hide a failing check.
+
+**Open / next**
+- **The pull request of this entry** (branch `fix/LB-002-download-retries`) is open, and its watch runs.
+- **Next:** LB-103 (favourite lines and their carousel), as the LB-101 entry below says, unless the owner chooses otherwise.
+- **If the Plugin Portal's 404 recurs,** rerun the failed jobs, then look for a fix that does not need the Portal for Kotlin's artifacts.
+- **Waiting on the owner:** as in the LB-101 entry below.
 
 ## 2026-11-02: LB-101, part 1: the Lines list over sample lines
 

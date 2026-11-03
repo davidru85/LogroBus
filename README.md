@@ -107,6 +107,7 @@ You will need:
     - Each line in the list has a star. Tapping it adds the line to "Your favourite lines", at the end of a row of cards at the top of the list, and tapping it again removes it. With no favourites, the row shows how to add one.
     - A card shows the line's badge, its name and both ends of the route. Tapping a card or a line opens the line's page, which for now shows the line and the same star; its map, directions and stops come next (LB-104).
     - Favourites are kept on the device, in the order they were added, and survive a restart. Screen readers say "Add line 3 to favourites" or "Remove line 3 from favourites".
+  - CI: when Maven Central turns downloads away because too many arrive at once (HTTP 429), Gradle now keeps retrying for about a minute instead of 3 seconds. It happened twice on 2 November, when every CI job downloaded the new dependencies at once.
   - LB-101, part 1: both apps open on the Lines list.
     - Day lines come first, then night (Búho) lines, each sorted by its number: 9 before 10. Each line shows its coloured badge, its name, and a "Not in service" label when it is not running.
     - Screen readers say "Line 4", never a colour, since some lines share one. Names wrap at large text sizes, and line codes are never cut.
