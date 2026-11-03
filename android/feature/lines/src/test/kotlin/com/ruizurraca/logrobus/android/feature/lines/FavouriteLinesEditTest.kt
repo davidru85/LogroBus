@@ -150,7 +150,8 @@ class FavouriteLinesEditTest {
         open(favourites(10, 4, 101))
         val rowHeight = row(10).fetchSemanticsNode().boundsInRoot.height
 
-        val handle = compose.onNodeWithTag(dragHandleTag(101))
+        // The handle says nothing to TalkBack, so it is part of its row in the merged tree.
+        val handle = compose.onNodeWithTag(dragHandleTag(101), useUnmergedTree = true)
         handle.performTouchInput { down(center) }
         // Step by step, with a frame between steps, as a finger moves: the list makes room as the line passes.
         repeat(DRAG_STEPS) {

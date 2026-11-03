@@ -1,10 +1,74 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
+import com.ruizurraca.logrobus.android.core.designsystem.ModalSheet
+import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.feature.lines.presentation.EditableFavouriteLineUi
+import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
-@Suppress("UnusedParameter")
+/**
+ * LB-110 (FR-FAV-02): the favourite lines' edit sheet, over the Lines list. A removed line goes through its toggle's
+ * event, so the list's star follows; a new order goes once a drag or a move ends. Done, a swipe down or back close it.
+ */
+@Composable
+internal fun FavouriteLinesSheet(
+    rows: List<EditableFavouriteLineUi>,
+    onEvent: (LinesEvent) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalSheet(onDismissRequest = onDismiss) { close ->
+        FavouriteLinesEditor(
+            rows,
+            onReorder = { onEvent(LinesEvent.ReorderFavourites(it)) },
+            onRemove = { onEvent(LinesEvent.SetFavourite(it, isFavourite = false)) },
+            onDone = close,
+        )
+    }
+}
+
+/**
+ * The edit sheet's content: its title and Done, then a row per favourite line in the user's order. Each row has a
+ * remove button, the line's badge and name, or "no longer served", and a handle to drag it by. TalkBack reads a row as
+ * one, and moves it with "Move up" and "Move down" instead of a drag (NFR-A11Y).
+ */
 @Composable
 internal fun FavouriteLinesEditor(
     rows: List<EditableFavouriteLineUi>,
@@ -12,7 +76,138 @@ internal fun FavouriteLinesEditor(
     onRemove: (lineId: Int) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
-) = Unit
+) {
+    // The order the user sees. A drag or a move changes it here first, and the saved order then arrives in the same
+    // order. A favourite removed or added, or a new saved order, replaces it, except during a drag.
+    var shown by remember { mutableStateOf(rows) }
+    var dragging by remember { mutableStateOf(false) }
+    LaunchedEffect(rows) { if (!dragging) shown = rows }
+    val move = { from: Int, to: Int ->
+        shown = shown.moved(from, to)
+        onReorder(shown.map { it.id })
+    }
+    val list = rememberLazyListState()
+    val reorderable = rememberReorderableLazyListState(list) { from, to -> shown = shown.moved(from.index, to.index) }
+    Column(modifier) {
+        Row(
+            Modifier.fillMaxWidth().padding(start = Tokens.Spacing.l, end = Tokens.Spacing.s),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.lines_favourites_edit_title),
+                modifier = Modifier.weight(1f).semantics { heading() },
+                style = MaterialTheme.typography.titleLarge,
+            )
+            TextButton(onClick = onDone) { Text(stringResource(R.string.lines_favourites_done)) }
+        }
+        LazyColumn(Modifier.testTag(FAVOURITE_LINES_EDITOR), list) {
+            itemsIndexed(shown, key = { _, row -> row.id }) { index, row ->
+                ReorderableItem(reorderable, key = row.id) { isDragging ->
+                    // The line under the finger rises above the others.
+                    Surface(
+                        color = if (isDragging) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+                        shadowElevation = if (isDragging) DRAGGED_ELEVATION else 0.dp,
+                    ) {
+                        EditRow(
+                            row,
+                            onRemove = { onRemove(row.id) },
+                            onMoveUp = if (index > 0) ({ move(index, index - 1) }) else null,
+                            onMoveDown = if (index < shown.lastIndex) ({ move(index, index + 1) }) else null,
+                            handle =
+                                Modifier.draggableHandle(
+                                    onDragStarted = { dragging = true },
+                                    onDragStopped = {
+                                        dragging = false
+                                        onReorder(shown.map { it.id })
+                                    },
+                                ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EditRow(
+    row: EditableFavouriteLineUi,
+    onRemove: () -> Unit,
+    onMoveUp: (() -> Unit)?,
+    onMoveDown: (() -> Unit)?,
+    handle: Modifier,
+) {
+    val stacked = LocalDensity.current.fontScale >= LARGE_TEXT_SCALE
+    val up = stringResource(R.string.lines_favourites_move_up)
+    val down = stringResource(R.string.lines_favourites_move_down)
+    val remove =
+        when (row) {
+            is EditableFavouriteLineUi.Served -> {
+                stringResource(R.string.lines_favourite_remove, row.code)
+            }
+
+            is EditableFavouriteLineUi.NoLongerServed -> {
+                stringResource(
+                    R.string.lines_favourites_remove_no_longer_served,
+                )
+            }
+        }
+    ListItem(
+        modifier =
+            Modifier.testTag(editRowTag(row.id)).semantics(mergeDescendants = true) {
+                customActions =
+                    listOfNotNull(
+                        onMoveUp?.let { CustomAccessibilityAction(up) { it().let { true } } },
+                        onMoveDown?.let { CustomAccessibilityAction(down) { it().let { true } } },
+                    )
+            },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        leadingContent = {
+            IconButton(onClick = onRemove) {
+                Icon(painterResource(DS.drawable.ic_remove), remove, tint = MaterialTheme.colorScheme.error)
+            }
+        },
+        // At large text the badge goes above the name, as in the list's rows, so the name breaks between words.
+        overlineContent =
+            if (stacked && row is EditableFavouriteLineUi.Served) {
+                { LineBadge(row.code, row.color, row.onColor) }
+            } else {
+                null
+            },
+        headlineContent = {
+            when (row) {
+                is EditableFavouriteLineUi.Served -> {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.m)) {
+                        if (!stacked) LineBadge(row.code, row.color, row.onColor)
+                        Text(row.displayName)
+                    }
+                }
+
+                is EditableFavouriteLineUi.NoLongerServed -> {
+                    Text(
+                        stringResource(R.string.lines_favourites_no_longer_served),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        trailingContent = {
+            // TalkBack moves the row with its actions, so the handle has nothing to say.
+            Icon(
+                painterResource(DS.drawable.ic_drag_handle),
+                contentDescription = null,
+                modifier = handle.testTag(dragHandleTag(row.id)).minimumInteractiveComponentSize(),
+            )
+        },
+    )
+}
+
+private fun <T> List<T>.moved(
+    from: Int,
+    to: Int,
+): List<T> = toMutableList().apply { add(to, removeAt(from)) }
+
+private val DRAGGED_ELEVATION = 6.dp
 
 internal const val FAVOURITE_LINES_EDITOR = "favouriteLinesEditor"
 

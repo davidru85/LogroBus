@@ -24,15 +24,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,7 +88,8 @@ fun LinesRoute(
     viewModel: LinesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LinesScreen(state, viewModel::onEvent, onOpenMore, onOpenLine, modifier)
+    val favouriteLimit by viewModel.favouriteLimit.collectAsStateWithLifecycle()
+    LinesScreen(state, viewModel::onEvent, onOpenMore, onOpenLine, modifier, favouriteLimit)
 }
 
 /**
@@ -111,8 +118,11 @@ fun LinesScreen(
     // The bar takes its scrolled colour while the list runs under it. It does not collapse yet: a scroll to the top on
     // re-selection (FR-NAV-03) is programmatic, so it would not bring a collapsed bar back.
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val snackbars = remember { SnackbarHostState() }
+    FavouriteLimitMessage(favouriteLimit, snackbars) { onEvent(LinesEvent.FavouriteLimitShown) }
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbars) },
         topBar = {
             TopAppBar(
                 title = { ScreenTitle(stringResource(R.string.lines_title)) },
@@ -161,6 +171,7 @@ private fun LineList(
 ) {
     val listState = rememberLazyListState()
     val field = remember { FocusRequester() }
+    var editing by rememberSaveable { mutableStateOf(false) }
     ScrollToTopOnReselect(listState)
     // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them. The list
     // ends above the keyboard: its first item is the field, so the window never pans to show the last results.
@@ -174,7 +185,12 @@ private fun LineList(
         }
         when (state) {
             is LinesUiState.Content -> {
-                item(key = FAVOURITES_HEADING) { GroupHeading(R.string.lines_favourites_title) }
+                item(key = FAVOURITES_HEADING) {
+                    // LB-110: Edit, while there is a favourite to edit, even one with no card.
+                    GroupHeading(R.string.lines_favourites_title) {
+                        if (state.editable.isNotEmpty()) EditButton { editing = true }
+                    }
+                }
                 item(key = FAVOURITES) { FavouriteLines(state.favourites, onOpenLine) }
                 groups(state.groups, onEvent, onOpenLine)
             }
@@ -200,6 +216,9 @@ private fun LineList(
                 Unit
             }
         }
+    }
+    if (editing && state is LinesUiState.Content) {
+        FavouriteLinesSheet(state.editable, onEvent, onDismiss = { editing = false })
     }
 }
 
@@ -238,6 +257,7 @@ private fun NoMatches(onClear: () -> Unit) {
 @Composable
 private fun GroupHeading(
     @StringRes title: Int,
+    action: (@Composable () -> Unit)? = null,
 ) {
     ListItem(
         headlineContent = {
@@ -248,7 +268,17 @@ private fun GroupHeading(
                 style = MaterialTheme.typography.titleSmall,
             )
         },
+        trailingContent = action,
     )
+}
+
+/** LB-110: opens the edit sheet. TalkBack names it by what it edits, a name that keeps the word it shows. */
+@Composable
+private fun EditButton(onClick: () -> Unit) {
+    val name = stringResource(R.string.lines_favourites_edit_title)
+    TextButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = name }) {
+        Text(stringResource(R.string.lines_favourites_edit))
+    }
 }
 
 /**
@@ -367,7 +397,7 @@ private const val FAVOURITES = "favourites"
 private val SearchFieldPadding = Modifier.padding(horizontal = Tokens.Spacing.l, vertical = Tokens.Spacing.s)
 
 // From this font scale, a row puts its badge above its name (Android's 200 % is 2).
-private const val LARGE_TEXT_SCALE = 1.5f
+internal const val LARGE_TEXT_SCALE = 1.5f
 
 // Enough rows to fill a phone's first screen.
 private const val PLACEHOLDER_ROWS = 8

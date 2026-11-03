@@ -18,11 +18,12 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * LB-110 (FR-FAV-02): the favourite lines' edit sheet in light, dark and at 200 % font, in Spanish: each row with its
  * remove button, its badge and name or "no longer served", and its drag handle. The sheet's content, without the
- * modal window around it, which Robolectric captures apart. One capture per test, on [SCREENSHOT_SDK].
+ * modal window around it, which Robolectric captures apart, on a window tall enough for every row at 200 %. One
+ * capture per test, on [SCREENSHOT_SDK].
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "es", sdk = [SCREENSHOT_SDK])
+@Config(qualifiers = "es-h1000dp", sdk = [SCREENSHOT_SDK])
 class FavouriteLinesEditorScreenshotTest(
     private val variant: String,
 ) {
