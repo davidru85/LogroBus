@@ -57,6 +57,31 @@ class LineQueryTest {
     }
 
     @Test
+    fun lb102_aCodeTypedWithASpaceOrADashStillMatches() {
+        // "B 1" splits into two words, and no word of line B1 begins with "1".
+        assertEquals(listOf(101), found("B 1"))
+        assertEquals(listOf(101), found("b-1"))
+    }
+
+    @Test
+    fun lb102_theWordsOfAQueryMayMatchDifferentFields() {
+        // A code and a terminus, or a headsign and a code: each word may begin a word of any field.
+        val line = line(3, "3", "Campillo - El Cubo", headsigns = listOf("Estación de Autobuses", "Campillo"))
+
+        assertEquals(listOf(10), found("10 arco"))
+        assertEquals(listOf(101), found("cava b1"))
+        assertTrue(LineQuery("3 estacion").matches(line))
+    }
+
+    @Test
+    fun lb102_aQueryWithoutTheEnyeMatchesANameWithIt() {
+        val line = line(12, "12", "Logroño - La Grajera")
+
+        assertTrue(LineQuery("logrono").matches(line))
+        assertTrue(LineQuery("LOGROÑO").matches(line))
+    }
+
+    @Test
     fun lb102_aQueryWithNoLettersOrDigitsIsNotASearch() {
         assertFalse(LineQuery("").isActive)
         assertFalse(LineQuery("  - ").isActive)
