@@ -14,33 +14,47 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -51,19 +65,23 @@ import com.ruizurraca.logrobus.android.core.designsystem.LineBadgeSize
 import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
 import com.ruizurraca.logrobus.android.core.designsystem.RetryMessage
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
+import com.ruizurraca.logrobus.android.core.designsystem.SearchField
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.android.core.navigation.ScrollToTopOnReselect
 import com.ruizurraca.logrobus.feature.lines.presentation.FavouriteLineCardUi
+import com.ruizurraca.logrobus.feature.lines.presentation.LineGroupUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineRowUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
 import com.ruizurraca.logrobus.transit.domain.LineKind
+import kotlinx.coroutines.flow.dropWhile
 import org.koin.androidx.compose.koinViewModel
+import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /**
- * The root of the Lines tab (LB-101, LB-103), with its ViewModel from the graph (ADR-0014). [onOpenMore] opens More,
- * and [onOpenLine] a line's detail.
+ * The root of the Lines tab (LB-101, LB-103, LB-102), with its ViewModel from the graph (ADR-0014). [onOpenMore] opens
+ * More, and [onOpenLine] a line's detail.
  */
 @Composable
 fun LinesRoute(
@@ -78,7 +96,8 @@ fun LinesRoute(
 
 /**
  * Renders [state] under the Lines top app bar, with the More action, and sends [onEvent]. A favourite card or a row
- * opens its line with [onOpenLine].
+ * opens its line with [onOpenLine]. [search] holds the search field's text, which the screen sends as it changes
+ * (FR-LINE-03); it survives configuration changes and process death.
  */
 @Composable
 fun LinesScreen(
@@ -87,7 +106,14 @@ fun LinesScreen(
     onOpenMore: () -> Unit,
     onOpenLine: (lineId: Int) -> Unit,
     modifier: Modifier = Modifier,
+    search: TextFieldState = rememberTextFieldState(),
 ) {
+    val send by rememberUpdatedState(onEvent)
+    // The ViewModel starts with no query, so an empty field is news only once it has had text. A field restored with
+    // text, after a configuration change or process death, filters the list again.
+    LaunchedEffect(search) {
+        snapshotFlow { search.text.toString() }.dropWhile(String::isEmpty).collect { send(LinesEvent.Search(it)) }
+    }
     // The bar takes its scrolled colour while the list runs under it. It does not collapse yet: a scroll to the top on
     // re-selection (FR-NAV-03) is programmatic, so it would not bring a collapsed bar back.
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -105,27 +131,36 @@ fun LinesScreen(
         val centred = Modifier.padding(padding).consumeWindowInsets(padding)
         when (state) {
             // Spec §7.3: the final layout with placeholders, never a lone spinner.
-            LinesUiState.Loading -> PlaceholderRows(padding)
+            LinesUiState.Loading -> {
+                PlaceholderRows(padding)
+            }
 
-            is LinesUiState.Content -> LineList(state, padding, onEvent, onOpenLine)
+            // One branch, so the list and its search field stay the same as the results change: the field keeps its
+            // text, its focus and the keyboard.
+            is LinesUiState.Content, is LinesUiState.SearchResults, LinesUiState.NoMatches -> {
+                LineList(state, search, padding, onEvent, onOpenLine)
+            }
 
-            LinesUiState.Empty -> RetryMessage(stringResource(R.string.lines_empty), retry, centred)
+            LinesUiState.Empty -> {
+                RetryMessage(stringResource(R.string.lines_empty), retry, centred)
+            }
 
-            is LinesUiState.Error -> RetryMessage(stringResource(state.reason.messageRes), retry, centred)
-
-            // LB-102: the screen has no search field yet.
-            is LinesUiState.SearchResults, LinesUiState.NoMatches -> Unit
+            is LinesUiState.Error -> {
+                RetryMessage(stringResource(state.reason.messageRes), retry, centred)
+            }
         }
     }
 }
 
 /**
- * The favourite lines (FR-LINE-12), then each group under its heading (FR-LINE-01). Re-selecting the tab at this root
- * scrolls it to the top (FR-NAV-03).
+ * The search field (FR-LINE-03), then the favourite lines (FR-LINE-12) and each group under its heading (FR-LINE-01).
+ * While a search is active, its results in the same groups, without the favourites (FR-LINE-16), or a sentence and
+ * "Clear search". Re-selecting the tab at this root scrolls it to the top (FR-NAV-03).
  */
 @Composable
 private fun LineList(
-    content: LinesUiState.Content,
+    state: LinesUiState,
+    search: TextFieldState,
     contentPadding: PaddingValues,
     onEvent: (LinesEvent) -> Unit,
     onOpenLine: (lineId: Int) -> Unit,
@@ -134,12 +169,58 @@ private fun LineList(
     ScrollToTopOnReselect(listState)
     // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them.
     LazyColumn(Modifier.consumeWindowInsets(contentPadding), listState, contentPadding) {
-        item(key = FAVOURITES_HEADING) { GroupHeading(R.string.lines_favourites_title) }
-        item(key = FAVOURITES) { FavouriteLines(content.favourites, onOpenLine) }
-        content.groups.forEach { group ->
-            item(key = group.kind) { GroupHeading(group.kind.titleRes) }
-            items(group.lines, key = { it.id }) { LineRow(it, onEvent, onOpenLine) }
+        item(key = SEARCH) { SearchField(search, stringResource(R.string.lines_search), SearchFieldPadding) }
+        when (state) {
+            is LinesUiState.Content -> {
+                item(key = FAVOURITES_HEADING) { GroupHeading(R.string.lines_favourites_title) }
+                item(key = FAVOURITES) { FavouriteLines(state.favourites, onOpenLine) }
+                groups(state.groups, onEvent, onOpenLine)
+            }
+
+            is LinesUiState.SearchResults -> {
+                groups(state.groups, onEvent, onOpenLine)
+            }
+
+            LinesUiState.NoMatches -> {
+                item(key = NO_MATCHES) { NoMatches(onClear = { search.clearText() }) }
+            }
+
+            // Not a list: LinesScreen shows them on their own.
+            LinesUiState.Loading, LinesUiState.Empty, is LinesUiState.Error -> {
+                Unit
+            }
         }
+    }
+}
+
+private fun LazyListScope.groups(
+    groups: List<LineGroupUi>,
+    onEvent: (LinesEvent) -> Unit,
+    onOpenLine: (lineId: Int) -> Unit,
+) {
+    groups.forEach { group ->
+        item(key = group.kind) { GroupHeading(group.kind.titleRes) }
+        items(group.lines, key = { it.id }) { LineRow(it, onEvent, onOpenLine) }
+    }
+}
+
+/**
+ * Spec §7.3: a search that found no line says so in one sentence, which TalkBack announces without moving its focus
+ * (NFR-A11Y), and offers one action, which empties the field.
+ */
+@Composable
+private fun NoMatches(onClear: () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().padding(Tokens.Spacing.xl),
+        verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            stringResource(R.string.lines_no_matches),
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            textAlign = TextAlign.Center,
+        )
+        Button(onClick = onClear) { Text(stringResource(DS.string.search_clear)) }
     }
 }
 
@@ -322,6 +403,12 @@ private fun PlaceholderRows(contentPadding: PaddingValues) {
             .padding(contentPadding)
             .clearAndSetSemantics { contentDescription = loading },
     ) {
+        Placeholder(
+            SearchFieldPadding
+                .fillMaxWidth()
+                .height(TextFieldDefaults.MinHeight)
+                .clip(SearchBarDefaults.inputFieldShape),
+        )
         ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
         Placeholder(
             Modifier
@@ -354,10 +441,15 @@ private val LineKind.titleRes: Int
             LineKind.NIGHT -> R.string.lines_group_night
         }
 
+private const val SEARCH = "search"
+private const val NO_MATCHES = "no-matches"
 private const val FAVOURITES_HEADING = "favourites-heading"
 private const val FAVOURITES = "favourites"
 private const val MEASURED_CARDS = "measured-cards"
 private const val SHOWN_CARDS = "shown-cards"
+
+// The search field lines up with the rows' content, and keeps its distance from the first heading.
+private val SearchFieldPadding = Modifier.padding(horizontal = Tokens.Spacing.l, vertical = Tokens.Spacing.s)
 
 // Wide enough for a two-line name and a short headsign; a phone shows two cards and the edge of a third.
 private val CARD_WIDTH = 168.dp

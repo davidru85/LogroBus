@@ -21,9 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 
 /**
- * A search field that filters what is under it as the user types (LB-102), in the search bar's shape and colours, with
- * a clear button once it has text. M3's collapsed `SearchBar` only opens an expanded search view, and keeps the keyboard
- * away until it does. [placeholder] says what it searches; the keyboard's search key closes the keyboard.
+ * A search field that filters what is under it as the user types (LB-102), in the search bar's shape and colours,
+ * with a clear button once it has text. M3's collapsed `SearchBar` only opens an expanded search view, and keeps the
+ * keyboard away until it does. [placeholder] says what it searches; the keyboard's search key closes the keyboard.
  */
 @Composable
 fun SearchField(
