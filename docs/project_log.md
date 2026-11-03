@@ -19,6 +19,86 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-03: LB-403, Settings
+
+**Done**
+- **PR #40 (LB-110) merged** on 2026-11-03, and `main` was synced.
+- **LB-403 (`feat/LB-403-settings`):**
+  - **Shared:**
+    - A new core module, `:shared:core:preferences`, with Multiplatform Settings 1.3.0 (ADR-0018, its first use) and AndroidX DataStore 1.3.0 on Android. `PreferencesStore` keeps `UserPreferences` (`ThemePreference`, `EtaFormat`) under `settings.theme` and `settings.eta_format`.
+    - Reads that fail give the defaults and are retried, and writes that fail are `Failure(Data)`. Android's DataStore file restarts from the defaults when damaged, and its scope ends with the graph's. iOS keeps the settings in the app's user defaults, and `savedPreferences(defaults:)` reads them at once.
+    - `EtaDisplay.of(expected, now, format)` applies spec §5.7's display rule, Now, minutes or the Madrid clock time, and in the clock-time format every ETA as the clock time. It was pulled forward from LB-205, which will build its arrivals with it.
+    - `:shared:feature:settings`: `ObservePreferences`, `SetTheme`, `SetEtaFormat`, `ClearCache` over the `AppCaches` port (Android's cache directory; iOS's `Library/Caches`, after the URL cache empties itself), and `SettingsUiState` with `AppLanguage`, `DataStatusUi` (the oldest last sync, never synced, or unknown) and `CacheMessage`.
+    - `:shared:umbrella` binds them. Swift gets them through `SettingsUseCases`, which `UseCases` extends, and `PreviewUseCases` delegates them to `PreviewSettings`.
+  - **Android:**
+    - Settings has three sections. Appearance: the language, a row that opens a dialog of radio buttons, and the theme as radio rows under a heading. Arrivals: the ETA format with examples. Data: the data status, and Clear cache with what it keeps. A short snackbar says Clear cache's outcome.
+    - The app is an `AppCompatActivity`. The language goes through AppCompat (`AppCompatLanguages`, bound by the shell), which the manifest declares with `localeConfig` and `AppLocalesMetadataHolderService`, and the bundle keeps every language.
+    - The theme is the system's per-app night mode from Android 12 (`UiModeManager`). Below Android 12 it is AppCompat's night mode, with the saved theme read once per process before the first frame (ADR-0020).
+  - **iOS:**
+    - A `Form` of system controls. The language row, with an "open outside" icon, opens the app's page in the iPhone's Settings (owner decision). Theme and ETA format are menu pickers. Clear cache's outcome is an alert, and the first load is redacted and read as "Cargando ajustes".
+    - `LogroBusApp` starts `AppAppearance` from the saved theme and applies its style to every window.
+  - **Tests:**
+    - Shared: `PreferencesStoreTest` and the platform stores' tests, `EtaDisplayTest` (CET, CEST and the end of summer time), the use cases, `SettingsUiMapperTest`, the caches on both platforms, `PreviewUseCasesTest`, and both graphs.
+    - Android: `SettingsViewModelTest`, `SettingsScreenTest`, `AppThemeTest`, `AppLanguagesTest` and `AppSettingsTest`.
+    - iOS: `SettingsViewModelTests` and `AppAppearanceTests`, `ShellSnapshotTests.lb403_settings` (loading, content, unknown status) and `ShellUITests.test_lb403_…`.
+    - Screenshots on both platforms in light, dark and 200 %, and the language dialog in landscape at 200 %.
+  - **iOS test runs:** the iPhone 17e simulator, `scripts/ios/test.sh`'s default and CI's, was missing on this machine. It was created again on iOS 26.5 (`xcrun simctl create`), and More's references pass on it, so LB-110's differences came from the 17 Pro Max.
+
+**Reviews** (the code-reviewer, data-rules-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; the data reviewer approved with nits, the other three asked for changes). Fixed in three TDD cycles, test first where a test could show it:
+- **Majors (Android):**
+  - The blocking theme read ran at every recreation. It now runs once per process and only below Android 12, as the one `runBlocking` outside tests (owner decision, 2026-11-03; `code_style.md` §2.2).
+  - Settings kept showing an old language after Android's own settings changed it; `MainActivity` now refreshes it.
+  - Play's language splits could leave English out of an install; they are off.
+  - The language dialog did not scroll, which could cut it at 200 % in landscape.
+- **Shared:**
+  - A read that failed once ended the settings' flow.
+  - The settings' keys were bare in iOS's shared user defaults.
+  - The cache message is mapped by `SettingsUiMapper`, not by each ViewModel.
+  - The store and the caches are internal behind their factories. The iOS store takes the injected dispatcher, and the Android factory takes its scope.
+  - KDocs: the clock-time format, the arrivals the list drops, and that the source client keeps no HTTP cache.
+- **Android minors:**
+  - From Android 12 the starting window follows the theme (`UiModeManager`).
+  - The theme tests prove the per-version paths and the single read.
+  - The radio groups are named by headings.
+  - Previews and screenshots: the unknown status and the language dialog.
+  - Nits: resource names that mirror §9's keys, an exhaustive state, a pinned top app bar.
+- **iOS minors:**
+  - The first frame is in the saved theme.
+  - VoiceOver hears "Cargando ajustes" on the first load.
+  - The language row shows that it leaves the app.
+  - The UI test no longer depends on what the device saved, and sets the theme back even when it fails.
+  - The window style is tested.
+  - Two quick themes land in order (a regression guard).
+  - The large-text snapshot shows the whole screen.
+  - Previews for never synced and unknown.
+  - Nits: the language names in the catalogue, regional localizations, and snapshots named after LB-403.
+- **Not changed:**
+  - The ten green commits that say "Refactor not needed." in prose were not reworded, which would take a force-push; the PR's TDD section says so.
+  - `EtaFormat` stays in `:shared:core:preferences`, which `:shared:core:presentation` now uses; `architecture.md` §3.2 records the edge.
+  - VoiceOver reads "English" in the device's voice: SwiftUI has no speech-language attribute for a `Text`, while TalkBack reads it in English.
+
+**Decisions**
+- **iOS's language stays in the system's Settings** (owner decision, 2026-11-03, ADR-0020). The app shows the language it runs in and opens its page there. "Without a restart" holds on Android only, and the criterion says so.
+- **Settings in three sections, with no new navigation** (owner decision, 2026-11-03): the data status is text, and About data stays in More.
+- **The one `runBlocking` outside tests** (owner decision, 2026-11-03): below Android 12, the saved theme before the first frame, once per process. From Android 12 the system applies the theme.
+- **Radio rows, not segmented buttons, on Android, and menu pickers on iOS:** segmented controls cut their labels at 200 %.
+- **Clear cache empties the platforms' cache directories.** The MVP keeps no live data on disk (ADR-0008), and the database (favourites, places, recents, static data, the learned direction codes) and the settings live elsewhere.
+- **No new Robolectric SDK:** code that differs by Android version takes the version as a parameter, rather than make every CI job download another SDK from Maven Central.
+
+**Open / next**
+- **The pull request of this entry** (branch `feat/LB-403-settings`) is open, and its watch runs.
+- **To check on a device:**
+  - Switching the language on both platforms: Android at once; iOS through the iPhone's Settings, which relaunches the app.
+  - The theme from the first frame and in sheets and alerts.
+  - TalkBack and VoiceOver in Settings and in the language dialog.
+- **Next, once it is merged:** LB-405 (localisation: plurals, locale formatting, and a check against hard-coded strings), which waits for nothing, unless the owner chooses otherwise. LB-104 waits for OQ-10, LB-102 part 2 and LB-205 for LB-008 part 2, and LB-008 part 2 for LB-003's fixtures and OQ-11.
+- **Waiting on the owner:**
+  - Android's "Undo" after removing a favourite line (LB-110).
+  - The Gradle cache provider, and the Kotlin Gradle plugin's Dependabot alert.
+  - OQ-10, OQ-11 and OQ-16, DD-10, and WorkManager, as in the entries below.
+
+---
+
 ## 2026-11-03: LB-110, editing the favourite lines
 
 **Done**

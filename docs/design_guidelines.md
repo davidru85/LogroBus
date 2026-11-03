@@ -66,9 +66,9 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 │ ← Ajustes                           │
 │ APARIENCIA                          │
 │ Idioma                  Español  ›  │  Android: a dialog; iOS: the iPhone's Settings
-│ Tema         Sistema · Claro · Oscuro│
+│ Tema                    Sistema  ›  │  Android: radio rows; iOS: a menu
 │ LLEGADAS                            │
-│ Formato de las llegadas  Minutos · Hora │  with an example of each
+│ Formato de las llegadas  Minutos ›  │  with an example of each
 │ DATOS                               │
 │ Líneas y paradas                    │
 │ Actualizados: 3 nov 2026, 10:30     │  the oldest last sync, Madrid clock
@@ -80,12 +80,12 @@ Three sections, in the order of the owner's sketch (owner decision, 2026-11-03),
 
 - **Language (ADR-0020):**
   - **Android:** a row with the language in use, which opens a dialog of radio buttons: the system language, Español and English, each language named in itself and spoken by TalkBack in its own language. Choosing one applies it at once (AppCompat recreates the screen); Cancel changes nothing.
-  - **iOS:** a row with the language the app runs in, which opens the app's page in the iPhone's Settings (owner decision, 2026-11-03): iOS keeps the per-app language there and relaunches the app after a change. A footer and a VoiceOver hint say so.
+  - **iOS:** a row with the language the app runs in and an "open outside" icon (`arrow.up.forward.app`), which opens the app's page in the iPhone's Settings (owner decision, 2026-11-03): iOS keeps the per-app language there and relaunches the app after a change. A footer and a VoiceOver hint say so.
 - **Theme:** System, Light or Dark, for the whole app, sheets and dialogs included. Android: radio buttons, which never cut their labels at 200 %, where segmented buttons would. iOS: a menu picker.
 - **ETA format (§6.3):** minutes or clock time, with an example of each ("5 min", "10:42").
 - **Data status:** "Lines and stops", updated at the oldest of their last successful syncs on the Madrid clock, "Not synced yet" while either has never synced, or "Can't be checked right now".
 - **Clear cache:** empties the app's caches and says what it keeps, the favourites and the lines and stops data. Its outcome is a short snackbar on Android and an alert on iOS, shown once.
-- **First load:** the same layout with nothing chosen and placeholders for the values; Android's choices are disabled, iOS's form redacted.
+- **First load:** the same layout with nothing chosen and placeholders for the values; Android's choices are disabled, iOS's form redacted, and read by VoiceOver as "Cargando ajustes".
 
 ## 3. The three sections
 
@@ -264,7 +264,9 @@ Results                                   Itinerary detail
 | Lines search | The design system's `SearchField`, the list's first item, which filters the list in place (LB-102, owner decision, 2026-11-03). M3's collapsed `SearchBar` only opens an expanded search view (`ExpandedFullScreenSearchBar`), and disables the soft keyboard until it does |
 | Favourite lines | `HorizontalUncontainedCarousel` of fixed-width cards (LB-103). The carousel centres its items vertically, so each card takes the tallest one's height, measured on copies hidden from TalkBack |
 | Editing favourite lines | `ModalSheet` over a `LazyColumn` of `ListItem`s, each a Reorderable `ReorderableItem` dragged by its handle (ADR-0019), with "Move up" and "Move down" as `CustomAccessibilityAction`s (LB-110) |
-| A one-off message | `Snackbar` in the screen's `SnackbarHost`, long, with a close button: the favourite limit (LB-110) |
+| A one-off message | `Snackbar` in the screen's `SnackbarHost`: long, with a close button, for the favourite limit (LB-110); short, for Clear cache's outcome (LB-403) |
+| A setting with a few choices | Its name as a heading, styled as a label, over `ListItem`s with a leading `RadioButton`, in a `selectableGroup` (LB-403). Segmented buttons would cut their labels at 200 % |
+| A setting chosen from a list | A `ListItem` with the value in use, which opens an `AlertDialog` of radio rows that scrolls, applies a choice at once, and has Cancel: the language (LB-403) |
 | Direction toggle, layer switcher | Connected `ButtonGroup` with `ToggleButton`s |
 | Map controls | `HorizontalFloatingToolbar` / `VerticalFloatingToolbar` over the map; a medium FAB for "recenter" |
 | Near Me sheet | `BottomSheetScaffold` with a partially expanded peek and `skipHiddenState = true` |
@@ -444,7 +446,8 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | `settings.appearance`, `settings.arrivals`, `settings.data` (section headings, LB-403) | Apariencia, Llegadas, Datos | Appearance, Arrivals, Data |
 | `settings.language` | Idioma | Language |
 | `settings.language.system` | Idioma del sistema | System language |
-| Language names (never translated) | Español, English | Español, English |
+| `settings.language.spanish`, `settings.language.english` (never translated) | Español, English | Español, English |
+| `settings.loading` (spoken, iOS's first load) | Cargando ajustes | Loading settings |
 | `settings.language.footer` (iOS) | El idioma de la app se cambia en Ajustes del iPhone. | The app's language is changed in the iPhone's Settings. |
 | `settings.language.hint` (spoken, iOS) | Abre Ajustes del iPhone | Opens the iPhone's Settings |
 | `settings.cancel` (Android's language dialog) | Cancelar | Cancel |
