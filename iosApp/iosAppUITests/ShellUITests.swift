@@ -190,11 +190,12 @@ final class ShellUITests: XCTestCase {
         let language = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Language")).firstMatch
         XCTAssertTrue(language.waitForExistence(timeout: 5))
         XCTAssertTrue(language.label.contains("English"), "the language row says English: \(language.label)")
-        // A menu picker reads as its name and the choice in use.
-        XCTAssertTrue(app.buttons["Arrival times, Minutes"].exists, "the ETA format's picker")
+        // A menu picker reads as its name and the choice in use, whatever the device saved.
+        let etaFormat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Arrival times, ")).firstMatch
+        XCTAssertTrue(etaFormat.waitForExistence(timeout: 5), "the ETA format's picker")
 
+        addTeardownBlock { @MainActor in self.choose("System", in: "Theme", app: app) }
         choose("Dark", in: "Theme", app: app)
-        choose("System", in: "Theme", app: app)
 
         app.buttons["Clear cache"].tap()
         let cleared = app.alerts["Cache cleared"]

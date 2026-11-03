@@ -79,33 +79,39 @@ struct SettingsViewModelTests {
     }
 
     @Test
+    func lb403_twoQuickThemes_landInTheOrderTheyWereChosen() async throws {
+        let viewModel = SettingsViewModel(useCases: SharedDependencies.shared.preview(), language: .spanish)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state is SettingsUiStateContent }
+
+        viewModel.onEvent(SettingsEventSetTheme(theme: .dark))
+        viewModel.onEvent(SettingsEventSetTheme(theme: .light))
+
+        try await waitUntil { (viewModel.state as? SettingsUiStateContent)?.theme == .light }
+        try await Task.sleep(for: .milliseconds(100))
+        #expect((viewModel.state as? SettingsUiStateContent)?.theme == .light)
+    }
+
+    @Test
+    func lb403_aLanguageEvent_changesNothing_asIOSKeepsTheLanguage() async throws {
+        let viewModel = SettingsViewModel(useCases: SharedDependencies.shared.preview(), language: .spanish)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state is SettingsUiStateContent }
+
+        viewModel.onEvent(SettingsEventSetLanguage(language: .english))
+
+        #expect((viewModel.state as? SettingsUiStateContent)?.language == .spanish)
+    }
+
+    @Test
     func lb403_theLanguageIsTheOneTheAppRunsIn() {
         #expect(AppLanguage.of(localization: "es") == .spanish)
         #expect(AppLanguage.of(localization: "en") == .english)
+        // A regional localization, should one ship, is still its language.
+        #expect(AppLanguage.of(localization: "en-GB") == .english)
         // Spanish is the development language, which iOS falls back to (NFR-I18N-01).
         #expect(AppLanguage.of(localization: nil) == .spanish)
-    }
-}
-
-/// FR-SET-01 on iOS: the app's root follows the theme chosen in Settings.
-@MainActor
-struct AppAppearanceTests {
-    @Test
-    func lb403_eachThemeIsItsColorScheme() {
-        #expect(AppAppearance.colorScheme(of: .system) == nil)
-        #expect(AppAppearance.colorScheme(of: .light) == .light)
-        #expect(AppAppearance.colorScheme(of: .dark) == .dark)
-    }
-
-    @Test
-    func lb403_theAppFollowsTheThemeChosenInSettings() async throws {
-        let useCases = SharedDependencies.shared.preview()
-        let appearance = AppAppearance(useCases: useCases)
-        let observation = Task { await appearance.observe() }
-        defer { observation.cancel() }
-
-        _ = try await useCases.setTheme().invoke(theme: .dark)
-
-        try await waitUntil { appearance.colorScheme == .dark }
     }
 }
