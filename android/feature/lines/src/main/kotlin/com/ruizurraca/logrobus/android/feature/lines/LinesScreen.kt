@@ -3,10 +3,12 @@ package com.ruizurraca.logrobus.android.feature.lines
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -173,6 +175,13 @@ private fun LineList(
     val listState = rememberLazyListState()
     val field = remember { FocusRequester() }
     var editing by rememberSaveable { mutableStateOf(false) }
+    // Closing the sheet gives the focus back to Edit, which opened it (design_guidelines.md §8).
+    val edit = remember { FocusRequester() }
+    var editClosed by remember { mutableStateOf(false) }
+    LaunchedEffect(editClosed) {
+        if (editClosed && state is LinesUiState.Content && state.editable.isNotEmpty()) edit.requestFocus()
+        editClosed = false
+    }
     ScrollToTopOnReselect(listState)
     // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them. The list
     // ends above the keyboard: its first item is the field, so the window never pans to show the last results.
@@ -188,8 +197,13 @@ private fun LineList(
             is LinesUiState.Content -> {
                 item(key = FAVOURITES_HEADING) {
                     // LB-110: Edit, while there is a favourite to edit, even one with no card.
+                    // The heading keeps Edit's height without it, so the list never moves when Edit comes or goes.
                     GroupHeading(R.string.lines_favourites_title) {
-                        if (state.editable.isNotEmpty()) EditButton { editing = true }
+                        if (state.editable.isNotEmpty()) {
+                            EditButton(Modifier.focusRequester(edit).focusable()) { editing = true }
+                        } else {
+                            Spacer(Modifier.size(Tokens.minTouchTarget))
+                        }
                     }
                 }
                 item(key = FAVOURITES) { FavouriteLines(state.favourites, onOpenLine) }
@@ -219,7 +233,14 @@ private fun LineList(
         }
     }
     if (editing && state is LinesUiState.Content) {
-        FavouriteLinesSheet(state.editable, onEvent, onDismiss = { editing = false })
+        FavouriteLinesSheet(
+            state.editable,
+            onEvent,
+            onDismiss = {
+                editing = false
+                editClosed = true
+            },
+        )
     }
 }
 
@@ -275,9 +296,12 @@ private fun GroupHeading(
 
 /** LB-110: opens the edit sheet. TalkBack names it by what it edits, a name that keeps the word it shows. */
 @Composable
-private fun EditButton(onClick: () -> Unit) {
+private fun EditButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     val name = stringResource(R.string.lines_favourites_edit_title)
-    TextButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = name }) {
+    TextButton(onClick = onClick, modifier = modifier.semantics { contentDescription = name }) {
         Text(stringResource(R.string.lines_favourites_edit))
     }
 }
@@ -357,7 +381,11 @@ private fun PlaceholderRows(contentPadding: PaddingValues) {
             .clearAndSetSemantics { contentDescription = loading },
     ) {
         SearchFieldPlaceholder(SearchFieldPadding.fillMaxWidth())
-        ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
+        // The favourites heading, as tall as with its Edit button.
+        ListItem(
+            headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) },
+            trailingContent = { Spacer(Modifier.size(Tokens.minTouchTarget)) },
+        )
         Placeholder(
             Modifier
                 .padding(horizontal = Tokens.Spacing.l)

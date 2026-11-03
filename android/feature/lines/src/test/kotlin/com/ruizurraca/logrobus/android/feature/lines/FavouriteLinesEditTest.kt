@@ -217,7 +217,8 @@ class FavouriteLinesEditTest {
 
         compose.onNode(inTheSheet and hasContentDescription(remove("10"))).performClick()
 
-        compose.onNode(hasText(context.getString(R.string.lines_favourites_hint))).assertExists()
+        // The carousel behind the sheet shows the hint too.
+        compose.onNode(inTheSheet and hasText(context.getString(R.string.lines_favourites_hint))).assertExists()
         compose.onNodeWithText(done).assertIsFocused()
     }
 

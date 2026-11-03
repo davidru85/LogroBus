@@ -23,8 +23,12 @@ internal fun FavouriteLimitMessage(
     val shown by rememberUpdatedState(onShown)
     LaunchedEffect(message) {
         if (message != null) {
-            snackbars.showSnackbar(message, withDismissAction = true, duration = SnackbarDuration.Long)
-            shown()
+            // Shown once, even when the screen leaves before the message ends: it must not come back on return.
+            try {
+                snackbars.showSnackbar(message, withDismissAction = true, duration = SnackbarDuration.Long)
+            } finally {
+                shown()
+            }
         }
     }
 }
