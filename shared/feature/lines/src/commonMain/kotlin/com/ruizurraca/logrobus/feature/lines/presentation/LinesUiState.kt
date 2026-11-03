@@ -45,6 +45,11 @@ sealed interface LinesEvent {
     /** FR-ERR-05: load again after an Error or Empty state. */
     data object Retry : LinesEvent
 
+    /** FR-LINE-03: the search field's text, as it now reads. An empty one clears the search. */
+    data class Search(
+        val query: String,
+    ) : LinesEvent
+
     /** FR-LINE-15: a row's favourite toggle, with the value it now shows. */
     data class SetFavourite(
         val lineId: Int,

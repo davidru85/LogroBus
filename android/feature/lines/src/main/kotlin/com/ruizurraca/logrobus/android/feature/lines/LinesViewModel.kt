@@ -11,15 +11,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * The Lines tab (LB-101, LB-103). It orchestrates only: the shared use cases and mapper build the state (ADR-0007).
+ * The Lines tab (LB-101, LB-103, LB-102). It orchestrates only: the shared use cases and mapper build the state
+ * (ADR-0007).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LinesViewModel(
@@ -33,10 +34,13 @@ class LinesViewModel(
     // rather than flash Loading (spec §7.3); only a new load, after Retry, starts at Loading.
     private var shownLoad = 0
 
+    // The search field's text (LB-102). It filters the lines already read, so a key never starts a load.
+    private val query = MutableStateFlow("")
+
     val state: StateFlow<LinesUiState> =
         loads
             .flatMapLatest { load ->
-                val states = observeLines().map(LinesUiMapper::state)
+                val states = combine(observeLines(), query, LinesUiMapper::state)
                 if (load == shownLoad) {
                     states
                 } else {
@@ -50,6 +54,8 @@ class LinesViewModel(
     fun onEvent(event: LinesEvent) {
         when (event) {
             LinesEvent.Retry -> loads.update { it + 1 }
+
+            is LinesEvent.Search -> query.value = event.query
 
             // The carousel and the toggle change through the use case's flow (FR-LINE-15). A save that fails, a damaged
             // database the repository has logged, leaves them as they were.
