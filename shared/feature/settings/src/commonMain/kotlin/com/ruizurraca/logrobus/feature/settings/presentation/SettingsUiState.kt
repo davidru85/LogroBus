@@ -64,11 +64,31 @@ sealed interface SettingsEvent {
 }
 
 object SettingsUiMapper {
-    @Suppress("UNUSED_PARAMETER", "UnusedParameter")
+    /**
+     * Settings with the [language] the platform reports, the stored [preferences] and the data status of [syncs]. A
+     * sync status that cannot be read leaves the rest of Settings as it is.
+     */
     fun state(
         preferences: UserPreferences,
         syncs: AppResult<List<DatasetSync>>,
         language: AppLanguage,
     ): SettingsUiState =
-        SettingsUiState.Content(AppLanguage.SYSTEM, ThemePreference.SYSTEM, EtaFormat.MINUTES, DataStatusUi.Unknown)
+        SettingsUiState.Content(language, preferences.theme, preferences.etaFormat, dataStatusOf(syncs))
+
+    private fun dataStatusOf(syncs: AppResult<List<DatasetSync>>): DataStatusUi =
+        when (syncs) {
+            is AppResult.Success -> {
+                val lastSuccesses = syncs.value.map { it.lastSuccess }
+                val oldest = lastSuccesses.filterNotNull().minOrNull()
+                if (oldest == null || null in lastSuccesses) {
+                    DataStatusUi.NeverSynced
+                } else {
+                    DataStatusUi.Synced(MadridDateTime.of(oldest))
+                }
+            }
+
+            is AppResult.Failure -> {
+                DataStatusUi.Unknown
+            }
+        }
 }

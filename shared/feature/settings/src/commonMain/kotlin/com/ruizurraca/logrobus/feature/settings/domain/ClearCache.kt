@@ -17,7 +17,7 @@ fun interface ClearCache {
 }
 
 class DefaultClearCache(
-    @Suppress("unused") private val caches: AppCaches,
+    private val caches: AppCaches,
 ) : ClearCache {
-    override suspend fun invoke(): AppResult<Unit> = AppResult.Success(Unit)
+    override suspend fun invoke(): AppResult<Unit> = caches.clear()
 }
