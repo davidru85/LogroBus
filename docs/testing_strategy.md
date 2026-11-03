@@ -124,6 +124,7 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
     - Screen snapshots (`iosAppTests/ShellSnapshotTests`) take a whole iPhone screen at 3×.
     - They take each screen as the root of its stack, where there is no Liquid Glass back button. They can then render by layers, at the component precision of 0.9995. At 0.99, a whole title on a full screen could vanish unnoticed.
   - **The iOS 18 fallback:** the glass snapshots force it on iOS 26 through `glassRendering = .fallback`. Real iOS 18 runs wait for the nightly (LB-412).
+  - **A sheet's navigation bar (LB-110):** off screen, iOS 26 draws an inline title and its toolbar buttons in fixed colours whatever the appearance (a white title in light mode, a black Done in dark), so the edit sheet's snapshots take its list without the bar, and the UI tests check the title and Done. Android likewise captures the sheet's content without the modal window.
 - Each screen needs these variants: light, dark, 200 % font, and every UX state.
 
 ### 4.7 Maestro flows

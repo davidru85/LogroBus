@@ -55,7 +55,7 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 | SC-07 Vehicle sheet | Sheet over the Line detail map and the Near Me map |
 | SC-08 to SC-10 Plan, itinerary list and detail | How to Get There tab |
 | SC-11 to SC-14, SC-17 News, Fares, Recharge points, Info | More (v1.0) |
-| SC-15 Manage favourites | Inline: reorder favourite lines from the carousel's "Edit"; manage saved stops from the Near Me sheet's "Edit" |
+| SC-15 Manage favourites | A modal sheet from the favourite lines carousel's "Edit" (LB-110, owner decision, 2026-11-03); saved stops from the Near Me sheet's "Edit" |
 | SC-16 Settings | More → Settings (MVP) |
 | SC-18 Onboarding | Before the first tab: 3 cards (value, favourites, location rationale) |
 
@@ -92,7 +92,13 @@ This document covers how LogroBus looks and behaves: the three sections screen b
 - The hint shows the ☆ symbol, and screen readers read it as words: "Marca la estrella de una línea para tenerla aquí" (`lines.favourites.hint_spoken`).
 - Order: the user's manual order (FR-FAV-02), adjusted through "Edit" (drag to reorder, remove).
 - Empty state: one compact hint card, "Marca ☆ en una línea para tenerla aquí" ("Tap ☆ on a line to pin it here"). The section never disappears entirely, so the feature stays discoverable.
-- With more than 20 favourites, adding another shows the limit message (FR-FAV-05).
+- With 20 favourites, adding another shows the limit message and saves nothing (FR-FAV-05).
+  - **As built (LB-110):** "Editar" ("Edit") ends the section's heading while there is a favourite to edit, even one with no card; screen readers name it "Editar líneas favoritas", which keeps the word it shows. It opens a modal sheet, "Editar líneas favoritas", with "Listo" ("Done") (owner decision, 2026-11-03): one row per favourite line in the user's order, each with a remove control, the line's badge and name, and a handle to drag it by. A favourite whose line has left the catalogue has no card, and the sheet lists it in its place as "Línea que ya no circula" ("Line that no longer runs"), since the device keeps only its id; it counts towards the limit until it is removed. Once every favourite is removed, the sheet shows the carousel's hint rather than going blank.
+  - The order is saved when a drag ends, and the carousel follows. A removed line goes through its toggle, so its row's star goes off. At large text a row puts its badge above its name, as the list's rows do.
+  - Screen readers read a row as one, with its place as its state ("2 de 3"), and move it with "Subir" and "Bajar" ("Move up", "Move down") without dragging, hearing the new place after each move; the first row has no "Subir" and the last no "Bajar". On Android the drag handle says nothing, since the actions do its work.
+  - Focus (§8): removing a line moves the focus to the next line's remove button, else the one before, else Done; on Android, closing the sheet gives the focus back to "Editar". The favourites heading keeps "Editar"'s height without it, so the list never moves when it comes or goes; on iOS "Editar" has the 44 pt touch target.
+  - On Android the sheet is the design system's `ModalSheet`, the drag comes from Reorderable (ADR-0019), and a row's remove button is labelled as the list's toggle ("Quitar línea 10 de favoritas"). On iOS it is a system list in edit mode, whose delete and reorder controls are the system's.
+  - The limit message, from a row's star or the line detail's: "Ya tienes 20 líneas favoritas, el máximo. Quita alguna para añadir otra." On Android a long snackbar with a close button, which TalkBack announces without moving its focus; on iOS an alert, with the first sentence as its title and the second as its message.
 
 **Full list**
 - Two groups, Day lines then Night lines (Búho), each sorted numerically by code: 1, 2, 3 … 11, then B1, B2, B3. The list is data-driven; there is no line 8.
@@ -221,6 +227,7 @@ Results                                   Itinerary detail
     - `ScreenTitle`, a top app bar's title as a heading;
     - `ScreenTransitions`, the cross-fade between screens.
   - Since LB-102: `SearchField`, a search field that filters what is under it as the user types: a `TextField` in the search bar's shape and colours, with Material Symbols' search icon, a 48 dp clear button once it has text ("Borrar búsqueda"), and the keyboard's search key, which closes the keyboard; and `SearchFieldPlaceholder`, its shape for a first load, as tall as the field at every text size.
+  - Since LB-110: `ModalSheet`, a modal bottom sheet for a task over a screen, fully expanded, whose content gets a `close` for its own Done; it keeps Material's experimental sheet API inside the design system. And Material Symbols' "do_not_disturb_on" and "drag_handle" icons (`ic_remove`, `ic_drag_handle`).
 
 | Need | Component |
 | --- | --- |
@@ -228,6 +235,8 @@ Results                                   Itinerary detail
 | Tab roots | `LargeFlexibleTopAppBar` / `TopAppBar` collapsing on scroll, with the More action |
 | Lines search | The design system's `SearchField`, the list's first item, which filters the list in place (LB-102, owner decision, 2026-11-03). M3's collapsed `SearchBar` only opens an expanded search view (`ExpandedFullScreenSearchBar`), and disables the soft keyboard until it does |
 | Favourite lines | `HorizontalUncontainedCarousel` of fixed-width cards (LB-103). The carousel centres its items vertically, so each card takes the tallest one's height, measured on copies hidden from TalkBack |
+| Editing favourite lines | `ModalSheet` over a `LazyColumn` of `ListItem`s, each a Reorderable `ReorderableItem` dragged by its handle (ADR-0019), with "Move up" and "Move down" as `CustomAccessibilityAction`s (LB-110) |
+| A one-off message | `Snackbar` in the screen's `SnackbarHost`, long, with a close button: the favourite limit (LB-110) |
 | Direction toggle, layer switcher | Connected `ButtonGroup` with `ToggleButton`s |
 | Map controls | `HorizontalFloatingToolbar` / `VerticalFloatingToolbar` over the map; a medium FAB for "recenter" |
 | Near Me sheet | `BottomSheetScaffold` with a partially expanded peek and `skipHiddenState = true` |
@@ -267,6 +276,8 @@ Since LB-012, the `scrollToTopRequests` environment value counts the re-selectio
 | Near Me sheet | `.sheet` with `.presentationDetents([.height(peek), .medium, .large])`, `.presentationBackgroundInteraction(.enabled(upThrough: .medium))` and `.interactiveDismissDisabled()`. Don't set `.presentationBackground`, so the system glass stays |
 | Direction toggle | `Picker(.segmented)` |
 | Favourite lines | `ScrollView(.horizontal)` + `HStack` with `.scrollTargetBehavior(.viewAligned)` (LB-103): at most 20 cards (FR-FAV-05), and a stack of fixed height gives every card the tallest one's |
+| Editing favourite lines | `.sheet` with a `NavigationStack`, an inline title and Done as its confirmation action, over a `List` in edit mode (`.environment(\.editMode, .constant(.active))`) with `.onMove` and `.onDelete`; "Move up" and "Move down" as `.accessibilityActions` (LB-110) |
+| A message that needs an answer | `.alert`: the favourite limit (LB-110) |
 | Refreshing | `.refreshable`; skeletons via `.redacted(reason: .placeholder)` for the first load |
 
 The MVP is **iPhone only** (NFR-PLAT-03): no iPad layouts.
@@ -384,6 +395,14 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | `lines.search` (the search field's prompt, LB-102 part 1) | Buscar línea | Search lines |
 | `lines.no_matches` (a search that found nothing) | Ninguna línea coincide con tu búsqueda. | No lines match your search. |
 | `search.clear` (the action of a search that found nothing; Android's clear button) | Borrar búsqueda | Clear search |
+| `lines.favourites.edit` (the carousel's button, LB-110) | Editar | Edit |
+| `lines.favourites.edit_title` (the edit sheet's title, and the button's spoken name) | Editar líneas favoritas | Edit favourite lines |
+| `lines.favourites.done` | Listo | Done |
+| `lines.favourites.no_longer_served` (a favourite whose line has left the catalogue) | Línea que ya no circula | Line that no longer runs |
+| `lines.favourites.remove_no_longer_served` (spoken, Android's remove button for it) | Quitar de favoritas la línea que ya no circula | Remove the line that no longer runs from favourites |
+| `lines.favourites.position` (spoken, a row's place in the edit sheet; iOS `lines.favourites.position %lld %lld`) | 2 de 3 | 2 of 3 |
+| `lines.favourites.move_up`, `lines.favourites.move_down` (screen readers' actions) | Subir, Bajar | Move up, Move down |
+| `lines.favourites.limit` (Android, plural; iOS `lines.favourites.limit %lld` and `lines.favourites.limit_hint`) | Ya tienes 20 líneas favoritas, el máximo. Quita alguna para añadir otra. | You already have 20 favourite lines, the most you can save. Remove one to add another. |
 | `nearme.saved.title` | Mis paradas | My stops |
 | `nearme.nearby.title` | Cerca de ti | Near you |
 | `plan.title` | Cómo llegar | How to get there |
