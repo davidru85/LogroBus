@@ -256,13 +256,8 @@ class LinesViewModelTest {
     fun lb110_aToggleBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() =
         runTest {
             // FR-FAV-05: the row's toggle stays off, and the screen says why, once.
-            val viewModel =
-                viewModel(setFavourite = {
-                    _,
-                    _,
-                    ->
-                    AppResult.Success(FavouriteToggle.LimitReached(20))
-                }) { flowOf(lines) }
+            val full = SetFavouriteLine { _, _ -> AppResult.Success(FavouriteToggle.LimitReached(20)) }
+            val viewModel = viewModel(setFavourite = full) { flowOf(lines) }
             assertEquals(null, viewModel.favouriteLimit.value)
 
             viewModel.onEvent(LinesEvent.SetFavourite(lineId = 4, isFavourite = true))

@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -43,6 +44,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /**
  * LB-110 (FR-FAV-02, FR-FAV-05, NFR-A11Y) on Android: the carousel's Edit opens a sheet with every favourite line in
@@ -139,10 +141,13 @@ class FavouriteLinesEditTest {
         assertEquals(listOf(moveUp, moveDown), actionsOf(row(4)))
         assertEquals(listOf(moveUp), actionsOf(row(101)))
 
+        // Each row says where it is, so a move is heard (NFR-A11Y).
+        assertEquals(position(2, 3), stateOf(row(4)))
         perform(moveUp, row(4))
 
         assertEquals(listOf<LinesEvent>(LinesEvent.ReorderFavourites(listOf(4, 10, 101))), events)
         assertEquals(listOf(4, 10, 101), rowsInTheSheet())
+        assertEquals(position(1, 3), stateOf(row(4)))
     }
 
     @Test
@@ -175,6 +180,124 @@ class FavouriteLinesEditTest {
         state = favourites(4, 101)
 
         assertEquals(listOf(4, 101), rowsInTheSheet())
+    }
+
+    @Test
+    fun lb110_talkBackReadsARowAsItsLineAndName_withoutTheHandle() {
+        open(favourites(10, 4))
+
+        val row = row(10).fetchSemanticsNode().config
+        assertEquals(listOf(badge("10")), row.getOrNull(SemanticsProperties.ContentDescription))
+        assertEquals(listOf("El Arco - Hospital San Pedro"), row.getOrNull(SemanticsProperties.Text)?.map { it.text })
+    }
+
+    @Test
+    fun lb110_removingALineMovesTheFocusToTheNextLinesRemoveButton() {
+        // The removed row takes its button, and TalkBack's focus, with it (design_guidelines.md §8).
+        openFollowing(favourites(10, 4, 101))
+
+        compose.onNode(inTheSheet and hasContentDescription(remove("10"))).performClick()
+
+        compose.onNode(inTheSheet and hasContentDescription(remove("4"))).assertIsFocused()
+    }
+
+    @Test
+    fun lb110_removingTheLastLineMovesTheFocusToTheLineBefore() {
+        openFollowing(favourites(10, 4))
+
+        compose.onNode(inTheSheet and hasContentDescription(remove("4"))).performClick()
+
+        compose.onNode(inTheSheet and hasContentDescription(remove("10"))).assertIsFocused()
+    }
+
+    @Test
+    fun lb110_removingTheOnlyLineShowsTheHint_andMovesTheFocusToDone() {
+        // Spec §7.3: the sheet never goes blank.
+        openFollowing(favourites(10))
+
+        compose.onNode(inTheSheet and hasContentDescription(remove("10"))).performClick()
+
+        compose.onNode(hasText(context.getString(R.string.lines_favourites_hint))).assertExists()
+        compose.onNodeWithText(done).assertIsFocused()
+    }
+
+    @Test
+    fun lb110_doneGivesTheFocusBackToEdit() {
+        open(favourites(10, 4))
+
+        compose.onNodeWithText(done).performClick()
+
+        compose.onNodeWithContentDescription(edit).assertIsFocused()
+    }
+
+    @Test
+    fun lb110_aChangeFromTheDatabaseDuringADragWaitsForTheDragToEnd() {
+        var state by mutableStateOf(favourites(10, 4, 101))
+        compose.setContent { LinesScreen(state, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {}) }
+        compose.onNodeWithContentDescription(edit).performClick()
+        val rowHeight = row(10).fetchSemanticsNode().boundsInRoot.height
+        val handle = compose.onNodeWithTag(dragHandleTag(101), useUnmergedTree = true)
+        handle.performTouchInput { down(center) }
+        repeat(DRAG_STEPS) {
+            handle.performTouchInput { moveBy(Offset(0f, -rowHeight * 2.5f / DRAG_STEPS)) }
+            compose.mainClock.advanceTimeByFrame()
+        }
+
+        // Another screen saves line 4 first while the finger is down: the dragged order holds.
+        state = favourites(4, 10, 101)
+        compose.waitForIdle()
+        assertEquals(listOf(101, 10, 4), rowsInTheSheet())
+
+        handle.performTouchInput { up() }
+        compose.waitForIdle()
+        assertEquals(listOf<LinesEvent>(LinesEvent.ReorderFavourites(listOf(101, 10, 4))), events)
+    }
+
+    @Test
+    fun lb110_theFavouritesHeadingIsAsTallWithEditAsWithout() {
+        // Starring the first favourite, or a first load with favourites, must not move the list (spec §7.3).
+        var state by mutableStateOf(favourites())
+        compose.setContent { LinesScreen(state, onEvent = {}, onOpenMore = {}, onOpenLine = {}) }
+        val hint = context.getString(R.string.lines_favourites_hint)
+        val without =
+            compose
+                .onNode(hasText(hint))
+                .fetchSemanticsNode()
+                .boundsInRoot.top
+
+        state = favourites(99)
+
+        assertEquals(
+            without,
+            compose
+                .onNode(hasText(hint))
+                .fetchSemanticsNode()
+                .boundsInRoot.top,
+            0.5f,
+        )
+    }
+
+    @Test
+    fun lb110_theLimitMessageCountsAsShown_evenWhenTheScreenLeavesFirst() {
+        // Opening a line within the message's 10 s must not bring it back on return.
+        var onScreen by mutableStateOf(true)
+        compose.setContent {
+            if (onScreen) {
+                LinesScreen(
+                    favourites(),
+                    onEvent = { events += it },
+                    onOpenMore = {},
+                    onOpenLine = {},
+                    favouriteLimit = 20,
+                )
+            }
+        }
+        compose.onNodeWithText(limitMessage(20)).assertExists()
+
+        onScreen = false
+        compose.waitForIdle()
+
+        assertEquals(listOf<LinesEvent>(LinesEvent.FavouriteLimitShown), events)
     }
 
     @Test
@@ -211,6 +334,37 @@ class FavouriteLinesEditTest {
         compose.setContent { LinesScreen(state, onEvent = { events += it }, onOpenMore = {}, onOpenLine = {}) }
         compose.onNodeWithContentDescription(edit).performClick()
     }
+
+    /** Opens the sheet over a state that follows the removals, as the database's flow does. */
+    private fun openFollowing(initial: LinesUiState) {
+        var state by mutableStateOf(initial)
+        val ids = (initial as LinesUiState.Content).editable.map { it.id }.toMutableList()
+        compose.setContent {
+            LinesScreen(
+                state,
+                onEvent = { event ->
+                    events += event
+                    if (event is LinesEvent.SetFavourite && !event.isFavourite) {
+                        ids -= event.lineId
+                        state = favourites(*ids.toIntArray())
+                    }
+                },
+                onOpenMore = {},
+                onOpenLine = {},
+            )
+        }
+        compose.onNodeWithContentDescription(edit).performClick()
+    }
+
+    private fun stateOf(row: SemanticsNodeInteraction) =
+        row.fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
+
+    private fun position(
+        at: Int,
+        of: Int,
+    ) = context.getString(R.string.lines_favourites_position, at, of)
+
+    private fun badge(code: String) = context.getString(DS.string.line_badge, code)
 
     private val inTheSheet = hasAnyAncestor(hasTestTag(FAVOURITE_LINES_EDITOR))
 
