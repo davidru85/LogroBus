@@ -21,8 +21,13 @@ fun interface SetFavouriteLine {
 
 /** What a favourite toggle did. */
 sealed interface FavouriteToggle {
+    /** The line is a favourite, or no longer one, as the toggle asked. */
     data object Done : FavouriteToggle
 
+    /**
+     * FR-FAV-05: [limit] lines are favourites already, so this one was not saved. Each platform words the message
+     * (AGENTS.md §5, rule 4), and the toggle keeps showing the line as not a favourite.
+     */
     data class LimitReached(
         val limit: Int,
     ) : FavouriteToggle
@@ -30,7 +35,7 @@ sealed interface FavouriteToggle {
 
 /**
  * Saves the line last, or removes it. A line saved now counts `favourite_add` (NFR-OBS-03): its kind, never the line. A
- * line that already was a favourite, after a double tap, counts nothing.
+ * line that already was a favourite, after a double tap, counts nothing, and so does one beyond the limit.
  */
 class DefaultSetFavouriteLine(
     private val favourites: FavouriteLinesRepository,

@@ -131,7 +131,7 @@ class PreviewUseCases internal constructor() : UseCases {
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
 
-    // In memory, like the database: a toggle in a preview or test shows at once.
+    // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =
         object : FavouriteLinesRepository {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
