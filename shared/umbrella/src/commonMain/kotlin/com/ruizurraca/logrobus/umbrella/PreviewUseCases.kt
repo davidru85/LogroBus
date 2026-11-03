@@ -7,9 +7,11 @@ import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -125,6 +127,8 @@ class PreviewUseCases internal constructor() : UseCases {
         DefaultObserveLinesWithFavourites(lines, favourites)
 
     override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
+
+    override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
 
     // In memory, like the database: a toggle in a preview or test shows at once.
     private val favourites =

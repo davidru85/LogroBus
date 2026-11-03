@@ -15,7 +15,16 @@ fun interface SetFavouriteLine {
     suspend operator fun invoke(
         lineId: Int,
         isFavourite: Boolean,
-    ): AppResult<Unit>
+    ): AppResult<FavouriteToggle>
+}
+
+/** What a favourite toggle did. */
+sealed interface FavouriteToggle {
+    data object Done : FavouriteToggle
+
+    data class LimitReached(
+        val limit: Int,
+    ) : FavouriteToggle
 }
 
 /**
@@ -29,12 +38,17 @@ class DefaultSetFavouriteLine(
     override suspend fun invoke(
         lineId: Int,
         isFavourite: Boolean,
-    ): AppResult<Unit> {
-        if (!isFavourite) return favourites.remove(lineId)
+    ): AppResult<FavouriteToggle> {
+        if (!isFavourite) {
+            return when (val removed = favourites.remove(lineId)) {
+                is AppResult.Success -> AppResult.Success(FavouriteToggle.Done)
+                is AppResult.Failure -> removed
+            }
+        }
         return when (val saved = favourites.add(lineId)) {
             is AppResult.Success -> {
                 if (saved.value == FavouriteAddition.ADDED) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
-                AppResult.Success(Unit)
+                AppResult.Success(FavouriteToggle.Done)
             }
 
             is AppResult.Failure -> {

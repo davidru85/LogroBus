@@ -3,6 +3,8 @@ package com.ruizurraca.logrobus.umbrella
 import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.Line
@@ -184,10 +186,49 @@ class PreviewUseCasesTest {
 
             preview.observeLinesWithFavourites()().test {
                 assertEquals(listOf(10), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
-                assertEquals(AppResult.Success(Unit), preview.setFavouriteLine()(lineId = 3, isFavourite = true))
+                assertEquals(
+                    AppResult.Success(FavouriteToggle.Done),
+                    preview.setFavouriteLine()(lineId = 3, isFavourite = true),
+                )
                 assertEquals(listOf(10, 3), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
                 preview.setFavouriteLine()(lineId = 10, isFavourite = false)
                 assertEquals(listOf(3), (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+            }
+        }
+
+    @Test
+    fun lb110_thePreviewKeepsTheLimitOfFavouriteLines() =
+        runTest {
+            // Swift tests script 20 favourites to show the limit message; the ids need not be in the catalogue.
+            val preview = SharedDependencies.preview()
+            (1..FAVOURITES_PER_TYPE).forEach { preview.favouriteLine(it) }
+
+            assertEquals(
+                AppResult.Success(FavouriteToggle.LimitReached(limit = FAVOURITES_PER_TYPE)),
+                preview.setFavouriteLine()(lineId = 101, isFavourite = true),
+            )
+        }
+
+    @Test
+    fun lb110_aNewOrderSetInThePreviewShowsAtOnce() =
+        runTest {
+            val preview =
+                SharedDependencies
+                    .preview()
+                    .favouriteLine(10)
+                    .favouriteLine(3)
+                    .favouriteLine(101)
+
+            preview.observeLinesWithFavourites()().test {
+                assertEquals(
+                    listOf(10, 3, 101),
+                    (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds,
+                )
+                assertEquals(AppResult.Success(Unit), preview.reorderFavouriteLines()(listOf(101, 10, 3)))
+                assertEquals(
+                    listOf(101, 10, 3),
+                    (awaitItem() as AppResult.Success<LinesWithFavourites>).value.favouriteIds,
+                )
             }
         }
 

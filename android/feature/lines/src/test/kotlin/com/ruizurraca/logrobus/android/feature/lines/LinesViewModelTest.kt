@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
@@ -144,7 +145,7 @@ class LinesViewModelTest {
             val viewModel =
                 LinesViewModel({ flowOf(lines) }) { lineId, isFavourite ->
                     set += lineId to isFavourite
-                    AppResult.Success(Unit)
+                    AppResult.Success(FavouriteToggle.Done)
                 }
 
             viewModel.onEvent(LinesEvent.SetFavourite(lineId = 3, isFavourite = true))
@@ -230,7 +231,7 @@ class LinesViewModelTest {
         }
 
     private fun viewModel(observe: ObserveLinesWithFavourites) =
-        LinesViewModel(observe) { _, _ -> AppResult.Success(Unit) }
+        LinesViewModel(observe) { _, _ -> AppResult.Success(FavouriteToggle.Done) }
 
     /** The next state after Loading. A read may be quicker than the collector, which then never sees Loading. */
     private suspend fun ReceiveTurbine<LinesUiState>.awaitSettled(): LinesUiState {
