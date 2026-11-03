@@ -51,9 +51,9 @@ class FavouriteLinesRepositoryImpl(
         return write("Saving a favourite line failed") {
             // One transaction, so the count and the insert see the same favourites.
             transactionWithResult {
-                val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList()
+                val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList().mapNotNull(String::toIntOrNull)
                 when {
-                    "$lineId" in saved -> {
+                    lineId in saved -> {
                         FavouriteAddition.ALREADY_SAVED
                     }
 
@@ -62,8 +62,9 @@ class FavouriteLinesRepositoryImpl(
                     }
 
                     else -> {
-                        insertFavourite("${FavouriteTypes.LINE}:$lineId", FavouriteTypes.LINE, "$lineId", now)
-                        FavouriteAddition.ADDED
+                        val rows =
+                            insertFavourite("${FavouriteTypes.LINE}:$lineId", FavouriteTypes.LINE, "$lineId", now)
+                        if (rows.value > 0) FavouriteAddition.ADDED else FavouriteAddition.ALREADY_SAVED
                     }
                 }
             }
@@ -78,7 +79,8 @@ class FavouriteLinesRepositoryImpl(
             // One transaction: the favourites are emitted once, in their new order, never half-moved.
             transaction {
                 val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList()
-                val named = lineIds.map(Int::toString).filter { it in saved }.distinct()
+                val refs = saved.associateBy(String::toIntOrNull)
+                val named = lineIds.distinct().mapNotNull { refs[it] }
                 (named + (saved - named.toSet())).forEachIndexed { position, ref ->
                     updateFavouritePosition(position.toLong(), FavouriteTypes.LINE, ref)
                 }

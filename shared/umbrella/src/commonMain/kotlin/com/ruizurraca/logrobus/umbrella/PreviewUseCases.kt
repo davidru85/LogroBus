@@ -137,14 +137,17 @@ class PreviewUseCases internal constructor() : UseCases {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
 
             override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
-                val ids = favouriteLineIds.value
-                val addition =
-                    when {
-                        lineId in ids -> FavouriteAddition.ALREADY_SAVED
-                        ids.size >= FAVOURITES_PER_TYPE -> FavouriteAddition.LIMIT_REACHED
-                        else -> FavouriteAddition.ADDED
-                    }
-                if (addition == FavouriteAddition.ADDED) favouriteLineIds.value = ids + lineId
+                if (failing) return AppResult.Failure(AppError.Data)
+                var addition = FavouriteAddition.ADDED
+                favouriteLineIds.update { ids ->
+                    addition =
+                        when {
+                            lineId in ids -> FavouriteAddition.ALREADY_SAVED
+                            ids.size >= FAVOURITES_PER_TYPE -> FavouriteAddition.LIMIT_REACHED
+                            else -> FavouriteAddition.ADDED
+                        }
+                    if (addition == FavouriteAddition.ADDED) ids + lineId else ids
+                }
                 return AppResult.Success(addition)
             }
 
@@ -154,6 +157,7 @@ class PreviewUseCases internal constructor() : UseCases {
             }
 
             override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> {
+                if (failing) return AppResult.Failure(AppError.Data)
                 favouriteLineIds.update { ids ->
                     val named = lineIds.filter { it in ids }.distinct()
                     named + (ids - named.toSet())
