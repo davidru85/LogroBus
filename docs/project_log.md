@@ -19,6 +19,33 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-03: LB-102, part 1: the Lines search by code, name and headsigns
+
+**Done**
+- **PR #37 (LB-002, Gradle's longer backoff for rate-limited downloads) merged** on 2026-11-03, then `main` was merged into LB-103's branch: the conflicts in both READMEs, `ci_cd.md` §5 and the log kept both changes.
+- **PR #38 (LB-103) merged** on 2026-11-03, and `main` was synced.
+  - **Its seventh run**, after the merge of `main`, failed in "Shared unit tests (:shared:core:network)", outside the change: Maven Central answered 429 for Robolectric's `nativeruntime-dist-compat-1.0.19.jar` in all three of `gradle-retry.sh`'s runs, about 8 minutes, despite PR #37's longer backoff. It is the jar of every earlier 429. The failed jobs were rerun once, and passed; the merge came before this note could reach LB-103's entry.
+  - **For the owner:** downloads keep failing because a pull request that changes the Gradle files starts with no cache. A cache with a fallback key would fix it: the "enhanced" provider of `setup-gradle` (proprietary terms, free for public repositories), or a first-party `actions/cache` step beside the basic provider, which adds to the full 10 GB quota (`ci_cd.md` §5).
+- **LB-102 part 1 (`feat/LB-102-lines-search`):**
+  - **Shared (`:shared:feature:lines`):** `LineQuery`: a line matches when each word of the query begins a word of its code, display name or headsigns, folded by `searchWords` as the stop search folds them; a query with no letters or digits searches nothing. `LinesUiMapper.state(result, query)` gives `SearchResults` (the found rows in their groups, without the carousel) or `NoMatches`; with no lines or a failure the query changes nothing. `LinesEvent.Search` carries the field's text.
+  - **ViewModels:** both keep the query and map the lines already read again, so a key never starts a load; a Retry keeps the query. Swift keeps the use case's last result for it.
+  - **Android:** `SearchField` in the design system, a `TextField` in the search bar's shape and colours, with a 48 dp clear button and the keyboard's search key. The Lines list has it as its first item; Content, SearchResults and NoMatches share one branch, so the field keeps its text, focus and keyboard. NoMatches is a sentence in a polite live region and "Borrar búsqueda". The skeleton has the field's shape. The favourites carousel moved to `FavouriteLines.kt` for detekt.
+  - **iOS:** `.searchable` under the large title, always shown, bound to the view model's query; NoMatches is a `ContentUnavailableView` with "Borrar búsqueda", announced to VoiceOver. The carousel moved to `FavouriteLines.swift` for SwiftLint.
+  - **Tests:** `LineQueryTest`, `LinesUiMapperTest`, both ViewModels' tests, `SearchFieldTest`, `LinesScreenTest`, the screenshots of both platforms (search and no matches, in light, dark and large text; every Lines capture now has the field), and `ShellUITests` end to end on iOS.
+
+**Decisions**
+- **Part 1 now, stop names in part 2** (owner decision, 2026-11-03): no stops are cached until LB-008 part 2, so the "Iglesia de Lardero" criterion waits. The prompt says "Buscar línea" until then.
+- **Android filters in place, as iOS does** (owner decision, 2026-11-03), instead of the full-screen search `design_guidelines.md` §4 named: the criteria want the carousel back when the query is cleared, not when a search view closes. M3's collapsed `SearchBar` disables the soft keyboard until it expands, so the design system's `SearchField` is built on `TextField`.
+- **Prefix words, as the stop search:** "1" finds 1, 10 and 11, "dero" finds nothing; the rule is the stop search's (`architecture.md` §4.3), so part 2 can search stop names the same way.
+- **The field's text lives in the screen on Android** (`TextFieldState`, saved across configuration changes and process death), which sends it as an event; an empty field is news only once it has had text. On iOS the view model holds it, as `.searchable` binds to a property.
+- **The iOS field shows in every state:** the system's search belongs to the navigation stack; a query typed during the first load filters the lines once they arrive. Android shows its field only with lines to filter.
+- **`@Suppress("LongParameterList")` on `LinesScreen`,** with its reason: its sixth parameter is the field's hoisted state, which previews and screenshots set.
+
+**Open / next**
+- **The pull request of this entry** (branch `feat/LB-102-lines-search`) is open, and its watch runs.
+- **Next, once it is merged:** LB-110 (edit favourite lines: reorder, remove, the limit of 20), which needs nothing else, unless the owner chooses otherwise. LB-102 part 2 waits for LB-008 part 2, and LB-104 for OQ-10's map style terms.
+- **Waiting on the owner:** the Gradle cache provider (above); the Kotlin Gradle plugin's Dependabot alert; OQ-10, OQ-11, OQ-16; DD-10; WorkManager; as in the entries below.
+
 ## 2026-11-02: LB-103, favourite lines, with a minimal line detail
 
 **Done**

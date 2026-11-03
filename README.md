@@ -101,6 +101,12 @@ You will need:
 
 ### Recent changes
 
+- **2026-11-03:**
+  - LB-102, part 1: a search field over the Lines list.
+    - The list filters as you type, by a line's code ("B1"), its name or where it heads, ignoring accents and capitals: "yague" finds "Yagüe - Varea". Each word must begin a word of the line, so "hosp lard" finds line 1.
+    - While a search is active, the favourites carousel hides and the results keep the day and night groups; clearing the search brings the carousel back. A search that finds nothing says so and offers "Clear search".
+    - Searching by a stop's name comes once the stops are downloaded (LB-008 part 2).
+    - Both apps filter the list in place. On Android the field is a new design-system component, since Material's search bar only opens a full-screen search.
 - **2026-11-02:**
   - CI: when a repository does not serve a dependency it has (Maven Central's "too many requests", or the Gradle Plugin Portal's "not found"), Gradle now runs again, up to three times, a minute apart. It happened in a different job on almost every run of 2 November. A failing test still fails at once.
   - LB-103: favourite lines.
