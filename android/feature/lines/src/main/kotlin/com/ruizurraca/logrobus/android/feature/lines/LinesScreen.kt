@@ -102,7 +102,8 @@ fun LinesScreen(
 ) {
     val send by rememberUpdatedState(onEvent)
     // The ViewModel starts with no query, so an empty field is news only once it has had text. A field restored with
-    // text, after a configuration change or process death, filters the list again.
+    // text, after a configuration change or process death, filters the list again. This relies on the field's saved
+    // state and the ViewModel sharing one lifetime, the navigation entry's (AppShell), so neither outlives the other.
     LaunchedEffect(search) {
         snapshotFlow { search.text.toString() }.dropWhile(String::isEmpty).collect { send(LinesEvent.Search(it)) }
     }
