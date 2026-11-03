@@ -12,7 +12,7 @@ La app se organiza en tres secciones y siempre se abre en **Líneas**. Funciona 
 
 | Sección | Qué hace |
 | --- | --- |
-| **Líneas** | Tus líneas favoritas en un carrusel arriba, y después todas las líneas diurnas y nocturnas (Búho) ordenadas por número, con buscador. El detalle de cada línea muestra el mapa del recorrido, los dos sentidos, las paradas con sus próximas llegadas y los autobuses en directo. |
+| **Líneas** | Tus líneas favoritas en un carrusel arriba, que reordenas o quitas en Editar (hasta 20), y después todas las líneas diurnas y nocturnas (Búho) ordenadas por número, con buscador. El detalle de cada línea muestra el mapa del recorrido, los dos sentidos, las paradas con sus próximas llegadas y los autobuses en directo. |
 | **Cerca de mí** | Un mapa con tu ubicación y las paradas cercanas. Toca una parada para ver sus próximos autobuses en un panel inferior. El panel también muestra tus paradas guardadas, con los tiempos en directo, y las paradas más cercanas. |
 | **Cómo llegar** | Planificación de viajes de A a B: rutas que combinan líneas, tiempos a pie e indicaciones paso a paso. |
 
@@ -28,7 +28,7 @@ Previsto para la v1.0: modo sin conexión, noticias y avisos de servicio, tarifa
 | --- | --- |
 | Arquitectura | Arquitectura limpia, organizada en módulos por funcionalidad; la capa de presentación (ViewModels e interfaz) se escribe para cada plataforma y los modelos de presentación son compartidos |
 | Código compartido | Kotlin Multiplatform: dominio, datos, red (Ktor), persistencia (SQLDelight) y modelos de presentación |
-| Android | Kotlin, Jetpack Compose, Material 3 Expressive. Mínimo Android 8.0 (API 26) |
+| Android | Kotlin, Jetpack Compose, Material 3 Expressive; Reorderable para reordenar arrastrando (ADR-0019). Mínimo Android 8.0 (API 26) |
 | iOS | Swift, SwiftUI, Liquid Glass en iOS 26 o superior. Mínimo iOS 18, solo iPhone |
 | Mapas | MapLibre Native en ambas plataformas |
 | Ubicación | Fused Location Provider de los servicios de Google Play en Android, Core Location en iOS; solo en primer plano |
@@ -104,6 +104,12 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **03-11-2026:**
+  - LB-110: editar las líneas favoritas.
+    - "Editar", junto a "Tus líneas favoritas", abre una hoja con todas tus líneas favoritas en tu orden. Arrastra una línea por su asa para moverla, o quítala; el carrusel lo refleja, y la estrella de una línea quitada se apaga. El orden se guarda en el dispositivo.
+    - Una línea favorita que ya no circula no tiene tarjeta, pero la hoja la muestra, para poder quitarla.
+    - Puedes guardar hasta 20 líneas favoritas. Una estrella pulsada a partir de ahí no guarda nada y explica por qué.
+    - Los lectores de pantalla mueven una línea con "Subir" y "Bajar", sin arrastrar.
+    - En Android, el arrastre viene de la biblioteca Reorderable (ADR-0019); en iOS, del modo edición de la lista del sistema.
   - LB-102, parte 1: un buscador sobre la lista de Líneas.
     - La lista se filtra según escribes, por el código de una línea ("B1"), su nombre o hacia dónde va, sin importar tildes ni mayúsculas: "yague" encuentra "Yagüe - Varea". Cada palabra tiene que ser el principio de una palabra de la línea, así que "hosp lard" encuentra la línea 1.
     - Mientras hay una búsqueda, el carrusel de favoritas se oculta y los resultados mantienen los grupos diurno y nocturno; al borrar la búsqueda, el carrusel vuelve. Una búsqueda sin resultados lo dice y ofrece "Borrar búsqueda".

@@ -8,6 +8,8 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.LogLevel
 import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Runnable
@@ -22,7 +24,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
 
-/** LB-103 (FR-FAV-01, FR-LINE-12, FR-LINE-15): the favourite lines, stored on the device in the user's order. */
+/**
+ * LB-103 (FR-FAV-01, FR-LINE-12, FR-LINE-15): the favourite lines, stored on the device in the user's order. LB-110
+ * (FR-FAV-02, FR-FAV-05): the user reorders them, and saves at most 20.
+ */
 class FavouriteLinesRepositoryTest {
     private val driver = testDriver()
     private val database = logroBusDatabase(driver)
@@ -52,8 +57,8 @@ class FavouriteLinesRepositoryTest {
         runTest {
             val repository = repository()
 
-            assertEquals(AppResult.Success(true), repository.add(10))
-            assertEquals(AppResult.Success(true), repository.add(3))
+            assertEquals(AppResult.Success(FavouriteAddition.ADDED), repository.add(10))
+            assertEquals(AppResult.Success(FavouriteAddition.ADDED), repository.add(3))
 
             repository.observeFavouriteLineIds().test {
                 assertEquals(AppResult.Success(listOf(10, 3)), awaitItem())
@@ -95,7 +100,7 @@ class FavouriteLinesRepositoryTest {
             listOf(10, 3).forEach { repository.add(it) }
 
             // Nothing was saved: a double tap must not count favourite_add twice (NFR-OBS-03).
-            assertEquals(AppResult.Success(false), repository.add(10))
+            assertEquals(AppResult.Success(FavouriteAddition.ALREADY_SAVED), repository.add(10))
 
             repository.observeFavouriteLineIds().test {
                 assertEquals(AppResult.Success(listOf(10, 3)), awaitItem())
@@ -184,6 +189,162 @@ class FavouriteLinesRepositoryTest {
                 awaitComplete()
             }
             assertEquals(listOf(LogLevel.Warn), logger.entries.map { it.level }.distinct())
+        }
+
+    @Test
+    fun lb110_aLineBeyondTheLimitIsNotSaved() =
+        runTest {
+            val repository = repository()
+            val twenty = (1..FAVOURITES_PER_TYPE).toList()
+            twenty.forEach { assertEquals(AppResult.Success(FavouriteAddition.ADDED), repository.add(it)) }
+
+            assertEquals(AppResult.Success(FavouriteAddition.LIMIT_REACHED), repository.add(101))
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(twenty), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aLineAlreadySavedAtTheLimitIsAlreadySaved_notBeyondIt() =
+        runTest {
+            val repository = repository()
+            (1..FAVOURITES_PER_TYPE).forEach { repository.add(it) }
+
+            assertEquals(AppResult.Success(FavouriteAddition.ALREADY_SAVED), repository.add(5))
+        }
+
+    @Test
+    fun lb110_savedStopsDoNotCountTowardsTheLimitOfLines() =
+        runTest {
+            // FR-FAV-05: the limit is per type (requirements.md §3.6).
+            (1..FAVOURITES_PER_TYPE).forEach { stop ->
+                database.favouriteQueries.insertFavourite(
+                    "stop:$stop",
+                    FavouriteTypes.STOP,
+                    "$stop",
+                    Instant.DISTANT_PAST,
+                )
+            }
+
+            assertEquals(AppResult.Success(FavouriteAddition.ADDED), repository().add(10))
+        }
+
+    @Test
+    fun lb110_aSavedLineWhoseIdIsNotANumberDoesNotCountTowardsTheLimit() =
+        runTest {
+            // Such a row is damage the app never shows, so the user could never free its place.
+            database.favouriteQueries.insertFavourite("line:x", FavouriteTypes.LINE, "x", Instant.DISTANT_PAST)
+            val repository = repository()
+            (1 until FAVOURITES_PER_TYPE).forEach { repository.add(it) }
+
+            assertEquals(AppResult.Success(FavouriteAddition.ADDED), repository.add(101))
+            assertEquals(AppResult.Success(FavouriteAddition.LIMIT_REACHED), repository.add(102))
+        }
+
+    @Test
+    fun lb110_aLineSavedWithItsIdInAnotherFormIsAlreadySaved() =
+        runTest {
+            // "07" reads as line 7, so adding line 7 must neither save it twice nor count favourite_add.
+            database.favouriteQueries.insertFavourite("line:07", FavouriteTypes.LINE, "07", Instant.DISTANT_PAST)
+            val repository = repository()
+
+            assertEquals(AppResult.Success(FavouriteAddition.ALREADY_SAVED), repository.add(7))
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(7)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderMovesALineSavedWithItsIdInAnotherForm() =
+        runTest {
+            val repository = repository()
+            repository.add(10)
+            database.favouriteQueries.insertFavourite("line:07", FavouriteTypes.LINE, "07", Instant.DISTANT_PAST)
+
+            repository.reorder(listOf(7, 10))
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(7, 10)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderThatNamesALineTwiceKeepsItOnce() =
+        runTest {
+            val repository = repository()
+            listOf(10, 3).forEach { repository.add(it) }
+
+            repository.reorder(listOf(3, 3, 10))
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(3, 10)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderIsSaved_andSurvivesARestart() =
+        runTest {
+            val repository = repository()
+            listOf(10, 3, 101).forEach { repository.add(it) }
+
+            assertEquals(AppResult.Success(Unit), repository.reorder(listOf(101, 10, 3)))
+
+            repository().observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(101, 10, 3)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderKeepsTheLinesItLeavesOut_afterTheOthers() =
+        runTest {
+            // A line saved from another screen after the edit sheet read the favourites keeps its place, last.
+            val repository = repository()
+            listOf(10, 3, 101, 4).forEach { repository.add(it) }
+
+            repository.reorder(listOf(3, 10))
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(3, 10, 101, 4)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderSkipsLinesThatAreNoLongerSaved_andTheNextLineGoesLast() =
+        runTest {
+            val repository = repository()
+            listOf(10, 3).forEach { repository.add(it) }
+
+            repository.reorder(listOf(3, 99, 10))
+            repository.add(5)
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(3, 10, 5)), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderIsOneChange() =
+        runTest {
+            // The carousel must not show the half-moved order of a reorder that is still being written.
+            val repository = repository()
+            listOf(10, 3, 101).forEach { repository.add(it) }
+
+            repository.observeFavouriteLineIds().test {
+                assertEquals(AppResult.Success(listOf(10, 3, 101)), awaitItem())
+                repository.reorder(listOf(101, 3, 10))
+                assertEquals(AppResult.Success(listOf(101, 3, 10)), awaitItem())
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun lb110_aNewOrderThatCannotBeSavedGivesAFailure_notACrash() =
+        runTest {
+            driver.execute(null, "DROP TABLE favourite", 0)
+
+            assertEquals(AppResult.Failure(AppError.Data), repository().reorder(listOf(3, 10)))
+            assertEquals(listOf(LogLevel.Warn), logger.entries.map { it.level })
         }
 }
 

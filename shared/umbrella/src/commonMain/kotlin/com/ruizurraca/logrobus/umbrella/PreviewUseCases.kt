@@ -3,12 +3,16 @@ package com.ruizurraca.logrobus.umbrella
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -98,7 +102,7 @@ class PreviewUseCases internal constructor() : UseCases {
                         } else {
                             emitAll(lastSuccesses.filterNotNull().map { AppResult.Success(it) })
                         }
-                    }.counted()
+                    }.countedIn(collections)
             },
         )
 
@@ -116,7 +120,7 @@ class PreviewUseCases internal constructor() : UseCases {
                         } else {
                             emitAll(cachedLines.map { AppResult.Success(it) })
                         }
-                    }.counted()
+                    }.countedIn(collections)
             },
         )
 
@@ -125,27 +129,48 @@ class PreviewUseCases internal constructor() : UseCases {
 
     override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
 
-    // In memory, like the database: a toggle in a preview or test shows at once.
+    override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
+
+    // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =
         object : FavouriteLinesRepository {
             override fun observeFavouriteLineIds() = favouriteLineIds.map { AppResult.Success(it) }
 
-            override suspend fun add(lineId: Int): AppResult<Boolean> {
-                val saved = lineId !in favouriteLineIds.value
-                favouriteLineIds.update { ids -> if (lineId in ids) ids else ids + lineId }
-                return AppResult.Success(saved)
+            override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
+                if (failing) return AppResult.Failure(AppError.Data)
+                var addition = FavouriteAddition.ADDED
+                favouriteLineIds.update { ids ->
+                    addition =
+                        when {
+                            lineId in ids -> FavouriteAddition.ALREADY_SAVED
+                            ids.size >= FAVOURITES_PER_TYPE -> FavouriteAddition.LIMIT_REACHED
+                            else -> FavouriteAddition.ADDED
+                        }
+                    if (addition == FavouriteAddition.ADDED) ids + lineId else ids
+                }
+                return AppResult.Success(addition)
             }
 
             override suspend fun remove(lineId: Int): AppResult<Unit> {
                 favouriteLineIds.update { ids -> ids - lineId }
                 return AppResult.Success(Unit)
             }
-        }
 
-    private fun <T> Flow<T>.counted(): Flow<T> =
-        onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }
+            override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> {
+                if (failing) return AppResult.Failure(AppError.Data)
+                favouriteLineIds.update { ids ->
+                    val named = lineIds.filter { it in ids }.distinct()
+                    named + (ids - named.toSet())
+                }
+                return AppResult.Success(Unit)
+            }
+        }
 
     private companion object {
         val SAMPLE_SYNC = Instant.parse("2026-10-28T09:30:00Z")
     }
 }
+
+/** Counts the collections of this flow that are running in [collections]. */
+private fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =
+    onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }

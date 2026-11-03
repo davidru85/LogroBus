@@ -22,6 +22,7 @@ class IosGraphTest {
         SharedDependencies.observeLastSyncs()
         SharedDependencies.observeLinesWithFavourites()
         SharedDependencies.setFavouriteLine()
+        SharedDependencies.reorderFavouriteLines()
     }
 
     @Test

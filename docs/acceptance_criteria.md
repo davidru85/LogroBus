@@ -468,6 +468,13 @@ Refs: FR-FAV-02, FR-FAV-05
 - **Given** a favourite line that has left the catalogue, which since LB-103 stays saved with no card, **when** edit mode opens, **then** it is listed as no longer served and can be removed, and it counts towards the limit of 20 (from LB-103's data review).
 - **Given** a screen reader, **when** reordering, **then** "Move up" and "Move down" accessibility actions work without dragging. `[manual: TalkBack, VoiceOver]`
 
+Done (2026-11-03) with this evidence. "Edit", on the "Your favourite lines" heading, opens a modal sheet with every favourite line in the user's order (owner decision, 2026-11-03). Android drags with the Reorderable library (ADR-0019); iOS uses a system list in edit mode:
+- Dragging the third line to the top: `FavouriteLinesEditTest.lb110_draggingTheThirdLineToTheTop_savesTheNewOrderOnceTheDragEnds` on Android, where the order is sent once, when the drag ends; `FavouriteLinesRepositoryTest` (a new order survives a restart, is one change, keeps the lines it leaves out after the others, and skips lines no longer saved), `ReorderFavouriteLinesTest`, and the ViewModel tests of both platforms (the carousel follows). On iOS the drag is the system list's own; it is checked by hand on a device.
+- Removing a line: `FavouriteLinesEditTest` (the row sends the line's toggle off, and the sheet follows a favourite removed or added) and, end to end, `ShellUITests.test_lb110_…` on iOS, where line 3 leaves the sheet and the carousel and its star goes off.
+- The limit of 20: `FavouriteLinesRepositoryTest` (a 21st line is not saved, a line already saved at the limit is not a limit, and saved stops do not count), `SetFavouriteLineTest` (the toggle says the limit was reached and counts no `favourite_add`), the ViewModel tests of both platforms (the message shows once), and `FavouriteLinesEditTest` (the snackbar of the list and of the line detail on Android). On iOS the alert is checked by hand.
+- A line no longer served: `LinesUiMapperTest` (the sheet lists it in its place, also when it is the only favourite), `FavouriteLinesEditTest` (Edit shows for it alone, and it can be removed), the edit sheet's screenshots on both platforms. It counts towards the limit, because the repository counts every saved line.
+- Screen readers: `FavouriteLinesEditTest.lb110_talkBackMovesALineUpOrDown_withoutDragging` on Android (the actions, and each row's place, "2 of 3", before and after a move), `FavouriteLinesListTests` on iOS (the moves behind "Move up" and "Move down"), and the focus after a removal and after the sheet closes (`FavouriteLinesEditTest`). TalkBack and VoiceOver themselves are still to be checked on a device.
+
 ---
 
 ## E2 Near Me

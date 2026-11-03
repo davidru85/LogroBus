@@ -4,6 +4,8 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsEvent.FavouriteAdd.Kind
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 
 /**
@@ -14,12 +16,26 @@ fun interface SetFavouriteLine {
     suspend operator fun invoke(
         lineId: Int,
         isFavourite: Boolean,
-    ): AppResult<Unit>
+    ): AppResult<FavouriteToggle>
+}
+
+/** What a favourite toggle did. */
+sealed interface FavouriteToggle {
+    /** The line is a favourite, or no longer one, as the toggle asked. */
+    data object Done : FavouriteToggle
+
+    /**
+     * FR-FAV-05: [limit] lines are favourites already, so this one was not saved. Each platform words the message
+     * (AGENTS.md §5, rule 4), and the toggle keeps showing the line as not a favourite.
+     */
+    data class LimitReached(
+        val limit: Int,
+    ) : FavouriteToggle
 }
 
 /**
  * Saves the line last, or removes it. A line saved now counts `favourite_add` (NFR-OBS-03): its kind, never the line. A
- * line that already was a favourite, after a double tap, counts nothing.
+ * line that already was a favourite, after a double tap, counts nothing, and so does one beyond the limit.
  */
 class DefaultSetFavouriteLine(
     private val favourites: FavouriteLinesRepository,
@@ -28,12 +44,29 @@ class DefaultSetFavouriteLine(
     override suspend fun invoke(
         lineId: Int,
         isFavourite: Boolean,
-    ): AppResult<Unit> {
-        if (!isFavourite) return favourites.remove(lineId)
+    ): AppResult<FavouriteToggle> {
+        if (!isFavourite) {
+            return when (val removed = favourites.remove(lineId)) {
+                is AppResult.Success -> AppResult.Success(FavouriteToggle.Done)
+                is AppResult.Failure -> removed
+            }
+        }
         return when (val saved = favourites.add(lineId)) {
             is AppResult.Success -> {
-                if (saved.value) analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
-                AppResult.Success(Unit)
+                when (saved.value) {
+                    FavouriteAddition.ADDED -> {
+                        analytics.track(AnalyticsEvent.FavouriteAdd(Kind.LINE))
+                        AppResult.Success(FavouriteToggle.Done)
+                    }
+
+                    FavouriteAddition.ALREADY_SAVED -> {
+                        AppResult.Success(FavouriteToggle.Done)
+                    }
+
+                    FavouriteAddition.LIMIT_REACHED -> {
+                        AppResult.Success(FavouriteToggle.LimitReached(FAVOURITES_PER_TYPE))
+                    }
+                }
             }
 
             is AppResult.Failure -> {

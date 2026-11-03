@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import org.koin.mp.KoinPlatform
@@ -16,6 +17,8 @@ interface UseCases {
     fun observeLinesWithFavourites(): ObserveLinesWithFavourites
 
     fun setFavouriteLine(): SetFavouriteLine
+
+    fun reorderFavouriteLines(): ReorderFavouriteLines
 }
 
 /**
@@ -36,6 +39,8 @@ object SharedDependencies : UseCases {
     override fun observeLinesWithFavourites(): ObserveLinesWithFavourites = graph().get()
 
     override fun setFavouriteLine(): SetFavouriteLine = graph().get()
+
+    override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
 
     private fun graph() =
         checkNotNull(KoinPlatform.getKoinOrNull()) {

@@ -5,8 +5,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
@@ -36,7 +38,8 @@ class LinesRouteTest {
             modules(
                 module {
                     factory { ObserveLinesWithFavourites { flowOf(lines) } }
-                    factory { SetFavouriteLine { _, _ -> AppResult.Success(Unit) } }
+                    factory { SetFavouriteLine { _, _ -> AppResult.Success(FavouriteToggle.Done) } }
+                    factory { ReorderFavouriteLines { AppResult.Success(Unit) } }
                 },
                 linesUiModule,
             )

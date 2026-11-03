@@ -46,3 +46,7 @@ secrets.properties
 
 # Claude Code personal overrides
 .claude/settings.local.json
+
+# The Swift packages' own pins: iosApp/Package.resolved is the only one (docs/ci_cd.md §6), and Xcode writes these
+# when it resolves a package on its own.
+iosApp/Packages/*/Package.resolved

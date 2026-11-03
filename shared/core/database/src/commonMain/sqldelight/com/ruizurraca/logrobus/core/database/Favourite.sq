@@ -40,7 +40,7 @@ SET missing_syncs = CASE
 END
 WHERE type = :stopType;
 
--- LB-103: the saved lines or stops in the user's order (FR-FAV-02); the oldest first until LB-110 lets them reorder.
+-- LB-103: the saved lines or stops in the user's order (FR-FAV-02), which LB-110 lets them change.
 selectFavouriteRefs:
 SELECT ref_id FROM favourite WHERE type = :type ORDER BY position, created_at;
 
@@ -58,3 +58,7 @@ VALUES (
 
 deleteFavourite:
 DELETE FROM favourite WHERE type = :type AND ref_id = :refId;
+
+-- LB-110 (FR-FAV-02): a favourite's place in the user's order.
+updateFavouritePosition:
+UPDATE favourite SET position = :position WHERE type = :type AND ref_id = :refId;

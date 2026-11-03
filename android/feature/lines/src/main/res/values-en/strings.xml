@@ -24,6 +24,24 @@
     <string name="lines_favourite_remove">Remove line %1$s from favourites</string>
     <!-- How TalkBack reads each headsign of a favourite card, which shows "→ Hospital San Pedro". -->
     <string name="lines_towards">Towards %1$s</string>
+    <!-- LB-110: the favourite lines' edit sheet (FR-FAV-02). The carousel's button shows "Edit", and TalkBack reads the
+         sheet's title as its name, which keeps the word it shows. -->
+    <string name="lines_favourites_edit">Edit</string>
+    <string name="lines_favourites_edit_title">Edit favourite lines</string>
+    <string name="lines_favourites_done">Done</string>
+    <!-- A favourite whose line has left the catalogue: the app no longer knows its code or name. -->
+    <string name="lines_favourites_no_longer_served">Line that no longer runs</string>
+    <string name="lines_favourites_remove_no_longer_served">Remove the line that no longer runs from favourites</string>
+    <!-- TalkBack's actions on a row, which reorder without dragging (NFR-A11Y). -->
+    <string name="lines_favourites_move_up">Move up</string>
+    <string name="lines_favourites_move_down">Move down</string>
+    <!-- A row's place in the edit sheet, which TalkBack says as the row's state, so each move is heard. -->
+    <string name="lines_favourites_position">%1$d of %2$d</string>
+    <!-- FR-FAV-05: a star tapped with the most favourite lines saved. -->
+    <plurals name="lines_favourites_limit">
+        <item quantity="one">You already have %1$d favourite line, the most you can save. Remove one to add another.</item>
+        <item quantity="other">You already have %1$d favourite lines, the most you can save. Remove one to add another.</item>
+    </plurals>
     <!-- The line detail (SC-04), until LB-104 adds its map, directions and stops. -->
     <string name="line_detail_title">Line %1$s</string>
     <!-- The detail's title while it loads or fails, before the line's code is known. -->

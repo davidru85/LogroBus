@@ -28,6 +28,9 @@ public struct LineDetailView: View {
                     }
                 }
             }
+            .favouriteLimitAlert(viewModel.favouriteLimit) {
+                viewModel.onEvent(LineDetailEventFavouriteLimitShown.shared)
+            }
             // Cancelled when the screen leaves, which stops the use case's collection; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }

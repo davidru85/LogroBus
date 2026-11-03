@@ -47,6 +47,8 @@ koin = "4.2.2"
 skie = "0.10.15"
 # Time zones and calendars for the Madrid clock; instants come from kotlin.time (ADR-0015).
 kotlinx-datetime = "0.8.0"
+# Drag to reorder in Compose lazy lists: the favourite lines' edit sheet (ADR-0019).
+reorderable = "3.1.0"
 # Not project dependencies: security floors for libraries with known advisories that AGP 9.3 (its tools and
 # plugin classpath), KGP's Swift export and Robolectric bring (docs/ci_cd.md §6). Drop each once the tool that
 # brings it ships a fixed version itself.
@@ -100,6 +102,7 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }

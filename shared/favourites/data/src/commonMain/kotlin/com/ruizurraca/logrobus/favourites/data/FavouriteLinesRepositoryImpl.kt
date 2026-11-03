@@ -11,6 +11,8 @@ import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.database.FavouriteQueries
 import com.ruizurraca.logrobus.core.database.FavouriteTypes
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
+import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -44,17 +46,46 @@ class FavouriteLinesRepositoryImpl(
                 emit(AppResult.Failure(AppError.Data))
             }
 
-    override suspend fun add(lineId: Int): AppResult<Boolean> {
+    override suspend fun add(lineId: Int): AppResult<FavouriteAddition> {
         val now = clock.now()
         return write("Saving a favourite line failed") {
-            // INSERT OR IGNORE changes no row for a line that is already saved.
-            insertFavourite(id = "${FavouriteTypes.LINE}:$lineId", type = FavouriteTypes.LINE, refId = "$lineId", now)
-                .value > 0
+            // One transaction, so the count and the insert see the same favourites.
+            transactionWithResult {
+                val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList().mapNotNull(String::toIntOrNull)
+                when {
+                    lineId in saved -> {
+                        FavouriteAddition.ALREADY_SAVED
+                    }
+
+                    saved.size >= FAVOURITES_PER_TYPE -> {
+                        FavouriteAddition.LIMIT_REACHED
+                    }
+
+                    else -> {
+                        val rows =
+                            insertFavourite("${FavouriteTypes.LINE}:$lineId", FavouriteTypes.LINE, "$lineId", now)
+                        if (rows.value > 0) FavouriteAddition.ADDED else FavouriteAddition.ALREADY_SAVED
+                    }
+                }
+            }
         }
     }
 
     override suspend fun remove(lineId: Int): AppResult<Unit> =
         write("Removing a favourite line failed") { deleteFavourite(FavouriteTypes.LINE, "$lineId") }
+
+    override suspend fun reorder(lineIds: List<Int>): AppResult<Unit> =
+        write("Reordering the favourite lines failed") {
+            // One transaction: the favourites are emitted once, in their new order, never half-moved.
+            transaction {
+                val saved = selectFavouriteRefs(FavouriteTypes.LINE).executeAsList()
+                val refs = saved.associateBy(String::toIntOrNull)
+                val named = lineIds.distinct().mapNotNull { refs[it] }
+                (named + (saved - named.toSet())).forEachIndexed { position, ref ->
+                    updateFavouritePosition(position.toLong(), FavouriteTypes.LINE, ref)
+                }
+            }
+        }
 
     // Only this module writes line favourites: a ref that is not a number is damage, dropped and counted, never shown.
     private fun lineIdsOf(refs: List<String>): List<Int> {

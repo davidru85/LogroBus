@@ -1,6 +1,18 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "%@, %@": {
+      "comment": "The favourite card's spoken headsigns, joined: already localised, so not translated (FavouriteLines.swift).",
+      "shouldTranslate": false,
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
     "line.loading": {
       "comment": "What VoiceOver says while the line detail's first load runs (spec §7.3, design_guidelines.md §8).",
       "extractionState": "manual",
@@ -109,6 +121,60 @@
         }
       }
     },
+    "lines.favourites.done": {
+      "comment": "LB-110: closes the edit sheet.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo"
+          }
+        }
+      }
+    },
+    "lines.favourites.edit": {
+      "comment": "LB-110: the carousel's button that opens the edit sheet; VoiceOver reads lines.favourites.edit_title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar"
+          }
+        }
+      }
+    },
+    "lines.favourites.edit_title": {
+      "comment": "LB-110: the edit sheet's title, and the carousel's Edit button as VoiceOver reads it (FR-FAV-02).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit favourite lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar líneas favoritas"
+          }
+        }
+      }
+    },
     "lines.favourites.hint": {
       "comment": "The favourite lines section with none, one hint (FR-LINE-14).",
       "extractionState": "manual",
@@ -141,6 +207,138 @@
           "stringUnit": {
             "state": "translated",
             "value": "Marca la estrella de una línea para tenerla aquí"
+          }
+        }
+      }
+    },
+    "lines.favourites.limit %lld": {
+      "comment": "FR-FAV-05: the alert's title when a star is tapped with the most favourite lines saved; the argument is the limit.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You already have %lld favourite line, the most you can save."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You already have %lld favourite lines, the most you can save."
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ya tienes %lld línea favorita, el máximo."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ya tienes %lld líneas favoritas, el máximo."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "lines.favourites.limit_hint": {
+      "comment": "FR-FAV-05: the limit alert's message.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove one to add another."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quita alguna para añadir otra."
+          }
+        }
+      }
+    },
+    "lines.favourites.move_down": {
+      "comment": "LB-110: VoiceOver's action that moves a favourite line down without dragging (NFR-A11Y).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bajar"
+          }
+        }
+      }
+    },
+    "lines.favourites.move_up": {
+      "comment": "LB-110: VoiceOver's action that moves a favourite line up without dragging (NFR-A11Y).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subir"
+          }
+        }
+      }
+    },
+    "lines.favourites.no_longer_served": {
+      "comment": "LB-110: a favourite whose line has left the catalogue; the app no longer knows its code or name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Line that no longer runs"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Línea que ya no circula"
+          }
+        }
+      }
+    },
+    "lines.favourites.position %lld %lld": {
+      "comment": "LB-110: a row's place in the edit sheet, which VoiceOver says as the row's value, so each move is heard. The arguments are the place and the number of rows.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld"
           }
         }
       }

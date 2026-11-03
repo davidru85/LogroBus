@@ -36,6 +36,19 @@ struct LineDetailViewModelTests {
     }
 
     @Test
+    func lb110_aStarBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() async throws {
+        let useCases = (201...220).reduce(SharedDependencies.shared.preview()) { $0.favouriteLine(id: Int32($1)) }
+        let viewModel = LineDetailViewModel(lineId: 3, useCases: useCases)
+        #expect(viewModel.favouriteLimit == nil)
+
+        viewModel.onEvent(LineDetailEventSetFavourite(isFavourite: true))
+        try await waitUntil { viewModel.favouriteLimit == 20 }
+
+        viewModel.onEvent(LineDetailEventFavouriteLimitShown.shared)
+        #expect(viewModel.favouriteLimit == nil)
+    }
+
+    @Test
     func lb103_aFirstLaunchWithNoNetworkShowsTheNetworkError_andRetryLoadsTheLine() async throws {
         let useCases = SharedDependencies.shared.preview().offline()
         let viewModel = LineDetailViewModel(lineId: 3, useCases: useCases)

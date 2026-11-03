@@ -26,6 +26,7 @@ NFR-MNT-03 requires an ADR for every technology choice in spec §8.3. ADR-0012 t
 | [0016](0016-image-loading-coil-on-android.md) | Image loading with Coil 3 on Android and AsyncImage on iOS (refines spec §8.3) | Accepted | 2026-10-26 |
 | [0017](0017-maplibre-native-maps.md) | MapLibre Native for maps on both platforms | Accepted | 2026-10-26 |
 | [0018](0018-multiplatform-settings.md) | Multiplatform Settings for small persisted preferences | Accepted | 2026-10-26 |
+| [0019](0019-reorderable-drag-to-reorder-on-android.md) | Reorderable for drag to reorder on Android | Accepted | 2026-11-03 |
 
 Status values: `Proposed`, `Accepted`, `Superseded by ADR-nnnn`, `Deprecated`.
 

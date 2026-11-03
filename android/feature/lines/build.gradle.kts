@@ -17,6 +17,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel)
+    // Drag to reorder the favourite lines (ADR-0019).
+    implementation(libs.reorderable)
     // koinViewModel() and the ViewModel DSL (ADR-0014). The module it exposes is a Koin type.
     api(libs.koin.core)
     implementation(libs.koin.androidx.compose)

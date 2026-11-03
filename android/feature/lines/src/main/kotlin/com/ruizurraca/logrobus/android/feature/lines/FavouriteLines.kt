@@ -1,24 +1,35 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -32,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.feature.lines.presentation.FavouriteLineCardUi
+import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
+import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
 
 /**
  * FR-LINE-12: the favourite lines' cards in the user's order, in a carousel of fixed-width cards. With none, one hint
@@ -136,3 +149,60 @@ private const val MAX_CARD_SHARE = 0.8f
 private const val NO_BREAK_SPACE = '\u00A0'
 private const val HEADSIGN_ARROW = "→"
 private const val HEADSIGN_SEPARATOR = "$NO_BREAK_SPACE· "
+
+/**
+ * LB-110: the favourites' heading, with Edit while there is a favourite to edit, even one with no card. Without Edit
+ * it keeps Edit's height, so the list never moves when Edit comes or goes.
+ */
+@Composable
+internal fun FavouritesHeading(
+    canEdit: Boolean,
+    edit: FocusRequester,
+    onEdit: () -> Unit,
+) {
+    GroupHeading(R.string.lines_favourites_title) {
+        if (canEdit) {
+            EditButton(Modifier.focusRequester(edit).focusable(), onEdit)
+        } else {
+            Spacer(Modifier.size(Tokens.minTouchTarget))
+        }
+    }
+}
+
+/** LB-110: the edit sheet while [editing]. Closing it gives the focus back to [edit], which opened it (§8). */
+@Composable
+internal fun FavouritesEditSheet(
+    state: LinesUiState,
+    editing: Boolean,
+    edit: FocusRequester,
+    onEvent: (LinesEvent) -> Unit,
+    onClose: () -> Unit,
+) {
+    var closed by remember { mutableStateOf(false) }
+    LaunchedEffect(closed) {
+        if (closed && state is LinesUiState.Content && state.editable.isNotEmpty()) edit.requestFocus()
+        closed = false
+    }
+    if (editing && state is LinesUiState.Content) {
+        FavouriteLinesSheet(
+            state.editable,
+            onEvent,
+            onDismiss = {
+                onClose()
+                closed = true
+            },
+        )
+    }
+}
+
+/** LB-110: opens the edit sheet. TalkBack names it by what it edits, a name that keeps the word it shows. */
+@Composable
+private fun EditButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val name = stringResource(R.string.lines_favourites_edit_title)
+    TextButton(onClick = onClick, modifier = modifier.semantics { contentDescription = name }) {
+        Text(stringResource(R.string.lines_favourites_edit))
+    }
+}

@@ -2,6 +2,8 @@ package com.ruizurraca.logrobus.android.feature.lines
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailEvent
@@ -11,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -28,6 +31,14 @@ class LineDetailViewModel(
     observeLines: ObserveLinesWithFavourites,
     private val setFavourite: SetFavouriteLine,
 ) : ViewModel() {
+    private val limit = MutableStateFlow<Int?>(null)
+
+    /**
+     * FR-FAV-05: the limit a toggle has just reached, for the screen's message, until the screen says it has shown it.
+     * It lives beside the state, since a toggle can reach it in any state with rows.
+     */
+    val favouriteLimit: StateFlow<Int?> = limit.asStateFlow()
+
     // Each Retry bumps it, which starts a new load.
     private val loads = MutableStateFlow(0)
 
@@ -51,10 +62,22 @@ class LineDetailViewModel(
 
     fun onEvent(event: LineDetailEvent) {
         when (event) {
-            LineDetailEvent.Retry -> loads.update { it + 1 }
+            LineDetailEvent.Retry -> {
+                loads.update { it + 1 }
+            }
 
             // FR-LINE-09: the toggle changes through the use case's flow.
-            is LineDetailEvent.SetFavourite -> viewModelScope.launch { setFavourite(lineId, event.isFavourite) }
+            is LineDetailEvent.SetFavourite -> {
+                // A save that fails, a damaged database the repository has logged, leaves the toggle as it was.
+                viewModelScope.launch {
+                    val toggle = (setFavourite(lineId, event.isFavourite) as? AppResult.Success)?.value
+                    if (toggle is FavouriteToggle.LimitReached) limit.value = toggle.limit
+                }
+            }
+
+            LineDetailEvent.FavouriteLimitShown -> {
+                limit.value = null
+            }
         }
     }
 

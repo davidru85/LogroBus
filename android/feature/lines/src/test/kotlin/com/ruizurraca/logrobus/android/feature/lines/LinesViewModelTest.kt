@@ -5,8 +5,11 @@ import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
+import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
+import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
@@ -35,7 +38,8 @@ import org.junit.Test
 /**
  * LB-101, ADR-0007 and testing_strategy.md §3: the Lines ViewModel builds every state with the shared use case and
  * mapper, retries on Retry, and stops its upstream after the screen leaves. LB-103: a row's toggle sets its line as a
- * favourite. LB-102: the search field's text filters the lines.
+ * favourite. LB-102: the search field's text filters the lines. LB-110: the edit sheet's new order is saved, and a
+ * toggle beyond the limit shows the limit message once.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LinesViewModelTest {
@@ -72,7 +76,7 @@ class LinesViewModelTest {
     @Test
     fun lb101_aFirstLaunchWithNoNetworkShowsTheError_andRetryLoadsTheLines() =
         runTest {
-            val viewModel = viewModel(Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
+            val viewModel = viewModel(observe = Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
 
             viewModel.state.test {
                 assertEquals(LinesUiState.Error(ErrorReason.NETWORK), awaitSettled())
@@ -142,10 +146,12 @@ class LinesViewModelTest {
             // FR-LINE-15: the carousel changes through the use case's flow, at once.
             val set = mutableListOf<Pair<Int, Boolean>>()
             val viewModel =
-                LinesViewModel({ flowOf(lines) }) { lineId, isFavourite ->
-                    set += lineId to isFavourite
-                    AppResult.Success(Unit)
-                }
+                viewModel(
+                    setFavourite = { lineId, isFavourite ->
+                        set += lineId to isFavourite
+                        AppResult.Success(FavouriteToggle.Done)
+                    },
+                ) { flowOf(lines) }
 
             viewModel.onEvent(LinesEvent.SetFavourite(lineId = 3, isFavourite = true))
             viewModel.onEvent(LinesEvent.SetFavourite(lineId = 10, isFavourite = false))
@@ -174,7 +180,7 @@ class LinesViewModelTest {
     fun lb102_aSearchFiltersTheLinesItHas_withoutLoadingThemAgain() =
         runTest {
             // One load: a second call of the use case would start a sync, and Loading would flash at each key.
-            val viewModel = viewModel(Scripted(flowOf(lines)))
+            val viewModel = viewModel(observe = Scripted(flowOf(lines)))
 
             viewModel.state.test {
                 awaitSettled()
@@ -218,7 +224,7 @@ class LinesViewModelTest {
     @Test
     fun lb102_aRetryKeepsTheSearch() =
         runTest {
-            val viewModel = viewModel(Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
+            val viewModel = viewModel(observe = Scripted(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
 
             viewModel.state.test {
                 awaitSettled()
@@ -229,8 +235,53 @@ class LinesViewModelTest {
             }
         }
 
-    private fun viewModel(observe: ObserveLinesWithFavourites) =
-        LinesViewModel(observe) { _, _ -> AppResult.Success(Unit) }
+    @Test
+    fun lb110_theEditSheetsNewOrderIsSaved() =
+        runTest {
+            val reordered = mutableListOf<List<Int>>()
+            val viewModel =
+                viewModel(
+                    reorderFavourites = { lineIds ->
+                        reordered += lineIds
+                        AppResult.Success(Unit)
+                    },
+                ) { flowOf(lines) }
+
+            viewModel.onEvent(LinesEvent.ReorderFavourites(listOf(101, 4)))
+
+            assertEquals(listOf(listOf(101, 4)), reordered)
+        }
+
+    @Test
+    fun lb110_aToggleBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() =
+        runTest {
+            // FR-FAV-05: the row's toggle stays off, and the screen says why, once.
+            val full = SetFavouriteLine { _, _ -> AppResult.Success(FavouriteToggle.LimitReached(20)) }
+            val viewModel = viewModel(setFavourite = full) { flowOf(lines) }
+            assertEquals(null, viewModel.favouriteLimit.value)
+
+            viewModel.onEvent(LinesEvent.SetFavourite(lineId = 4, isFavourite = true))
+            assertEquals(20, viewModel.favouriteLimit.value)
+
+            viewModel.onEvent(LinesEvent.FavouriteLimitShown)
+            assertEquals(null, viewModel.favouriteLimit.value)
+        }
+
+    @Test
+    fun lb110_aToggleThatIsDoneShowsNoLimit() =
+        runTest {
+            val viewModel = viewModel { flowOf(lines) }
+
+            viewModel.onEvent(LinesEvent.SetFavourite(lineId = 4, isFavourite = true))
+
+            assertEquals(null, viewModel.favouriteLimit.value)
+        }
+
+    private fun viewModel(
+        setFavourite: SetFavouriteLine = SetFavouriteLine { _, _ -> AppResult.Success(FavouriteToggle.Done) },
+        reorderFavourites: ReorderFavouriteLines = ReorderFavouriteLines { AppResult.Success(Unit) },
+        observe: ObserveLinesWithFavourites,
+    ) = LinesViewModel(observe, setFavourite, reorderFavourites)
 
     /** The next state after Loading. A read may be quicker than the collector, which then never sees Loading. */
     private suspend fun ReceiveTurbine<LinesUiState>.awaitSettled(): LinesUiState {

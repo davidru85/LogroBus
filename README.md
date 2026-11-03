@@ -12,7 +12,7 @@ The app is organised into three sections and always opens on **Lines**. It runs 
 
 | Section | What it does |
 | --- | --- |
-| **Lines** | Your favourite lines in a carousel at the top, then every day and night (Búho) line sorted by code, with search. Line detail shows the route map, both directions, the stops with their next arrivals, and live buses. |
+| **Lines** | Your favourite lines in a carousel at the top, which you reorder or remove in Edit (up to 20), then every day and night (Búho) line sorted by code, with search. Line detail shows the route map, both directions, the stops with their next arrivals, and live buses. |
 | **Near Me** | A map with your location and the nearby stops. Tap a stop to see its next buses in a bottom sheet. The sheet also lists your saved stops with live arrivals, and the stops closest to you. |
 | **How to Get There** | Trip planning from A to B: routes that combine lines, walking times and step-by-step directions. |
 
@@ -28,7 +28,7 @@ Planned for v1.0: offline mode, news and service notices, fares, recharge points
 | --- | --- |
 | Architecture | Clean architecture, organised in feature modules; the presentation layer (ViewModels and UI) is written per platform, and the presentation models are shared |
 | Shared code | Kotlin Multiplatform: domain, data, networking (Ktor), persistence (SQLDelight), presentation models |
-| Android | Kotlin, Jetpack Compose, Material 3 Expressive. Minimum Android 8.0 (API 26) |
+| Android | Kotlin, Jetpack Compose, Material 3 Expressive; Reorderable for drag to reorder (ADR-0019). Minimum Android 8.0 (API 26) |
 | iOS | Swift, SwiftUI, Liquid Glass on iOS 26+. Minimum iOS 18, iPhone only |
 | Maps | MapLibre Native on both platforms |
 | Location | Google Play services' Fused Location Provider on Android, Core Location on iOS; foreground only |
@@ -102,6 +102,12 @@ You will need:
 ### Recent changes
 
 - **2026-11-03:**
+  - LB-110: editing the favourite lines.
+    - "Edit", beside "Your favourite lines", opens a sheet with every favourite line in your order. Drag a line by its handle to move it, or remove it; the carousel follows, and a removed line's star goes off. The order is kept on the device.
+    - A favourite line that is no longer in service has no card, but the sheet lists it, so it can be removed.
+    - You can save up to 20 favourite lines. A star tapped beyond that saves nothing and says why.
+    - Screen readers move a line with "Move up" and "Move down", without dragging.
+    - On Android, dragging comes from the Reorderable library (ADR-0019); on iOS, from the system list's edit mode.
   - LB-102, part 1: a search field over the Lines list.
     - The list filters as you type, by a line's code ("B1"), its name or where it heads, ignoring accents and capitals: "yague" finds "Yagüe - Varea". Each word must begin a word of the line, so "hosp lard" finds line 1.
     - While a search is active, the favourites carousel hides and the results keep the day and night groups; clearing the search brings the carousel back. A search that finds nothing says so and offers "Clear search".

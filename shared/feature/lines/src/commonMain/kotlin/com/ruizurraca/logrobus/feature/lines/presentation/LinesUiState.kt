@@ -16,11 +16,13 @@ sealed interface LinesUiState {
 
     /**
      * The "Your favourite lines" carousel, then day lines and night (Búho) lines; a kind with no lines has no group.
-     * With no [favourites], the carousel shows its hint card instead (FR-LINE-14).
+     * With no [favourites], the carousel shows its hint card instead (FR-LINE-14). [editable] is every saved favourite
+     * for the edit sheet (LB-110), and the carousel offers Edit only when it has one.
      */
     data class Content(
         val favourites: List<FavouriteLineCardUi>,
         val groups: List<LineGroupUi>,
+        val editable: List<EditableFavouriteLineUi>,
     ) : LinesUiState
 
     /** FR-LINE-16: the lines a search found, in the list's groups, without the favourites carousel. */
@@ -55,6 +57,14 @@ sealed interface LinesEvent {
         val lineId: Int,
         val isFavourite: Boolean,
     ) : LinesEvent
+
+    /** LB-110 (FR-FAV-02): the edit sheet's order of the favourite lines, once a drag or a move has ended. */
+    data class ReorderFavourites(
+        val lineIds: List<Int>,
+    ) : LinesEvent
+
+    /** LB-110 (FR-FAV-05): the limit message has been shown and dismissed, so it does not show again. */
+    data object FavouriteLimitShown : LinesEvent
 }
 
 /** The lines of one [kind], sorted by code. Each platform words the group's title. */
@@ -91,6 +101,31 @@ data class FavouriteLineCardUi(
     val headsigns: List<String>,
 )
 
+/**
+ * A row of the favourite lines' edit sheet (LB-110, FR-FAV-02), in the user's order: the user drags it to reorder, or
+ * removes it.
+ */
+sealed interface EditableFavouriteLineUi {
+    val id: Int
+
+    /** A line of the catalogue: its badge ([code] on [color] in [onColor], ARGB) and its display name. */
+    data class Served(
+        override val id: Int,
+        val code: String,
+        val displayName: String,
+        val color: Long,
+        val onColor: Long,
+    ) : EditableFavouriteLineUi
+
+    /**
+     * A favourite whose line has left the catalogue: it has no card, and the database keeps no name for it, so each
+     * platform says "no longer served". It counts towards the limit until the user removes it (FR-FAV-05).
+     */
+    data class NoLongerServed(
+        override val id: Int,
+    ) : EditableFavouriteLineUi
+}
+
 object LinesUiMapper {
     /** The state of [result] for the search field's [query]; with no query, the whole list and its favourites. */
     fun state(
@@ -120,7 +155,12 @@ object LinesUiMapper {
         val byId = lines.associateBy { it.id }
         // A favourite whose line left the catalogue stays saved, without a card until the line comes back.
         val favourites = favouriteIds.mapNotNull { byId[it] }.map(::cardOf)
-        return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()))
+        val editable =
+            favouriteIds.map { id ->
+                byId[id]?.let(::editableOf)
+                    ?: EditableFavouriteLineUi.NoLongerServed(id)
+            }
+        return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()), editable)
     }
 
     private fun searchResults(
@@ -161,6 +201,15 @@ object LinesUiMapper {
         isOperational = line.isOperational,
         isFavourite = isFavourite,
     )
+
+    private fun editableOf(line: Line) =
+        EditableFavouriteLineUi.Served(
+            id = line.id,
+            code = line.code,
+            displayName = line.displayName,
+            color = line.color,
+            onColor = line.onColor,
+        )
 
     private fun cardOf(line: Line) =
         FavouriteLineCardUi(

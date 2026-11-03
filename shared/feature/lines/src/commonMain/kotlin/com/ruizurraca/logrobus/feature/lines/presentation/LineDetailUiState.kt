@@ -30,6 +30,9 @@ sealed interface LineDetailEvent {
     data class SetFavourite(
         val isFavourite: Boolean,
     ) : LineDetailEvent
+
+    /** LB-110 (FR-FAV-05): the limit message has been shown and dismissed, so it does not show again. */
+    data object FavouriteLimitShown : LineDetailEvent
 }
 
 /** The line's badge ([code] on [color] in [onColor], ARGB), its display name, and whether it is a favourite. */

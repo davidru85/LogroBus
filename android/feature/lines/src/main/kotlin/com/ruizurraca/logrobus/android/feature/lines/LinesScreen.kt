@@ -3,10 +3,12 @@ package com.ruizurraca.logrobus.android.feature.lines
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,15 +26,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,8 +79,8 @@ import org.koin.androidx.compose.koinViewModel
 import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /**
- * The root of the Lines tab (LB-101, LB-103, LB-102), with its ViewModel from the graph (ADR-0014). [onOpenMore] opens
- * More, and [onOpenLine] a line's detail.
+ * The root of the Lines tab (LB-101, LB-103, LB-102, LB-110), with its ViewModel from the graph (ADR-0014).
+ * [onOpenMore] opens More, and [onOpenLine] a line's detail.
  */
 @Composable
 fun LinesRoute(
@@ -82,15 +90,17 @@ fun LinesRoute(
     viewModel: LinesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LinesScreen(state, viewModel::onEvent, onOpenMore, onOpenLine, modifier)
+    val favouriteLimit by viewModel.favouriteLimit.collectAsStateWithLifecycle()
+    LinesScreen(state, viewModel::onEvent, onOpenMore, onOpenLine, modifier, favouriteLimit)
 }
 
 /**
  * Renders [state] under the Lines top app bar, with the More action, and sends [onEvent]. A favourite card or a row
- * opens its line with [onOpenLine]. [search] holds the search field's text, which the screen sends as it changes
- * (FR-LINE-03); it survives configuration changes and process death.
+ * opens its line with [onOpenLine]. [favouriteLimit], when a star has just reached it, shows the limit message
+ * (FR-FAV-05). [search] holds the search field's text, which the screen sends as it changes (FR-LINE-03); it survives
+ * configuration changes and process death.
  */
-@Suppress("LongParameterList") // State and events, two ways out to the shell, the modifier, the field's hoisted state.
+@Suppress("LongParameterList") // State and events, two ways out to the shell, the modifier, the message, the field.
 @Composable
 fun LinesScreen(
     state: LinesUiState,
@@ -98,6 +108,7 @@ fun LinesScreen(
     onOpenMore: () -> Unit,
     onOpenLine: (lineId: Int) -> Unit,
     modifier: Modifier = Modifier,
+    favouriteLimit: Int? = null,
     search: TextFieldState = rememberTextFieldState(),
 ) {
     val send by rememberUpdatedState(onEvent)
@@ -110,8 +121,11 @@ fun LinesScreen(
     // The bar takes its scrolled colour while the list runs under it. It does not collapse yet: a scroll to the top on
     // re-selection (FR-NAV-03) is programmatic, so it would not bring a collapsed bar back.
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val snackbars = remember { SnackbarHostState() }
+    FavouriteLimitMessage(favouriteLimit, snackbars) { onEvent(LinesEvent.FavouriteLimitShown) }
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbars) },
         topBar = {
             TopAppBar(
                 title = { ScreenTitle(stringResource(R.string.lines_title)) },
@@ -160,6 +174,8 @@ private fun LineList(
 ) {
     val listState = rememberLazyListState()
     val field = remember { FocusRequester() }
+    var editing by rememberSaveable { mutableStateOf(false) }
+    val edit = remember { FocusRequester() }
     ScrollToTopOnReselect(listState)
     // The padding goes inside the list, so the rows scroll behind the system bars rather than stop above them. The list
     // ends above the keyboard: its first item is the field, so the window never pans to show the last results.
@@ -173,7 +189,9 @@ private fun LineList(
         }
         when (state) {
             is LinesUiState.Content -> {
-                item(key = FAVOURITES_HEADING) { GroupHeading(R.string.lines_favourites_title) }
+                item(key = FAVOURITES_HEADING) {
+                    FavouritesHeading(canEdit = state.editable.isNotEmpty(), edit) { editing = true }
+                }
                 item(key = FAVOURITES) { FavouriteLines(state.favourites, onOpenLine) }
                 groups(state.groups, onEvent, onOpenLine)
             }
@@ -200,6 +218,7 @@ private fun LineList(
             }
         }
     }
+    FavouritesEditSheet(state, editing, edit, onEvent) { editing = false }
 }
 
 private fun LazyListScope.groups(
@@ -235,8 +254,9 @@ private fun NoMatches(onClear: () -> Unit) {
 }
 
 @Composable
-private fun GroupHeading(
+internal fun GroupHeading(
     @StringRes title: Int,
+    action: (@Composable () -> Unit)? = null,
 ) {
     ListItem(
         headlineContent = {
@@ -247,6 +267,7 @@ private fun GroupHeading(
                 style = MaterialTheme.typography.titleSmall,
             )
         },
+        trailingContent = action,
     )
 }
 
@@ -325,7 +346,11 @@ private fun PlaceholderRows(contentPadding: PaddingValues) {
             .clearAndSetSemantics { contentDescription = loading },
     ) {
         SearchFieldPlaceholder(SearchFieldPadding.fillMaxWidth())
-        ListItem(headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) })
+        // The favourites heading, as tall as with its Edit button.
+        ListItem(
+            headlineContent = { Placeholder(Modifier.fillMaxWidth(HEADING_WIDTH).height(lineHeight)) },
+            trailingContent = { Spacer(Modifier.size(Tokens.minTouchTarget)) },
+        )
         Placeholder(
             Modifier
                 .padding(horizontal = Tokens.Spacing.l)
@@ -366,7 +391,7 @@ private const val FAVOURITES = "favourites"
 private val SearchFieldPadding = Modifier.padding(horizontal = Tokens.Spacing.l, vertical = Tokens.Spacing.s)
 
 // From this font scale, a row puts its badge above its name (Android's 200 % is 2).
-private const val LARGE_TEXT_SCALE = 1.5f
+internal const val LARGE_TEXT_SCALE = 1.5f
 
 // Enough rows to fill a phone's first screen.
 private const val PLACEHOLDER_ROWS = 8

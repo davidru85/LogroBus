@@ -146,6 +146,36 @@ final class ShellUITests: XCTestCase {
         XCTAssertEqual(search.value as? String, "Search lines", "Clear search emptied the field")
     }
 
+    @MainActor
+    func test_lb110_editListsTheFavourites_andALineRemovedThereLeavesTheCarousel_andItsStarGoesOff() {
+        // FR-FAV-02, through the debug build's graph and the device's database: line 3 is added from its row, then
+        // removed in the edit sheet. The test starts and ends with line 3 out of the favourites.
+        let app = launch()
+        XCTAssertTrue(line("3", in: app).waitForExistence(timeout: 10))
+        removeFavourite("3", in: app)
+        app.buttons["Add line 3 to favourites"].tap()
+        XCTAssertTrue(favouriteCard("3", in: app).waitForExistence(timeout: 5))
+
+        app.buttons["Edit favourite lines"].tap()
+        let sheet = app.navigationBars["Edit favourite lines"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
+        // The sheet's row of line 3: the list's own row, behind the sheet, has no delete control.
+        let row = app.cells
+            .containing(.image, identifier: "minus.circle.fill")
+            .containing(NSPredicate(format: "label == %@", "Line 3"))
+            .firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "line 3 is in the sheet")
+        // Edit mode's delete control, then the Delete button it reveals.
+        row.images["minus.circle.fill"].tap()
+        app.buttons["Delete"].firstMatch.tap()
+        XCTAssertTrue(row.waitForNonExistence(timeout: 5), "line 3 left the sheet")
+        sheet.buttons["Done"].tap()
+
+        XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(favouriteCard("3", in: app).waitForNonExistence(timeout: 5), "line 3 left the carousel")
+        XCTAssertTrue(app.buttons["Add line 3 to favourites"].exists, "line 3's star is off")
+    }
+
     /// Takes line `code` out of the favourites, if it is one, from its row's toggle.
     @MainActor
     private func removeFavourite(_ code: String, in app: XCUIApplication) {

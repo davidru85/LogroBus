@@ -6,8 +6,8 @@ import Testing
 
 /// AGENTS.md §9 and spec §7.3: every state of the Lines list in light, dark and large text, in Spanish. At large text,
 /// no code is cut and names wrap (LB-101). With no favourites, the carousel shows its hint (LB-103). A search shows its
-/// results without the carousel, or a sentence and Clear search (LB-102). References live in __Snapshots__; a missing
-/// one is recorded, and that run fails until it is committed.
+/// results without the carousel, or a sentence and Clear search (LB-102). The edit sheet lists every favourite line
+/// (LB-110). References live in __Snapshots__; a missing one is recorded, and that run fails until it is committed.
 @MainActor
 struct LinesSnapshotTests {
     @Test(arguments: Appearance.allCases)
@@ -43,6 +43,31 @@ struct LinesSnapshotTests {
             SharedDependencies.shared.preview(), searching: "tranvía", settlesOn: LinesUiStateNoMatches.self
         )
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
+    func lb110_theEditSheet(appearance: Appearance) async throws {
+        // FR-FAV-02: in the user's order, each row's delete control, its badge and name, or "no longer served" for line
+        // 99, which has left the catalogue, and its reorder control. The list without its navigation bar: rendered off
+        // screen, iOS 26's bar draws its title and Done in fixed colours whatever the appearance. The UI tests check
+        // the title and Done (ShellUITests).
+        let useCases = SharedDependencies.shared.preview()
+            .favouriteLine(id: 10).favouriteLine(id: 4).favouriteLine(id: 99).favouriteLine(id: 101)
+        let viewModel = LinesViewModel(useCases: useCases)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state is LinesUiStateContent }
+        let content = try #require(viewModel.state as? LinesUiStateContent)
+
+        let list = FavouriteLinesList(rows: content.editable, onReorder: { _ in }, onRemove: { _ in })
+        assertSnapshot(of: appearance.apply(to: list), as: appearance.strategy, named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
+    func lb110_theEditSheetOnceEveryFavouriteIsRemoved(appearance: Appearance) {
+        // Spec §7.3: the carousel's hint, never a blank sheet.
+        let list = FavouriteLinesList(rows: [], onReorder: { _ in }, onRemove: { _ in })
+        assertSnapshot(of: appearance.apply(to: list), as: appearance.strategy, named: appearance.name)
     }
 
     @Test(arguments: Appearance.allCases)

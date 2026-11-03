@@ -11,8 +11,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 /**
- * LB-101 (FR-LINE-01, FR-LINE-02), LB-103 (FR-LINE-12 to 15) and LB-102 (FR-LINE-03, FR-LINE-16): the Lines list's
- * state, from the lines, the favourite ones and the search, or the failure to get them.
+ * LB-101 (FR-LINE-01, FR-LINE-02), LB-103 (FR-LINE-12 to 15), LB-102 (FR-LINE-03, FR-LINE-16) and LB-110 (FR-FAV-02):
+ * the Lines list's state, from the lines, the favourite ones and the search, or the failure to get them.
  */
 class LinesUiMapperTest {
     @Test
@@ -25,7 +25,7 @@ class LinesUiMapperTest {
         val day = listOf("1", "2", "3", "4", "5", "6", "7", "9", "10", "11")
         val night = listOf("B1", "B2", "B3")
         val groups = listOf(LineGroupUi(LineKind.DAY, day.map(::row)), LineGroupUi(LineKind.NIGHT, night.map(::row)))
-        assertEquals(LinesUiState.Content(favourites = emptyList(), groups = groups), state)
+        assertEquals(LinesUiState.Content(favourites = emptyList(), groups = groups, editable = emptyList()), state)
     }
 
     @Test
@@ -158,6 +158,38 @@ class LinesUiMapperTest {
         val state = LinesUiMapper.state(success(listOf(line("3")), favouriteIds = listOf(99, 3)))
 
         assertEquals(listOf("3"), (state as LinesUiState.Content).favourites.map { it.code })
+    }
+
+    @Test
+    fun lb110_theEditSheetHasEveryFavourite_inTheUsersOrder_includingOnesNoLongerServed() {
+        // A line that left the catalogue has no card, but the sheet lists it so the user can remove it.
+        val state = LinesUiMapper.state(success(listOf(line("3"), line("10")), favouriteIds = listOf(10, 99, 3)))
+
+        assertEquals(
+            listOf(
+                EditableFavouriteLineUi.Served(id = 10, code = "10", displayName = "Line 10", 0xFFE30613, 0xFFFFFFFF),
+                EditableFavouriteLineUi.NoLongerServed(id = 99),
+                EditableFavouriteLineUi.Served(id = 3, code = "3", displayName = "Line 3", 0xFFE30613, 0xFFFFFFFF),
+            ),
+            (state as LinesUiState.Content).editable,
+        )
+    }
+
+    @Test
+    fun lb110_withOnlyLinesNoLongerServed_theCarouselHasNoCards_butTheEditSheetHasThem() {
+        // The carousel shows its hint, and Edit still lets the user remove what counts towards the limit.
+        val state = LinesUiMapper.state(success(listOf(line("3")), favouriteIds = listOf(99)))
+
+        state as LinesUiState.Content
+        assertEquals(emptyList(), state.favourites)
+        assertEquals(listOf<EditableFavouriteLineUi>(EditableFavouriteLineUi.NoLongerServed(99)), state.editable)
+    }
+
+    @Test
+    fun lb110_withNoFavourites_theEditSheetHasNothingToEdit() {
+        val state = LinesUiMapper.state(success(listOf(line("1"), line("3"))))
+
+        assertEquals(emptyList(), (state as LinesUiState.Content).editable)
     }
 
     @Test

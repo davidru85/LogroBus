@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailEvent
@@ -49,7 +50,8 @@ class LineDetailViewModelTest {
     fun lb103_theDetailLoads_thenShowsWhatTheSharedMapperMakesOfItsLine() =
         runTest {
             val observed = MutableSharedFlow<AppResult<LinesWithFavourites>>()
-            val viewModel = LineDetailViewModel(lineId = 3, { observed }) { _, _ -> AppResult.Success(Unit) }
+            val viewModel =
+                LineDetailViewModel(lineId = 3, { observed }) { _, _ -> AppResult.Success(FavouriteToggle.Done) }
 
             viewModel.state.test {
                 assertEquals(LineDetailUiState.Loading, awaitItem())
@@ -65,7 +67,7 @@ class LineDetailViewModelTest {
             val viewModel =
                 LineDetailViewModel(lineId = 3, { flowOf(lines) }) { lineId, isFavourite ->
                     set += lineId to isFavourite
-                    AppResult.Success(Unit)
+                    AppResult.Success(FavouriteToggle.Done)
                 }
 
             viewModel.onEvent(LineDetailEvent.SetFavourite(isFavourite = true))
@@ -75,11 +77,27 @@ class LineDetailViewModelTest {
         }
 
     @Test
+    fun lb110_aToggleBeyondTheLimitShowsTheLimit_untilTheMessageHasBeenShown() =
+        runTest {
+            val viewModel =
+                LineDetailViewModel(lineId = 3, { flowOf(lines) }) { _, _ ->
+                    AppResult.Success(FavouriteToggle.LimitReached(20))
+                }
+            assertEquals(null, viewModel.favouriteLimit.value)
+
+            viewModel.onEvent(LineDetailEvent.SetFavourite(isFavourite = true))
+            assertEquals(20, viewModel.favouriteLimit.value)
+
+            viewModel.onEvent(LineDetailEvent.FavouriteLimitShown)
+            assertEquals(null, viewModel.favouriteLimit.value)
+        }
+
+    @Test
     fun lb103_retryLoadsTheLineAgain() =
         runTest {
             val loads = ArrayDeque(listOf(flowOf(AppResult.Failure(AppError.Network)), flowOf(lines)))
             val observe = ObserveLinesWithFavourites { loads.removeFirst() }
-            val viewModel = LineDetailViewModel(lineId = 3, observe) { _, _ -> AppResult.Success(Unit) }
+            val viewModel = LineDetailViewModel(lineId = 3, observe) { _, _ -> AppResult.Success(FavouriteToggle.Done) }
 
             viewModel.state.test {
                 assertEquals(LineDetailUiState.Error(ErrorReason.NETWORK), awaitSettled())
@@ -104,7 +122,7 @@ class LineDetailViewModelTest {
                             emit(lines)
                         }
                     },
-                ) { _, _ -> AppResult.Success(Unit) }
+                ) { _, _ -> AppResult.Success(FavouriteToggle.Done) }
             viewModel.onEvent(LineDetailEvent.Retry)
             val states = mutableListOf<LineDetailUiState>()
             backgroundScope.launch { viewModel.state.collect { states += it } }.let { first ->
