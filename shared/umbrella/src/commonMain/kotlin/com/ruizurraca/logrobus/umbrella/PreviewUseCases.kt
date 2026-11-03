@@ -2,6 +2,9 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.preferences.EtaFormat
+import com.ruizurraca.logrobus.core.preferences.ThemePreference
+import com.ruizurraca.logrobus.core.preferences.UserPreferences
 import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
@@ -14,8 +17,12 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
+import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
+import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -27,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -76,6 +84,17 @@ class PreviewUseCases internal constructor() : UseCases {
      */
     fun favouriteLine(id: Int): PreviewUseCases =
         apply { favouriteLineIds.update { ids -> if (id in ids) ids else ids + id } }
+
+    /** Scripts the user's settings (LB-403), as if they had chosen them before. */
+    @Suppress("UNUSED_PARAMETER", "UnusedParameter")
+    fun settings(
+        theme: ThemePreference,
+        etaFormat: EtaFormat,
+    ): PreviewUseCases = this
+
+    /** How many times the cache was cleared, for a Swift test of Clear cache (LB-403). */
+    val cacheClears: Int
+        get() = 0
 
     /** Scripts a database that cannot be read: the use cases fail with a data error, then complete. */
     fun failing(): PreviewUseCases = apply { failing = true }
@@ -130,6 +149,14 @@ class PreviewUseCases internal constructor() : UseCases {
     override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
+
+    override fun observePreferences(): ObservePreferences = ObservePreferences { flowOf(UserPreferences()) }
+
+    override fun setTheme(): SetTheme = SetTheme { AppResult.Success(Unit) }
+
+    override fun setEtaFormat(): SetEtaFormat = SetEtaFormat { AppResult.Success(Unit) }
+
+    override fun clearCache(): ClearCache = ClearCache { AppResult.Success(Unit) }
 
     // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =

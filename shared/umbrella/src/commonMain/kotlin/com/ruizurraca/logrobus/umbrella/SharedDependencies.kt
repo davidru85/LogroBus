@@ -4,7 +4,11 @@ import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
+import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
+import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import org.koin.mp.KoinPlatform
 
 /**
@@ -19,6 +23,14 @@ interface UseCases {
     fun setFavouriteLine(): SetFavouriteLine
 
     fun reorderFavouriteLines(): ReorderFavouriteLines
+
+    fun observePreferences(): ObservePreferences
+
+    fun setTheme(): SetTheme
+
+    fun setEtaFormat(): SetEtaFormat
+
+    fun clearCache(): ClearCache
 }
 
 /**
@@ -41,6 +53,14 @@ object SharedDependencies : UseCases {
     override fun setFavouriteLine(): SetFavouriteLine = graph().get()
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
+
+    override fun observePreferences(): ObservePreferences = graph().get()
+
+    override fun setTheme(): SetTheme = graph().get()
+
+    override fun setEtaFormat(): SetEtaFormat = graph().get()
+
+    override fun clearCache(): ClearCache = graph().get()
 
     private fun graph() =
         checkNotNull(KoinPlatform.getKoinOrNull()) {

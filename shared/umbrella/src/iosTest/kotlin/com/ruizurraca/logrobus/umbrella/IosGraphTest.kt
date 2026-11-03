@@ -23,6 +23,10 @@ class IosGraphTest {
         SharedDependencies.observeLinesWithFavourites()
         SharedDependencies.setFavouriteLine()
         SharedDependencies.reorderFavouriteLines()
+        SharedDependencies.observePreferences()
+        SharedDependencies.setTheme()
+        SharedDependencies.setEtaFormat()
+        SharedDependencies.clearCache()
     }
 
     @Test
