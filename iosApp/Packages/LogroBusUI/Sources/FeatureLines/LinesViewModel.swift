@@ -45,7 +45,7 @@ public final class LinesViewModel {
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
     public func observe() async {
         for await result in useCases.observeLinesWithFavourites().invoke() {
-            state = LinesUiMapper.shared.state(result: result)
+            state = LinesUiMapper.shared.state(result: result, query: "")
         }
     }
 }

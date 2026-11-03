@@ -2,11 +2,15 @@ package com.ruizurraca.logrobus.feature.lines.presentation
 
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.domain.LineQuery
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 
-/** The Lines tab (LB-101, FR-LINE-01, FR-LINE-02; LB-103, FR-LINE-12 to 15), in the UX states of spec §7.3. */
+/**
+ * The Lines tab (LB-101, FR-LINE-01, FR-LINE-02; LB-103, FR-LINE-12 to 15; LB-102, FR-LINE-03, FR-LINE-16), in the UX
+ * states of spec §7.3.
+ */
 sealed interface LinesUiState {
     data object Loading : LinesUiState
 
@@ -18,6 +22,14 @@ sealed interface LinesUiState {
         val favourites: List<FavouriteLineCardUi>,
         val groups: List<LineGroupUi>,
     ) : LinesUiState
+
+    /** FR-LINE-16: the lines a search found, in the list's groups, without the favourites carousel. */
+    data class SearchResults(
+        val groups: List<LineGroupUi>,
+    ) : LinesUiState
+
+    /** A search that found no line: one sentence and one action, "Clear search" (spec §7.3). */
+    data object NoMatches : LinesUiState
 
     /** No lines at all: one sentence and Retry (spec §7.3). */
     data object Empty : LinesUiState
@@ -75,11 +87,20 @@ data class FavouriteLineCardUi(
 )
 
 object LinesUiMapper {
-    fun state(result: AppResult<LinesWithFavourites>): LinesUiState =
+    /** The state of [result] for the search field's [query]; with no query, the whole list and its favourites. */
+    fun state(
+        result: AppResult<LinesWithFavourites>,
+        query: String = "",
+    ): LinesUiState =
         when (result) {
             is AppResult.Success -> {
                 val lines = result.value.lines
-                if (lines.isEmpty()) LinesUiState.Empty else content(lines, result.value.favouriteIds)
+                val search = LineQuery(query)
+                when {
+                    lines.isEmpty() -> LinesUiState.Empty
+                    search.isActive -> searchResults(lines.filter(search::matches), result.value.favouriteIds)
+                    else -> content(lines, result.value.favouriteIds)
+                }
             }
 
             is AppResult.Failure -> {
@@ -96,6 +117,16 @@ object LinesUiMapper {
         val favourites = favouriteIds.mapNotNull { byId[it] }.map(::cardOf)
         return LinesUiState.Content(favourites, groupsOf(lines, favouriteIds.toSet()))
     }
+
+    private fun searchResults(
+        found: List<Line>,
+        favouriteIds: List<Int>,
+    ): LinesUiState =
+        if (found.isEmpty()) {
+            LinesUiState.NoMatches
+        } else {
+            LinesUiState.SearchResults(groupsOf(found, favouriteIds.toSet()))
+        }
 
     // FR-LINE-01: the kinds in their order (day, then night), each sorted by the number in its code: 9 before 10.
     private fun groupsOf(

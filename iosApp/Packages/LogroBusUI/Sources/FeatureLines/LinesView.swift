@@ -39,6 +39,9 @@ public struct LinesView: View {
             message(Text("lines.empty", bundle: .module))
         case .error(let error):
             message(error.reason.message)
+        case .searchResults, .noMatches:
+            // LB-102: the screen has no search field yet.
+            EmptyView()
         }
     }
 

@@ -112,6 +112,9 @@ fun LinesScreen(
             LinesUiState.Empty -> RetryMessage(stringResource(R.string.lines_empty), retry, centred)
 
             is LinesUiState.Error -> RetryMessage(stringResource(state.reason.messageRes), retry, centred)
+
+            // LB-102: the screen has no search field yet.
+            is LinesUiState.SearchResults, LinesUiState.NoMatches -> Unit
         }
     }
 }
