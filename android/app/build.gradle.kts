@@ -24,6 +24,8 @@ dependencies {
     implementation(projects.android.feature.lines)
     implementation(projects.android.feature.settings)
     implementation(libs.androidx.activity.compose)
+    // The app's language and theme, chosen in Settings (ADR-0020).
+    implementation(libs.androidx.appcompat)
     implementation(libs.compose.material3)
     implementation(libs.compose.material3.adaptive.navigation.suite)
     implementation(libs.compose.ui)

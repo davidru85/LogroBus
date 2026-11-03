@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.android.feature.lines.LinesViewModel
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataViewModel
+import com.ruizurraca.logrobus.android.feature.settings.SettingsViewModel
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.umbrella.initKoin
 import org.junit.Assert.assertNotNull
@@ -46,6 +47,7 @@ class AppGraphTest {
 
         assertNotNull(ViewModelProvider.create(store, fromTheGraph)[AboutDataViewModel::class])
         assertNotNull(ViewModelProvider.create(store, fromTheGraph)[LinesViewModel::class])
+        assertNotNull(ViewModelProvider.create(store, fromTheGraph)[SettingsViewModel::class])
         store.clear()
     }
 }

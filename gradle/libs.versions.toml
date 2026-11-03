@@ -20,6 +20,8 @@ compose-bom = "2026.09.00"
 # upgraded deliberately). Move to the stable 1.5.0 when it ships.
 compose-material3 = "1.5.0-beta02"
 androidx-activity = "1.13.0"
+# Per-app language on every API level, and the app's own light or dark theme (ADR-0020).
+androidx-appcompat = "1.8.0"
 androidx-lifecycle = "2.11.0"
 # One back stack per tab, owned by the app (ADR-0005).
 androidx-navigation3 = "1.2.0"
@@ -85,6 +87,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
