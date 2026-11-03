@@ -18,6 +18,10 @@ internal class LineQuery(
 
     fun matches(line: Line): Boolean {
         val lineWords = (listOf(line.code, line.displayName) + line.headsigns).flatMap(::searchWords)
-        return words.all { word -> lineWords.any { it.startsWith(word) } }
+        return words.all { word -> lineWords.any { it.startsWith(word) } } || beginsTheCodeOf(line)
     }
+
+    // A code typed with a separator, "B 1" or "B-1", is two words; together they begin "b1".
+    private fun beginsTheCodeOf(line: Line): Boolean =
+        searchWords(line.code).joinToString("").startsWith(words.joinToString(""))
 }
