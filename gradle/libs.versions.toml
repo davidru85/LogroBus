@@ -49,6 +49,9 @@ skie = "0.10.15"
 kotlinx-datetime = "0.8.0"
 # Drag to reorder in Compose lazy lists: the favourite lines' edit sheet (ADR-0019).
 reorderable = "3.1.0"
+# Small persisted preferences, over DataStore on Android and NSUserDefaults on iOS (ADR-0018).
+multiplatform-settings = "1.3.0"
+androidx-datastore = "1.3.0"
 # Not project dependencies: security floors for libraries with known advisories that AGP 9.3 (its tools and
 # plugin classpath), KGP's Swift export and Robolectric bring (docs/ci_cd.md §6). Drop each once the tool that
 # brings it ships a fixed version itself.
@@ -103,6 +106,11 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings" }
+multiplatform-settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatform-settings" }
+multiplatform-settings-datastore = { module = "com.russhwolf:multiplatform-settings-datastore", version.ref = "multiplatform-settings" }
+multiplatform-settings-test = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatform-settings" }
+androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "androidx-datastore" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }

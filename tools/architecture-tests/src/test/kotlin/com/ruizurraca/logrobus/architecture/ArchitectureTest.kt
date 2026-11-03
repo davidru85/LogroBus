@@ -26,6 +26,7 @@ class ArchitectureTest {
             ":shared:core:database",
             ":shared:core:location",
             ":shared:core:polling",
+            ":shared:core:preferences",
             ":shared:core:presentation",
             ":shared:core:testing",
             ":shared:transit:domain",
