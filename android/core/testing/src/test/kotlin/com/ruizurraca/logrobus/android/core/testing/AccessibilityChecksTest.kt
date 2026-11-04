@@ -45,6 +45,14 @@ class AccessibilityChecksTest {
     }
 
     @Test
+    fun lb406_textNarrowerThanTheRoomItMayTake_isNotCut() {
+        // Semantics lay a text's paragraph out at the widest the text may be, wider than its own width.
+        compose.setContent { Text("Línea") }
+
+        compose.assertAccessible()
+    }
+
+    @Test
     fun lb406_aControlWithoutALabel_fails() {
         compose.setContent { Box(Modifier.size(48.dp).clickable {}) }
 
