@@ -1,6 +1,7 @@
 @testable import DesignSystem
 import Shared
 import Testing
+import UIKit
 
 /// NFR-MNT-04, NFR-A11Y-06 and OQ-18: the placeholder palette is neutral, and all its text is readable.
 struct TokensTests {
@@ -21,6 +22,38 @@ struct TokensTests {
         for (role, background, text) in pairs {
             #expect(contrastRatio(first: background, second: text) >= 4.5, "\(name) \(role)")
         }
+    }
+
+    /// LB-406 (NFR-A11Y-01): the screens draw on the system's backgrounds, a grouped list's and its rows', so the
+    /// accent, which tints every control, and the secondary text reach 4.5:1 on them too, where the system's blue and
+    /// secondary grey do not.
+    @Test(arguments: [(UIUserInterfaceStyle.light, Tokens.light), (.dark, Tokens.dark)])
+    func lb406_theAccentAndTheSecondaryTextReach4point5To1OnTheSystemsBackgrounds(
+        style: UIUserInterfaceStyle,
+        palette: Tokens.Palette
+    ) {
+        let backgrounds: [(String, UIColor)] = [
+            ("background", .systemBackground),
+            ("grouped background", .systemGroupedBackground),
+            ("grouped row", .secondarySystemGroupedBackground)
+        ]
+        for (name, background) in backgrounds {
+            let resolved = argb(background, style)
+            for (role, text) in [("accent", palette.accent), ("secondary text", palette.secondaryText)] {
+                #expect(contrastRatio(first: resolved, second: text) >= 4.5, "\(role) on the \(name), \(style)")
+            }
+        }
+    }
+
+    /// The colour as opaque ARGB, in `style`.
+    private func argb(_ color: UIColor, _ style: UIUserInterfaceStyle) -> Int64 {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
+            .getRed(&red, green: &green, blue: &blue, alpha: nil)
+        let channels = [red, green, blue].map { Int64(($0 * 255).rounded()) }
+        return 0xFF00_0000 | channels[0] << 16 | channels[1] << 8 | channels[2]
     }
 
     @Test(arguments: schemes)

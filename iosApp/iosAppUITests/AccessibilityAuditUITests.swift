@@ -22,8 +22,8 @@ final class AccessibilityAuditUITests: XCTestCase {
         try auditEveryScreen(in: launch(textSize: "UICTContentSizeCategoryAccessibilityXXXL"), contrast: false)
     }
 
-    /// Lines with the favourites' hint, a search and a favourite, the favourites' edit sheet, a line's detail, More,
-    /// Settings, About data, Near me and Directions. Line 3 is a favourite only while the test needs one.
+    /// Lines with the favourites' hint, a search and a favourite, the favourites' edit sheet, a favourite's detail,
+    /// More, Settings, About data, Near me and Directions. Line 3 is a favourite only while the test needs one.
     @MainActor
     private func auditEveryScreen(in app: XCUIApplication, contrast: Bool) throws {
         let types: XCUIAccessibilityAuditType = contrast ? .all : .all.subtracting(.contrast)
@@ -62,15 +62,16 @@ final class AccessibilityAuditUITests: XCTestCase {
         try audit("Edit favourite lines", types, in: app, into: &issues)
         sheet.buttons["Done"].tap()
         XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
-        scrollUp(toward: removeLine3, in: app)
-        removeLine3.tap()
 
-        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Line 3, ")).firstMatch
-        scrollUp(toward: row, in: app)
-        row.tap()
-        XCTAssertTrue(app.navigationBars["Line 3"].waitForExistence(timeout: 5))
+        // The carousel's card, at the top: it alone says where the line heads.
+        let card = NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", "Line 3, ", "Towards")
+        app.buttons.matching(card).firstMatch.tap()
+        let detail = app.navigationBars["Line 3"]
+        XCTAssertTrue(detail.waitForExistence(timeout: 5))
         try audit("Line 3", types, in: app, into: &issues)
-        app.navigationBars["Line 3"].buttons["Lines"].tap()
+        detail.buttons["Remove line 3 from favourites"].tap()
+        XCTAssertTrue(detail.buttons["Add line 3 to favourites"].waitForExistence(timeout: 5))
+        detail.buttons["Lines"].tap()
 
         app.navigationBars["Lines"].buttons["More"].tap()
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5))
@@ -97,7 +98,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
 
     /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
-    /// named after the screen, its kind and its element.
+    /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
+    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none.
     @MainActor
     private func audit(
         _ screen: String,
@@ -111,11 +113,18 @@ final class AccessibilityAuditUITests: XCTestCase {
         add(shot)
         let navigationBars = app.navigationBars.allElementsBoundByIndex.map(\.frame)
         var found: [String] = []
-        try app.performAccessibilityAudit(for: types) { issue in
-            if Self.isFalsePositive(issue, navigationBars: navigationBars) { return true }
-            let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
-            found.append("\(screen): \(issue.compactDescription), \(element): \(issue.detailedDescription)")
-            return true
+        for attempt in 1...3 {
+            found = []
+            var unnamed = false
+            try app.performAccessibilityAudit(for: types) { issue in
+                if Self.isFalsePositive(issue, navigationBars: navigationBars) { return true }
+                unnamed = unnamed || issue.element == nil
+                let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
+                found.append("\(screen): \(issue.compactDescription), \(element): \(issue.detailedDescription)")
+                return true
+            }
+            if !unnamed || attempt == 3 { break }
+            Thread.sleep(forTimeInterval: 1)
         }
         issues += found
     }
@@ -129,6 +138,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     ///   on a long press instead.
     /// - **Dynamic Type of Settings' Data section:** its heading and footer, alone in the form, are reported as not
     ///   scaling, yet they scale with the others at the largest text.
+    @MainActor
     private static func isFalsePositive(_ issue: XCUIAccessibilityAuditIssue, navigationBars: [CGRect]) -> Bool {
         let label = issue.element?.label ?? ""
         switch issue.auditType {
@@ -146,14 +156,16 @@ final class AccessibilityAuditUITests: XCTestCase {
     /// Swipes the list up until one of `elements` can be tapped: at the largest text, line 3 is below the screen.
     @MainActor
     private func scrollUp(toward elements: XCUIElement..., in app: XCUIApplication) {
-        for _ in 0..<10 where !elements.contains(where: { $0.exists && $0.isHittable }) { app.swipeUp() }
+        for _ in 0..<20 where !elements.contains(where: { $0.exists && $0.isHittable }) {
+            app.swipeUp(velocity: .slow)
+        }
     }
 
     /// Swipes the list down until `element`, near its top, can be tapped, then on to the top, so that nothing is left
     /// beneath the search field.
     @MainActor
     private func scrollDown(toward element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<10 where !(element.exists && element.isHittable) { app.swipeDown() }
+        for _ in 0..<20 where !(element.exists && element.isHittable) { app.swipeDown(velocity: .slow) }
         app.swipeDown()
         app.swipeDown()
         XCTAssertTrue(element.isHittable, "\(element) is on screen")

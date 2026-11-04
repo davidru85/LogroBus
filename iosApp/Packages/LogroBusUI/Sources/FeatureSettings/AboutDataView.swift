@@ -43,17 +43,21 @@ public struct AboutDataView: View {
             Section {
                 ForEach(rows, id: \.dataset) { row in
                     LabeledContent {
-                        if let lastSuccess = row.lastSuccess {
-                            Text(lastSuccess.formatted(locale: locale))
-                        } else {
-                            Text("about.last_sync.never", bundle: .module)
+                        Group {
+                            if let lastSuccess = row.lastSuccess {
+                                Text(lastSuccess.formatted(locale: locale))
+                            } else {
+                                Text("about.last_sync.never", bundle: .module)
+                            }
                         }
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                     } label: {
                         Text(row.dataset.label, bundle: .module)
                     }
                 }
             } header: {
                 Text("about.last_sync.title", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             }
         }
     }

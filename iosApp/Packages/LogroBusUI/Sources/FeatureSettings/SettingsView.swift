@@ -53,8 +53,10 @@ public struct SettingsView: View {
                 }
             } header: {
                 Text("settings.appearance", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             } footer: {
                 Text("settings.language.footer", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             }
             Section {
                 Picker(selection: Binding(get: { content.etaFormat }, set: { format in
@@ -68,12 +70,15 @@ public struct SettingsView: View {
                 }
             } header: {
                 Text("settings.arrivals", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             } footer: {
                 Text("settings.eta_format.footer", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             }
             Section {
                 LabeledContent {
                     dataStatus(content.dataStatus)
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                 } label: {
                     Text("settings.data_status", bundle: .module)
                 }
@@ -84,8 +89,10 @@ public struct SettingsView: View {
                 }
             } header: {
                 Text("settings.data", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             } footer: {
                 Text("settings.clear_cache.detail", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             }
         }
     }
@@ -98,6 +105,7 @@ public struct SettingsView: View {
             LabeledContent {
                 HStack {
                     language.name
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                     // The row opens the iPhone's Settings, outside the app.
                     Image(systemName: "arrow.up.forward.app")
                         .foregroundStyle(.tertiary)
