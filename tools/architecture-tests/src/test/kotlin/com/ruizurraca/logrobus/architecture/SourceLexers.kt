@@ -1,8 +1,12 @@
 package com.ruizurraca.logrobus.architecture
 
-/** A string literal: where it opens (its first quote or raw-string delimiter), and its [text] without interpolations. */
+/**
+ * A string literal: where it opens (its first quote or raw-string delimiter) and where it [end]s, after its closing
+ * delimiter, and its [text] without interpolations.
+ */
 internal class StringLiteral(
     val start: Int,
+    val end: Int,
     val text: String,
 )
 
@@ -78,7 +82,7 @@ internal abstract class Lexer(
         start: Int,
         text: String,
     ) {
-        literals += StringLiteral(start, text)
+        literals += StringLiteral(start, at, text)
     }
 
     protected fun blank(
@@ -177,7 +181,8 @@ internal class KotlinLexer(
         val quote = if (raw) TRIPLE_QUOTE else "\""
         at += quote.length
         val text = StringBuilder()
-        while (at < source.length && !source.startsWith(quote, at)) {
+        // A plain string ends with its line, so that a stray quote never hides the rest of the file.
+        while (at < source.length && !source.startsWith(quote, at) && (raw || source[at] != '\n')) {
             val char = source[at]
             val next = source.getOrNull(at + 1)
             when {
@@ -187,7 +192,7 @@ internal class KotlinLexer(
 
                 char == '$' && next == '{' -> {
                     at += 2
-                    code(closing = '}', record = false)
+                    code(closing = '}', record = record)
                 }
 
                 char == '$' && next != null && (next.isLetter() || next == '_') -> {

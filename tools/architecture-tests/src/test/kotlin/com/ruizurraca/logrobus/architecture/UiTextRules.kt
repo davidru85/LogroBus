@@ -18,15 +18,21 @@ data class UiTextFinding(
 object UiTextRules {
     /**
      * The hard-coded user-facing text in a Kotlin [source]. A string literal with a letter is user-facing where
-     * Compose shows or speaks it: the text of `Text` and its kin, a spoken label or description, a snackbar or toast
-     * message. Template expressions are not text, and previews are exempt.
+     * Compose shows or speaks it: anywhere at the top level of the text of `Text` and its kin, of a spoken label or
+     * description, of a snackbar, toast or notification. Template expressions and format specifiers are not text,
+     * and previews are exempt.
      */
     fun hardcodedKotlinUiText(source: String): List<UiTextFinding> {
         val lexed = KotlinLexer(source).lex()
         val previews = kotlinPreviewRanges(lexed.code)
-        return lexed.literals
+        val sinks =
+            textCallSinks(lexed, KOTLIN_TEXT_CALLS, KOTLIN_LABEL) + textPropertySinks(lexed, KOTLIN_TEXT_PROPERTY)
+        return sinks
+            .map { it.literal }
+            .distinctBy { it.start }
+            .sortedBy { it.start }
             .filter { literal -> previews.none { literal.start in it } }
-            .filter { it.text.any(Char::isLetter) && KOTLIN_UI_TEXT.containsMatchIn(lexed.codeBefore(it.start)) }
+            .filter { it.text.replace(FORMAT_SPECIFIER, "").any(Char::isLetter) }
             .map { UiTextFinding(source.lineAt(it.start), it.text) }
     }
 
@@ -174,16 +180,25 @@ private fun swiftPreviewRanges(code: String): List<IntRange> {
     return (macros + types).toList()
 }
 
-// What comes right before a literal that Compose shows or speaks: the first argument of a text call, a toast's
-// message, or a parameter or semantics property that holds text.
-private val KOTLIN_UI_TEXT =
-    Regex(
-        """(?:\b(?:Text|BasicText|AnnotatedString|CustomAccessibilityAction|showSnackbar)\(\s*""" +
-            """(?:(?:label|message)\s*=\s*)?""" +
-            """|\bmakeText\([^,()]*,\s*""" +
-            """|\b(?:text|contentDescription|stateDescription|onClickLabel|onLongClickLabel|paneTitle|actionLabel)""" +
-            """\s*=\s*)$""",
+// Compose's calls that show or speak their text, and where the text goes (LB-405).
+private val KOTLIN_TEXT_CALLS =
+    listOf(
+        TextCall(listOf("Text", "BasicText", "AnnotatedString"), positions = setOf(0), labels = setOf("text")),
+        TextCall(listOf("Icon", "Image"), positions = setOf(1), labels = setOf("contentDescription")),
+        TextCall(listOf("CustomAccessibilityAction"), positions = setOf(0), labels = setOf("label")),
+        TextCall(listOf("onClick", "onLongClick"), labels = setOf("label")),
+        TextCall(listOf("showSnackbar"), positions = setOf(0, 1), labels = setOf("message", "actionLabel")),
+        TextCall(listOf("makeText"), positions = setOf(1), labels = setOf("text")),
+        TextCall(listOf("append", "setContentTitle", "setContentText", "setTicker"), positions = setOf(0)),
     )
+
+private val KOTLIN_LABEL = Regex("""^\s*(\w+)\s*=(?!=)""")
+
+// Semantics properties and parameters that hold spoken text, wherever they are set: `contentDescription = …`.
+private val KOTLIN_TEXT_PROPERTY =
+    Regex("""\b(?:contentDescription|stateDescription|onClickLabel|onLongClickLabel|paneTitle)\s*=(?!=)""")
+
+private val FORMAT_SPECIFIER = Regex("""%(\d+\$)?[-#+ 0,(]*\d*(\.\d+)?[a-zA-Z%]""")
 
 private val KOTLIN_PREVIEW_ANNOTATION = Regex("""@\w*Preview\w*""")
 
@@ -194,9 +209,11 @@ private val KOTLIN_ANNOTATED_FUNCTION =
             """(?:(?:private|internal|public|protected|inline|override|open|actual|expect)\s+)*fun\b""",
     )
 
-private val KOTLIN_PREVIEW_FUNCTION = Regex("""\bfun\s+(?:<[^>]*>\s*)?(?:[\w.]+\.)?\w*Previews?\s*\(""")
+// A private function named after a preview; a function the app uses is never one.
+private val KOTLIN_PREVIEW_FUNCTION =
+    Regex("""\bprivate\s+(?:\w+\s+)*fun\s+(?:<[^>]*>\s*)?(?:[\w.]+\.)?\w*Previews?\s*\(""")
 
-/** The functions that are previews: annotated with a preview annotation, or named after one. */
+/** The functions that are previews: annotated with a preview annotation, or private and named after one. */
 private fun kotlinPreviewRanges(code: String): List<IntRange> {
     val annotated =
         KOTLIN_PREVIEW_ANNOTATION.findAll(code).mapNotNull { annotation ->
@@ -211,32 +228,18 @@ private fun kotlinPreviewRanges(code: String): List<IntRange> {
     return (annotated + named).toList()
 }
 
-/** The end of the block body of the function whose declaration starts at [from], or null without one. */
+/**
+ * The end of the block body of the function whose declaration starts at [from]. Null for an expression body, whose
+ * end the code does not mark, so that the exemption never runs on into the next declaration.
+ */
 private fun functionEnd(
     code: String,
     from: Int,
 ): Int? {
     val parameters = code.indexOf('(', from).takeIf { it >= 0 } ?: return null
     val afterParameters = closing(code, parameters) ?: return null
-    val body = code.indexOf('{', afterParameters).takeIf { it >= 0 } ?: return null
-    return closing(code, body)
-}
-
-/** The index of the bracket that closes the one at [open], in code whose comments and strings are blanked. */
-private fun closing(
-    code: String,
-    open: Int,
-): Int? {
-    val opening = code[open]
-    val close = if (opening == '(') ')' else '}'
-    var depth = 0
-    for (index in open until code.length) {
-        when (code[index]) {
-            opening -> depth++
-            close -> if (--depth == 0) return index
-        }
-    }
-    return null
+    val body = code.indexOfAny(charArrayOf('{', '='), afterParameters).takeIf { it >= 0 } ?: return null
+    return if (code[body] == '{') closing(code, body) else null
 }
 
 private fun String.lineAt(offset: Int): Int = 1 + (0 until offset).count { this[it] == '\n' }
