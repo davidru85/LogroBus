@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Last updated | 2026-11-02 |
+| Last updated | 2026-11-05 |
 | Status values | `todo`, `in-progress`, `blocked`, `deferred`, `done`, `dropped` |
 | Priority | Spec priority: P0 = launch blocker, P1 = launch target, P2 = post-launch |
 
@@ -101,7 +101,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-404 | About data: data source, last sync per dataset, prediction disclaimer, attributions. Done early, with LB-010 part 2: the last sync per dataset (shared use case and mapper, both screens), reachable from More since LB-012 | FR-SET-03, NFR-PRIV-05 | P0 | in-progress |
 | LB-405 | Localisation es and en, plurals, Madrid time display, locale formatting. Done: the device's first language that the app speaks, or else Spanish, on both platforms; on Android, `MainActivity`'s locale puts Material's and Android's words and the formats in that language too, and on iOS, SwiftUI's `Locale.app` the lookups that take a locale; `LocalisationTest` fails on user-facing text in UI code, on an iOS key missing from its catalogue and on a catalogue entry without Spanish and English, and Android lint on a missing English string; the plurals and the Madrid times were met early (LB-011, LB-010) | NFR-I18N-01 to 03 | P0 | done |
 | LB-406 | Accessibility pass: spoken labels, 200 % font, contrast, polite announcements, list equivalents, glass legibility. Part 1 (done): automated checks on every screen built so far, which later screens join: `assertAccessible` (`:android:core:testing`) in the Android screenshot tests, Xcode's accessibility audit on every iOS screen at the default and the largest text and in dark mode; the iOS tint and secondary text in the tokens' colours, which reach 4.5:1. Part 2: the arrival rows' spoken label and polite announcements (with LB-205 and LB-213), the maps' list equivalents (LB-203, LB-104, LB-308), glass legibility (LB-202), and the device passes | NFR-A11Y-01 to 06 | P0 | in-progress |
-| LB-407 | Favourites included in OS backups; "No longer served" after 7 missing syncs | FR-FAV-03, FR-FAV-04 | P0 | todo |
+| LB-407 | Favourites included in OS backups; "No longer served" after 7 missing syncs | FR-FAV-03, FR-FAV-04 | P0 | in-progress |
 | LB-408 | ETAs use the server clock offset when the device clock is off by more than 60 s | FR-ERR-06 | P1 | todo |
 | LB-409 | Consent dialog, Crashlytics and Analytics with the NFR-OBS-03 events only; Settings toggles. Builds on LB-017: a persisted `ConsentStore` (Multiplatform Settings, ADR-0018) replaces `MemoryConsentStore`, exposed to Swift; the vendor implementations go in `PlatformTelemetry`, with the SDKs' automatic collection off and tied to consent | NFR-PRIV-03, NFR-OBS-03 | P1 | blocked (OQ-16) |
 | LB-410 | Onboarding: 3 cards (value, favourites, location rationale) | FR-NAV-06, SC-18, FR-LOC-01 | P1 | todo |
