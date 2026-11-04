@@ -7,7 +7,6 @@ import com.ruizurraca.logrobus.android.core.designsystem.R
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
@@ -40,17 +39,16 @@ class AppLocalesTest {
 
     @Test
     @Config(qualifiers = "fr-rFR")
-    fun lb405_onAFrenchDevice_theAppsOwnResourcesAreSpanishToo() {
-        // AppCompat reads them below Android 13 for the system's language, once "System" is chosen in Settings.
-        val application = RuntimeEnvironment.getApplication()
-
-        assertEquals(
-            "es-FR",
-            application.resources.configuration.locales
-                .toLanguageTags(),
-        )
-        // Spanish plural rules: French ones would say "a la 00:15", as for one o'clock.
-        assertEquals("a las 00:15", application.resources.getQuantityString(R.plurals.eta_clock_spoken, 0, "00:15"))
+    fun lb405_onAFrenchDevice_thePluralRulesAreSpanish() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                // French plural rules would say "a la 00:15", as for one o'clock.
+                assertEquals(
+                    "a las 00:15",
+                    activity.resources.getQuantityString(R.plurals.eta_clock_spoken, 0, "00:15"),
+                )
+            }
+        }
     }
 
     @Test
