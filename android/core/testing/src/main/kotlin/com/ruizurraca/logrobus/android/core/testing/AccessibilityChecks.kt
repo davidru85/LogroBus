@@ -83,7 +83,20 @@ private val Dp.text: String
 private fun SemanticsNode.textProblems(): List<String> {
     val layouts = mutableListOf<TextLayoutResult>()
     config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
-    return layouts
-        .filter { layout -> layout.hasVisualOverflow || (0 until layout.lineCount).any(layout::isLineEllipsized) }
-        .map { layout -> "\"${layout.layoutInput.text}\" is cut short" }
+    return layouts.filter { it.isCutShort }.map { layout -> "\"${layout.layoutInput.text}\" is cut short" }
 }
+
+/**
+ * Whether the text lost lines or characters: an ellipsis, lines beyond its height, or a line wider than its width.
+ * Not [TextLayoutResult.hasVisualOverflow]: the layout that semantics give lays the paragraph out at the widest the
+ * text may be, which is wider than a short text, so its width would always seem to overflow.
+ */
+private val TextLayoutResult.isCutShort: Boolean
+    get() {
+        val lines = 0 until lineCount
+        val widest = lines.maxOfOrNull { getLineRight(it) - getLineLeft(it) } ?: 0f
+        return lines.any(::isLineEllipsized) || didOverflowHeight || widest > size.width + ROUNDING
+    }
+
+/** Half a pixel: a line's width is a fraction, and the text's width rounds it up. */
+private const val ROUNDING = 0.5f
