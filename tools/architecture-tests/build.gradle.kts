@@ -14,13 +14,14 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.konsist)
+    testImplementation(libs.kotlinx.serialization.json)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {
     useJUnitPlatform()
-    // Konsist and the file-system checks read the whole repository, so declare it as input: the Swift sources too,
-    // for the iOS rules (Package.swift among them).
+    // Konsist and the file-system checks read the whole repository, so declare it as input: the Swift sources and
+    // string catalogues too, for the iOS rules (Package.swift among them).
     inputs
         .files(
             fileTree(isolated.rootProject.projectDirectory) {
@@ -32,6 +33,7 @@ tasks.test {
                     ".gitignore",
                     "iosApp/project.yml",
                     "iosApp/**/*.swift",
+                    "iosApp/**/*.xcstrings",
                 )
                 exclude("**/build/**", "**/.build/**", ".gradle/**", ".kotlin/**", "build-logic/.gradle/**")
             },

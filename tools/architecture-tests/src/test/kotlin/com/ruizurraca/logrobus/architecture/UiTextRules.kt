@@ -1,5 +1,13 @@
 package com.ruizurraca.logrobus.architecture
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
 /** A user-facing [text] written into UI code at its 1-based [line], rather than taken from the string resources. */
 data class UiTextFinding(
     val line: Int,
@@ -41,13 +49,47 @@ object UiTextRules {
             }.map { UiTextFinding(source.lineAt(it.start), it.text) }
     }
 
-    /** The catalogue keys a Swift [source] uses. */
-    @Suppress("UNUSED_PARAMETER") // TDD: red.
-    fun swiftCatalogueKeys(source: String): Set<String> = emptySet()
+    /**
+     * The catalogue keys a Swift [source] uses: those it passes where SwiftUI shows or speaks text, and those its
+     * members typed LocalizedStringKey or LocalizedStringResource return. Interpolations are left out, so
+     * `"lines.towards \(headsign)"` uses `lines.towards`.
+     */
+    fun swiftCatalogueKeys(source: String): Set<String> {
+        val lexed = SwiftLexer(source).lex()
+        val localizedMembers =
+            SWIFT_LOCALIZED_MEMBER
+                .findAll(lexed.code)
+                .mapNotNull { member -> closing(lexed.code, member.range.last)?.let { member.range.last..it } }
+                .toList()
+        return lexed.literals
+            .filter { literal ->
+                val sink = SWIFT_UI_TEXT.find(lexed.codeBefore(literal.start))
+                (sink != null && sink.groups[VERBATIM] == null) || localizedMembers.any { literal.start in it }
+            }.map { it.text.trim() }
+            .filter(CATALOGUE_KEY::matches)
+            .toSet()
+    }
 
-    /** The entries of a string catalogue's [json] that lack a translated Spanish or English value. */
-    @Suppress("UNUSED_PARAMETER") // TDD: red.
-    fun untranslatedCatalogueEntries(json: String): List<String> = emptyList()
+    /**
+     * The entries of a string catalogue's [json] without a translated value in Spanish or English (NFR-I18N-01), as
+     * "key (language)": every string unit of the language, each plural form included, must be translated and not
+     * empty. An entry marked not to translate needs only the source language.
+     */
+    fun untranslatedCatalogueEntries(json: String): List<String> {
+        val catalogue = Json.parseToJsonElement(json).jsonObject
+        val sourceLanguage = catalogue["sourceLanguage"]?.jsonPrimitive?.content
+        return catalogue["strings"]
+            ?.jsonObject
+            .orEmpty()
+            .flatMap { (key, entry) ->
+                val localizations = entry.jsonObject["localizations"]?.jsonObject.orEmpty()
+                val translatable = entry.jsonObject["shouldTranslate"]?.jsonPrimitive?.booleanOrNull != false
+                APP_LANGUAGES
+                    .filter { language -> translatable || language == sourceLanguage }
+                    .filterNot { language -> localizations[language]?.let(::isTranslated) == true }
+                    .map { language -> "$key ($language)" }
+            }.sorted()
+    }
 
     /** A key of a string catalogue, such as `lines.title`, once the interpolations that follow it are left out. */
     fun isCatalogueKey(text: String): Boolean = CATALOGUE_KEY.matches(text.trim())
@@ -66,6 +108,45 @@ private val SWIFT_UI_TEXT =
     )
 
 private const val VERBATIM = 1
+
+// A member that returns catalogue keys: `var title: LocalizedStringKey {` or `-> LocalizedStringResource {`.
+private val SWIFT_LOCALIZED_MEMBER = Regex("""(?::|->)\s*(?:LocalizedStringKey|LocalizedStringResource)\s*\{""")
+
+// NFR-I18N-01: Spanish, the source language, and English.
+private val APP_LANGUAGES = listOf("es", "en")
+
+private fun isTranslated(localization: JsonElement): Boolean {
+    val units = stringUnits(localization)
+    return units.isNotEmpty() &&
+        units.all { unit ->
+            unit["state"]?.jsonPrimitive?.content == "translated" &&
+                !unit["value"]?.jsonPrimitive?.content.isNullOrEmpty()
+        }
+}
+
+/** Every string unit in a localisation: its own, its plural or device variations', and its substitutions'. */
+private fun stringUnits(element: JsonElement): List<JsonObject> =
+    when (element) {
+        is JsonObject -> {
+            element.flatMap { (name, value) ->
+                if (name ==
+                    "stringUnit"
+                ) {
+                    listOf(value.jsonObject)
+                } else {
+                    stringUnits(value)
+                }
+            }
+        }
+
+        is JsonArray -> {
+            element.flatMap(::stringUnits)
+        }
+
+        else -> {
+            emptyList()
+        }
+    }
 
 private val CATALOGUE_KEY = Regex("""[a-z0-9_]+(?:\.[a-z0-9_]+)+""")
 
