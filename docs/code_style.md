@@ -38,8 +38,8 @@
 
 - In shared modules, visibility is `internal` by default. Only what other modules or Swift need is `public`.
 - Prefer immutable data: `val`, `data class`, and read-only collections across layers.
-- Model errors with `AppResult` and `AppError`. Never use exceptions for expected failures. Catch exceptions only at the network and database boundaries, in `PollingEngine`, which turns whatever a `fetch` throws into a failure of that key alone, and in the static sync, which turns whatever the database or the normaliser throws into a failed sync that keeps the cache (NFR-REL-02, NFR-REL-03).
-- Coroutines: inject `AppDispatchers`; ViewModels use `viewModelScope`; repositories expose `Flow` and `suspend` functions; never use `runBlocking` outside tests.
+- Model errors with `AppResult` and `AppError`. Never use exceptions for expected failures. Catch exceptions only at the network and database boundaries, at the settings store's (`SettingsPreferencesStore`: a read that fails gives the defaults and is retried, a write that fails is `Failure(Data)`, LB-403), in `PollingEngine`, which turns whatever a `fetch` throws into a failure of that key alone, and in the static sync, which turns whatever the database or the normaliser throws into a failed sync that keeps the cache (NFR-REL-02, NFR-REL-03).
+- Coroutines: inject `AppDispatchers`; ViewModels use `viewModelScope`; repositories expose `Flow` and `suspend` functions; never use `runBlocking` outside tests. **One exception** (owner decision, 2026-11-03, ADR-0020): below Android 12, `MainActivity.attachBaseContext` reads the saved theme with `runBlocking`, once per process, so the first frame is in it.
 - Name test functions in `lowerCamelCase` with underscores between clauses: `dd05_reinterpretsWallClockInMadrid_duringCest`. Do not use backtick names with spaces.
 - The package layout mirrors the modules, `com.ruizurraca.logrobus.<area>.<layer>`. For example: `com.ruizurraca.logrobus.feature.nearme.presentation`, `com.ruizurraca.logrobus.transit.data`, and on Android `com.ruizurraca.logrobus.android.feature.nearme`.
 

@@ -23,8 +23,16 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
+import com.ruizurraca.logrobus.feature.settings.domain.DefaultClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
+import com.ruizurraca.logrobus.feature.settings.domain.DefaultObservePreferences
+import com.ruizurraca.logrobus.feature.settings.domain.DefaultSetEtaFormat
+import com.ruizurraca.logrobus.feature.settings.domain.DefaultSetTheme
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
+import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
+import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
@@ -46,7 +54,8 @@ internal val APPLICATION_SCOPE = named("application")
 /**
  * The shared graph (ADR-0014): the core, with one instance of each service for the whole process, then one module per
  * data and feature module. [platform] provides what only a platform can create: the [Logger], the app lifecycle, the
- * location provider, the client identity for the `User-Agent` and the SQLite driver. [telemetry] binds the telemetry
+ * location provider, the client identity for the `User-Agent`, the SQLite driver, the settings store and the
+ * caches. [telemetry] binds the telemetry
  * contracts for the build (ADR-0009). [debug] builds list sample lines until LB-008 part 2 (owner decision,
  * 2026-11-02).
  */
@@ -101,6 +110,10 @@ private val favouritesDataModule =
 private val settingsModule =
     module {
         factory<ObserveLastSyncs> { DefaultObserveLastSyncs(get()) }
+        factory<ObservePreferences> { DefaultObservePreferences(get()) }
+        factory<SetTheme> { DefaultSetTheme(get()) }
+        factory<SetEtaFormat> { DefaultSetEtaFormat(get()) }
+        factory<ClearCache> { DefaultClearCache(get()) }
     }
 
 // LB-008 part 2 binds the static sync engine over the source, and the sample lines go.

@@ -7,10 +7,13 @@ import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.error
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.network.ClientIdentity
+import com.ruizurraca.logrobus.core.preferences.ThemePreference
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
+import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -122,6 +125,21 @@ class AndroidGraphTest {
             initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
 
             assertEquals(AppResult.Success(SampleLines.all), KoinPlatform.getKoin().get<ObserveLines>()().first())
+        }
+
+    @Test
+    fun lb403_settingsAreKeptOnTheDevice_acrossARestart() =
+        runTest {
+            // DataStore allows one active instance per file in a process: stopping the graph must release it, or the
+            // next graph, Robolectric's next test say, could not read the settings.
+            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+            KoinPlatform.getKoin().get<SetTheme>()(ThemePreference.DARK)
+            stopKoin()
+
+            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+            val restarted = KoinPlatform.getKoin().get<ObservePreferences>()().first()
+
+            assertEquals(ThemePreference.DARK, restarted.theme)
         }
 
     @Test

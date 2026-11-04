@@ -9,4 +9,30 @@
     <string name="about_last_sync_never">Not synced yet</string>
     <string name="about_dataset_lines">Lines</string>
     <string name="about_dataset_stops">Stops</string>
+
+    <!-- Settings (LB-403, FR-SET-01, design_guidelines.md §9, keys settings.*). -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System language</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_arrivals">Arrivals</string>
+    <string name="settings_eta_format">Arrival times</string>
+    <string name="settings_eta_format_minutes">Minutes</string>
+    <string name="settings_eta_format_minutes_example">For example, 5 min</string>
+    <string name="settings_eta_format_clock_time">Clock time</string>
+    <string name="settings_eta_format_clock_time_example">For example, 10:42</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_status">Lines and stops</string>
+    <!-- %1$s: the date and time of the oldest last successful sync, on the Madrid clock. -->
+    <string name="settings_data_status_synced">Updated: %1$s</string>
+    <string name="settings_data_status_never">Not synced yet</string>
+    <string name="settings_data_status_unknown">Can\'t be checked right now</string>
+    <string name="settings_clear_cache">Clear cache</string>
+    <string name="settings_clear_cache_detail">Your favourites and the lines and stops data are kept.</string>
+    <string name="settings_cache_cleared">Cache cleared</string>
+    <string name="settings_cache_failed">Couldn\'t clear the cache</string>
 </resources>

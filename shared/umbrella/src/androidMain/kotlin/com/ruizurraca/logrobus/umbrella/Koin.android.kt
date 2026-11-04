@@ -2,12 +2,20 @@ package com.ruizurraca.logrobus.umbrella
 
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
+import com.ruizurraca.logrobus.core.common.AppDispatchers
 import com.ruizurraca.logrobus.core.common.AppLifecycle
 import com.ruizurraca.logrobus.core.common.ProcessAppLifecycle
 import com.ruizurraca.logrobus.core.database.logroBusDriver
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.location.fusedLocationProvider
 import com.ruizurraca.logrobus.core.network.clientIdentity
+import com.ruizurraca.logrobus.core.preferences.PreferencesStore
+import com.ruizurraca.logrobus.core.preferences.dataStorePreferencesStore
+import com.ruizurraca.logrobus.feature.settings.data.appCaches
+import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.dsl.onClose
@@ -49,4 +57,11 @@ private fun androidModule(
     single<LocationProvider> { fusedLocationProvider(context, get()) }
     single { clientIdentity(appVersion) }
     single<SqlDriver> { logroBusDriver(context) } onClose { it?.close() }
+    // DataStore allows one active instance per file in a process (ADR-0018): its scope ends with the graph's, so a
+    // later graph can read the settings again.
+    single<PreferencesStore> {
+        val graph = get<CoroutineScope>(APPLICATION_SCOPE).coroutineContext[Job]
+        dataStorePreferencesStore(context, get(), CoroutineScope(get<AppDispatchers>().io + SupervisorJob(graph)))
+    }
+    single<AppCaches> { appCaches(context, get<AppDispatchers>().io, get()) }
 }

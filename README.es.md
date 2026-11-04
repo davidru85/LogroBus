@@ -18,7 +18,7 @@ La app se organiza en tres secciones y siempre se abre en **Líneas**. Funciona 
 
 Además, la app incluye:
 - Llegadas en tiempo real que indican claramente lo recientes y fiables que son las predicciones.
-- Español e inglés.
+- Español e inglés, y un tema claro u oscuro, que eliges en Ajustes, junto con cómo se muestran las llegadas (minutos u hora). Ajustes también dice cuándo se actualizaron por última vez las líneas y las paradas, y borra la caché.
 
 Previsto para la v1.0: modo sin conexión, noticias y avisos de servicio, tarifas, puntos de recarga, un widget para la pantalla de inicio y notificaciones.
 
@@ -27,8 +27,8 @@ Previsto para la v1.0: modo sin conexión, noticias y avisos de servicio, tarifa
 | Área | Tecnología |
 | --- | --- |
 | Arquitectura | Arquitectura limpia, organizada en módulos por funcionalidad; la capa de presentación (ViewModels e interfaz) se escribe para cada plataforma y los modelos de presentación son compartidos |
-| Código compartido | Kotlin Multiplatform: dominio, datos, red (Ktor), persistencia (SQLDelight) y modelos de presentación |
-| Android | Kotlin, Jetpack Compose, Material 3 Expressive; Reorderable para reordenar arrastrando (ADR-0019). Mínimo Android 8.0 (API 26) |
+| Código compartido | Kotlin Multiplatform: dominio, datos, red (Ktor), persistencia (SQLDelight), ajustes (Multiplatform Settings) y modelos de presentación |
+| Android | Kotlin, Jetpack Compose, Material 3 Expressive; Reorderable para reordenar arrastrando (ADR-0019); AppCompat para el idioma y el tema propios de la app (ADR-0020). Mínimo Android 8.0 (API 26) |
 | iOS | Swift, SwiftUI, Liquid Glass en iOS 26 o superior. Mínimo iOS 18, solo iPhone |
 | Mapas | MapLibre Native en ambas plataformas |
 | Ubicación | Fused Location Provider de los servicios de Google Play en Android, Core Location en iOS; solo en primer plano |
@@ -98,12 +98,17 @@ La documentación técnica está en inglés.
 | M1 Líneas | Sección Líneas | En curso |
 | M2 Cerca de mí | Sección Cerca de mí | Sin empezar |
 | M3 Cómo llegar | Planificador de viajes | Sin empezar |
-| M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | Sin empezar |
+| M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | En curso |
 | M5 v1.0 | Modo sin conexión, noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
 
 ### Cambios recientes
 
 - **03-11-2026:**
+  - LB-403: Ajustes, desde Más.
+    - Apariencia: el idioma de la app y su tema (el del sistema, claro u oscuro). En Android eliges el idioma en la app y cambia al momento; en iPhone la fila abre la página de la app en Ajustes del iPhone, donde iOS guarda el idioma de cada app (ADR-0020).
+    - Llegadas: los tiempos de llegada en minutos o en hora. Las pantallas de llegadas, que vienen después, lo seguirán.
+    - Datos: cuándo se actualizaron por última vez las líneas y las paradas, y "Borrar caché", que vacía las cachés de la app y conserva tus favoritas y las líneas y paradas.
+    - El tema y el formato de las llegadas se guardan en el dispositivo (Multiplatform Settings, ADR-0018).
   - LB-110: editar las líneas favoritas.
     - "Editar", junto a "Tus líneas favoritas", abre una hoja con todas tus líneas favoritas en tu orden. Arrastra una línea por su asa para moverla, o quítala; el carrusel lo refleja, y la estrella de una línea quitada se apaga. El orden se guarda en el dispositivo.
     - Una línea favorita que ya no circula no tiene tarjeta, pero la hoja la muestra, para poder quitarla.

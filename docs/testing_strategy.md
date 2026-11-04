@@ -101,6 +101,12 @@ Android unit tests run on the JVM with Robolectric, through each module's `ciUni
 - **Graphics:** test classes that assert on Compose UI use `@GraphicsMode(GraphicsMode.Mode.NATIVE)`. In the default LEGACY mode, text measures a few pixels wide and `assertIsDisplayed()` fails. Roborazzi needs NATIVE too.
 - **Espresso:** Compose UI Test brings Espresso 3.5.0, which calls `InputManager.getInstance()`, removed in API 37. Modules with Compose UI tests add `libs.androidx.test.espresso.core` (3.7.0).
 
+Two more things the app's tests learned with Settings (LB-403):
+- **Work on another thread:** Compose's test clock is virtual under Robolectric, so `waitUntil` does not wait for work on DataStore's own thread. A test that waits for a saved setting polls in real time (`AppSettingsTest.eventually`).
+- **Process-wide state:** Robolectric runs a module's tests in one process, and AppCompat keeps its night mode and application locales for the whole process. A test that sets them resets them after itself; `setDefaultNightMode` refuses "unspecified", so `forgetAppCompatsNightMode()` sets AppCompat's field, as a cold start finds it. DataStore allows one active instance per file in a process, which is why the graph gives it a scope that ends with the graph.
+- **One Android version:** Robolectric runs the target SDK, and does not reconfigure the app when the system's per-app night mode or locales change. Code that differs by version takes the version as a parameter, which tests pass (`applyTheme(context, theme, sdk)`), rather than download another SDK in every CI job.
+- **Dialogs at large text:** a dialog is a window of its own, whose density comes from the configuration, so its tests and screenshots set `RuntimeEnvironment.setFontScale(2f)` rather than the screen's `LocalDensity`.
+
 ### 4.6 Screenshots
 
 - **Android:** Roborazzi (1.77.0) on the JVM, with Robolectric's native graphics.

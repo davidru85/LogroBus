@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft; store declarations are prepared as the final MVP step (LB-414) |
-| Last updated | 2026-10-27 |
+| Last updated | 2026-11-03 |
 | Based on | Spec NFR-SEC-01 to 05, NFR-PRIV-01 to 05 |
 
 LogroBus has no accounts, no project-owned servers and no advertising. This document records what data the app handles, which permissions it uses, the security controls, and the draft store declarations. **It is not legal advice; the owner validates the privacy policy and the store answers before release.**
@@ -22,7 +22,7 @@ LogroBus has no accounts, no project-owned servers and no advertising. This docu
 | Precise or approximate location | OS, when the user is on Near Me or plans from "My location": Google Play services' Fused Location Provider on Android, Core Location on iOS | Memory only | Yes, as coordinates in API-07 and API-08 requests | Logroño transport BFF | Nearby stops, walking distances, trip planning |
 | Coordinates of map points and saved places used in a plan | User | Saved places: on-device database | Yes, in API-07 requests | Logroño transport BFF | Trip planning |
 | Address search text | User | No | Yes, in geocoder requests | CartoCiudad (IGN) | Address suggestions |
-| Favourites, saved places, recent searches, settings | User | On-device database and settings | Only through the user's own OS backup (Android Auto Backup, iCloud) | The user's Google or Apple account | Persistence (FR-FAV-03) |
+| Favourites, saved places, recent searches, settings | User | On-device database and settings. The settings (LB-403) are the theme and the ETA format, as enum names, in a DataStore file on Android and the app's user defaults on iOS (ADR-0018); the app's language is kept by the OS (ADR-0020). "Clear cache" empties only the app's cache directories | Only through the user's own OS backup (Android Auto Backup, iCloud) | The user's Google or Apple account | Persistence (FR-FAV-03) |
 | IP address and `User-Agent` | Inherent to HTTPS | No | Yes | BFF, CartoCiudad, map tile provider | Network transport |
 | Analytics events and crash reports | Telemetry contracts (ADR-0009, LB-017): typed events and breadcrumbs with ids, counts, flags and enums only (a Konsist rule), consent-gated per kind and opt-in; crash reports carry error types and stacks, never messages (`RedactedThrowable`); no-op in release builds and console logging in debug builds until the vendor is chosen. The vendor SDKs must ship with automatic collection off and tied to consent (LB-409). `StopView` and `LineView`, with a vendor's install id and timestamps, could hint at someone's usual stops: the privacy declarations (LB-414) must cover them | none | Only with consent, once a vendor is active (likely Firebase Analytics and Crashlytics, OQ-16) | Vendor to be confirmed | Stability and product metrics |
 

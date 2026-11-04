@@ -65,7 +65,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-202 | Near Me map: user location, initial camera rules, stop pins with clustering, selected-stop styling | FR-NEAR-01, FR-NEAR-08, FR-STOP-10, spec §7.4 | P0 | todo |
 | LB-203 | Persistent bottom sheet with detents; "Near you" list of the 5 closest stops within 800 m, sorted by walking distance (API-08, at most 40 candidates) | FR-NEAR-02, FR-NEAR-03, FR-HOME-03, FR-STOP-11, NFR-A11Y-04 | P0 | todo |
 | LB-204 | "My stops" section: saved stops with their next 3 arrivals; empty state with "Find a stop" | FR-NEAR-03, FR-HOME-02, FR-HOME-07 (adapted) | P0 | todo |
-| LB-205 | Stop detail (sheet in Near Me, pushed screen elsewhere): header with headsigns, served lines, arrivals from API-06 with `previewMinutes = 60`, ETA rules, "Updated N s ago", 20 s refresh | FR-NEAR-04, FR-NAV-07, FR-STOP-03 to 05, spec §5.7 | P0 | todo |
+| LB-205 | Stop detail (sheet in Near Me, pushed screen elsewhere): header with headsigns, served lines, arrivals from API-06 with `previewMinutes = 60`, ETA rules, "Updated N s ago", 20 s refresh. The ETA display rule, `EtaDisplay.of` with the user's ETA format, was built early in LB-403; the list still drops arrivals more than a minute past | FR-NEAR-04, FR-NAV-07, FR-STOP-03 to 05, spec §5.7 | P0 | todo |
 | LB-206 | Empty arrivals message, and the night-service text from remote config for night-only stops | FR-STOP-06, OQ-08 | P0 | todo |
 | LB-207 | Line filter chips and "Group by line" in stop detail | FR-STOP-04, FR-STOP-07 | P1 | todo |
 | LB-208 | Save a stop with an alias (up to 30 characters); edit saved stops (reorder, rename, delete) | FR-STOP-08, FR-FAV-01, FR-FAV-02, FR-FAV-05 | P0 | todo |
@@ -97,7 +97,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | --- | --- | --- | --- | --- |
 | LB-401 | Network error handling on every screen: retry with backoff, previous data kept with its freshness, error state with reason and Retry, silent static-refresh failures (no offline mode, ADR-0008) | FR-ERR-03, FR-ERR-04, FR-ERR-05 | P0 | todo |
 | LB-402 | Standard UX states on every data-driven screen, with screenshot tests (light, dark, 200 % font) | Spec §7.3, §10.6 | P0 | todo |
-| LB-403 | Settings: language, theme, ETA format, data refresh status, clear cache | FR-SET-01 | P0 | todo |
+| LB-403 | Settings: language, theme, ETA format, data refresh status, clear cache. Done: three sections; the language through AppCompat on Android and the system's Settings on iOS (ADR-0020); the theme and the ETA format in `:shared:core:preferences` (ADR-0018); `EtaDisplay.of` applies the ETA format, for LB-205 | FR-SET-01 | P0 | done |
 | LB-404 | About data: data source, last sync per dataset, prediction disclaimer, attributions. Done early, with LB-010 part 2: the last sync per dataset (shared use case and mapper, both screens), reachable from More since LB-012 | FR-SET-03, NFR-PRIV-05 | P0 | in-progress |
 | LB-405 | Localisation es and en, plurals, Madrid time display, locale formatting | NFR-I18N-01 to 03 | P0 | todo |
 | LB-406 | Accessibility pass: spoken labels, 200 % font, contrast, polite announcements, list equivalents, glass legibility | NFR-A11Y-01 to 06 | P0 | todo |

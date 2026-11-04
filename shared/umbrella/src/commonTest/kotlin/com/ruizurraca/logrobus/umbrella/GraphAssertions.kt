@@ -10,9 +10,15 @@ import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.PollingEngine
+import com.ruizurraca.logrobus.core.preferences.PreferencesStore
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
 import com.ruizurraca.logrobus.core.telemetry.ConsentStore
 import com.ruizurraca.logrobus.core.telemetry.CrashReporter
+import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
+import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
+import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
+import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
+import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import org.koin.core.Koin
 import kotlin.test.assertSame
 
@@ -33,6 +39,13 @@ internal fun assertResolvesTheCore(koin: Koin) {
         AnalyticsTracker::class,
         CrashReporter::class,
         ConsentStore::class,
+        // Settings (LB-403): the platform's store and caches, and the use cases Android's ViewModels take from Koin.
+        PreferencesStore::class,
+        AppCaches::class,
+        ObservePreferences::class,
+        SetTheme::class,
+        SetEtaFormat::class,
+        ClearCache::class,
     ).forEach { koin.get<Any>(it) }
     // One clock for the whole app: the source client corrects it, and the polling engine and screens read it.
     assertSame(koin.get<ServerCorrectedClock>(), koin.get<AppClock>())

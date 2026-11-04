@@ -18,7 +18,7 @@ The app is organised into three sections and always opens on **Lines**. It runs 
 
 The app also includes:
 - Real-time arrivals with a visible indication of how fresh and how reliable each prediction is.
-- Spanish and English.
+- Spanish and English, and a light or dark theme, which you can choose in Settings, with how arrival times show (minutes or clock time). Settings also says when the lines and stops were last updated, and clears the cache.
 
 Planned for v1.0: offline mode, news and service notices, fares, recharge points, a home-screen widget and notifications.
 
@@ -27,8 +27,8 @@ Planned for v1.0: offline mode, news and service notices, fares, recharge points
 | Area | Technology |
 | --- | --- |
 | Architecture | Clean architecture, organised in feature modules; the presentation layer (ViewModels and UI) is written per platform, and the presentation models are shared |
-| Shared code | Kotlin Multiplatform: domain, data, networking (Ktor), persistence (SQLDelight), presentation models |
-| Android | Kotlin, Jetpack Compose, Material 3 Expressive; Reorderable for drag to reorder (ADR-0019). Minimum Android 8.0 (API 26) |
+| Shared code | Kotlin Multiplatform: domain, data, networking (Ktor), persistence (SQLDelight), settings (Multiplatform Settings), presentation models |
+| Android | Kotlin, Jetpack Compose, Material 3 Expressive; Reorderable for drag to reorder (ADR-0019); AppCompat for the app's own language and theme (ADR-0020). Minimum Android 8.0 (API 26) |
 | iOS | Swift, SwiftUI, Liquid Glass on iOS 26+. Minimum iOS 18, iPhone only |
 | Maps | MapLibre Native on both platforms |
 | Location | Google Play services' Fused Location Provider on Android, Core Location on iOS; foreground only |
@@ -96,12 +96,17 @@ You will need:
 | M1 Lines | Lines section | In progress |
 | M2 Near Me | Near Me section | Not started |
 | M3 How to Get There | Trip planner | Not started |
-| M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, privacy declarations | Not started |
+| M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, privacy declarations | In progress |
 | M5 v1.0 | Offline mode, news, fares, recharge points, widget, notifications, release | Not started |
 
 ### Recent changes
 
 - **2026-11-03:**
+  - LB-403: Settings, from More.
+    - Appearance: the app's language and its theme (system, light or dark). On Android you pick the language in the app, which switches at once; on iPhone the row opens the app's page in the iPhone's Settings, where iOS keeps an app's language (ADR-0020).
+    - Arrivals: arrival times as minutes or as clock times. The arrival screens, which come next, will follow it.
+    - Data: when the lines and stops were last updated, and "Clear cache", which empties the app's caches and keeps your favourites and the lines and stops.
+    - The theme and the arrival format are kept on the device (Multiplatform Settings, ADR-0018).
   - LB-110: editing the favourite lines.
     - "Edit", beside "Your favourite lines", opens a sheet with every favourite line in your order. Drag a line by its handle to move it, or remove it; the carousel follows, and a removed line's star goes off. The order is kept on the device.
     - A favourite line that is no longer in service has no card, but the sheet lists it, so it can be removed.

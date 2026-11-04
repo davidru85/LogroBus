@@ -2,6 +2,7 @@ import XCTest
 
 /// LB-012: the three tabs (FR-NAV-01, FR-NAV-02), each with its own stack (FR-NAV-03), and More from every tab root
 /// (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data. LB-101: the Lines list at the Lines root.
+/// LB-403: Settings, end to end.
 final class ShellUITests: XCTestCase {
 
     @MainActor
@@ -174,6 +175,44 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
         XCTAssertTrue(favouriteCard("3", in: app).waitForNonExistence(timeout: 5), "line 3 left the carousel")
         XCTAssertTrue(app.buttons["Add line 3 to favourites"].exists, "line 3's star is off")
+    }
+
+    @MainActor
+    func test_lb403_settingsOffersItsChoices_aThemeAppliesAtOnce_andClearCacheSaysSo() {
+        // FR-SET-01 through the debug build's graph and the device's settings. The test leaves the theme as it found
+        // it, the system's.
+        let app = launch()
+        app.navigationBars["Lines"].buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+
+        // ADR-0020: the language is the system's per-app setting, which the row opens; launched in English.
+        let language = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Language")).firstMatch
+        XCTAssertTrue(language.waitForExistence(timeout: 5))
+        XCTAssertTrue(language.label.contains("English"), "the language row says English: \(language.label)")
+        // A menu picker reads as its name and the choice in use, whatever the device saved.
+        let etaFormat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Arrival times, ")).firstMatch
+        XCTAssertTrue(etaFormat.waitForExistence(timeout: 5), "the ETA format's picker")
+
+        addTeardownBlock { @MainActor in self.choose("System", in: "Theme", app: app) }
+        choose("Dark", in: "Theme", app: app)
+
+        app.buttons["Clear cache"].tap()
+        let cleared = app.alerts["Cache cleared"]
+        XCTAssertTrue(cleared.waitForExistence(timeout: 5))
+        cleared.buttons.firstMatch.tap()
+        XCTAssertTrue(cleared.waitForNonExistence(timeout: 5))
+    }
+
+    /// Chooses `option` in the menu of the picker named `picker`, which reads as its name and the choice in use, and
+    /// waits until the picker shows it.
+    @MainActor
+    private func choose(_ option: String, in picker: String, app: XCUIApplication) {
+        let button = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "\(picker), ")).firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        button.tap()
+        app.buttons[option].firstMatch.tap()
+        XCTAssertTrue(app.buttons["\(picker), \(option)"].waitForExistence(timeout: 5), "\(picker) shows \(option)")
     }
 
     /// Takes line `code` out of the favourites, if it is one, from its row's toggle.

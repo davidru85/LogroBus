@@ -40,7 +40,7 @@ import com.ruizurraca.logrobus.android.core.navigation.SettingsKey
 import com.ruizurraca.logrobus.android.feature.lines.LineDetailRoute
 import com.ruizurraca.logrobus.android.feature.lines.LinesRoute
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataRoute
-import com.ruizurraca.logrobus.android.feature.settings.SettingsScreen
+import com.ruizurraca.logrobus.android.feature.settings.SettingsRoute
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
 /**
@@ -164,7 +164,7 @@ internal fun screens(
                 onBack = navigator::goBack,
             )
         }
-        entry<SettingsKey>(onTab) { SettingsScreen(onBack = navigator::goBack) }
+        entry<SettingsKey>(onTab) { SettingsRoute(onBack = navigator::goBack) }
         entry<AboutDataKey>(onTab) { AboutDataRoute(onBack = navigator::goBack) }
     }
 }

@@ -3,6 +3,9 @@ package com.ruizurraca.logrobus.umbrella
 import app.cash.turbine.test
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.preferences.EtaFormat
+import com.ruizurraca.logrobus.core.preferences.ThemePreference
+import com.ruizurraca.logrobus.core.preferences.UserPreferences
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
@@ -252,6 +255,57 @@ class PreviewUseCasesTest {
 
             assertEquals(AppResult.Failure(AppError.Data), preview.setFavouriteLine()(lineId = 3, isFavourite = true))
             assertEquals(AppResult.Failure(AppError.Data), preview.reorderFavouriteLines()(listOf(10)))
+        }
+
+    @Test
+    fun lb403_thePreviewStartsWithTheDefaultSettings() =
+        runTest {
+            assertEquals(UserPreferences(), SharedDependencies.preview().observePreferences()().first())
+        }
+
+    @Test
+    fun lb403_thePreviewCanScriptTheSettings() =
+        runTest {
+            val preview = SharedDependencies.preview().settings(ThemePreference.DARK, EtaFormat.CLOCK_TIME)
+
+            assertEquals(
+                UserPreferences(ThemePreference.DARK, EtaFormat.CLOCK_TIME),
+                preview.observePreferences()().first(),
+            )
+        }
+
+    @Test
+    fun lb403_aSettingChangedInThePreviewShowsAtOnce() =
+        runTest {
+            val preview = SharedDependencies.preview()
+
+            preview.observePreferences()().test {
+                assertEquals(UserPreferences(), awaitItem())
+                assertEquals(AppResult.Success(Unit), preview.setTheme()(ThemePreference.LIGHT))
+                assertEquals(UserPreferences(theme = ThemePreference.LIGHT), awaitItem())
+                assertEquals(AppResult.Success(Unit), preview.setEtaFormat()(EtaFormat.CLOCK_TIME))
+                assertEquals(UserPreferences(ThemePreference.LIGHT, EtaFormat.CLOCK_TIME), awaitItem())
+            }
+        }
+
+    @Test
+    fun lb403_thePreviewCountsTheTimesTheCacheWasCleared() =
+        runTest {
+            val preview = SharedDependencies.preview()
+
+            assertEquals(AppResult.Success(Unit), preview.clearCache()())
+            assertEquals(1, preview.cacheClears)
+        }
+
+    @Test
+    fun lb403_aFailingPreviewFailsToSaveASettingOrClearTheCache() =
+        runTest {
+            val preview = SharedDependencies.preview().failing()
+
+            assertEquals(AppResult.Failure(AppError.Data), preview.setTheme()(ThemePreference.DARK))
+            assertEquals(AppResult.Failure(AppError.Data), preview.setEtaFormat()(EtaFormat.CLOCK_TIME))
+            assertEquals(AppResult.Failure(AppError.Data), preview.clearCache()())
+            assertEquals(0, preview.cacheClears)
         }
 
     @Test
