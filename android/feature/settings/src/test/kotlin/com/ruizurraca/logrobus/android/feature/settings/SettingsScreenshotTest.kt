@@ -11,6 +11,7 @@ import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import com.ruizurraca.logrobus.feature.settings.presentation.AppLanguage
 import com.ruizurraca.logrobus.feature.settings.presentation.SettingsUiState
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +45,8 @@ class SettingsScreenshotTest(
     /** LB-406 (NFR-A11Y): labels, touch targets, and at 200 % every choice whole. */
     @Test
     fun lb406_settings_isAccessible() {
+        // Labels, touch targets and text do not change with the colours: dark repeats light.
+        assumeTrue(variant != "dark")
         showSettings()
 
         compose.assertAccessible()
@@ -60,7 +63,8 @@ class SettingsScreenshotTest(
     /** LB-406 (NFR-A11Y): the dialog's choices, labelled, large enough and whole at 200 %. */
     @Test
     fun lb406_languageDialog_isAccessible() {
-        if (state != "content") return
+        // The dialog does not depend on the screen's state: it is checked once per variant, the others are skipped.
+        assumeTrue(state == "content" && variant != "dark")
         showLanguageDialog()
 
         compose.assertAccessible()

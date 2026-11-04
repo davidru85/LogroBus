@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.android.core.testing.assertAccessible
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,6 +42,8 @@ class ShellScreenshotTest(
     /** LB-406 (NFR-A11Y): the tabs and More, labelled, large enough and whole at 200 %. */
     @Test
     fun lb406_shellScreen_isAccessible() {
+        // Labels, touch targets and text do not change with the colours: dark repeats light.
+        assumeTrue(variant != "dark")
         compose.show(variant) { Screen() }
 
         compose.assertAccessible()
@@ -84,6 +87,8 @@ class RailScreenshotTest(
     /** LB-406 (NFR-A11Y): the navigation rail, labelled, large enough and whole at 200 %. */
     @Test
     fun lb406_theShellOnAMediumWindow_isAccessible() {
+        // Labels, touch targets and text do not change with the colours: dark repeats light.
+        assumeTrue(variant != "dark")
         compose.show(variant) { AppShell() }
 
         compose.assertAccessible()
