@@ -108,7 +108,8 @@ public struct SettingsView: View {
                         .foregroundStyle(Tokens.Colors.secondaryText)
                     // The row opens the iPhone's Settings, outside the app.
                     Image(systemName: "arrow.up.forward.app")
-                        .foregroundStyle(.tertiary)
+                        // LB-406: the one sign that the row leaves the app, so at least 3:1 (WCAG 1.4.11).
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                         .accessibilityHidden(true)
                 }
             } label: {

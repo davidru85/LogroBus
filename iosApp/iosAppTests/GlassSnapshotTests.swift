@@ -17,6 +17,8 @@ struct GlassSnapshotTests {
                 FloatingControls(primaryEnabled: look != .disabled)
                     .environment(\.glassRendering, rendering)
                     .environment(\.dynamicTypeSize, look == .largeText ? .accessibility3 : .large)
+                    // The app's tint, as its root sets it (LB-406).
+                    .appTint()
             ),
             as: .image(
                 drawHierarchyInKeyWindow: true,

@@ -71,6 +71,8 @@ enum Appearance: CaseIterable, Sendable {
                 .environment(\.dynamicTypeSize, self == .largeText ? .accessibility3 : .large)
                 .padding(Tokens.Spacing.small)
                 .background(Color(uiColor: .systemBackground))
+                // The app's tint, as its root sets it (LB-406).
+                .appTint()
         )
     }
 }

@@ -61,7 +61,12 @@ package.targets.append(
 package.targets.append(
     .testTarget(
         name: "FeatureLinesTests",
-        dependencies: ["FeatureLines", "Shared", .product(name: "SnapshotTesting", package: "swift-snapshot-testing")],
+        dependencies: [
+            "DesignSystem",
+            "FeatureLines",
+            "Shared",
+            .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+        ],
         exclude: ["__Snapshots__"],
         linkerSettings: linksShared
     )

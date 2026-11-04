@@ -24,34 +24,44 @@ struct TokensTests {
         }
     }
 
-    /// LB-406 (NFR-A11Y-01): the screens draw on the system's backgrounds, a grouped list's and its rows', so the
-    /// accent, which tints every control, and the secondary text reach 4.5:1 on them too, where the system's blue and
-    /// secondary grey do not.
+    /// LB-406 (NFR-A11Y-01): the screens draw on the system's backgrounds, a grouped list's and its rows', and a
+    /// sheet's raised ones, so the accent, which tints every control, and the secondary text reach 4.5:1 on them too,
+    /// with Increase Contrast as without, where the system's blue and secondary grey do not.
     @Test(arguments: [(UIUserInterfaceStyle.light, Tokens.light), (.dark, Tokens.dark)])
     func lb406_theAccentAndTheSecondaryTextReach4point5To1OnTheSystemsBackgrounds(
         style: UIUserInterfaceStyle,
         palette: Tokens.Palette
-    ) {
+    ) throws {
         let backgrounds: [(String, UIColor)] = [
             ("background", .systemBackground),
             ("grouped background", .systemGroupedBackground),
             ("grouped row", .secondarySystemGroupedBackground)
         ]
         for (name, background) in backgrounds {
-            let resolved = argb(background, style)
-            for (role, text) in [("accent", palette.accent), ("secondary text", palette.secondaryText)] {
-                #expect(contrastRatio(first: resolved, second: text) >= 4.5, "\(role) on the \(name), \(style)")
+            for level in [UIUserInterfaceLevel.base, .elevated] {
+                for contrast in [UIAccessibilityContrast.normal, .high] {
+                    let traits = UITraitCollection { traits in
+                        traits.userInterfaceStyle = style
+                        traits.userInterfaceLevel = level
+                        traits.accessibilityContrast = contrast
+                    }
+                    let resolved = try argb(background, traits)
+                    for (role, text) in [("accent", palette.accent), ("secondary text", palette.secondaryText)] {
+                        let ratio = contrastRatio(first: resolved, second: text)
+                        #expect(ratio >= 4.5, "\(role) on the \(name), \(style), \(level), \(contrast)")
+                    }
+                }
             }
         }
     }
 
-    /// The colour as opaque ARGB, in `style`.
-    private func argb(_ color: UIColor, _ style: UIUserInterfaceStyle) -> Int64 {
+    /// The colour as opaque ARGB, resolved with `traits`.
+    private func argb(_ color: UIColor, _ traits: UITraitCollection) throws -> Int64 {
         var red: CGFloat = 0
         var green: CGFloat = 0
         var blue: CGFloat = 0
-        color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
-            .getRed(&red, green: &green, blue: &blue, alpha: nil)
+        let converted = color.resolvedColor(with: traits).getRed(&red, green: &green, blue: &blue, alpha: nil)
+        try #require(converted, "\(color) has RGB components")
         let channels = [red, green, blue].map { Int64(($0 * 255).rounded()) }
         return 0xFF00_0000 | channels[0] << 16 | channels[1] << 8 | channels[2]
     }
