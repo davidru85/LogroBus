@@ -90,4 +90,14 @@ class AccessibilityChecksTest {
 
         assertTrue(failure.message, "B1" in failure.message.orEmpty())
     }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.LEGACY)
+    fun lb406_withLegacyGraphics_whichMeasureNoText_theChecksFail_insteadOfPassingUnseen() {
+        compose.setContent { Text("Hospital San Pedro") }
+
+        val failure = assertThrows(AssertionError::class.java) { compose.assertAccessible() }
+
+        assertTrue(failure.message, "GraphicsMode.Mode.NATIVE" in failure.message.orEmpty())
+    }
 }
