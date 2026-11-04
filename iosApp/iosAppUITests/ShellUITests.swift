@@ -2,7 +2,7 @@ import XCTest
 
 /// LB-012: the three tabs (FR-NAV-01, FR-NAV-02), each with its own stack (FR-NAV-03), and More from every tab root
 /// (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data. LB-101: the Lines list at the Lines root.
-/// LB-403: Settings, end to end.
+/// LB-403: Settings, end to end. LB-405: the language a device in another language gets.
 final class ShellUITests: XCTestCase {
 
     @MainActor
@@ -13,6 +13,22 @@ final class ShellUITests: XCTestCase {
     @MainActor
     func test_lb012_theTabsAreInOrder_withLinesSelected_inSpanish() {
         assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: launch(language: "es", region: "es_ES"))
+    }
+
+    @MainActor
+    func test_lb405_aDeviceInAnotherLanguage_getsEnglish_asIosDecides() {
+        // NFR-I18N-01: with none of the device's languages in the app, iOS picks English whenever the app has it,
+        // whatever its development language. Android picks Spanish (owner decision, 2026-11-04, ADR-0020).
+        let app = launch(language: "fr", region: "fr_FR")
+        assertTabs(["Lines", "Near me", "Directions"], in: app)
+    }
+
+    @MainActor
+    func test_lb405_theDevicesFirstLanguageThatTheAppSpeaks_isTheAppsLanguage() {
+        let app = launch(language: "fr, es", region: "fr_FR")
+        assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: app)
+        app.navigationBars["Líneas"].buttons["Más"].tap()
+        XCTAssertTrue(app.buttons["Ajustes"].waitForExistence(timeout: 5))
     }
 
     @MainActor
