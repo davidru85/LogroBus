@@ -3,7 +3,9 @@ package com.ruizurraca.logrobus.architecture
 import com.ruizurraca.logrobus.architecture.UiTextRules.catalogueKeys
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedKotlinUiText
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedSwiftUiText
+import com.ruizurraca.logrobus.architecture.UiTextRules.isCatalogueKey
 import com.ruizurraca.logrobus.architecture.UiTextRules.swiftCatalogueKeys
+import com.ruizurraca.logrobus.architecture.UiTextRules.unbundledSwiftKeys
 import com.ruizurraca.logrobus.architecture.UiTextRules.untranslatedCatalogueEntries
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -29,7 +31,7 @@ class LocalisationTest {
     @Test
     fun lb405_iosUiCodeHasNoHardcodedUserFacingText() {
         val findings =
-            (swiftSources("iosApp/iosApp") + swiftSources("iosApp/Packages/LogroBusUI/Sources")).flatMap { file ->
+            iosTargets().flatMap(::swiftSources).flatMap { file ->
                 hardcodedSwiftUiText(file.readText()).map { "${file.relativePath()}:${it.line}: \"${it.text}\"" }
             }
 
@@ -50,7 +52,7 @@ class LocalisationTest {
     fun lb405_everyKeyTheIosCodeUsesIsInItsTargetsCatalogue() {
         val missing =
             iosTargets().flatMap { target ->
-                val used = swiftSources(target.relativePath()).flatMap { swiftCatalogueKeys(it.readText()) }
+                val used = swiftSources(target).flatMap { swiftCatalogueKeys(it.readText()) }
                 val catalogued = catalogueOf(target)?.let(::keysOf).orEmpty()
                 (used.toSet() - catalogued).sorted().map { "${target.relativePath()}: $it" }
             }
@@ -58,14 +60,53 @@ class LocalisationTest {
         assertEquals(emptyList<String>(), missing, "Add the key to the target's Localizable.xcstrings")
     }
 
-    /** The app target and each target of the Swift package, whose strings live in a catalogue of their own. */
+    @Test
+    fun lb405_packageTargetsLookTheirKeysUpInTheirOwnBundles() {
+        val unbundled =
+            packageTargets().flatMap(::swiftSources).flatMap { file ->
+                unbundledSwiftKeys(file.readText()).map { "${file.relativePath()}:${it.line}: \"${it.text}\"" }
+            }
+
+        assertEquals(emptyList<String>(), unbundled, "Name the target's bundle: Text(\"key\", bundle: .module)")
+    }
+
+    @Test
+    fun lb405_everyIosCatalogueKeyIsInUse() {
+        // Xcode never marks a key added by hand as stale, so an unused one would stay, and need translating, for ever.
+        val unused =
+            iosTargets().flatMap { target ->
+                val used = swiftSources(target).flatMap { swiftCatalogueKeys(it.readText()) }.toSet()
+                val catalogued = catalogueOf(target)?.let(::keysOf).orEmpty().filter(::isCatalogueKey)
+                (catalogued - used).sorted().map { "${target.relativePath()}: $it" }
+            }
+
+        assertEquals(emptyList<String>(), unused, "Remove the key from the catalogue, or use it")
+    }
+
+    /**
+     * Every target with Swift code of its own, each with its own catalogue: the app and any extension beside it, and
+     * each target of the Swift packages. Test targets are left out.
+     */
     private fun iosTargets(): List<File> =
-        listOf(root.resolve("iosApp/iosApp")) +
-            root
-                .resolve("iosApp/Packages/LogroBusUI/Sources")
-                .listFiles(File::isDirectory)
-                .orEmpty()
-                .sortedBy { it.name }
+        root
+            .resolve("iosApp")
+            .listFiles(File::isDirectory)
+            .orEmpty()
+            .filter { it.name !in IOS_NON_TARGETS && !it.name.endsWith("Tests") && swiftSources(it).isNotEmpty() }
+            .sortedBy { it.name } + packageTargets()
+
+    private fun packageTargets(): List<File> =
+        root
+            .resolve("iosApp/Packages")
+            .listFiles(File::isDirectory)
+            .orEmpty()
+            .flatMap {
+                it
+                    .resolve("Sources")
+                    .listFiles(File::isDirectory)
+                    .orEmpty()
+                    .toList()
+            }.sortedBy { it.path }
 
     private fun catalogueOf(target: File): File? =
         listOf(
@@ -75,10 +116,10 @@ class LocalisationTest {
 
     private fun keysOf(catalogue: File): Set<String> = catalogueKeys(catalogue.readText())
 
-    private fun swiftSources(directory: String): List<File> =
-        root
-            .resolve(directory)
+    private fun swiftSources(directory: File): List<File> =
+        directory
             .walkTopDown()
+            .onEnter { it.name != "build" && !it.name.startsWith(".") }
             .filter { it.isFile && it.extension == "swift" }
             .sortedBy { it.path }
             .toList()
@@ -97,4 +138,9 @@ class LocalisationTest {
             .toList()
 
     private fun File.relativePath(): String = relativeTo(root).invariantSeparatorsPath
+
+    private companion object {
+        // iosApp's folders that are not targets: the packages, the generated project and build outputs.
+        val IOS_NON_TARGETS = setOf("Packages", "Configuration", "iosApp.xcodeproj", "build", "DerivedData")
+    }
 }

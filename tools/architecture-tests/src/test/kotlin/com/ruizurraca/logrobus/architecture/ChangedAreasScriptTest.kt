@@ -78,6 +78,9 @@ class ChangedAreasScriptTest {
             "iosApp/Packages/LogroBusUI/Sources/FeatureSettings/SettingsView.swift",
             "iosApp/iosApp/Localizable.xcstrings",
             "iosApp/Packages/LogroBusUI/Sources/FeatureLines/Resources/Localizable.xcstrings",
+            // An extension target beside the app, such as v1.0's widget, has text of its own.
+            "iosApp/LogroBusWidget/ArrivalsWidget.swift",
+            "iosApp/LogroBusWidget/Localizable.xcstrings",
         ).forEach { path ->
             repo.listFiles()?.forEach { it.deleteRecursively() }
             commitBase("README.md")
