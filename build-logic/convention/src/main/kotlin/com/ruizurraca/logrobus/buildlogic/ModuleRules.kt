@@ -73,11 +73,12 @@ object ModuleRules {
         to: ModuleKind,
     ): String? {
         if (to is ModuleKind.Unknown) return "the target is not a classified module"
-        if (to == ModuleKind.Testing) return "production code must not depend on the testing module"
+        if (to.isTesting && !from.isTesting) return "production code must not depend on a testing module"
         val allowed =
             when (from) {
                 is ModuleKind.Core -> to is ModuleKind.Core
                 ModuleKind.Testing -> to is ModuleKind.Core || to is ModuleKind.Domain
+                ModuleKind.AndroidTesting -> to is ModuleKind.Core || to is ModuleKind.AndroidCore
                 is ModuleKind.Domain -> to == ModuleKind.Core("common")
                 is ModuleKind.Data -> to is ModuleKind.Core || to == ModuleKind.Domain(from.capability)
                 is ModuleKind.Feature -> to is ModuleKind.Core || to is ModuleKind.Domain
@@ -122,6 +123,10 @@ object ModuleRules {
     /** Infrastructure libraries belong to their core [owner] plus data modules and the data packages of features. */
     private fun ModuleKind.mayUse(owner: ModuleKind.Core): Boolean =
         this == owner || this is ModuleKind.Data || this is ModuleKind.Feature
+
+    /** The test-support modules, which only test configurations may use. */
+    private val ModuleKind.isTesting: Boolean
+        get() = this == ModuleKind.Testing || this == ModuleKind.AndroidTesting
 
     private fun String.isInGroup(group: String): Boolean = this == group || startsWith("$group.")
 
@@ -182,6 +187,11 @@ internal sealed interface ModuleKind {
         override val label = "Android core"
     }
 
+    /** LB-406: `:android:core:testing`, helpers for the Android UI tests. */
+    data object AndroidTesting : ModuleKind {
+        override val label = "Android testing"
+    }
+
     data class AndroidFeature(
         val name: String,
     ) : ModuleKind {
@@ -236,6 +246,7 @@ internal sealed interface ModuleKind {
                 root == "shared" && group == "feature" -> Feature(name)
                 root == "shared" && group in capabilities && name == "domain" -> Domain(group)
                 root == "shared" && group in capabilities && name == "data" -> Data(group)
+                root == "android" && group == "core" && name == "testing" -> AndroidTesting
                 root == "android" && group == "core" -> AndroidCore(name)
                 root == "android" && group == "feature" -> AndroidFeature(name)
                 else -> Unknown
