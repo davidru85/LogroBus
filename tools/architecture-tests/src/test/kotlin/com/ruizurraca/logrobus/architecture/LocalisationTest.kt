@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.architecture
 
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedKotlinUiText
+import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedSwiftUiText
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -21,6 +22,24 @@ class LocalisationTest {
 
         assertEquals(emptyList<String>(), findings, "Take user-facing text from the string resources")
     }
+
+    @Test
+    fun lb405_iosUiCodeHasNoHardcodedUserFacingText() {
+        val findings =
+            (swiftSources("iosApp/iosApp") + swiftSources("iosApp/Packages/LogroBusUI/Sources")).flatMap { file ->
+                hardcodedSwiftUiText(file.readText()).map { "${file.relativePath()}:${it.line}: \"${it.text}\"" }
+            }
+
+        assertEquals(emptyList<String>(), findings, "Take user-facing text from the string catalogues, by key")
+    }
+
+    private fun swiftSources(directory: String): List<File> =
+        root
+            .resolve(directory)
+            .walkTopDown()
+            .filter { it.isFile && it.extension == "swift" }
+            .sortedBy { it.path }
+            .toList()
 
     /** The main source files with [extension] under [directory], without build outputs. */
     private fun sources(

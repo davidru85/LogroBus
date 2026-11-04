@@ -22,9 +22,67 @@ object UiTextRules {
             .map { UiTextFinding(source.lineAt(it.start), it.text) }
     }
 
-    /** The hard-coded user-facing text in a Swift [source]. */
-    @Suppress("UNUSED_PARAMETER") // TDD: red.
-    fun hardcodedSwiftUiText(source: String): List<UiTextFinding> = emptyList()
+    /**
+     * The hard-coded user-facing text in a Swift [source]. A string literal with a letter is user-facing where SwiftUI
+     * shows or speaks it: the title of `Text`, `Button` and their kin, a navigation title, an accessibility label, an
+     * alert or a search prompt. There it must be a catalogue key such as `lines.title`, which interpolations may
+     * follow, and never verbatim text. Previews are exempt.
+     */
+    fun hardcodedSwiftUiText(source: String): List<UiTextFinding> {
+        val lexed = SwiftLexer(source).lex()
+        val previews = swiftPreviewRanges(lexed.code)
+        return lexed.literals
+            .filter { literal -> previews.none { literal.start in it } }
+            .filter { literal ->
+                val sink = SWIFT_UI_TEXT.find(lexed.codeBefore(literal.start))
+                sink != null &&
+                    literal.text.any(Char::isLetter) &&
+                    (sink.groups[VERBATIM] != null || !isCatalogueKey(literal.text))
+            }.map { UiTextFinding(source.lineAt(it.start), it.text) }
+    }
+
+    /** A key of a string catalogue, such as `lines.title`, once the interpolations that follow it are left out. */
+    fun isCatalogueKey(text: String): Boolean = CATALOGUE_KEY.matches(text.trim())
+}
+
+// What comes right before a literal that SwiftUI shows or speaks: the title of a view or modifier that takes a
+// LocalizedStringKey, verbatim text, a String(localized:) key, or a search prompt.
+private val SWIFT_UI_TEXT =
+    Regex(
+        """(?:\b(?:Text|Button|Label|Toggle|Picker|Section|LabeledContent|Link|Menu|TextField|SecureField|Stepper|""" +
+            """ProgressView|GroupBox|DisclosureGroup|NavigationLink|ContentUnavailableView|Tab|LocalizedStringKey|""" +
+            """LocalizedStringResource|navigationTitle|accessibilityLabel|accessibilityHint|accessibilityValue|""" +
+            """accessibilityAction|alert|confirmationDialog|help|badge)\(\s*(verbatim\s*:\s*)?(?:named\s*:\s*)?""" +
+            """|\bString\(\s*localized\s*:\s*""" +
+            """|\bprompt\s*:\s*)$""",
+    )
+
+private const val VERBATIM = 1
+
+private val CATALOGUE_KEY = Regex("""[a-z0-9_]+(?:\.[a-z0-9_]+)+""")
+
+private val SWIFT_PREVIEW_MACRO = Regex("""#Preview\b""")
+
+private val SWIFT_TYPE = Regex("""\b(?:struct|class|enum|extension)\s+(\w+)([^{]*)\{""")
+
+/** The previews: `#Preview` blocks, and types named after a preview or that are a PreviewProvider. */
+private fun swiftPreviewRanges(code: String): List<IntRange> {
+    val macros =
+        SWIFT_PREVIEW_MACRO.findAll(code).mapNotNull { macro ->
+            var body = macro.range.last + 1
+            while (body < code.length && code[body].isWhitespace()) body++
+            if (code.getOrNull(body) == '(') body = (closing(code, body) ?: return@mapNotNull null) + 1
+            body = code.indexOf('{', body).takeIf { it >= 0 } ?: return@mapNotNull null
+            closing(code, body)?.let { macro.range.first..it }
+        }
+    val types =
+        SWIFT_TYPE
+            .findAll(code)
+            .filter { type ->
+                val (name, inheritance) = type.destructured
+                name.endsWith("Preview") || name.endsWith("Previews") || "PreviewProvider" in inheritance
+            }.mapNotNull { type -> closing(code, type.range.last)?.let { type.range.first..it } }
+    return (macros + types).toList()
 }
 
 // What comes right before a literal that Compose shows or speaks: the first argument of a text call, a toast's
@@ -90,211 +148,6 @@ private fun closing(
         }
     }
     return null
-}
-
-/** A string literal: where its opening quote is, and its [text] without its template expressions. */
-private class StringLiteral(
-    val start: Int,
-    val text: String,
-)
-
-/**
- * A source ready to scan: [code] is the source with every comment and the content of every string literal blanked
- * out, so patterns match code only and offsets stay those of the source; [literals] are the string literals.
- */
-private class Lexed(
-    val code: String,
-    val literals: List<StringLiteral>,
-) {
-    fun codeBefore(offset: Int): String = code.substring(maxOf(0, offset - LOOK_BEHIND), offset)
-
-    private companion object {
-        const val LOOK_BEHIND = 200
-    }
-}
-
-/** Kotlin's comments (nested block comments too), strings, raw strings, templates and characters. */
-private class KotlinLexer(
-    private val source: String,
-) {
-    private val code = source.toCharArray()
-    private val literals = mutableListOf<StringLiteral>()
-    private var at = 0
-
-    fun lex(): Lexed {
-        code(nested = false, record = true)
-        return Lexed(String(code), literals)
-    }
-
-    /** Code up to the end, or up to the brace that closes a template expression when [nested]. */
-    private fun code(
-        nested: Boolean,
-        record: Boolean,
-    ) {
-        var depth = 0
-        while (at < source.length) {
-            when {
-                source.startsWith("//", at) -> {
-                    lineComment()
-                }
-
-                source.startsWith("/*", at) -> {
-                    blockComment()
-                }
-
-                source.startsWith(RAW_QUOTE, at) -> {
-                    string(raw = true, record = record)
-                }
-
-                source[at] == '"' -> {
-                    string(raw = false, record = record)
-                }
-
-                source[at] == '\'' -> {
-                    character()
-                }
-
-                source[at] == '{' -> {
-                    depth++
-                    at++
-                }
-
-                source[at] == '}' && nested && depth == 0 -> {
-                    at++
-                    return
-                }
-
-                source[at] == '}' -> {
-                    depth--
-                    at++
-                }
-
-                else -> {
-                    at++
-                }
-            }
-        }
-    }
-
-    private fun lineComment() {
-        val end = source.indexOf('\n', at).takeIf { it >= 0 } ?: source.length
-        blank(at, end)
-        at = end
-    }
-
-    private fun blockComment() {
-        val start = at
-        var depth = 0
-        while (at < source.length) {
-            when {
-                source.startsWith("/*", at) -> {
-                    depth++
-                    at += 2
-                }
-
-                source.startsWith("*/", at) -> {
-                    depth--
-                    at += 2
-                }
-
-                else -> {
-                    at++
-                }
-            }
-            if (depth == 0) break
-        }
-        blank(start, at)
-    }
-
-    private fun string(
-        raw: Boolean,
-        record: Boolean,
-    ) {
-        val start = at
-        val quote = if (raw) RAW_QUOTE else "\""
-        at += quote.length
-        val text = StringBuilder()
-        while (at < source.length && !source.startsWith(quote, at)) {
-            val char = source[at]
-            val next = source.getOrNull(at + 1)
-            when {
-                !raw && char == '\\' -> {
-                    escape(text)
-                }
-
-                char == '$' && next == '{' -> {
-                    at += 2
-                    code(nested = true, record = false)
-                }
-
-                char == '$' && next != null && (next.isLetter() || next == '_') -> {
-                    templateName()
-                }
-
-                else -> {
-                    text.append(char)
-                    at++
-                }
-            }
-        }
-        // A raw string closes on the last three quotes of a longer run.
-        while (raw && source.startsWith("$RAW_QUOTE\"", at)) text.append('"').also { at++ }
-        blank(start + quote.length, at)
-        at = minOf(at + quote.length, source.length)
-        if (record) literals += StringLiteral(start, text.toString())
-    }
-
-    private fun escape(text: StringBuilder) {
-        val escaped = source.getOrNull(at + 1)
-        val unicode =
-            source
-                .substring(minOf(at + 2, source.length), minOf(at + UNICODE_END, source.length))
-                .takeIf { escaped == 'u' && it.length == UNICODE_DIGITS }
-                ?.toIntOrNull(HEX)
-        when {
-            unicode != null -> {
-                text.append(unicode.toChar())
-                at += UNICODE_END
-            }
-
-            else -> {
-                // \n, \t and the like are whitespace, not letters; the rest stand for themselves.
-                text.append(if (escaped in WHITESPACE_ESCAPES) ' ' else escaped ?: ' ')
-                at += 2
-            }
-        }
-    }
-
-    private fun templateName() {
-        at++
-        while (at < source.length && (source[at].isLetterOrDigit() || source[at] == '_')) at++
-    }
-
-    private fun character() {
-        val start = at
-        at++
-        if (source.getOrNull(at) == '\\') at += 2
-        while (at < source.length && source[at] != '\'' && source[at] != '\n') at++
-        at = minOf(at + 1, source.length)
-        blank(start, at)
-    }
-
-    private fun blank(
-        from: Int,
-        until: Int,
-    ) {
-        for (index in from until minOf(until, source.length)) {
-            if (code[index] != '\n') code[index] = ' '
-        }
-    }
-
-    private companion object {
-        const val RAW_QUOTE = "\"\"\""
-        const val UNICODE_DIGITS = 4
-        const val UNICODE_END = 6
-        const val HEX = 16
-        val WHITESPACE_ESCAPES = setOf('n', 't', 'r', 'b')
-    }
 }
 
 private fun String.lineAt(offset: Int): Int = 1 + (0 until offset).count { this[it] == '\n' }

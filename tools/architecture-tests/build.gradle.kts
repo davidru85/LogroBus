@@ -19,7 +19,8 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    // Konsist and the file-system checks read the whole repository, so declare it as input.
+    // Konsist and the file-system checks read the whole repository, so declare it as input: the Swift sources too,
+    // for the iOS rules (Package.swift among them).
     inputs
         .files(
             fileTree(isolated.rootProject.projectDirectory) {
@@ -30,9 +31,9 @@ tasks.test {
                     "scripts/ci/*.sh",
                     ".gitignore",
                     "iosApp/project.yml",
-                    "iosApp/Packages/*/Package.swift",
+                    "iosApp/**/*.swift",
                 )
-                exclude("**/build/**", ".gradle/**", ".kotlin/**", "build-logic/.gradle/**")
+                exclude("**/build/**", "**/.build/**", ".gradle/**", ".kotlin/**", "build-logic/.gradle/**")
             },
         ).withPathSensitivity(PathSensitivity.RELATIVE)
 }
