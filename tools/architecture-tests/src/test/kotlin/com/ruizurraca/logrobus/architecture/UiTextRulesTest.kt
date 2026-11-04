@@ -1,8 +1,10 @@
 package com.ruizurraca.logrobus.architecture
 
+import com.ruizurraca.logrobus.architecture.UiTextRules.catalogueKeys
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedKotlinUiText
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedSwiftUiText
 import com.ruizurraca.logrobus.architecture.UiTextRules.swiftCatalogueKeys
+import com.ruizurraca.logrobus.architecture.UiTextRules.unbundledSwiftKeys
 import com.ruizurraca.logrobus.architecture.UiTextRules.untranslatedCatalogueEntries
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -323,6 +325,164 @@ class UiTextRulesTest {
     }
 
     @Test
+    fun lb405_swiftLocalizedMembersAndValuesHoldKeysNotWords() {
+        val source =
+            """
+            var title: LocalizedStringKey {
+                switch self {
+                case .day: "lines.group.day"
+                case .night: "Líneas nocturnas"
+                }
+            }
+            let subtitle: LocalizedStringKey = "Próximas llegadas"
+            static var title: LocalizedStringResource = "lines.title"
+            func row(label: LocalizedStringKey = "Fila") {}
+            var hint: LocalizedStringResource { LocalizedStringResource("lines.hint", comment: "Read after the list") }
+            """.trimIndent()
+
+        assertEquals(
+            listOf("Líneas nocturnas", "Próximas llegadas", "Fila"),
+            hardcodedSwiftUiText(source).map { it.text },
+        )
+    }
+
+    @Test
+    fun lb405_swiftTextAnywhereInATextArgumentIsHardcoded() {
+        val source =
+            """
+            Text(isOn ? "lines.on" : "Apagado")
+            Text(stop.name ?? "Parada sin nombre")
+            Text("lines.towards \(flag ? "Sí" : "No")")
+            """.trimIndent()
+
+        assertEquals(
+            listOf("Apagado", "Parada sin nombre", "Sí", "No"),
+            hardcodedSwiftUiText(source).map { it.text },
+        )
+    }
+
+    @Test
+    fun lb405_swiftAnnouncementsMapsPickersWidgetsAndUiKitShowOrSpeakTheirText() {
+        val source =
+            """
+            AccessibilityNotification.Announcement("Actualizado").post()
+            UIAccessibility.post(notification: .announcement, argument: "Actualizado ahora")
+            Marker("Parada", coordinate: coordinate)
+            Annotation("Bus", coordinate: coordinate) { BusPin() }
+            DatePicker("Salida", selection: ${'$'}date)
+            .accessibilityInputLabels(["Más", "Opciones"])
+            .accessibilityCustomContent("Andén", "Dos")
+            .navigationSubtitle("Centro")
+            ShareLink("Compartir", item: url)
+            ControlGroup("Mapa") {}
+            AttributedString(localized: "Hola")
+            NSLocalizedString("Adiós", comment: "")
+            label.accessibilityLabel = "Botón"
+            .configurationDisplayName("Llegadas")
+            IntentDescription("Muestra las llegadas")
+            @Parameter(title: "Parada") var stop: StopEntity
+            DisplayRepresentation(title: "Línea")
+            """.trimIndent()
+
+        assertEquals(
+            listOf(
+                "Actualizado",
+                "Actualizado ahora",
+                "Parada",
+                "Bus",
+                "Salida",
+                "Más",
+                "Opciones",
+                "Andén",
+                "Dos",
+                "Centro",
+                "Compartir",
+                "Mapa",
+                "Hola",
+                "Adiós",
+                "Botón",
+                "Llegadas",
+                "Muestra las llegadas",
+                "Parada",
+                "Línea",
+            ),
+            hardcodedSwiftUiText(source).map { it.text },
+        )
+    }
+
+    @Test
+    fun lb405_onlyAPrivateSwiftTypeIsAPreviewByItsName() {
+        val source =
+            """
+            struct RoutePreview: View {
+                var body: some View { Text("Ruta recomendada") }
+            }
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(2, "Ruta recomendada")), hardcodedSwiftUiText(source))
+    }
+
+    @Test
+    fun lb405_aPackageTargetTakesItsKeysFromItsOwnBundle() {
+        // SwiftUI looks a key up in the app's bundle unless the call names another, which a package target must do.
+        val source =
+            """
+            Text("lines.title", bundle: .module)
+            Text("lines.title")
+            Button("settings.clear_cache") {}
+            String(localized: "eta.now", bundle: bundle)
+            String(localized: "eta.now")
+            .navigationTitle(Text("settings.title", bundle: .module))
+            .navigationTitle("settings.title")
+            var title: LocalizedStringKey { "lines.group.day" }
+            var label: LocalizedStringResource { "tab.lines" }
+            .searchable(text: ${'$'}query, prompt: "lines.search")
+            """.trimIndent()
+
+        assertEquals(
+            listOf(
+                UiTextFinding(2, "lines.title"),
+                UiTextFinding(3, "settings.clear_cache"),
+                UiTextFinding(5, "eta.now"),
+                UiTextFinding(7, "settings.title"),
+                UiTextFinding(9, "tab.lines"),
+                UiTextFinding(10, "lines.search"),
+            ),
+            unbundledSwiftKeys(source),
+        )
+    }
+
+    @Test
+    fun lb405_keysKeepTheirArguments_soAKeyWithoutThemIsAnotherKey() {
+        val catalogue =
+            """
+            { "sourceLanguage" : "es", "version" : "1.0", "strings" : {
+              "line.title %@" : { }, "line.title.generic" : { }, "eta.clock_spoken %lld %@" : { },
+              "lines.favourites.position %lld %lld" : { } } }
+            """.trimIndent()
+        val source =
+            """
+            Text("line.title \(code)", bundle: .module)
+            Text("line.title", bundle: .module)
+            String(localized: "eta.clock_spoken \(hour) \(time)", bundle: bundle)
+            """.trimIndent()
+
+        assertEquals(
+            setOf(
+                "line.title \uFFFC",
+                "line.title.generic",
+                "eta.clock_spoken \uFFFC \uFFFC",
+                "lines.favourites.position \uFFFC \uFFFC",
+            ),
+            catalogueKeys(catalogue),
+        )
+        assertEquals(
+            setOf("line.title \uFFFC", "line.title", "eta.clock_spoken \uFFFC \uFFFC"),
+            swiftCatalogueKeys(source),
+        )
+    }
+
+    @Test
     fun lb405_theKeysSwiftCodeUsesAreItsTextKeysAndWhatItsLocalizedMembersReturn() {
         val source =
             """
@@ -348,7 +508,7 @@ class UiTextRulesTest {
         assertEquals(
             setOf(
                 "lines.title",
-                "lines.towards",
+                "lines.towards \uFFFC",
                 "settings.clear_cache",
                 "eta.now",
                 "settings.theme.light",
@@ -391,7 +551,7 @@ class UiTextRulesTest {
     }
 
     @Test
-    fun lb405_everyPluralFormIsTranslated_andUntranslatableEntriesNeedOnlySpanish() {
+    fun lb405_everyPluralFormIsTranslated_andUntranslatableEntriesNeedOnlyASpanishValue() {
         val catalogue =
             """
             {
@@ -406,7 +566,9 @@ class UiTextRulesTest {
                     "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld minutos" } } } } } } },
                 "language.spanish" : { "shouldTranslate" : false, "localizations" : {
                   "es" : { "stringUnit" : { "state" : "translated", "value" : "Español" } } } },
-                "language.english" : { "shouldTranslate" : false }
+                "language.english" : { "shouldTranslate" : false },
+                "%@, %@" : { "shouldTranslate" : false, "localizations" : {
+                  "es" : { "stringUnit" : { "state" : "new", "value" : "%1${'$'}@, %2${'$'}@" } } } }
               },
               "version" : "1.0"
             }

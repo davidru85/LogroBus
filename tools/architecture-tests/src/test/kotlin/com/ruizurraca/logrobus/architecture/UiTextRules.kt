@@ -97,6 +97,14 @@ object UiTextRules {
             }.sorted()
     }
 
+    /** The catalogue keys that a package target's Swift [source] looks up in the app's bundle instead of its own. */
+    @Suppress("UNUSED_PARAMETER") // TDD: red.
+    fun unbundledSwiftKeys(source: String): List<UiTextFinding> = emptyList()
+
+    /** The keys of a string catalogue's [json]. */
+    @Suppress("UNUSED_PARAMETER") // TDD: red.
+    fun catalogueKeys(json: String): Set<String> = emptySet()
+
     /** A key of a string catalogue, such as `lines.title`, once the interpolations that follow it are left out. */
     fun isCatalogueKey(text: String): Boolean = CATALOGUE_KEY.matches(text.trim())
 }
