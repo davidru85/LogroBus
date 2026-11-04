@@ -71,11 +71,13 @@ class ChangedAreasScriptTest {
     }
 
     @Test
-    fun lb405_swiftUiSourcesRunTheKotlinJobs() {
-        // LocalisationTest reads the Swift sources of the app and of the Swift package for hard-coded text.
+    fun lb405_swiftUiSourcesAndStringCataloguesRunTheKotlinJobs() {
+        // LocalisationTest reads the Swift sources of the app and of the Swift package, and their string catalogues.
         listOf(
             "iosApp/iosApp/MoreView.swift",
             "iosApp/Packages/LogroBusUI/Sources/FeatureSettings/SettingsView.swift",
+            "iosApp/iosApp/Localizable.xcstrings",
+            "iosApp/Packages/LogroBusUI/Sources/FeatureLines/Resources/Localizable.xcstrings",
         ).forEach { path ->
             repo.listFiles()?.forEach { it.deleteRecursively() }
             commitBase("README.md")
