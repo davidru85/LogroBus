@@ -52,7 +52,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The check is a test, not a detekt plugin or a SwiftLint regex:** one place for both platforms, unit-tested, and run by the Kotlin jobs on Linux, which a SwiftLint custom rule could not be.
 
 **Open / next**
-- **The pull request of this entry** (branch `feat/LB-405-localisation`) is open, and its watch runs.
+- **The pull request of this entry, PR #42** (branch `feat/LB-405-localisation`), is open, and its watch runs. **CI:** its first "PR title" check failed. GitHub answered the first `gh pr create` with a 502 but still opened the PR, with a title one character over the 100-character limit; the title was shortened at once, and this log's commit runs the check again, since editing a title triggers no workflow and a rerun replays the old one.
 - **To check on a device:** a French device on Android 12 and on 13 or later (Material's words, dates), and on iOS (Spanish, the system's words included); TalkBack and VoiceOver; plus LB-403's checks.
 - **Next, once it is merged:** LB-406 (accessibility pass), which waits for nothing, unless the owner chooses otherwise. LB-404's remaining parts (data source, disclaimer, attributions) touch the tile licensing of OQ-10.
 - **Waiting on the owner:**
