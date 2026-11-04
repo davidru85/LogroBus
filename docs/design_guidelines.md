@@ -401,7 +401,9 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 
 - Spanish (es-ES) is the source language and English ships in v1. The tone is short, direct and friendly, using "tú" in Spanish.
 - Line names, stop names and CMS content are shown as delivered (after overrides) and never translated.
-- Dates, times and prices follow the device locale. Times always use `Europe/Madrid`.
+- Dates, times and prices follow the device locale, in the app's language. Times always use `Europe/Madrid`.
+- **Language (LB-405):** the device's first language that the app speaks, Spanish or English, unless one is chosen in Settings (ADR-0020). A device that speaks neither gets Spanish, the system's own words and the date formats included.
+- **No text in code (LB-405):** every word shown or spoken comes from the string resources: Android's `values/` and `values-en/`, and on iOS the target's `Localizable.xcstrings`, by a dotted key such as `lines.title`. Previews may show sample text. `code_style.md` §1 has the rule and its check.
 
 | Key | es | en |
 | --- | --- | --- |

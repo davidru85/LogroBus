@@ -728,10 +728,14 @@ Done early, with LB-010 part 2 (2026-10-28): the last successful sync of each da
 Refs: NFR-I18N-01 to 03
 
 - **Given** the device language is Spanish or English, **when** the app runs, **then** every UI string is in that language. Any other device language falls back to Spanish.
+  - A device whose languages include Spanish or English gets the first of them; with neither, Spanish, on both platforms (ADR-0020). On Android the app's strings fall back from `values/`, and `MainActivity` attaches in the same language, so Material's and Android's strings, the plural rules and the date formats agree with them (`AppLocalesTest`, `lb405_…`). iOS falls back to the app's development language, Spanish, and the root view gives SwiftUI that language in the device's region, so the lookups that take a locale agree too (`AppLocaleTests`; `ShellUITests.test_lb405_…`, French and "French, then English", the package targets' words included). Below Android 13, once "System" is chosen in Settings during a session, Android's own words follow the device until the app restarts (ADR-0020).
+  - Every string exists in both languages: Android lint's `MissingTranslation`, an error, checks `values-en/`; on iOS, `LocalisationTest.lb405_everyIosCatalogueEntryIsInSpanishAndEnglish` checks every catalogue entry, plural forms included, `lb405_everyKeyTheIosCodeUsesIsInItsTargetsCatalogue` the keys the code uses, arguments included, `lb405_packageTargetsLookTheirKeysUpInTheirOwnBundles` the bundle they are looked up in, and `lb405_everyIosCatalogueKeyIsInUse` that none is left over.
 - **Given** the device time zone is America/New_York, **when** times render, **then** they are in Europe/Madrid.
-  - Done early, with LB-010 part 2, for About data's times (tests `lb405_…`). `MadridDateTime` converts through the CET and CEST transitions, and each platform formats it in a fixed zone with its locale.
+  - Done early, with LB-010 part 2, for About data's times (tests `lb405_…`). `MadridDateTime` converts through the CET and CEST transitions, and each platform formats it in a fixed zone with its locale. Settings' data status uses the same formatting (LB-403), and an ETA's clock time is the Madrid clock's (`EtaDisplayTest`).
 - **Given** a count of 1 and a count of 2 minutes, **when** they render in either language, **then** the plural forms come from platform resources.
+  - Done early, with LB-011: the spoken ETAs and delays are plurals on both platforms, Android's `plurals` and the iOS catalogue's plural variations (`EtaTextTest.lb011_eachEtaCaseIsSpoken` and `…_inSpanish`, on both). They are tested at 1 and 4 minutes, and 4 is in the same plural category as 2 in both languages. The visible "1 min" and "2 min" use an abbreviation that has no plural in either language.
 - Done when: a lint or test check fails on any hard-coded user-facing string in UI code.
+  - `LocalisationTest.lb405_androidUiCodeHasNoHardcodedUserFacingText` and `lb405_iosUiCodeHasNoHardcodedUserFacingText`, in `:tools:architecture-tests`, with their rules unit-tested in `UiTextRulesTest` (`code_style.md` §1).
 
 ### LB-406 Accessibility pass
 Refs: NFR-A11Y-01 to 06, NFR-PLAT-01

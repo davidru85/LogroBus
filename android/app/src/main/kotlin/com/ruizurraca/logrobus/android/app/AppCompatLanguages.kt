@@ -43,5 +43,5 @@ internal fun languageOf(locales: LocaleListCompat): AppLanguage =
         else -> AppLanguage.SYSTEM
     }
 
-private const val SPANISH = "es"
-private const val ENGLISH = "en"
+internal const val SPANISH = "es"
+internal const val ENGLISH = "en"

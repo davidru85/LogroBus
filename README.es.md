@@ -18,7 +18,7 @@ La app se organiza en tres secciones y siempre se abre en **Líneas**. Funciona 
 
 Además, la app incluye:
 - Llegadas en tiempo real que indican claramente lo recientes y fiables que son las predicciones.
-- Español e inglés, y un tema claro u oscuro, que eliges en Ajustes, junto con cómo se muestran las llegadas (minutos u hora). Ajustes también dice cuándo se actualizaron por última vez las líneas y las paradas, y borra la caché.
+- Español e inglés: la app sigue el idioma del móvil, y si no lo tiene, va en español. El idioma también se elige en Ajustes, con un tema claro u oscuro, junto con cómo se muestran las llegadas (minutos u hora). Ajustes también dice cuándo se actualizaron por última vez las líneas y las paradas, y borra la caché.
 
 Previsto para la v1.0: modo sin conexión, noticias y avisos de servicio, tarifas, puntos de recarga, un widget para la pantalla de inicio y notificaciones.
 
@@ -103,6 +103,11 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **04-11-2026:**
+  - LB-405: localización.
+    - La app sigue los idiomas del móvil: el primero que habla, español o inglés. En un móvil en otro idioma va en español, y aun así puedes elegir cualquiera de los dos en Ajustes.
+    - Todo lo que se ve queda entonces en ese idioma, con las palabras del propio móvil y los formatos de fecha, no solo los textos de la app: en Android, mediante el idioma de la pantalla; en iPhone, mediante el idioma en que SwiftUI busca los textos de la app.
+    - Una comprobación falla con cualquier texto para el usuario escrito en el código en lugar de en las traducciones, con una clave de traducción del iPhone que falte y con un texto que no tenga su versión en español y en inglés.
 - **03-11-2026:**
   - LB-403: Ajustes, desde Más.
     - Apariencia: el idioma de la app y su tema (el del sistema, claro u oscuro). En Android eliges el idioma en la app y cambia al momento; en iPhone la fila abre la página de la app en Ajustes del iPhone, donde iOS guarda el idioma de cada app (ADR-0020).

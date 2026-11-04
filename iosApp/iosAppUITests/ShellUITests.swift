@@ -2,7 +2,7 @@ import XCTest
 
 /// LB-012: the three tabs (FR-NAV-01, FR-NAV-02), each with its own stack (FR-NAV-03), and More from every tab root
 /// (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data. LB-101: the Lines list at the Lines root.
-/// LB-403: Settings, end to end.
+/// LB-403: Settings, end to end. LB-405: the language a device in another language gets.
 final class ShellUITests: XCTestCase {
 
     @MainActor
@@ -12,7 +12,28 @@ final class ShellUITests: XCTestCase {
 
     @MainActor
     func test_lb012_theTabsAreInOrder_withLinesSelected_inSpanish() {
-        assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: launch(language: "es", region: "es_ES"))
+        assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: launch(languages: ["es"], region: "es_ES"))
+    }
+
+    @MainActor
+    func test_lb405_aDeviceInAnotherLanguage_getsTheAppInSpanish() {
+        // NFR-I18N-01: iOS falls back to the app's development language, Spanish, as Android does from values/. The
+        // package targets' words too: the screen's title from FeatureLines, a row's line from DesignSystem.
+        let app = launch(languages: ["fr"], region: "fr_FR")
+        assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: app)
+        XCTAssertTrue(app.navigationBars["Líneas"].waitForExistence(timeout: 5))
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Línea 4, ")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "a row's line in Spanish, from DesignSystem")
+        app.navigationBars["Líneas"].buttons["Más"].tap()
+        XCTAssertTrue(app.buttons["Ajustes"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func test_lb405_theDevicesFirstLanguageThatTheAppSpeaks_isTheAppsLanguage() {
+        let app = launch(languages: ["fr", "en"], region: "fr_FR")
+        assertTabs(["Lines", "Near me", "Directions"], in: app)
+        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        XCTAssertTrue(line("4", in: app).waitForExistence(timeout: 10), "a row's line in English, from DesignSystem")
     }
 
     @MainActor
@@ -254,12 +275,14 @@ final class ShellUITests: XCTestCase {
 
     @MainActor
     private func launch(
-        language: String = "en",
+        languages: [String] = ["en"],
         region: String = "en_GB",
         textSize: String? = nil
     ) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
+        // The device's languages in order, as an old-style property list array: ("fr", "es").
+        let list = "(" + languages.map { "\"\($0)\"" }.joined(separator: ", ") + ")"
+        app.launchArguments += ["-AppleLanguages", list, "-AppleLocale", region]
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
         app.launch()
         return app

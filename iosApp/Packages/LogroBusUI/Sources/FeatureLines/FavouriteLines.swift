@@ -77,7 +77,7 @@ private struct FavouriteCard: View {
     private var towards: Text {
         let parts = card.headsigns.map { Text("lines.towards \($0)", bundle: .module) }
         guard let first = parts.first else { return Text(verbatim: "") }
-        return parts.dropFirst().reduce(first) { spoken, next in Text("\(spoken), \(next)") }
+        return parts.dropFirst().reduce(first) { spoken, next in Text("\(spoken), \(next)", bundle: .module) }
     }
 
     // At large sizes, a card takes at most this share of the row, so the next card's edge still shows.

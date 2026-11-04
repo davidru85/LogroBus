@@ -71,6 +71,25 @@ class ChangedAreasScriptTest {
     }
 
     @Test
+    fun lb405_swiftUiSourcesAndStringCataloguesRunTheKotlinJobs() {
+        // LocalisationTest reads the Swift sources of the app and of the Swift package, and their string catalogues.
+        listOf(
+            "iosApp/iosApp/MoreView.swift",
+            "iosApp/Packages/LogroBusUI/Sources/FeatureSettings/SettingsView.swift",
+            "iosApp/iosApp/Localizable.xcstrings",
+            "iosApp/Packages/LogroBusUI/Sources/FeatureLines/Resources/Localizable.xcstrings",
+            // An extension target beside the app, such as v1.0's widget, has text of its own.
+            "iosApp/LogroBusWidget/ArrivalsWidget.swift",
+            "iosApp/LogroBusWidget/Localizable.xcstrings",
+        ).forEach { path ->
+            repo.listFiles()?.forEach { it.deleteRecursively() }
+            commitBase("README.md")
+            commitChange(path)
+            assertEquals("true", area("kotlin", "main"), path)
+        }
+    }
+
+    @Test
     fun lb002_lintConfigurationChangesRunTheKotlinJobs() {
         // ktlint reads .editorconfig and detekt reads config/; a config-only PR must still run both.
         listOf("config/detekt/detekt.yml", ".editorconfig").forEach { path ->

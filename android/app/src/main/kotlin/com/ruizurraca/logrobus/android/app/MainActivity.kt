@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.android.app
 
 import android.content.Context
 import android.os.Bundle
+import android.os.LocaleList
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -27,7 +28,11 @@ class MainActivity : AppCompatActivity() {
         // ADR-0020, the one blocking read outside tests (code_style.md §2.2, owner decision, 2026-11-03): below Android
         // 12, a few bytes once per process, so the first frame is in the saved theme.
         applySavedThemeBeforeTheFirstFrame { runBlocking { observePreferences().first().theme } }
-        super.attachBaseContext(newBase)
+        // LB-405: on a device in another language, Spanish for everything on screen, not only the app's strings, and
+        // for what formats without a locale of its own, such as String.format and Compose's Locale.current.
+        val context = newBase.inSupportedLocales()
+        LocaleList.setDefault(context.resources.configuration.locales)
+        super.attachBaseContext(context)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
