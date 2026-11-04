@@ -21,6 +21,10 @@ object UiTextRules {
             .filter { it.text.any(Char::isLetter) && KOTLIN_UI_TEXT.containsMatchIn(lexed.codeBefore(it.start)) }
             .map { UiTextFinding(source.lineAt(it.start), it.text) }
     }
+
+    /** The hard-coded user-facing text in a Swift [source]. */
+    @Suppress("UNUSED_PARAMETER") // TDD: red.
+    fun hardcodedSwiftUiText(source: String): List<UiTextFinding> = emptyList()
 }
 
 // What comes right before a literal that Compose shows or speaks: the first argument of a text call, a toast's

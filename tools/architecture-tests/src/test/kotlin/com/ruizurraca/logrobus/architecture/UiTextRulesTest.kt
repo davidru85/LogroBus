@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.architecture
 
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedKotlinUiText
+import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedSwiftUiText
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -135,5 +136,97 @@ class UiTextRulesTest {
             """.trimIndent()
 
         assertEquals(listOf(UiTextFinding(7, "Adiós")), hardcodedKotlinUiText(source))
+    }
+
+    @Test
+    fun lb405_swiftTextThatIsNoCatalogueKeyIsHardcoded() {
+        val source =
+            """
+            Text("Hola")
+            Button("Cancel") {}
+            .navigationTitle("Lines")
+            .accessibilityLabel("Más")
+            Label("Info", systemImage: "info.circle")
+            Section("Datos") {}
+            .alert("Caché borrada", isPresented: ${'$'}shown) {}
+            .searchable(text: ${'$'}query, prompt: "Buscar")
+            String(localized: "Hecho")
+            """.trimIndent()
+
+        assertEquals(
+            listOf("Hola", "Cancel", "Lines", "Más", "Info", "Datos", "Caché borrada", "Buscar", "Hecho"),
+            hardcodedSwiftUiText(source).map { it.text },
+        )
+    }
+
+    @Test
+    fun lb405_swiftVerbatimTextWithALetterIsHardcoded() {
+        val source =
+            """
+            Text(verbatim: "Hola")
+            Text(verbatim: "lines.title")
+            Text(verbatim: "")
+            Text(verbatim: " · ")
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(1, "Hola"), UiTextFinding(2, "lines.title")), hardcodedSwiftUiText(source))
+    }
+
+    @Test
+    fun lb405_swiftCatalogueKeysDataAndSymbolsPass() {
+        val source =
+            """
+            Text("lines.title", bundle: .module)
+            Text("lines.towards \(headsign)")
+            Text("lines.favourites.position \(index + 1) \(count)")
+            Text(line.name)
+            Text("\(code), \(name)")
+            Image(systemName: "star.fill")
+            String(localized: "eta.now", bundle: bundle)
+            .accessibilityIdentifier("settings.theme")
+            """.trimIndent()
+
+        assertEquals(emptyList<UiTextFinding>(), hardcodedSwiftUiText(source))
+    }
+
+    @Test
+    fun lb405_swiftCommentsAndStringsDoNotFoolTheScanner() {
+        val source =
+            """
+            // Text("Hola")
+            /* Text("Hola") /* nested */ Text("Adiós") */
+            let code = "Text(\"Hola\")"
+            let multiline = ""${'"'}
+                Text("Hola")
+                ""${'"'}
+            let raw = #"Text("Hola")"#
+            Text("Fin")
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(8, "Fin")), hardcodedSwiftUiText(source))
+    }
+
+    @Test
+    fun lb405_swiftPreviewsAreExempt() {
+        val source =
+            """
+            #Preview("Dark") {
+                Text("Hola")
+            }
+
+            private struct GlassPreview: View {
+                var body: some View { Text(verbatim: "Buscar rutas") }
+            }
+
+            struct Row_Previews: PreviewProvider {
+                static var previews: some View { Text("Muestra") }
+            }
+
+            struct Row: View {
+                var body: some View { Text("Adiós") }
+            }
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(14, "Adiós")), hardcodedSwiftUiText(source))
     }
 }
