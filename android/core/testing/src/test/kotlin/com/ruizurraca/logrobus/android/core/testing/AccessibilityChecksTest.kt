@@ -19,9 +19,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.GraphicsMode
 
 /** LB-406 (NFR-A11Y-02, NFR-A11Y-03, NFR-A11Y touch targets): the checks every Android screen test can run. */
 @RunWith(AndroidJUnit4::class)
+// Text is only measured with native graphics; Robolectric's legacy graphics give it no width.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class AccessibilityChecksTest {
     @get:Rule
     val compose = createComposeRule()
@@ -54,7 +57,12 @@ class AccessibilityChecksTest {
     fun lb406_aTouchTargetUnder48dp_fails_namingTheControl() {
         // Compose widens the touch area of a click only, so a long press alone keeps the layout's 24 dp.
         compose.setContent {
-            Box(Modifier.size(24.dp).semantics { contentDescription = "Hold to edit"; onLongClick { true } })
+            Box(
+                Modifier.size(24.dp).semantics {
+                    contentDescription = "Hold to edit"
+                    onLongClick { true }
+                },
+            )
         }
 
         val failure = assertThrows(AssertionError::class.java) { compose.assertAccessible() }
