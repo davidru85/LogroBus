@@ -1,8 +1,11 @@
 package com.ruizurraca.logrobus.architecture
 
+/** What a string literal's text holds for each interpolation or template: one argument, and not a letter. */
+internal const val ARGUMENT = '\uFFFC'
+
 /**
  * A string literal: where it opens (its first quote or raw-string delimiter) and where it [end]s, after its closing
- * delimiter, and its [text] without interpolations.
+ * delimiter, and its [text], with an [ARGUMENT] for each interpolation.
  */
 internal class StringLiteral(
     val start: Int,
@@ -12,8 +15,8 @@ internal class StringLiteral(
 
 /**
  * A source ready to scan: [code] is the source with every comment and the content of every string literal blanked
- * out, so patterns match code only and offsets stay those of the source; [literals] are the string literals, outside
- * interpolations.
+ * out, so patterns match code only and offsets stay those of the source; [literals] are the string literals, those in
+ * interpolations and templates included.
  */
 internal class Lexed(
     val code: String,
@@ -193,10 +196,12 @@ internal class KotlinLexer(
                 char == '$' && next == '{' -> {
                     at += 2
                     code(closing = '}', record = record)
+                    text.append(ARGUMENT)
                 }
 
                 char == '$' && next != null && (next.isLetter() || next == '_') -> {
                     templateName()
+                    text.append(ARGUMENT)
                 }
 
                 else -> {
@@ -259,7 +264,8 @@ internal class SwiftLexer(
             when {
                 source.startsWith("$escape(", at) -> {
                     at += escape.length + 1
-                    code(closing = ')', record = false)
+                    code(closing = ')', record = record)
+                    text.append(ARGUMENT)
                 }
 
                 source.startsWith(escape, at) -> {

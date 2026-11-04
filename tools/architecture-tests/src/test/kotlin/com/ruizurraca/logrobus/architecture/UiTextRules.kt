@@ -37,49 +37,62 @@ object UiTextRules {
     }
 
     /**
-     * The hard-coded user-facing text in a Swift [source]. A string literal with a letter is user-facing where SwiftUI
-     * shows or speaks it: the title of `Text`, `Button` and their kin, a navigation title, an accessibility label, an
-     * alert or a search prompt. There it must be a catalogue key such as `lines.title`, which interpolations may
-     * follow, and never verbatim text. Previews are exempt.
+     * The hard-coded user-facing text in a Swift [source]. A string literal with a letter is user-facing where SwiftUI,
+     * UIKit or a widget shows or speaks it: anywhere at the top level of the title of `Text`, `Button` and their kin,
+     * of a navigation title, an accessibility label or announcement, an alert, a search prompt, a map pin, and in what
+     * a member typed LocalizedStringKey or LocalizedStringResource holds. There it must be a catalogue key such as
+     * `lines.title`, which interpolations may follow, and never verbatim text. Previews are exempt.
      */
     fun hardcodedSwiftUiText(source: String): List<UiTextFinding> {
         val lexed = SwiftLexer(source).lex()
         val previews = swiftPreviewRanges(lexed.code)
-        return lexed.literals
-            .filter { literal -> previews.none { literal.start in it } }
-            .filter { literal ->
-                val sink = SWIFT_UI_TEXT.find(lexed.codeBefore(literal.start))
-                sink != null &&
-                    literal.text.any(Char::isLetter) &&
-                    (sink.groups[VERBATIM] != null || !isCatalogueKey(literal.text))
-            }.map { UiTextFinding(source.lineAt(it.start), it.text) }
+        return swiftTexts(lexed)
+            .filter { text -> previews.none { text.literal.start in it } }
+            .filter { it.literal.text.any(Char::isLetter) && (it.verbatim || !isCatalogueKey(it.literal.text)) }
+            .map { UiTextFinding(source.lineAt(it.literal.start), it.literal.text) }
+    }
+
+    /**
+     * The catalogue keys that a package target's Swift [source] looks up in the app's bundle instead of its own.
+     * SwiftUI looks a key up in the app's bundle unless the call names one, which only `Text`, `String(localized:)`
+     * and their kin can, with `bundle:`. A member typed LocalizedStringKey hands its keys to such a `Text`.
+     */
+    fun unbundledSwiftKeys(source: String): List<UiTextFinding> {
+        val lexed = SwiftLexer(source).lex()
+        val previews = swiftPreviewRanges(lexed.code)
+        return swiftTexts(lexed)
+            .filter { text -> previews.none { text.literal.start in it } }
+            .filter { !it.verbatim && !it.bundled && isCatalogueKey(it.literal.text) }
+            .map { UiTextFinding(source.lineAt(it.literal.start), it.literal.text.trim()) }
     }
 
     /**
      * The catalogue keys a Swift [source] uses: those it passes where SwiftUI shows or speaks text, and those its
-     * members typed LocalizedStringKey or LocalizedStringResource return. Interpolations are left out, so
-     * `"lines.towards \(headsign)"` uses `lines.towards`.
+     * members typed LocalizedStringKey or LocalizedStringResource hold. Each interpolation stands as [ARGUMENT], so
+     * `"lines.towards \(headsign)"` uses `lines.towards ` followed by one argument.
      */
-    fun swiftCatalogueKeys(source: String): Set<String> {
-        val lexed = SwiftLexer(source).lex()
-        val localizedMembers =
-            SWIFT_LOCALIZED_MEMBER
-                .findAll(lexed.code)
-                .mapNotNull { member -> closing(lexed.code, member.range.last)?.let { member.range.last..it } }
-                .toList()
-        return lexed.literals
-            .filter { literal ->
-                val sink = SWIFT_UI_TEXT.find(lexed.codeBefore(literal.start))
-                (sink != null && sink.groups[VERBATIM] == null) || localizedMembers.any { literal.start in it }
-            }.map { it.text.trim() }
-            .filter(CATALOGUE_KEY::matches)
+    fun swiftCatalogueKeys(source: String): Set<String> =
+        swiftTexts(SwiftLexer(source).lex())
+            .filter { !it.verbatim && isCatalogueKey(it.literal.text) }
+            .map { it.literal.text.trim() }
             .toSet()
-    }
+
+    /** The keys of a string catalogue's [json], each format argument (`%@`, `%lld`, `%1$@` …) as [ARGUMENT]. */
+    fun catalogueKeys(json: String): Set<String> =
+        Json
+            .parseToJsonElement(json)
+            .jsonObject["strings"]
+            ?.jsonObject
+            ?.keys
+            .orEmpty()
+            .map { it.replace(SWIFT_FORMAT_ARGUMENT, ARGUMENT.toString()) }
+            .toSet()
 
     /**
      * The entries of a string catalogue's [json] without a translated value in Spanish or English (NFR-I18N-01), as
      * "key (language)": every string unit of the language, each plural form included, must be translated and not
-     * empty. An entry marked not to translate needs only the source language.
+     * empty. An entry marked not to translate needs only a value in the source language, whatever its state: Xcode
+     * leaves the value it extracts for one marked new.
      */
     fun untranslatedCatalogueEntries(json: String): List<String> {
         val catalogue = Json.parseToJsonElement(json).jsonObject
@@ -92,48 +105,154 @@ object UiTextRules {
                 val translatable = entry.jsonObject["shouldTranslate"]?.jsonPrimitive?.booleanOrNull != false
                 APP_LANGUAGES
                     .filter { language -> translatable || language == sourceLanguage }
-                    .filterNot { language -> localizations[language]?.let(::isTranslated) == true }
-                    .map { language -> "$key ($language)" }
+                    .filterNot { language ->
+                        localizations[language]?.let { isTranslated(it, finalOnly = translatable) } == true
+                    }.map { language -> "$key ($language)" }
             }.sorted()
     }
 
-    /** The catalogue keys that a package target's Swift [source] looks up in the app's bundle instead of its own. */
-    @Suppress("UNUSED_PARAMETER") // TDD: red.
-    fun unbundledSwiftKeys(source: String): List<UiTextFinding> = emptyList()
-
-    /** The keys of a string catalogue's [json]. */
-    @Suppress("UNUSED_PARAMETER") // TDD: red.
-    fun catalogueKeys(json: String): Set<String> = emptySet()
-
-    /** A key of a string catalogue, such as `lines.title`, once the interpolations that follow it are left out. */
-    fun isCatalogueKey(text: String): Boolean = CATALOGUE_KEY.matches(text.trim())
+    /** A key of a string catalogue, such as `lines.title`, once the arguments that follow it are left out. */
+    fun isCatalogueKey(text: String): Boolean = CATALOGUE_KEY.matches(text.replace(ARGUMENT, ' ').trim())
 }
 
-// What comes right before a literal that SwiftUI shows or speaks: the title of a view or modifier that takes a
-// LocalizedStringKey, verbatim text, a String(localized:) key, or a search prompt.
-private val SWIFT_UI_TEXT =
-    Regex(
-        """(?:\b(?:Text|Button|Label|Toggle|Picker|Section|LabeledContent|Link|Menu|TextField|SecureField|Stepper|""" +
-            """ProgressView|GroupBox|DisclosureGroup|NavigationLink|ContentUnavailableView|Tab|LocalizedStringKey|""" +
-            """LocalizedStringResource|navigationTitle|accessibilityLabel|accessibilityHint|accessibilityValue|""" +
-            """accessibilityAction|alert|confirmationDialog|help|badge)\(\s*(verbatim\s*:\s*)?(?:named\s*:\s*)?""" +
-            """|\bString\(\s*localized\s*:\s*""" +
-            """|\bprompt\s*:\s*)$""",
+/** A literal that SwiftUI shows or speaks: given as [verbatim] text, or as a key looked up in a [bundled] bundle. */
+private class SwiftText(
+    val literal: StringLiteral,
+    val verbatim: Boolean,
+    val bundled: Boolean,
+)
+
+/** Every literal of a lexed Swift source that is shown or spoken, once, with how it is given. */
+private fun swiftTexts(lexed: Lexed): List<SwiftText> {
+    val calls =
+        textCallSinks(lexed, SWIFT_TEXT_CALLS, SWIFT_LABEL).map { sink ->
+            val bundled = sink.call in BUNDLE_CALLS && sink.callArguments.any { it.label == "bundle" }
+            SwiftText(sink.literal, verbatim = sink.call == "Text" && sink.label == "verbatim", bundled = bundled)
+        }
+    val properties = textPropertySinks(lexed, SWIFT_TEXT_PROPERTY).map { SwiftText(it.literal, false, false) }
+    return (calls + properties + localizedDeclarationTexts(lexed))
+        .groupBy { it.literal.start }
+        .map { (_, texts) ->
+            SwiftText(texts.first().literal, texts.any { it.verbatim }, texts.any { it.bundled })
+        }.sortedBy { it.literal.start }
+}
+
+/**
+ * What members, constants and parameters typed LocalizedStringKey or LocalizedStringResource hold: every literal
+ * of a computed member's body, but a comment or a table name, and the top-level literals of an initial value. A
+ * LocalizedStringKey goes to a `Text` that names the bundle; a LocalizedStringResource literal names none.
+ */
+private fun localizedDeclarationTexts(lexed: Lexed): List<SwiftText> =
+    SWIFT_LOCALIZED_DECLARATION
+        .findAll(lexed.code)
+        .flatMap { declaration ->
+            val (type, opening) = declaration.destructured
+            val bundled = type == "LocalizedStringKey"
+            val literals =
+                if (opening == "{") {
+                    val body =
+                        declaration.range.last..(closing(lexed.code, declaration.range.last) ?: declaration.range.last)
+                    lexed.literals.filter {
+                        it.start in body &&
+                            !SWIFT_NOT_TEXT.containsMatchIn(lexed.codeBefore(it.start))
+                    }
+                } else {
+                    lexed.topLevelLiterals(expressionAfter(lexed.code, declaration.range.last + 1))
+                }
+            literals.map { SwiftText(it, verbatim = false, bundled = bundled) }
+        }.toList()
+
+// SwiftUI's, UIKit's and WidgetKit's calls that show or speak their text, and where the text goes (LB-405).
+private val SWIFT_TEXT_CALLS =
+    listOf(
+        TextCall(listOf("Text"), positions = setOf(0), labels = setOf("verbatim")),
+        TextCall(
+            listOf(
+                "Button",
+                "Label",
+                "Toggle",
+                "Picker",
+                "Section",
+                "LabeledContent",
+                "Link",
+                "Menu",
+                "TextField",
+                "SecureField",
+                "Stepper",
+                "ProgressView",
+                "GroupBox",
+                "DisclosureGroup",
+                "NavigationLink",
+                "ContentUnavailableView",
+                "Tab",
+                "ShareLink",
+                "ControlGroup",
+                "DatePicker",
+                "Marker",
+                "Annotation",
+                "LocalizedStringKey",
+                "LocalizedStringResource",
+                "NSLocalizedString",
+                "Announcement",
+                "IntentDescription",
+                "navigationTitle",
+                "navigationSubtitle",
+                "accessibilityLabel",
+                "accessibilityHint",
+                "accessibilityValue",
+                "accessibilityInputLabels",
+                "help",
+                "badge",
+                "alert",
+                "confirmationDialog",
+                "configurationDisplayName",
+                "description",
+            ),
+            positions = setOf(0),
+        ),
+        TextCall(listOf("String", "AttributedString"), labels = setOf("localized")),
+        TextCall(listOf("accessibilityAction"), labels = setOf("named")),
+        TextCall(listOf("accessibilityCustomContent"), positions = setOf(0, 1)),
+        TextCall(listOf("post"), labels = setOf("argument")),
+        TextCall(listOf("Parameter", "DisplayRepresentation"), labels = setOf("title")),
+        TextCall(listOf("searchable"), labels = setOf("prompt")),
     )
 
-private const val VERBATIM = 1
+// The calls that can name the bundle to look a key up in.
+private val BUNDLE_CALLS = setOf("Text", "String", "AttributedString", "LocalizedStringResource", "NSLocalizedString")
 
-// A member that returns catalogue keys: `var title: LocalizedStringKey {` or `-> LocalizedStringResource {`.
-private val SWIFT_LOCALIZED_MEMBER = Regex("""(?::|->)\s*(?:LocalizedStringKey|LocalizedStringResource)\s*\{""")
+private val SWIFT_LABEL = Regex("""^\s*(\w+)\s*:(?!:)""")
+
+// UIKit's text properties: `label.accessibilityLabel = …`.
+private val SWIFT_TEXT_PROPERTY =
+    Regex("""\.(?:accessibilityLabel|accessibilityHint|accessibilityValue|text|title|placeholder)\s*=(?!=)""")
+
+// `var title: LocalizedStringKey {`, `-> LocalizedStringResource {`, `let title: LocalizedStringKey = `.
+private val SWIFT_LOCALIZED_DECLARATION =
+    Regex("""(?::|->)\s*(LocalizedStringKey|LocalizedStringResource)\??\s*([{=])(?!=)""")
+
+// The arguments of a localized value that are not text.
+private val SWIFT_NOT_TEXT = Regex("""\b(?:comment|table|tableName)\s*:\s*$""")
+
+// A format argument of a catalogue key: `%@`, `%lld`, `%1$@`, `%.1f` …
+private val SWIFT_FORMAT_ARGUMENT =
+    Regex("""%(\d+\$)?[-+ 0#']*\d*(\.\d+)?(lld|llu|ld|lu|hhd|hd|d|i|u|o|x|X|@|f|lf|e|g|s|c)""")
 
 // NFR-I18N-01: Spanish, the source language, and English.
 private val APP_LANGUAGES = listOf("es", "en")
 
-private fun isTranslated(localization: JsonElement): Boolean {
+/**
+ * Whether every string unit of a [localization] has a value, and, when [finalOnly], whether each is marked
+ * translated rather than new or needing review.
+ */
+private fun isTranslated(
+    localization: JsonElement,
+    finalOnly: Boolean,
+): Boolean {
     val units = stringUnits(localization)
     return units.isNotEmpty() &&
         units.all { unit ->
-            unit["state"]?.jsonPrimitive?.content == "translated" &&
+            (!finalOnly || unit["state"]?.jsonPrimitive?.content == "translated") &&
                 !unit["value"]?.jsonPrimitive?.content.isNullOrEmpty()
         }
 }
@@ -141,34 +260,24 @@ private fun isTranslated(localization: JsonElement): Boolean {
 /** Every string unit in a localisation: its own, its plural or device variations', and its substitutions'. */
 private fun stringUnits(element: JsonElement): List<JsonObject> =
     when (element) {
-        is JsonObject -> {
-            element.flatMap { (name, value) ->
-                if (name ==
-                    "stringUnit"
-                ) {
-                    listOf(value.jsonObject)
-                } else {
-                    stringUnits(value)
-                }
-            }
-        }
-
-        is JsonArray -> {
-            element.flatMap(::stringUnits)
-        }
-
-        else -> {
-            emptyList()
-        }
+        is JsonObject -> element.flatMap { (name, value) -> unitsOf(name, value) }
+        is JsonArray -> element.flatMap(::stringUnits)
+        else -> emptyList()
     }
+
+private fun unitsOf(
+    name: String,
+    value: JsonElement,
+): List<JsonObject> = if (name == "stringUnit") listOf(value.jsonObject) else stringUnits(value)
 
 private val CATALOGUE_KEY = Regex("""[a-z0-9_]+(?:\.[a-z0-9_]+)+""")
 
 private val SWIFT_PREVIEW_MACRO = Regex("""#Preview\b""")
 
-private val SWIFT_TYPE = Regex("""\b(?:struct|class|enum|extension)\s+(\w+)([^{]*)\{""")
+private val SWIFT_TYPE =
+    Regex("""\b(?:(private|fileprivate)\s+)?(?:final\s+)?(?:struct|class|enum|extension)\s+(\w+)([^{]*)\{""")
 
-/** The previews: `#Preview` blocks, and types named after a preview or that are a PreviewProvider. */
+/** The previews: `#Preview` blocks, PreviewProvider types, and private types named after a preview. */
 private fun swiftPreviewRanges(code: String): List<IntRange> {
     val macros =
         SWIFT_PREVIEW_MACRO.findAll(code).mapNotNull { macro ->
@@ -182,8 +291,9 @@ private fun swiftPreviewRanges(code: String): List<IntRange> {
         SWIFT_TYPE
             .findAll(code)
             .filter { type ->
-                val (name, inheritance) = type.destructured
-                name.endsWith("Preview") || name.endsWith("Previews") || "PreviewProvider" in inheritance
+                val (access, name, inheritance) = type.destructured
+                val namedAfterAPreview = name.endsWith("Preview") || name.endsWith("Previews")
+                "PreviewProvider" in inheritance || (access.isNotEmpty() && namedAfterAPreview)
             }.mapNotNull { type -> closing(code, type.range.last)?.let { type.range.first..it } }
     return (macros + types).toList()
 }
