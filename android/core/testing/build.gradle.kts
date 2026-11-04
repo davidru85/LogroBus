@@ -7,9 +7,10 @@ dependencies {
     // The checks extend Compose UI Test's finders.
     api(libs.compose.ui.test.junit4)
     implementation(libs.compose.ui)
+    // The checks run under Robolectric, and read its graphics mode.
+    implementation(libs.robolectric)
 
     testImplementation(libs.junit4)
-    testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.compose.foundation)
     testImplementation(libs.compose.material3)

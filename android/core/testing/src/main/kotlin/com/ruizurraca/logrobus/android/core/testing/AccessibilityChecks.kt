@@ -10,6 +10,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.config.ConfigurationRegistry
 import kotlin.math.roundToInt
 
 /** The smallest touch target, in both directions (NFR-A11Y, Material's 48 dp). */
@@ -24,9 +26,15 @@ private val MIN_TOUCH_TARGET = 48.dp
  * - its touch area, which Compose widens around a click, is at least 48 dp in both directions;
  * - no text is cut short, by an ellipsis or by its box (NFR-A11Y-03 at 200 % font).
  *
- * Nodes hidden from accessibility services are skipped.
+ * Nodes hidden from accessibility services are skipped. The test must run with native graphics: Robolectric's legacy
+ * graphics do not measure text, so the text checks would judge it wrongly either way.
  */
 fun SemanticsNodeInteractionsProvider.assertAccessible() {
+    if (ConfigurationRegistry.get(GraphicsMode.Mode::class.java) != GraphicsMode.Mode.NATIVE) {
+        throw AssertionError(
+            "assertAccessible needs @GraphicsMode(GraphicsMode.Mode.NATIVE): legacy graphics do not measure text",
+        )
+    }
     val controls = onAllNodes(isRoot()).fetchSemanticsNodes().flatMap { it.withDescendants() }
     val texts = onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().flatMap { it.withDescendants() }
     val problems =
