@@ -30,7 +30,7 @@ This document covers what we test, at which level, with which tools, and what ev
 | Architecture rules | Module and package boundaries, telemetry event types, user-facing text in UI code and the iOS string catalogues (LB-405, `code_style.md` §1) | `tools/architecture-tests` | Konsist; small lexers of its own for Kotlin and Swift | Every PR |
 | Android UI | Screen states and primary interactions | `android/feature/*/src/test` (Robolectric), `android/app/src/androidTest` | Compose UI test, Roborazzi | Every PR (Robolectric); nightly (instrumented) |
 | iOS UI | Screen states and primary interactions, plus checks of the built bundle (device family, orientations, deployment target, bundle id) | `iosApp/Packages/LogroBusUI/Tests` (snapshots), `iosApp/iosAppTests` (hosted, Swift Testing), `iosApp/iosAppUITests` | Swift Testing, swift-snapshot-testing, XCUITest | Every PR that touches `iosApp/` or `shared/`; otherwise nightly |
-| Accessibility (automated) | Labels, touch targets, contrast | Same as the UI tests | Android Accessibility Test Framework checks; XCUITest `performAccessibilityAudit()` | With the UI tests |
+| Accessibility (automated) | Labels, touch targets, cut text at 200 %, contrast (LB-406) | The screenshot tests of every Android screen and component; `iosAppUITests/AccessibilityAuditUITests` | `assertAccessible` (`:android:core:testing`) on Robolectric; XCUITest `performAccessibilityAudit()` | Every PR, with the UI tests |
 | End to end | The five critical journeys (`architecture.md` §8) against the live source | `maestro/` | Maestro | Nightly, non-blocking |
 | Performance | Cold start, first ETA, search latency, map frame rate | `android/benchmark`, `iosApp/iosAppUITests` | Macrobenchmark plus Baseline Profiles; `XCTApplicationLaunchMetric` | Weekly and before each release (LB-411) |
 | Accessibility (manual) | TalkBack and VoiceOver walkthrough, 200 % font, Reduce Transparency, Increase Contrast | Checklist in `design_guidelines.md` §8 | Devices | Before each beta and release |
@@ -44,7 +44,7 @@ This document covers what we test, at which level, with which tools, and what ev
 | Repository, sync, polling or caching | Integration test with `MockEngine` and the in-memory database, covering success, failure and retry |
 | Shared presentation mapper | Unit tests for every `UiState` it can produce |
 | Android or iOS ViewModel | Tests for every state it can emit, for each event, and for cancellation |
-| Compose or SwiftUI screen | Screenshot per UX state (light, dark, 200 % font), plus one interaction test for the primary action |
+| Compose or SwiftUI screen | Screenshot per UX state (light, dark, 200 % font), plus one interaction test for the primary action; on Android, `assertAccessible` on every screenshot case; on iOS, the screen in `AccessibilityAuditUITests`'s walk (LB-406) |
 | Bug fix | A regression test that fails before the fix |
 | Docs, scripts or CI only | `scripts/checks/run-docs-checks.sh` passes |
 
@@ -133,7 +133,29 @@ Two more things the app's tests learned with Settings (LB-403):
   - **A sheet's navigation bar (LB-110):** off screen, iOS 26 draws an inline title and its toolbar buttons in fixed colours whatever the appearance (a white title in light mode, a black Done in dark), so the edit sheet's snapshots take its list without the bar, and the UI tests check the title and Done. Android likewise captures the sheet's content without the modal window.
 - Each screen needs these variants: light, dark, 200 % font, and every UX state.
 
-### 4.7 Maestro flows
+### 4.7 Accessibility checks (LB-406)
+
+- **Android: `assertAccessible`, in `:android:core:testing`.**
+  - Compose UI Test's accessibility checks (the Accessibility Test Framework) do nothing under Robolectric: a 12 dp button without a label passed them. `assertAccessible` reads the semantics tree that TalkBack reads instead, and lists every problem:
+    - a control (click, long press, slider, text field) without a label;
+    - a touch area under 48 dp in either direction, measured as `touchBoundsInRoot`, which Compose widens around a click;
+    - text cut short: an ellipsis, lines beyond its height, or a line wider than the text.
+  - It skips nodes hidden from accessibility services and controls outside the screen, as TalkBack does.
+  - **Not `TextLayoutResult.hasVisualOverflow`:** the layout that semantics give lays a paragraph out at the widest the text may be, so every short text would seem to overflow.
+  - It needs native graphics, and fails under Robolectric's legacy graphics, which do not measure text.
+  - Every screenshot test runs it on each of its cases: every state, in light, dark and at 200 % font. Each test shows its content once for the capture and once for the checks. `EtaText` and `LineBadge`, which no screen shows whole yet, run it at 200 % in both languages.
+- **iOS: `iosAppUITests/AccessibilityAuditUITests`.**
+  - One launch at the default text size and one at the largest walk every screen and run XCUITest's `performAccessibilityAudit()` on each, reporting every issue together with a screenshot of its screen.
+  - **Contrast only where nothing scrolls beneath the floating bars.** iOS 26's scroll edge effect fades content under the tab bar and the navigation bar, and the audit reads that faded text, sometimes without naming its element. The Lines list is therefore audited for contrast while a search keeps it short, and the full list for everything else. At the largest text every text is large text (3:1), which the default size's 4.5:1 covers. `TokensTests` checks the accent and the secondary text against the system's backgrounds.
+  - The audit sometimes reads a screen that is still settling, and cannot name an issue's element: it then runs again, up to three times.
+  - **What it reports wrongly**, each checked in its screenshot, is named in the test with its reason:
+    - "clipped" text whose spoken label says a symbol in words (the favourites' hint, a card's headsigns);
+    - the system search field's placeholder;
+    - a navigation bar button's Dynamic Type, which the system caps and shows in the Large Content Viewer;
+    - the Dynamic Type of Settings' Data heading and footer, which scale with the others.
+  - It takes about 3 minutes locally and 5 to 6 on CI: the `iOS build and tests` job's limit is 35 minutes (owner decision, 2026-11-04, `ci_cd.md` §5).
+
+### 4.8 Maestro flows
 
 - One flow per critical journey, in `maestro/`, tagged `critical`.
 - Flows run nightly against the live source on an emulator and a simulator.

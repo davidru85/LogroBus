@@ -294,6 +294,10 @@ Liquid Glass is the navigation and control layer that floats above content. Cont
 
 `GlassRendering` in the environment forces the iOS 18–25 fallback, for snapshots and previews. `Tokens.Colors.cardBackground` (LB-103) and `groupedBackground` (LB-102) are the system's grouped list colours until the brand palette (LB-413).
 
+**Colours that reach 4.5:1 (LB-406, NFR-A11Y-01).** The system's blue reaches about 4:1 on white, and its secondary grey about 3.5:1, both under WCAG AA's 4.5:1 for normal text.
+- The app's root sets the tint to `Tokens.Colors.accent`, so every control, picker value and selected tab draws in the accent.
+- Secondary text is `Tokens.Colors.secondaryText`, set on each list section's heading and footer and on a `LabeledContent`'s value, which otherwise take the system's grey. A root `.foregroundStyle(_:_:)` would do it in one place, but it also turns buttons' labels from the tint to the primary colour, so they no longer look like actions.
+
 Since LB-012, the `scrollToTopRequests` environment value counts the re-selections of a tab at its root. The shell sets it on every tab root, and a root with a scrolling list scrolls to its top whenever it changes.
 
 **System first.** These pick up Liquid Glass automatically when built with the iOS 26 SDK and run on iOS 26 or later:
@@ -388,6 +392,8 @@ As built (LB-011): shared code sends `EtaUi`, with an `EtaDisplay` (`Now`, `Minu
 | Partial | Content shown; logged silently | Same |
 
 ## 8. Accessibility checklist (NFR-A11Y)
+
+Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessible` checks every screenshot case for labels, 48 dp touch targets and cut text; on iOS, `AccessibilityAuditUITests` runs Xcode's audit on every screen at the default and the largest text. The device checks below remain.
 
 - [ ] Every ETA and line badge has the spoken label from §6.3.
 - [ ] Live updates do not move focus, and polite announcements come at most once per 30 s for the focused item.

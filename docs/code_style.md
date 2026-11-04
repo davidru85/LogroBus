@@ -82,6 +82,7 @@
 - Never force-unwrap (`!`) or force-try outside tests. Use `guard` for early exits.
 - Use SwiftUI previews (`#Preview`) for every UX state in light and dark, with fake states.
 - Accessibility: every image has a label or is explicitly decorative, and every custom control has traits. Group ETA rows with `.accessibilityElement(children: .combine)` and give them the spoken label from `design_guidelines.md` §6.3.
+- Secondary text takes `Tokens.Colors.secondaryText`, never the system's `.secondary`, which stays under 4.5:1. That includes a list section's heading and footer and a `LabeledContent`'s value, which take the system's grey unless told otherwise. Controls take the app's tint, the accent (LB-406, `design_guidelines.md` §5).
 
 ## 4. Shell scripts
 
