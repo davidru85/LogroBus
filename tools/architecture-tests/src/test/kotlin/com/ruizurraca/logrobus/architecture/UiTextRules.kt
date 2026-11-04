@@ -41,6 +41,14 @@ object UiTextRules {
             }.map { UiTextFinding(source.lineAt(it.start), it.text) }
     }
 
+    /** The catalogue keys a Swift [source] uses. */
+    @Suppress("UNUSED_PARAMETER") // TDD: red.
+    fun swiftCatalogueKeys(source: String): Set<String> = emptySet()
+
+    /** The entries of a string catalogue's [json] that lack a translated Spanish or English value. */
+    @Suppress("UNUSED_PARAMETER") // TDD: red.
+    fun untranslatedCatalogueEntries(json: String): List<String> = emptyList()
+
     /** A key of a string catalogue, such as `lines.title`, once the interpolations that follow it are left out. */
     fun isCatalogueKey(text: String): Boolean = CATALOGUE_KEY.matches(text.trim())
 }

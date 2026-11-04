@@ -2,6 +2,8 @@ package com.ruizurraca.logrobus.architecture
 
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedKotlinUiText
 import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedSwiftUiText
+import com.ruizurraca.logrobus.architecture.UiTextRules.swiftCatalogueKeys
+import com.ruizurraca.logrobus.architecture.UiTextRules.untranslatedCatalogueEntries
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -228,5 +230,101 @@ class UiTextRulesTest {
             """.trimIndent()
 
         assertEquals(listOf(UiTextFinding(14, "Adiós")), hardcodedSwiftUiText(source))
+    }
+
+    @Test
+    fun lb405_theKeysSwiftCodeUsesAreItsTextKeysAndWhatItsLocalizedMembersReturn() {
+        val source =
+            """
+            Text("lines.title", bundle: .module)
+            Text("lines.towards \(headsign)")
+            Button("settings.clear_cache") {}
+            String(localized: "eta.now", bundle: bundle)
+            Text(verbatim: "lines.verbatim")
+            Image(systemName: "star.fill")
+            .accessibilityIdentifier("settings.theme")
+            var label: LocalizedStringKey {
+                switch self {
+                case .light: "settings.theme.light"
+                case .dark: "settings.theme.dark"
+                }
+            }
+            func title(for kind: Kind) -> LocalizedStringResource {
+                kind == .day ? "lines.group.day" : "lines.group.night"
+            }
+            var icon: String { "info.circle" }
+            """.trimIndent()
+
+        assertEquals(
+            setOf(
+                "lines.title",
+                "lines.towards",
+                "settings.clear_cache",
+                "eta.now",
+                "settings.theme.light",
+                "settings.theme.dark",
+                "lines.group.day",
+                "lines.group.night",
+            ),
+            swiftCatalogueKeys(source),
+        )
+    }
+
+    @Test
+    fun lb405_aCatalogueEntryNeedsATranslatedSpanishAndEnglishValue() {
+        val catalogue =
+            """
+            {
+              "sourceLanguage" : "es",
+              "strings" : {
+                "done" : { "localizations" : {
+                  "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+                  "es" : { "stringUnit" : { "state" : "translated", "value" : "Hecho" } } } },
+                "no_english" : { "localizations" : {
+                  "es" : { "stringUnit" : { "state" : "translated", "value" : "Solo español" } } } },
+                "new_english" : { "localizations" : {
+                  "en" : { "stringUnit" : { "state" : "new", "value" : "Draft" } },
+                  "es" : { "stringUnit" : { "state" : "translated", "value" : "Borrador" } } } },
+                "empty_spanish" : { "localizations" : {
+                  "en" : { "stringUnit" : { "state" : "translated", "value" : "Empty" } },
+                  "es" : { "stringUnit" : { "state" : "translated", "value" : "" } } } },
+                "nothing" : { }
+              },
+              "version" : "1.0"
+            }
+            """.trimIndent()
+
+        assertEquals(
+            listOf("empty_spanish (es)", "new_english (en)", "no_english (en)", "nothing (en)", "nothing (es)"),
+            untranslatedCatalogueEntries(catalogue),
+        )
+    }
+
+    @Test
+    fun lb405_everyPluralFormIsTranslated_andUntranslatableEntriesNeedOnlySpanish() {
+        val catalogue =
+            """
+            {
+              "sourceLanguage" : "es",
+              "strings" : {
+                "minutes %lld" : { "localizations" : {
+                  "en" : { "variations" : { "plural" : {
+                    "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld minute" } },
+                    "other" : { "stringUnit" : { "state" : "needs_review", "value" : "%lld minutes" } } } } },
+                  "es" : { "variations" : { "plural" : {
+                    "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld minuto" } },
+                    "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld minutos" } } } } } } },
+                "language.spanish" : { "shouldTranslate" : false, "localizations" : {
+                  "es" : { "stringUnit" : { "state" : "translated", "value" : "Español" } } } },
+                "language.english" : { "shouldTranslate" : false }
+              },
+              "version" : "1.0"
+            }
+            """.trimIndent()
+
+        assertEquals(
+            listOf("language.english (es)", "minutes %lld (en)"),
+            untranslatedCatalogueEntries(catalogue),
+        )
     }
 }
