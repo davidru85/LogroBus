@@ -96,10 +96,14 @@ extension AppLanguage {
     /// The language the app runs in, which iOS picks from the device's languages or the app's own (ADR-0020).
     public static var current: AppLanguage { of(localization: Bundle.main.preferredLocalizations.first) }
 
-    /// The app's language for a bundle `localization`, whatever its region. Spanish is the development language,
-    /// which iOS falls back to.
+    /// The app's language for a bundle `localization`, whatever its region. Spanish is the development language.
     static func of(localization: String?) -> AppLanguage {
         guard let localization else { return .spanish }
         return Locale.Language(identifier: localization).languageCode == .english ? .english : .spanish
     }
+}
+
+extension Locale {
+    /// TDD: red.
+    static func app(localization: String?, device: Locale) -> Locale { device }
 }
