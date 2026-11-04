@@ -172,6 +172,23 @@ class ModuleRulesTest {
     }
 
     @Test
+    fun lb406_productionCodeMayNotDependOnTheAndroidTestingModule() {
+        assertEquals(1, violations(":android:feature:lines", ":android:core:testing").size)
+        assertEquals(1, violations(":android:core:designsystem", ":android:core:testing").size)
+        assertEquals(1, violations(":android:app", ":android:core:testing").size)
+    }
+
+    @Test
+    fun lb406_theAndroidTestingModuleMayDependOnCoreModulesOnly() {
+        assertEquals(
+            emptyList<String>(),
+            violations(":android:core:testing", ":shared:core:common", ":android:core:designsystem"),
+        )
+        assertEquals(1, violations(":android:core:testing", ":android:feature:lines").size)
+        assertEquals(1, violations(":android:core:testing", ":shared:feature:lines").size)
+    }
+
+    @Test
     fun lb001_testingModuleMayDependOnCoreAndDomainModules() {
         assertEquals(
             emptyList<String>(),

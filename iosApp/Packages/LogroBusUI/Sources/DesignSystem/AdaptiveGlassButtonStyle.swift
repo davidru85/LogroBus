@@ -12,7 +12,9 @@ public struct AdaptiveGlassButtonStyle: PrimitiveButtonStyle {
             configuration.label.frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
         }
         if #available(iOS 26, *), rendering.usesLiquidGlass {
-            button.buttonStyle(.glass)
+            // A primary label, as in the fallback: `.glass` draws its label in the tint, which the app's root sets to
+            // the accent (LB-406), and a control over the map needs the strongest contrast.
+            button.buttonStyle(.glass).tint(.primary)
         } else {
             button.buttonStyle(MaterialButtonStyle())
         }

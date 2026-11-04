@@ -33,7 +33,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 1. **One concern per job.** A job answers exactly one question, such as "is the PR title valid?" or "do `:shared:data` unit tests pass?". Its job name is the status-check name.
 2. **Short by design.** Target under 5 minutes per job, with a hard `timeout-minutes` of 10 at most. If a job's typical duration exceeds 5 minutes, split it: by module, by test type, by platform or by shard.
    - **Exception: the macOS jobs.** The Kotlin/Native toolchain and the simulator's first boot dominate them, and splitting does not shorten them (§5). Their budgets are in §3 and their timeouts in `ios-checks.yml`.
-   - **`iOS build and tests` has a 10-minute budget** (owner decision, 2026-10-25), measured at 5–11 min.
+   - **`iOS build and tests` has a 10-minute budget** (owner decision, 2026-10-25), measured at 5–11 min. It has grown since: 17 to 23 minutes by LB-405, its tests alone about 10. LB-406's accessibility audits add 6 to 7 more, so its limit is 35 minutes (owner decision, 2026-11-04, §5).
 3. **Parallel and independent.** Jobs do not depend on each other unless one consumes another's artefact, such as iOS tests needing the Kotlin framework.
 4. **Reproducible locally.** Each job runs a single script from `scripts/checks/` or `scripts/ci/`, or a single Gradle task. The failure message tells you the command to run locally.
 5. **Relevant only.** Workflows are split by area with path filters, so a docs-only PR does not build iOS.
@@ -124,6 +124,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - **In both variants the tests never waited for the boot.** Besides the boot's contention, the rest of the time goes to the tests' first launches on the newly booted simulator.
   - **Splitting the job would not shorten it:** each part would need its own macOS runner, Gradle build and boot, and GitHub Free allows only 5 macOS jobs at once.
   - **Its budget is therefore 10 minutes** (owner decision, 2026-10-25, §2). The launch UI tests stay on every pull request.
+  - **The accessibility audits (LB-406, 2026-11-04):** `AccessibilityAuditUITests` walks every screen at the default and the largest text, and again in dark mode, about 3.5 minutes locally and 6 to 7 on CI's runner, which runs these tests about twice as slowly. With the job at 17 to 23 minutes, its limit went from 25 to 35 minutes (owner decision, 2026-11-04), rather than a job of its own, which would build the framework and the app again on a sixth macOS runner, or a nightly run, which would find a regression a day late.
   - **The package's tests left it (LB-101, 2026-11-02):** it took 19 minutes on PR #35. Since LB-101, it runs only the app's test targets, and each test target of `LogroBusUI` runs in a matrix job of its own (§3). Each of those jobs builds the framework again: with the app's job and the shared iOS tests, a pull request uses 5 macOS runners at once, the most that GitHub Free allows.
 - **Concurrency:** `concurrency` with `cancel-in-progress: true` per pull request, so a new push cancels the stale run.
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.

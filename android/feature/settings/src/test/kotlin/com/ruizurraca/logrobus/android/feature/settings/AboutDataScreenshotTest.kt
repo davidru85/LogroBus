@@ -8,7 +8,9 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
+import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import com.ruizurraca.logrobus.feature.settings.presentation.AboutDataUiState
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +34,22 @@ class AboutDataScreenshotTest(
 
     @Test
     fun lb011_aboutDataState_screenshot() {
+        show()
+
+        compose.onRoot().captureRoboImage("src/test/screenshots/AboutData_${state}_$variant.png")
+    }
+
+    /** LB-406 (NFR-A11Y): labels, touch targets, and at 200 % every time and name whole. */
+    @Test
+    fun lb406_aboutDataState_isAccessible() {
+        // Labels, touch targets and text do not change with the colours: dark repeats light.
+        assumeTrue(variant != DARK)
+        show()
+
+        compose.assertAccessible()
+    }
+
+    private fun show() {
         val uiState = states.getValue(state)
         compose.setContent {
             val density = LocalDensity.current
@@ -42,8 +60,6 @@ class AboutDataScreenshotTest(
                 ) { Surface { AboutDataScreen(uiState, onEvent = {}, onBack = {}) } }
             }
         }
-
-        compose.onRoot().captureRoboImage("src/test/screenshots/AboutData_${state}_$variant.png")
     }
 
     companion object {

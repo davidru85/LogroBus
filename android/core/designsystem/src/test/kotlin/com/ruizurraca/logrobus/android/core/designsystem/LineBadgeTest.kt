@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -76,6 +77,18 @@ class LineBadgeTest {
                 CurrentLineBadges(darkTheme = false)
             }
         }
+    }
+
+    /** LB-406 (NFR-A11Y-03): at 200 %, every current line's code shows whole, in every badge size. */
+    @Test
+    fun lb406_everyLineCodeIsWholeAt200PercentFont() {
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f)) {
+                CurrentLineBadges(darkTheme = false)
+            }
+        }
+
+        compose.assertAccessible()
     }
 
     @OptIn(ExperimentalLayoutApi::class)

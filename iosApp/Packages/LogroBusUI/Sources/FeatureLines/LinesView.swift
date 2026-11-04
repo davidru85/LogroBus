@@ -106,6 +106,7 @@ public struct LinesView: View {
                     HStack {
                         // The title's width is the header's when there is no Edit, as before LB-110.
                         Text("lines.favourites.title", bundle: .module)
+                            .foregroundStyle(Tokens.Colors.secondaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         // LB-110: Edit, while there is a favourite to edit, even one with no card.
                         if !editable.isEmpty {
@@ -134,6 +135,7 @@ public struct LinesView: View {
                     }
                 } header: {
                     Text(group.kind.title, bundle: .module)
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                 }
             }
         }

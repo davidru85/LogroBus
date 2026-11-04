@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import com.ruizurraca.logrobus.core.common.color.contrastRatio
 import com.ruizurraca.logrobus.core.presentation.EtaDelay
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
@@ -114,6 +115,31 @@ class EtaTextTest {
                 EveryEta(darkTheme = false)
             }
         }
+    }
+
+    /** LB-406 (NFR-A11Y-03): at 200 %, no ETA, delay or tag is cut short, in either language. */
+    @Test
+    @Config(qualifiers = "es-w360dp-h1600dp")
+    fun lb406_everyEtaCase_isWholeAt200PercentFont() {
+        compose.setContent { AtFontScale2 { EveryEta(darkTheme = false) } }
+
+        compose.assertAccessible()
+    }
+
+    @Test
+    @Config(qualifiers = "en-w360dp-h1600dp")
+    fun lb406_everyEtaCase_isWholeAt200PercentFont_inEnglish() {
+        compose.setContent { AtFontScale2 { EveryEta(darkTheme = false) } }
+
+        compose.assertAccessible()
+    }
+
+    @Composable
+    private fun AtFontScale2(content: @Composable () -> Unit) {
+        CompositionLocalProvider(
+            LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f),
+            content = content,
+        )
     }
 
     @Composable

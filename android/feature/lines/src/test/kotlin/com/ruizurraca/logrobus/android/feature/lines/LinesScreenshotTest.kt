@@ -9,7 +9,9 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
+import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,6 +36,22 @@ class LinesScreenshotTest(
 
     @Test
     fun lb101_linesState_screenshot() {
+        show()
+
+        compose.onRoot().captureRoboImage("src/test/screenshots/Lines_${state}_$variant.png")
+    }
+
+    /** LB-406 (NFR-A11Y): labels, touch targets, and at 200 % every code and name whole. */
+    @Test
+    fun lb406_linesState_isAccessible() {
+        // Labels, touch targets and text do not change with the colours: dark repeats light.
+        assumeTrue(variant != DARK)
+        show()
+
+        compose.assertAccessible()
+    }
+
+    private fun show() {
         val uiState = states.getValue(state)
         compose.setContent {
             val density = LocalDensity.current
@@ -47,8 +65,6 @@ class LinesScreenshotTest(
                 }
             }
         }
-
-        compose.onRoot().captureRoboImage("src/test/screenshots/Lines_${state}_$variant.png")
     }
 
     companion object {

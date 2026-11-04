@@ -1,3 +1,4 @@
+import DesignSystem
 import FeatureSettings
 @testable import LogroBus
 import Shared
@@ -93,7 +94,8 @@ enum ShellLook: CaseIterable, CustomStringConvertible, Sendable {
     }
 
     @MainActor func apply(to view: some View) -> AnyView {
-        AnyView(view.environment(\.dynamicTypeSize, self == .largeText ? .accessibility3 : .large))
+        // The app's tint, as its root sets it (LB-406).
+        AnyView(view.environment(\.dynamicTypeSize, self == .largeText ? .accessibility3 : .large).appTint())
     }
 }
 

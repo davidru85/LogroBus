@@ -1,3 +1,4 @@
+import DesignSystem
 import FeatureSettings
 import Shared
 import SwiftUI
@@ -34,6 +35,8 @@ struct LogroBusApp: App {
             AppShell()
                 // LB-405: one language on screen, the one iOS gave the app, with the device's region.
                 .environment(\.locale, .app)
+                // LB-406 (NFR-A11Y-01): controls in the accent rather than the system's blue.
+                .appTint()
                 .task { await appearance.observe() }
                 // The windows' own style, so sheets and alerts follow it too.
                 .onChange(of: appearance.interfaceStyle, initial: true) { _, style in

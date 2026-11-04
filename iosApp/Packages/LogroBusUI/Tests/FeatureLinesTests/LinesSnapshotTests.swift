@@ -1,3 +1,4 @@
+import DesignSystem
 @testable import FeatureLines
 import Shared
 import SnapshotTesting
@@ -148,6 +149,8 @@ enum Appearance: CaseIterable, Sendable {
             view
                 .environment(\.dynamicTypeSize, self == .largeText ? .accessibility3 : .large)
                 .environment(\.locale, Locale(identifier: "es"))
+                // The app's tint, as its root sets it (LB-406).
+                .appTint()
         )
     }
 }

@@ -71,6 +71,11 @@ custom_rules:
     excluded: ".*/DesignSystem/.*"
     message: "Use AdaptiveGlassButtonStyle or AdaptiveGlassProminentButtonStyle from DesignSystem (ADR-0003)."
     severity: error
+  system_secondary_text:
+    name: "System secondary text"
+    regex: '(\.foregroundStyle|\.foregroundColor)\(\s*(\.(secondary|tertiary|quaternary)\b|Color\.(secondary|gray)\b)'
+    message: "The system's secondary greys stay under 4.5:1: use Tokens.Colors.secondaryText (LB-406, docs/code_style.md §3.2)."
+    severity: error
   swift_telemetry_payload:
     name: "Telemetry payload declared in Swift"
     regex: '\b(class|struct|enum|actor|extension|protocol)\s+[\w.]+(\s*<[^>{]*>)?\s*:[^{]*\b(AnalyticsEvent|Breadcrumb)\b'

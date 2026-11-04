@@ -47,6 +47,7 @@ class ArchitectureTest {
             ":android:core:designsystem",
             ":android:core:map",
             ":android:core:navigation",
+            ":android:core:testing",
             ":android:feature:lines",
             ":android:feature:stops",
             ":android:feature:nearme",

@@ -19,6 +19,62 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-04: LB-406 part 1, accessibility checks on every screen
+
+**Done**
+- **PR #42 (LB-405) merged** on 2026-11-04, and `main` was synced.
+- **LB-406 part 1 (`feat/LB-406-accessibility-pass`):** automated checks that every screen built so far runs, and later screens join (`testing_strategy.md` §4.7).
+  - **Android, `assertAccessible`:**
+    - It lives in a new test-only module, `:android:core:testing`. `ModuleRules` keeps it out of production code, and it has a matrix job of its own in CI.
+    - It reads the semantics tree that TalkBack reads: labelled controls, 48 dp touch areas (`touchBoundsInRoot`), and no cut text.
+    - Every screenshot test runs it on each case in light and at 200 %: every state of the shell and its rail, More, Lines, line detail, the favourites editor, Settings and its language dialog, and About data. Dark repeats light, so it is skipped. ETAs and line badges run it at 200 % in both languages.
+    - Every screen passed at once. Making Lines' names end in an ellipsis failed 9 cases, and was undone.
+  - **iOS, `AccessibilityAuditUITests`:** two launches, at the default and the largest text, walk every screen and the Clear cache alert, and run Xcode's `performAccessibilityAudit()`, with a screenshot of each screen. The default launch then walks them again in dark mode.
+    - It found the system's secondary grey (about 3.5:1) on Settings' and About data's headings, footers and values, and the system blue (about 4:1) of Clear cache.
+    - Now the app's root tint is `Tokens.Colors.accent`, and those texts, with Lines' headings, use `Tokens.Colors.secondaryText` (`design_guidelines.md` §5).
+    - `TokensTests` checks both on the system's backgrounds, raised ones and Increase Contrast included. `DesignSystem`'s `appTint()` sets the tint at the root and in every snapshot helper, so the re-recorded Lines, line detail and Settings references show the accent that ships. SwiftLint's `system_secondary_text` rule forbids the system's greys.
+  - **Ahead of part 2:** the arrival rows' spoken label and polite announcements (LB-205, LB-213), the maps' list equivalents (LB-203, LB-104, LB-308), glass legibility (LB-202), and the device passes (`acceptance_criteria.md`).
+
+**Reviews** (the code-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; no shared code changed, so no data-rules review; all three asked for changes). Fixed in three TDD cycles:
+- **Majors:**
+  - **Android touch targets** were read from `touchBoundsInRoot`, the widened rectangle, while TalkBack gets that rectangle cut at the window's edge and where a later control takes the space. A probe showed a 24 dp control in a corner given 36 × 12 dp. `assertAccessible` now reads the view's `AccessibilityNodeInfo`.
+  - **The iOS snapshots lacked the app's tint,** so the references showed the system blue the story removed. The tint is now `appTint()`, applied at the root and by every snapshot helper.
+  - **A "Towards " label exclusion** would have hidden clipped text on any later screen, such as the direction toggle. Each exclusion now holds on its screen only, and the spoken-in-words texts are matched by accessibility identifiers.
+- **Minors:**
+  - Android: labels are checked off screen too, and for custom actions, expand, collapse and dismiss; a typed text is no label. Hidden nodes are skipped only as TalkBack skips them, all text is checked, and a container that does not scroll may not cut text.
+  - iOS: the Dynamic Type exclusion holds for a navigation bar's buttons only, the search field's only at the largest text. Settings' opens-outside icon was 1.7:1, and now takes the tokens' grey. The Clear cache alert and dark mode are audited.
+- **Not changed, or noted:**
+  - The system's alert, its search field's 20 pt Clear text button, and the Dynamic Type of its capped alert text are excluded, each a system component, found when the alert and dark mode joined the walk.
+  - The glass button style keeps a primary label, which the app's tint would otherwise colour. Map controls need the strongest contrast, and their legibility is part 2's.
+  - No `secondaryTextStyle()` helper: it would only rename the 19 uses; the SwiftLint rule and the audit guard the colour.
+  - Previews do not take the app's tint, since they are a development aid; snapshots do.
+  - The commit bodies before the review wrote "Refactor not needed." rather than `TDD: refactor not needed`; they are pushed, so they stay.
+
+**Decisions**
+- **Our own Android checks, not the Accessibility Test Framework:** Compose UI Test's `enableAccessibilityChecks()` does nothing under Robolectric (its own documentation says so). A 12 dp unlabelled button passed it, even with Robolectric's accessibility turned on, and CI has no emulator. So `assertAccessible` reads the semantics tree directly.
+  - It caught two false positives of its own, each fixed with a regression test. First, every text seemed to overflow, because the layout that semantics give lays a paragraph out at its widest. Second, a control scrolled off screen has an empty touch area.
+  - It refuses to run under legacy graphics, which do not measure text.
+- **What the iOS audit gets wrong is named in the test, each case checked in its screenshot.**
+  - "Clipped" text whose spoken label says a symbol in words: removing the hint's label removed the issue.
+  - The system search field's placeholder.
+  - A navigation bar button's Dynamic Type.
+  - The Dynamic Type of Settings' Data heading and footer: they scale at the largest text.
+- **Android touch targets as TalkBack gets them:** from the `AccessibilityNodeInfo` that Compose builds for the view, which works under Robolectric without an accessibility service. A control that a scrolling ancestor shows only in part is measured once scrolled to.
+- **Contrast is audited where nothing scrolls under the floating bars.**
+  - iOS 26's scroll edge effect fades what is under the tab bar and the navigation bar, and the audit sometimes reports those issues without an element. So they cannot be excluded by position: excluding unnamed issues once hid real ones in Settings.
+  - The Lines list is audited for contrast while a search keeps it short. The largest size is audited without contrast: all its text is large, with a 3:1 threshold.
+  - An audit with an unnamed issue runs again, up to three times, while the screen settles.
+- **The iOS tint at the app's root, and secondary text set where it is used:** a root `.foregroundStyle(.primary, secondary)` fixed the grey in one place, but turned Clear cache and Edit black, so they no longer looked like buttons.
+- **The `iOS build and tests` job's limit is 35 minutes** (owner decision, 2026-11-04), not 25. The audits add about 3.5 minutes locally and 6 to 7 on CI, and the job already took 17 to 23 (`ci_cd.md` §5). A separate job and a nightly run were the alternatives.
+- **Split into two parts:** the arrival, live and map screens that the other criteria need do not exist yet, so they come with them.
+
+**Open / next**
+- **The pull request of this entry, PR #43** (branch `feat/LB-406-accessibility-pass`), is open, and its watch runs. Its run is the first to show the `iOS build and tests` job with the audits, against the new 35-minute limit.
+- **Next, once it is merged:** LB-407 (favourites in OS backups; "no longer served" after 7 missed syncs), whose backup part waits for nothing, unless the owner chooses otherwise.
+- **Waiting on the owner:** as in the LB-405 entry below.
+
+---
+
 ## 2026-11-04: LB-405, localisation
 
 **Done**
@@ -52,7 +108,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The check is a test, not a detekt plugin or a SwiftLint regex:** one place for both platforms, unit-tested, and run by the Kotlin jobs on Linux, which a SwiftLint custom rule could not be.
 
 **Open / next**
-- **The pull request of this entry, PR #42** (branch `feat/LB-405-localisation`), is open, and its watch runs. **CI:** its first "PR title" check failed. GitHub answered the first `gh pr create` with a 502 but still opened the PR, with a title one character over the 100-character limit; the title was shortened at once, and this log's commit runs the check again, since editing a title triggers no workflow and a rerun replays the old one.
+- **The pull request of this entry, PR #42** (branch `feat/LB-405-localisation`), was merged on 2026-11-04. **CI:** its first "PR title" check failed. GitHub answered the first `gh pr create` with a 502 but still opened the PR, with a title one character over the 100-character limit; the title was shortened at once, and this log's commit runs the check again, since editing a title triggers no workflow and a rerun replays the old one.
   - **GitHub lost that push:** an incident from 10:38 UTC (pull requests, Git operations and Actions) left the PR on b0252d1 for over three hours while the branch was on 46d574c, and no run started for it. The next push, this note's commit, brings the PR up to date.
   - **A runner flake outside the change:** in that first run, "Android unit tests (:android:feature:settings)", and so the `Kotlin gate`, failed in its 22 screenshot tests. Robolectric's own fetcher (`MavenArtifactFetcher`, at test time, not through Gradle) could not download the SDK 36 jar from Maven Central (an `IOException`). "Android screenshots (:android:feature:settings)" downloaded the same jar in the same run and passed, and this module's code is unchanged. It is the first failure of that path, so the new run is its one retry. `gradle-retry.sh` rightly does not retry it, since it sees failing tests. If it recurs, Gradle could resolve Robolectric's SDK jars, with its retries and cache, and Robolectric could run offline (`ci_cd.md` §5).
 - **To check on a device:** a French device on Android 12 and on 13 or later (Material's words, dates), and on iOS (Spanish, the system's words included); TalkBack and VoiceOver; plus LB-403's checks.

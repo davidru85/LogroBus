@@ -74,7 +74,8 @@ LogroBus/
 │   ├── core/
 │   │   ├── designsystem/            # MaterialExpressiveTheme, tokens, LineBadge, EtaText (LB-011); expressive wrappers as screens need them
 │   │   ├── map/                     # MapLibre composables, layers, markers
-│   │   └── navigation/              # @Serializable NavKeys, and ScrollToTopOnReselect for tab roots (LB-012)
+│   │   ├── navigation/              # @Serializable NavKeys, and ScrollToTopOnReselect for tab roots (LB-012)
+│   │   └── testing/                 # test scopes only: assertAccessible, the accessibility checks of every screen test (LB-406)
 │   └── feature/
 │       ├── lines/  stops/  nearme/  planner/  settings/   # Compose screens + Android ViewModels
 ├── iosApp/
@@ -130,7 +131,8 @@ flowchart TB
 | `:shared:transit:data`, `:shared:favourites:data` | Their own domain module, `:shared:core:*`, Ktor and SQLDelight | Other capabilities' domains, feature modules |
 | `:shared:feature:<x>` | Domain modules, `:shared:core:*` (planner's own data package may use `:shared:core:network`) | **Other feature modules**, data modules (bound through DI) |
 | `:shared:umbrella` | Everything shared | Platform code |
-| `:android:core:*` | `:shared:core:*`, other `:android:core:*` modules | Domain, data and feature modules |
+| `:android:core:*` | `:shared:core:*`, other `:android:core:*` modules | Domain, data and feature modules; `:android:core:testing` |
+| `:android:core:testing` | `:shared:core:*`, other `:android:core:*` modules, Compose UI Test, Robolectric | Feature modules. No production module may depend on it (test scopes only, LB-406) |
 | `:android:feature:<x>` | `:shared:feature:<x>`, domain modules, `:shared:core:*`, `:android:core:*` | Other Android or shared feature modules, data modules |
 | `:android:app` | Everything Android, `:shared:umbrella` | none |
 | iOS `DesignSystem` | `Shared` (XCFramework), for `EtaUi` and the shared contrast rule (LB-011) | `MapUI`, `Feature*` targets |
@@ -509,8 +511,8 @@ flowchart TD
 | Integration: repositories, sync, polling | `shared/transit/data`, `shared/favourites/data` commonTest | Ktor `MockEngine`, in-memory SQLDelight, Turbine |
 | Architecture rules | `tools/architecture-tests` | Konsist |
 | Android ViewModels | `android/feature/*/src/test` | JUnit, Turbine, fakes from `:shared:core:testing` |
-| Android UI | `android/feature/*/src/test`, `androidTest` | Compose UI test, Roborazzi |
-| iOS ViewModels and UI | `Packages/LogroBusUI/Tests`, `iosAppTests` (built-bundle checks), `iosAppUITests` | Swift Testing, swift-snapshot-testing, XCUITest |
+| Android UI | `android/feature/*/src/test`, `androidTest` | Compose UI test, Roborazzi; `assertAccessible` from `:android:core:testing` (LB-406) |
+| iOS ViewModels and UI | `Packages/LogroBusUI/Tests`, `iosAppTests` (built-bundle checks), `iosAppUITests` | Swift Testing, swift-snapshot-testing, XCUITest and its accessibility audit (LB-406) |
 | End to end | `maestro/` | Maestro |
 
 The critical end-to-end journeys for the MVP (spec §10.1, adapted):

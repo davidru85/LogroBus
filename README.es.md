@@ -46,7 +46,7 @@ scripts/                              Arranque, comprobaciones de calidad, utili
 .claude/, .github/                    Configuración de Claude Code; plantillas de pull request y workflows de CI
 logrono-bus-app-functional-spec.md    Especificación funcional v0.1
 shared/                               Módulos de Kotlin Multiplatform: core, transit, favourites, funcionalidades, umbrella
-android/                              App de Android, módulos core (sistema de diseño, mapa, navegación) y módulos de funcionalidad
+android/                              App de Android, módulos core (sistema de diseño, mapa, navegación, ayudas para tests) y módulos de funcionalidad
 iosApp/                               App de iOS (especificación de XcodeGen) y el paquete Swift LogroBusUI
 build-logic/, gradle/                 Plugins de convención de Gradle; el catálogo de versiones
 tools/architecture-tests/             Reglas automáticas de módulos y paquetes
@@ -104,6 +104,12 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **04-11-2026:**
+  - LB-406, parte 1: comprobaciones de accesibilidad en todas las pantallas.
+    - Android: cada test de capturas comprueba también su pantalla tal como la recorre TalkBack. Cada control tiene etiqueta y una zona táctil de al menos 48 dp, y ningún texto queda cortado, tampoco con la letra al 200 %.
+    - iPhone: un test recorre todas las pantallas con el tamaño de texto normal y con el máximo, y otra vez en modo oscuro, y pasa en cada una la auditoría de accesibilidad de Xcode: zonas táctiles, texto recortado, tamaño del texto, contraste y descripciones.
+    - La auditoría encontró en iPhone textos grises y azules demasiado tenues, los colores del propio sistema. Las cabeceras de sección, las notas y los valores usan ahora el gris de la app, y los botones su azul, que alcanzan el contraste de 4,5:1 de WCAG AA.
+    - La parte 2 llega con las pantallas que la necesitan: filas de llegadas habladas, avisos discretos de las actualizaciones en directo, una lista para cada mapa y cristal legible.
+    - CI: el job de tests de la app de iPhone puede durar ahora hasta 35 minutos, porque las auditorías añaden 6 o 7.
   - LB-405: localización.
     - La app sigue los idiomas del móvil: el primero que habla, español o inglés. En un móvil en otro idioma va en español, y aun así puedes elegir cualquiera de los dos en Ajustes.
     - Todo lo que se ve queda entonces en ese idioma, con las palabras del propio móvil y los formatos de fecha, no solo los textos de la app: en Android, mediante el idioma de la pantalla; en iPhone, mediante el idioma en que SwiftUI busca los textos de la app.

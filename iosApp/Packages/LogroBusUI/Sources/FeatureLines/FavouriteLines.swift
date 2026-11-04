@@ -16,6 +16,8 @@ struct FavouriteLines: View {
                 .foregroundStyle(Tokens.Colors.secondaryText)
                 // VoiceOver reads words, never "white star".
                 .accessibilityLabel(Text("lines.favourites.hint_spoken", bundle: .module))
+                // LB-406: the accessibility audit takes the longer spoken label for clipped text.
+                .accessibilityIdentifier("lines.favourites.hint")
         } else {
             ScrollView(.horizontal) {
                 HStack(spacing: Tokens.Spacing.small) {
@@ -61,6 +63,8 @@ private struct FavouriteCard: View {
                         .font(.caption)
                         .foregroundStyle(Tokens.Colors.secondaryText)
                         .accessibilityLabel(towards)
+                        // LB-406: the accessibility audit takes the longer spoken label for clipped text.
+                        .accessibilityIdentifier("lines.favourites.card.headsigns")
                 }
             }
             .padding(Tokens.Spacing.medium)

@@ -46,7 +46,7 @@ scripts/                              Bootstrap, quality gates, CI helpers and a
 .claude/, .github/                    Claude Code configuration; PR templates and CI workflows
 logrono-bus-app-functional-spec.md    Functional specification v0.1
 shared/                               Kotlin Multiplatform modules: core, transit, favourites, features, umbrella
-android/                              Android app, core modules (design system, map, navigation) and feature modules
+android/                              Android app, core modules (design system, map, navigation, test helpers) and feature modules
 iosApp/                               iOS app (XcodeGen spec) and the LogroBusUI Swift package
 build-logic/, gradle/                 Gradle convention plugins; the version catalog
 tools/architecture-tests/             Automated module and package rules
@@ -102,6 +102,12 @@ You will need:
 ### Recent changes
 
 - **2026-11-04:**
+  - LB-406, part 1: accessibility checks on every screen.
+    - Android: every screenshot test also checks its screen as TalkBack meets it. Every control has a label and a touch area of at least 48 dp, and no text is cut short, at 200 % font size too.
+    - iPhone: a test walks every screen at the normal and the largest text size, and again in dark mode, and runs Xcode's accessibility audit on each: touch areas, clipped text, text size, contrast and descriptions.
+    - The audit found grey and blue text on iPhone that was too faint, the system's own colours. Section headings, notes and values now use the app's grey, and buttons its blue, which reach the 4.5:1 contrast of WCAG AA.
+    - Part 2 comes with the screens it needs: spoken arrival rows, quiet announcements of live updates, a list for every map, and legible glass.
+    - CI: the iPhone app's test job may now take up to 35 minutes, since the audits add 6 or 7.
   - LB-405: localisation.
     - The app follows your phone's languages: the first one it speaks, Spanish or English. On a phone in another language it is in Spanish, and you can still pick either in Settings.
     - Everything on screen is then in that language, the phone's own words and the date formats included, not only the app's: on Android through the screen's language, on iPhone through the language SwiftUI looks the app's words up in.
