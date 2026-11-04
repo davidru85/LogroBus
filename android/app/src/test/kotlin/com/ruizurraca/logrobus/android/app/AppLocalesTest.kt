@@ -35,7 +35,11 @@ class AppLocalesTest {
     fun lb405_onAFrenchDevice_theWholeAppIsInSpanish() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                assertEquals("es-FR", activity.resources.configuration.locales.toLanguageTags())
+                assertEquals(
+                    "es-FR",
+                    activity.resources.configuration.locales
+                        .toLanguageTags(),
+                )
                 // Android's own strings, as Material's, follow the activity's locale.
                 assertEquals("Cancelar", activity.getString(android.R.string.cancel))
             }
@@ -47,7 +51,11 @@ class AppLocalesTest {
     fun lb405_onAnEnglishDevice_theAppIsInEnglish() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                assertEquals("en-GB", activity.resources.configuration.locales.toLanguageTags())
+                assertEquals(
+                    "en-GB",
+                    activity.resources.configuration.locales
+                        .toLanguageTags(),
+                )
                 assertEquals("Cancel", activity.getString(android.R.string.cancel))
             }
         }
