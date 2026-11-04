@@ -748,15 +748,15 @@ Refs: NFR-A11Y-01 to 06, NFR-PLAT-01
 
 Part 1 (2026-11-04): automated checks that every screen built so far runs, and future screens join (`testing_strategy.md` §4.7). Evidence:
 - **Touch targets (the fourth criterion):**
-  - Android: `assertAccessible` from `:android:core:testing`, on every screenshot case (every state, light, dark and 200 % font) of the shell and its rail, More, Lines, the line detail, the favourites editor, Settings, its language dialog and About data. It checks 48 dp touch areas and labelled controls.
-  - iOS: `AccessibilityAuditUITests`, with Xcode's audit (44 pt hit regions among its checks) on every screen at the default and the largest text.
+  - Android: `assertAccessible` from `:android:core:testing`, on every screenshot case in light and at 200 % font (every state) of the shell and its rail, More, Lines, the line detail, the favourites editor, Settings, its language dialog and About data. It checks labelled controls and 48 dp touch areas as TalkBack and Accessibility Scanner get them, from the view's node info; `AccessibilityChecksTest` shows a small control in a window's corner, and two side by side, failing.
+  - iOS: `AccessibilityAuditUITests`, with Xcode's audit (44 pt hit regions among its checks) on every screen and the Clear cache alert at the default and the largest text, and again in dark mode.
   - Accessibility Scanner and Accessibility Inspector by hand are left for the device check.
 - **200 % font (the third criterion):**
   - Android: the same checks' cut-text rule on every screen at 200 %. `EtaTextTest.lb406_everyEtaCase_isWholeAt200PercentFont` (in Spanish and English) and `LineBadgeTest.lb406_everyLineCodeIsWholeAt200PercentFont` cover the ETAs and codes that no screen shows whole yet.
   - iOS: the audit's clipped-text check at the largest text, besides the snapshots at `accessibility3`.
   - A mutation that ellipsised the line names of Android's Lines list failed 9 cases.
 - **Contrast (NFR-A11Y-01, NFR-A11Y-06):**
-  - The iOS audit found the system's secondary grey and blue under 4.5:1 in Settings and About data. They are now the tokens' secondary text and accent (`design_guidelines.md` §5), and `TokensTests.lb406_…` checks both on the system's backgrounds.
+  - The iOS audit found the system's secondary grey and blue under 4.5:1 in Settings and About data. They are now the tokens' secondary text and accent (`design_guidelines.md` §5), in light and dark, and `TokensTests.lb406_…` checks both on the system's backgrounds, raised ones and Increase Contrast included. The snapshots take the app's tint, and SwiftLint forbids the system's greys.
   - Android's placeholder tokens were already checked (`TokensTest`, LB-011), and so were line badges, by NFR-A11Y-06's rule (LB-011).
 - **Spoken labels of ETAs and line badges (NFR-A11Y-02):** met in LB-011 (`EtaTextTest`, `LineBadgeTest` and their iOS counterparts).
 

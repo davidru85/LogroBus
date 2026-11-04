@@ -136,24 +136,26 @@ Two more things the app's tests learned with Settings (LB-403):
 ### 4.7 Accessibility checks (LB-406)
 
 - **Android: `assertAccessible`, in `:android:core:testing`.**
-  - Compose UI Test's accessibility checks (the Accessibility Test Framework) do nothing under Robolectric: a 12 dp button without a label passed them. `assertAccessible` reads the semantics tree that TalkBack reads instead, and lists every problem:
-    - a control (click, long press, slider, text field) without a label;
-    - a touch area under 48 dp in either direction, measured as `touchBoundsInRoot`, which Compose widens around a click;
-    - text cut short: an ellipsis, lines beyond its height, or a line wider than the text.
-  - It skips nodes hidden from accessibility services and controls outside the screen, as TalkBack does.
+  - Compose UI Test's accessibility checks (the Accessibility Test Framework) do nothing under Robolectric: a 12 dp button without a label passed them. `assertAccessible` reads the semantics tree and the node info that TalkBack reads instead, and lists every problem:
+    - **A control without a label:** a click, long press, slider or text field, or custom actions, expand, collapse or dismiss. The label is its description or its text, never only what was typed in a field. It is checked wherever the control is, since TalkBack scrolls to it.
+    - **A touch area under 48 dp in either direction, as TalkBack and Accessibility Scanner get it.** That is the bounds of the view's `AccessibilityNodeInfo`: Compose widens a click's area, then cuts it at the window's edge and where a later control takes the space. A small control in a window's corner, or two side by side, therefore fail although `touchBoundsInRoot` says 48 dp. A control that a scrolling list shows only in part is measured once scrolled to; one outside the screen is not measured.
+    - **Text cut short:** an ellipsis, lines beyond its height, a line wider than the text, or a container that does not scroll clipping it. All text is checked, text hidden from TalkBack and text under `clearAndSetSemantics` included: cut text fails whoever reads the screen.
+  - A node hidden from accessibility services is skipped as a control, and so are its children when it merges them, as TalkBack does.
   - **Not `TextLayoutResult.hasVisualOverflow`:** the layout that semantics give lays a paragraph out at the widest the text may be, so every short text would seem to overflow.
-  - It needs native graphics, and fails under Robolectric's legacy graphics, which do not measure text.
-  - Every screenshot test runs it on each of its cases: every state, in light, dark and at 200 % font. Each test shows its content once for the capture and once for the checks. `EtaText` and `LineBadge`, which no screen shows whole yet, run it at 200 % in both languages.
+  - It needs native graphics, and fails under Robolectric's legacy graphics, which do not measure text, or outside Robolectric, with a message that says so.
+  - Every screenshot test runs it on each of its cases in light and at 200 % font; dark repeats light, so it is skipped. Each test shows its content once for the capture and once for the checks. `EtaText` and `LineBadge`, which no screen shows whole yet, run it at 200 % in both languages.
+  - A window only checks the touch targets of the controls it shows: a test that needs a control's size makes the window tall enough, as the screenshot tests do, or scrolls to it.
 - **iOS: `iosAppUITests/AccessibilityAuditUITests`.**
-  - One launch at the default text size and one at the largest walk every screen and run XCUITest's `performAccessibilityAudit()` on each, reporting every issue together with a screenshot of its screen.
-  - **Contrast only where nothing scrolls beneath the floating bars.** iOS 26's scroll edge effect fades content under the tab bar and the navigation bar, and the audit reads that faded text, sometimes without naming its element. The Lines list is therefore audited for contrast while a search keeps it short, and the full list for everything else. At the largest text every text is large text (3:1), which the default size's 4.5:1 covers. `TokensTests` checks the accent and the secondary text against the system's backgrounds.
-  - The audit sometimes reads a screen that is still settling, and cannot name an issue's element: it then runs again, up to three times.
-  - **What it reports wrongly**, each checked in its screenshot, is named in the test with its reason:
-    - "clipped" text whose spoken label says a symbol in words (the favourites' hint, a card's headsigns);
-    - the system search field's placeholder;
+  - One launch at the default text size and one at the largest walk every screen, the Clear cache alert included, and run XCUITest's `performAccessibilityAudit()` on each. Each issue is reported together with a screenshot of its screen. The default size's launch then walks Lines, More, Settings, the alert and About data again with the device in dark mode.
+  - **Contrast only where nothing scrolls beneath the floating bars.** iOS 26's scroll edge effect fades content under the tab bar and the navigation bar, and the audit reads that faded text, sometimes without naming its element. The Lines list is therefore audited for contrast while a search keeps it short, and the full list for everything else. At the largest text every text is large text (3:1), which the default size's 4.5:1 covers. `TokensTests` checks the accent and the secondary text against the system's backgrounds, raised ones and Increase Contrast included.
+  - The audit sometimes reads a screen that is still settling, and cannot name an issue's element: it then runs again, up to three times. An issue that still names none is reported.
+  - **What it reports wrongly**, each checked in its screenshot, is named in the test with its reason. Each exclusion holds only on the screen where it was seen, and, where the issue names an element, only for that element:
+    - "clipped" text whose spoken label says a symbol in words: the favourites' hint and a card's headsigns, by their accessibility identifiers;
+    - the system search field's placeholder at the largest text, and its 20 pt Clear text button (Close ends the search);
     - a navigation bar button's Dynamic Type, which the system caps and shows in the Large Content Viewer;
-    - the Dynamic Type of Settings' Data heading and footer, which scale with the others.
-  - It takes about 3 minutes locally and 5 to 6 on CI: the `iOS build and tests` job's limit is 35 minutes (owner decision, 2026-11-04, `ci_cd.md` §5).
+    - the Dynamic Type of Settings' Data heading and footer, which scale with the others;
+    - the system's alert, whose text iOS caps and whose parts the audit cannot name. Its button takes the accent, whose contrast is audited.
+  - It takes about 3.5 minutes locally and 6 to 7 on CI: the `iOS build and tests` job's limit is 35 minutes (owner decision, 2026-11-04, `ci_cd.md` §5).
 
 ### 4.8 Maestro flows
 

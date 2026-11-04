@@ -27,15 +27,28 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Android, `assertAccessible`:**
     - It lives in a new test-only module, `:android:core:testing`. `ModuleRules` keeps it out of production code, and it has a matrix job of its own in CI.
     - It reads the semantics tree that TalkBack reads: labelled controls, 48 dp touch areas (`touchBoundsInRoot`), and no cut text.
-    - Every screenshot test runs it on each case: every state of the shell and its rail, More, Lines, line detail, the favourites editor, Settings and its language dialog, and About data, in light, dark and at 200 %. ETAs and line badges run it at 200 % in both languages.
+    - Every screenshot test runs it on each case in light and at 200 %: every state of the shell and its rail, More, Lines, line detail, the favourites editor, Settings and its language dialog, and About data. Dark repeats light, so it is skipped. ETAs and line badges run it at 200 % in both languages.
     - Every screen passed at once. Making Lines' names end in an ellipsis failed 9 cases, and was undone.
-  - **iOS, `AccessibilityAuditUITests`:** two launches, at the default and the largest text, walk every screen and run Xcode's `performAccessibilityAudit()`, with a screenshot of each screen.
+  - **iOS, `AccessibilityAuditUITests`:** two launches, at the default and the largest text, walk every screen and the Clear cache alert, and run Xcode's `performAccessibilityAudit()`, with a screenshot of each screen. The default launch then walks them again in dark mode.
     - It found the system's secondary grey (about 3.5:1) on Settings' and About data's headings, footers and values, and the system blue (about 4:1) of Clear cache.
     - Now the app's root tint is `Tokens.Colors.accent`, and those texts, with Lines' headings, use `Tokens.Colors.secondaryText` (`design_guidelines.md` §5).
-    - `TokensTests` checks both on the system's backgrounds. 10 Lines snapshots and 7 Settings screen snapshots were re-recorded for the darker grey.
+    - `TokensTests` checks both on the system's backgrounds, raised ones and Increase Contrast included. `DesignSystem`'s `appTint()` sets the tint at the root and in every snapshot helper, so the re-recorded Lines, line detail and Settings references show the accent that ships. SwiftLint's `system_secondary_text` rule forbids the system's greys.
   - **Ahead of part 2:** the arrival rows' spoken label and polite announcements (LB-205, LB-213), the maps' list equivalents (LB-203, LB-104, LB-308), glass legibility (LB-202), and the device passes (`acceptance_criteria.md`).
 
-**Reviews** (pending, at the end of the story).
+**Reviews** (the code-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; no shared code changed, so no data-rules review; all three asked for changes). Fixed in three TDD cycles:
+- **Majors:**
+  - **Android touch targets** were read from `touchBoundsInRoot`, the widened rectangle, while TalkBack gets that rectangle cut at the window's edge and where a later control takes the space. A probe showed a 24 dp control in a corner given 36 × 12 dp. `assertAccessible` now reads the view's `AccessibilityNodeInfo`.
+  - **The iOS snapshots lacked the app's tint,** so the references showed the system blue the story removed. The tint is now `appTint()`, applied at the root and by every snapshot helper.
+  - **A "Towards " label exclusion** would have hidden clipped text on any later screen, such as the direction toggle. Each exclusion now holds on its screen only, and the spoken-in-words texts are matched by accessibility identifiers.
+- **Minors:**
+  - Android: labels are checked off screen too, and for custom actions, expand, collapse and dismiss; a typed text is no label. Hidden nodes are skipped only as TalkBack skips them, all text is checked, and a container that does not scroll may not cut text.
+  - iOS: the Dynamic Type exclusion holds for a navigation bar's buttons only, the search field's only at the largest text. Settings' opens-outside icon was 1.7:1, and now takes the tokens' grey. The Clear cache alert and dark mode are audited.
+- **Not changed, or noted:**
+  - The system's alert, its search field's 20 pt Clear text button, and the Dynamic Type of its capped alert text are excluded, each a system component, found when the alert and dark mode joined the walk.
+  - The glass button style keeps a primary label, which the app's tint would otherwise colour. Map controls need the strongest contrast, and their legibility is part 2's.
+  - No `secondaryTextStyle()` helper: it would only rename the 19 uses; the SwiftLint rule and the audit guard the colour.
+  - Previews do not take the app's tint, since they are a development aid; snapshots do.
+  - The commit bodies before the review wrote "Refactor not needed." rather than `TDD: refactor not needed`; they are pushed, so they stay.
 
 **Decisions**
 - **Our own Android checks, not the Accessibility Test Framework:** Compose UI Test's `enableAccessibilityChecks()` does nothing under Robolectric (its own documentation says so). A 12 dp unlabelled button passed it, even with Robolectric's accessibility turned on, and CI has no emulator. So `assertAccessible` reads the semantics tree directly.
@@ -46,12 +59,13 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - The system search field's placeholder.
   - A navigation bar button's Dynamic Type.
   - The Dynamic Type of Settings' Data heading and footer: they scale at the largest text.
+- **Android touch targets as TalkBack gets them:** from the `AccessibilityNodeInfo` that Compose builds for the view, which works under Robolectric without an accessibility service. A control that a scrolling ancestor shows only in part is measured once scrolled to.
 - **Contrast is audited where nothing scrolls under the floating bars.**
   - iOS 26's scroll edge effect fades what is under the tab bar and the navigation bar, and the audit sometimes reports those issues without an element. So they cannot be excluded by position: excluding unnamed issues once hid real ones in Settings.
   - The Lines list is audited for contrast while a search keeps it short. The largest size is audited without contrast: all its text is large, with a 3:1 threshold.
   - An audit with an unnamed issue runs again, up to three times, while the screen settles.
 - **The iOS tint at the app's root, and secondary text set where it is used:** a root `.foregroundStyle(.primary, secondary)` fixed the grey in one place, but turned Clear cache and Edit black, so they no longer looked like buttons.
-- **The `iOS build and tests` job's limit is 35 minutes** (owner decision, 2026-11-04), not 25. The audits add about 3 minutes locally and 5 to 6 on CI, and the job already took 17 to 23 (`ci_cd.md` §5). A separate job and a nightly run were the alternatives.
+- **The `iOS build and tests` job's limit is 35 minutes** (owner decision, 2026-11-04), not 25. The audits add about 3.5 minutes locally and 6 to 7 on CI, and the job already took 17 to 23 (`ci_cd.md` §5). A separate job and a nightly run were the alternatives.
 - **Split into two parts:** the arrival, live and map screens that the other criteria need do not exist yet, so they come with them.
 
 **Open / next**
