@@ -32,6 +32,8 @@ struct LogroBusApp: App {
     var body: some Scene {
         WindowGroup {
             AppShell()
+                // LB-405: one language on screen, the one iOS gave the app, with the device's region.
+                .environment(\.locale, .app)
                 .task { await appearance.observe() }
                 // The windows' own style, so sheets and alerts follow it too.
                 .onChange(of: appearance.interfaceStyle, initial: true) { _, style in

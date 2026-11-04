@@ -3,8 +3,8 @@ import Foundation
 import Testing
 
 /// LB-405 (NFR-I18N-01): SwiftUI looks the app's words up, and formats, in the language iOS gave the app, with the
-/// device's region. With the device's own locale, a French device would get English from Foundation but Spanish, the
-/// development language, from SwiftUI's `Text`.
+/// device's region. With the device's own locale, a French device got Spanish, the development language, from the
+/// app's bundles, but English from the lookups that take a locale, such as the tab labels' LocalizedStringResource.
 struct AppLocaleTests {
     @Test
     func lb405_aDeviceInAnotherLanguage_getsTheAppsLanguageInItsRegion() {

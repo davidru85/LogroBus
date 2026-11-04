@@ -16,24 +16,24 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
-    func test_lb405_aDeviceInAnotherLanguage_getsEnglish_asIosDecides() {
-        // NFR-I18N-01: with none of the device's languages in the app, iOS picks English whenever the app has it,
-        // whatever its development language. Android picks Spanish (owner decision, 2026-11-04, ADR-0020).
+    func test_lb405_aDeviceInAnotherLanguage_getsTheAppInSpanish() {
+        // NFR-I18N-01: iOS falls back to the app's development language, Spanish, as Android does from values/. The
+        // package targets' words too: the screen's title from FeatureLines, a row's line from DesignSystem.
         let app = launch(languages: ["fr"], region: "fr_FR")
-        assertTabs(["Lines", "Near me", "Directions"], in: app)
-        // The package targets' words too: the screen's title from FeatureLines, a row's line from DesignSystem.
-        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
-        XCTAssertTrue(line("4", in: app).waitForExistence(timeout: 10))
-    }
-
-    @MainActor
-    func test_lb405_theDevicesFirstLanguageThatTheAppSpeaks_isTheAppsLanguage() {
-        let app = launch(languages: ["fr", "es"], region: "fr_FR")
         assertTabs(["Líneas", "Cerca de mí", "Cómo llegar"], in: app)
+        XCTAssertTrue(app.navigationBars["Líneas"].waitForExistence(timeout: 5))
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Línea 4, ")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10), "a row's line in Spanish, from DesignSystem")
         app.navigationBars["Líneas"].buttons["Más"].tap()
         XCTAssertTrue(app.buttons["Ajustes"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func test_lb405_theDevicesFirstLanguageThatTheAppSpeaks_isTheAppsLanguage() {
+        let app = launch(languages: ["fr", "en"], region: "fr_FR")
+        assertTabs(["Lines", "Near me", "Directions"], in: app)
+        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        XCTAssertTrue(line("4", in: app).waitForExistence(timeout: 10), "a row's line in English, from DesignSystem")
     }
 
     @MainActor

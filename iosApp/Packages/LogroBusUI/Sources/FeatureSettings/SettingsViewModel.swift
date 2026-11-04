@@ -96,7 +96,8 @@ extension AppLanguage {
     /// The language the app runs in, which iOS picks from the device's languages or the app's own (ADR-0020).
     public static var current: AppLanguage { of(localization: Bundle.main.preferredLocalizations.first) }
 
-    /// The app's language for a bundle `localization`, whatever its region. Spanish is the development language.
+    /// The app's language for a bundle `localization`, whatever its region. Spanish is the development language,
+    /// which iOS falls back to.
     static func of(localization: String?) -> AppLanguage {
         guard let localization else { return .spanish }
         return Locale.Language(identifier: localization).languageCode == .english ? .english : .spanish
@@ -104,6 +105,23 @@ extension AppLanguage {
 }
 
 extension Locale {
-    /// TDD: red.
-    static func app(localization: String?, device: Locale) -> Locale { device }
+    /// LB-405 (NFR-I18N-01): the locale SwiftUI looks the app's words up in, and formats with: the language iOS gave
+    /// the app, Spanish, its development language, on a device whose languages it does not speak, with the device's
+    /// region and preferences. With the device's own locale, a lookup that takes a locale, such as a
+    /// LocalizedStringResource's, matches English for it instead, so the screens mixed the two.
+    public static var app: Locale {
+        app(localization: Bundle.main.preferredLocalizations.first, device: .autoupdatingCurrent)
+    }
+
+    /// The `device` locale in the language of the app's bundle `localization`, or the device's own when they agree.
+    static func app(localization: String?, device: Locale) -> Locale {
+        guard let localization else { return device }
+        let language = Locale.Language(identifier: localization).languageCode
+        guard device.language.languageCode != language else { return device }
+        // Only the language changes: the region, and the device's preferences, stay.
+        var components = Locale.Components(locale: device)
+        components.languageComponents.languageCode = language
+        components.languageComponents.script = nil
+        return Locale(components: components)
+    }
 }
