@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
+import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,11 +33,24 @@ class ShellScreenshotTest(
 
     @Test
     fun lb012_shellScreen_screenshot() {
-        compose.capture("${screen}_$variant", variant) {
-            when (screen) {
-                "shell" -> AppShell()
-                else -> MoreScreen(onOpenSettings = {}, onOpenAboutData = {}, onBack = {})
-            }
+        compose.show(variant) { Screen() }
+
+        compose.onRoot().captureRoboImage("src/test/screenshots/${screen}_$variant.png")
+    }
+
+    /** LB-406 (NFR-A11Y): the tabs and More, labelled, large enough and whole at 200 %. */
+    @Test
+    fun lb406_shellScreen_isAccessible() {
+        compose.show(variant) { Screen() }
+
+        compose.assertAccessible()
+    }
+
+    @Composable
+    private fun Screen() {
+        when (screen) {
+            "shell" -> AppShell()
+            else -> MoreScreen(onOpenSettings = {}, onOpenAboutData = {}, onBack = {})
         }
     }
 
@@ -62,7 +76,17 @@ class RailScreenshotTest(
 
     @Test
     fun lb012_theShellOnAMediumWindow_screenshot() {
-        compose.capture("shellRail_$variant", variant) { AppShell() }
+        compose.show(variant) { AppShell() }
+
+        compose.onRoot().captureRoboImage("src/test/screenshots/shellRail_$variant.png")
+    }
+
+    /** LB-406 (NFR-A11Y): the navigation rail, labelled, large enough and whole at 200 %. */
+    @Test
+    fun lb406_theShellOnAMediumWindow_isAccessible() {
+        compose.show(variant) { AppShell() }
+
+        compose.assertAccessible()
     }
 
     companion object {
@@ -74,8 +98,7 @@ class RailScreenshotTest(
 
 private val VARIANTS = listOf("light", "dark", "fontScale2")
 
-private fun ComposeContentTestRule.capture(
-    name: String,
+private fun ComposeContentTestRule.show(
     variant: String,
     content: @Composable () -> Unit,
 ) {
@@ -86,5 +109,4 @@ private fun ComposeContentTestRule.capture(
             LogroBusTheme(darkTheme = variant == "dark", content = content)
         }
     }
-    onRoot().captureRoboImage("src/test/screenshots/$name.png")
 }

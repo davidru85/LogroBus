@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 
+    testImplementation(projects.android.core.testing)
     testImplementation(libs.junit4)
     // contrastRatio, to check the placeholder palette (NFR-A11Y-06).
     testImplementation(projects.shared.core.common)

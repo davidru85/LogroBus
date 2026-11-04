@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
+import com.ruizurraca.logrobus.android.core.testing.assertAccessible
 import com.ruizurraca.logrobus.feature.settings.presentation.AppLanguage
 import com.ruizurraca.logrobus.feature.settings.presentation.SettingsUiState
 import org.junit.Rule
@@ -35,6 +36,37 @@ class SettingsScreenshotTest(
 
     @Test
     fun lb403_settings_screenshot() {
+        showSettings()
+
+        compose.onRoot().captureRoboImage("src/test/screenshots/Settings_${state}_$variant.png")
+    }
+
+    /** LB-406 (NFR-A11Y): labels, touch targets, and at 200 % every choice whole. */
+    @Test
+    fun lb406_settings_isAccessible() {
+        showSettings()
+
+        compose.assertAccessible()
+    }
+
+    @Test
+    fun lb403_languageDialog_screenshot() {
+        if (state != "content") return
+        showLanguageDialog()
+
+        compose.onNode(isDialog()).captureRoboImage("src/test/screenshots/Settings_languageDialog_$variant.png")
+    }
+
+    /** LB-406 (NFR-A11Y): the dialog's choices, labelled, large enough and whole at 200 %. */
+    @Test
+    fun lb406_languageDialog_isAccessible() {
+        if (state != "content") return
+        showLanguageDialog()
+
+        compose.assertAccessible()
+    }
+
+    private fun showSettings() {
         val shown =
             when (state) {
                 "loading" -> SettingsUiState.Loading
@@ -48,13 +80,9 @@ class SettingsScreenshotTest(
                 LogroBusTheme(darkTheme = variant == "dark") { SettingsScreen(shown, onEvent = {}, onBack = {}) }
             }
         }
-
-        compose.onRoot().captureRoboImage("src/test/screenshots/Settings_${state}_$variant.png")
     }
 
-    @Test
-    fun lb403_languageDialog_screenshot() {
-        if (state != "content") return
+    private fun showLanguageDialog() {
         // A dialog is a window of its own, whose density comes from the configuration, not from the screen's.
         if (variant == "fontScale2") RuntimeEnvironment.setFontScale(2f)
         compose.setContent {
@@ -62,8 +90,6 @@ class SettingsScreenshotTest(
                 LanguageDialog(AppLanguage.SYSTEM, onChoose = {}, onDismiss = {})
             }
         }
-
-        compose.onNode(isDialog()).captureRoboImage("src/test/screenshots/Settings_languageDialog_$variant.png")
     }
 
     companion object {

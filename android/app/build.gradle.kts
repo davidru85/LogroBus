@@ -42,6 +42,7 @@ dependencies {
     // KoinApplicationPreview: the shell's preview gives the Lines root its ViewModel (ADR-0014).
     implementation(libs.koin.androidx.compose)
 
+    testImplementation(projects.android.core.testing)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
