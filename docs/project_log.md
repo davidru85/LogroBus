@@ -19,6 +19,50 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-04: LB-405, localisation
+
+**Done**
+- **PR #41 (LB-403) merged** on 2026-11-04, and `main` was synced. **CI:** its first run failed in "Android unit tests (:android:core:designsystem)", and so the `Kotlin gate`: the Gradle Plugin Portal did not serve `kotlin-dsl`'s plugin marker in any of `gradle-retry.sh`'s three runs, as on PR #36 and #38. The failed jobs were rerun once and passed. The lasting fix, a Gradle cache with a fallback key (`ci_cd.md` §5), still waits for the owner's choice of cache provider.
+- **LB-405 (`feat/LB-405-localisation`):**
+  - **The check of the "Done when":** `LocalisationTest` in `:tools:architecture-tests` fails on user-facing text written into UI code, on both platforms (`code_style.md` §1). Its rules, unit-tested in `UiTextRulesTest`, read the code through small lexers of their own for Kotlin and Swift (`SourceLexers.kt`), which blank comments and strings, and a model of the calls whose arguments hold text (`TextSinks.kt`): every top-level literal with a letter of such an argument fails on Android, and on iOS every one that is not a catalogue key, verbatim text included. Previews are exempt.
+  - **The iOS catalogues:** every entry translated into Spanish and English, plural forms included; every key the code uses in its target's catalogue, arguments included; every dotted key in use; and a package target's keys looked up in its own bundle. Android lint's `MissingTranslation`, an error, already checked `values-en/` (shown failing on a dropped string).
+  - **CI:** `changed-areas.sh` runs the Kotlin jobs when a Swift source or a string catalogue under `iosApp/` changes, since the localisation tests read them (`ChangedAreasScriptTest`). The test task declares them as inputs, so Gradle reruns it.
+  - **Android:** the app's strings already fell back to Spanish from `values/`, but on a French device Material's and Android's words, the plural rules and the date formats were French. `MainActivity` now attaches in the device's languages that the app speaks, in their order, or else in Spanish with the device's region and regional preferences, and makes that the default locale (`AppLocales.kt`, `AppLocalesTest`).
+  - **iOS:** with French alone, iOS gives the app its development language, Spanish, as Android does, the system's own words included. But the lookups that take a locale, the tab labels' `LocalizedStringResource` and DesignSystem's strings, matched English for the device's `fr_FR`: English tabs and line badges over Spanish screens, found when the UI tests began checking the package targets' words. The root view now gives SwiftUI `Locale.app`, the app's language in the device's region (`AppLocaleTests`), and two UI tests pin the result: French gives Spanish everywhere, "French, then English" gives English. The favourite card joins its headsigns through FeatureLines' bundle, so the not-translated entry Xcode extracted there is the one used.
+  - **Met early:** the plurals (LB-011: the spoken ETAs and delays, tested at 1 and 4 minutes in both languages) and the Madrid times (LB-010 part 2, `lb405_…`).
+  - **iOS test runs:** on the iPhone 17e, iOS 26.5.
+  - GitHub answered pushes with "Internal Server Error" several times today; each went through on a retry.
+
+**Reviews** (the code-reviewer, android-ui-reviewer and ios-ui-reviewer subagents; no shared code changed, so no data-rules review; all three asked for changes). Fixed in four TDD cycles:
+- **Majors:**
+  - Words returned by a member typed `LocalizedStringKey` or `LocalizedStringResource`, the codebase's own pattern, passed both Swift rules. They are now text, as are initial values and default parameters of those types.
+  - A preview with an expression body exempted the declaration after it. An expression body now exempts nothing, and a function or type is a preview by its name only when private.
+  - A package target's key given to `Button`, `.navigationTitle`, a search prompt or `Text` without `bundle:` is looked up in the app's bundle and shows the raw key: `unbundledSwiftKeys` and `lb405_packageTargetsLookTheirKeysUpInTheirOwnBundles` now catch it.
+  - Below Android 13, choosing "System" in Settings lets AppCompat apply the device's locale to the activity until the app restarts. Giving the application Spanish resources (an override of its `getResources()`) made every other context's configuration context come out in the device's locale under Robolectric, so it was dropped; ADR-0020 records the case and the alternative, the owner's call.
+- **The iOS UI tests only checked the app target's words** (a minor): checking a row and the Lines title too found the mixed-language screens above, now fixed.
+- **Minors:** only the literal right after a call's parenthesis was checked: now every top-level literal of the argument, in ternaries, elvis operators, concatenations and interpolations. Positional descriptions (`Icon(x, "…")`), semantics actions' labels, `append`, toasts after a nested first argument, notifications, and on iOS announcements, map pins, date pickers, input labels, custom content, share links, UIKit's text properties and the widget and App Intents titles are sinks. Keys keep their arguments, so a key that drops one no longer matches. Format specifiers are not letters, and `text =` counts only in text calls. The default locale and the device's regional preferences follow the fallback. A plain Kotlin string ends with its line. The iOS UI tests take a list of languages.
+- **Not changed, or noted:**
+  - A literal given to a component of ours is not seen by the check: components take a `Text`, as `FavouriteToggle` does (`code_style.md` §1).
+  - A literal passed as an argument of `stringResource(…)` inside `Text` belongs to the inner call, and is not checked.
+  - TalkBack and VoiceOver read the fallback language with the device's voice: for the device check.
+  - The green commit b4e9c88 also moved the Kotlin lexer into `SourceLexers.kt`, a refactor, while its body says none was needed. It is pushed, so it stays, and the PR says so.
+
+**Decisions**
+- **Each platform's own fallback** (owner decision, 2026-11-04), with no hack such as writing `AppleLanguages` into the app's defaults. The question rested on a misreading: the English that a French device saw on iOS came from the class method `Bundle.preferredLocalizations(from:forPreferences:)`, which knows no development language, and from the app's own lookups with the device's locale. iOS's own rule is the development language, Spanish, so both platforms fall back to Spanish and the acceptance criterion stands as written (ADR-0020).
+- **The check is a test, not a detekt plugin or a SwiftLint regex:** one place for both platforms, unit-tested, and run by the Kotlin jobs on Linux, which a SwiftLint custom rule could not be.
+
+**Open / next**
+- **The pull request of this entry** (branch `feat/LB-405-localisation`) is open, and its watch runs.
+- **To check on a device:** a French device on Android 12 and on 13 or later (Material's words, dates), and on iOS (Spanish, the system's words included); TalkBack and VoiceOver; plus LB-403's checks.
+- **Next, once it is merged:** LB-406 (accessibility pass), which waits for nothing, unless the owner chooses otherwise. LB-404's remaining parts (data source, disclaimer, attributions) touch the tile licensing of OQ-10.
+- **Waiting on the owner:**
+  - Below Android 13, whether to keep the language choice in the app's own settings, so that "System" never brings the device's locale back during a session (ADR-0020).
+  - Android's "Undo" after removing a favourite line (LB-110).
+  - The Gradle cache provider, and the Kotlin Gradle plugin's Dependabot alert.
+  - OQ-10, OQ-11 and OQ-16, DD-10, and WorkManager, as in the entries below.
+
+---
+
 ## 2026-11-03: LB-403, Settings
 
 **Done**
@@ -86,7 +130,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **No new Robolectric SDK:** code that differs by Android version takes the version as a parameter, rather than make every CI job download another SDK from Maven Central.
 
 **Open / next**
-- **The pull request of this entry** (branch `feat/LB-403-settings`) is open, and its watch runs.
+- **The pull request of this entry** (branch `feat/LB-403-settings`), PR #41, was merged on 2026-11-04.
 - **To check on a device:**
   - Switching the language on both platforms: Android at once; iOS through the iPhone's Settings, which relaunches the app.
   - The theme from the first frame and in sheets and alerts.

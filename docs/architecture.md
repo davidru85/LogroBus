@@ -496,7 +496,7 @@ flowchart TD
 | Telemetry | Contracts in `:shared:core:telemetry`; no-op or logging in the MVP; vendor later (ADR-0009) |
 | Settings | Multiplatform Settings (DataStore, `NSUserDefaults`), ADR-0018, in `:shared:core:preferences` (LB-403). The language and theme are applied each platform's own way, ADR-0020 |
 | Logging | The `Logger` interface (`:shared:core:common`): `ConsoleLogger` from the debug level in debug builds; errors only in release (`security_privacy.md` §4), or `NoOpLogger`. The app's build type decides, not the shared binary's (LB-010). Never logs coordinates or free text |
-| Localisation | Android `values/` (es-ES, the default) and `values-en/`; iOS `Localizable.xcstrings` with Spanish as the development language |
+| Localisation | Android `values/` (es-ES, the default) and `values-en/`; iOS `Localizable.xcstrings` with Spanish as the development language. A device in any other language gets Spanish, its system's words included: on Android through `MainActivity`'s locale, on iOS through the development language and SwiftUI's `Locale.app` (LB-405, ADR-0020); `LocalisationTest` keeps user-facing text out of the code (`code_style.md` §1) |
 | Security | HTTPS only, no pinning (spec §8.7), no secrets (`security_privacy.md`) |
 | Visual design | `design_guidelines.md` and a neutral placeholder theme until the Figma designs arrive near the end of the MVP (LB-413) |
 

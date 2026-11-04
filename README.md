@@ -18,7 +18,7 @@ The app is organised into three sections and always opens on **Lines**. It runs 
 
 The app also includes:
 - Real-time arrivals with a visible indication of how fresh and how reliable each prediction is.
-- Spanish and English, and a light or dark theme, which you can choose in Settings, with how arrival times show (minutes or clock time). Settings also says when the lines and stops were last updated, and clears the cache.
+- Spanish and English: the app follows your phone's language, or else it is in Spanish. You can also choose the language in Settings, with a light or dark theme, with how arrival times show (minutes or clock time). Settings also says when the lines and stops were last updated, and clears the cache.
 
 Planned for v1.0: offline mode, news and service notices, fares, recharge points, a home-screen widget and notifications.
 
@@ -101,6 +101,11 @@ You will need:
 
 ### Recent changes
 
+- **2026-11-04:**
+  - LB-405: localisation.
+    - The app follows your phone's languages: the first one it speaks, Spanish or English. On a phone in another language it is in Spanish, and you can still pick either in Settings.
+    - Everything on screen is then in that language, the phone's own words and the date formats included, not only the app's: on Android through the screen's language, on iPhone through the language SwiftUI looks the app's words up in.
+    - A check fails on any user-facing text written into the code instead of the translations, on an iPhone translation key that is missing, and on a text without both its Spanish and its English.
 - **2026-11-03:**
   - LB-403: Settings, from More.
     - Appearance: the app's language and its theme (system, light or dark). On Android you pick the language in the app, which switches at once; on iPhone the row opens the app's page in the iPhone's Settings, where iOS keeps an app's language (ADR-0020).
