@@ -26,8 +26,8 @@ private val MIN_TOUCH_TARGET = 48.dp
  * - its touch area, which Compose widens around a click, is at least 48 dp in both directions;
  * - no text is cut short, by an ellipsis or by its box (NFR-A11Y-03 at 200 % font).
  *
- * Nodes hidden from accessibility services are skipped. The test must run with native graphics: Robolectric's legacy
- * graphics do not measure text, so the text checks would judge it wrongly either way.
+ * Nodes hidden from accessibility services, and controls outside the screen, are skipped. The test must run with
+ * native graphics: Robolectric's legacy graphics do not measure text, so the text checks would judge it wrongly.
  */
 fun SemanticsNodeInteractionsProvider.assertAccessible() {
     if (ConfigurationRegistry.get(GraphicsMode.Mode::class.java) != GraphicsMode.Mode.NATIVE) {
@@ -38,7 +38,8 @@ fun SemanticsNodeInteractionsProvider.assertAccessible() {
     val controls = onAllNodes(isRoot()).fetchSemanticsNodes().flatMap { it.withDescendants() }
     val texts = onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().flatMap { it.withDescendants() }
     val problems =
-        controls.filter { it.isControl }.flatMap { it.controlProblems() } + texts.flatMap { it.textProblems() }
+        controls.filter { it.isControl && it.isOnScreen }.flatMap { it.controlProblems() } +
+            texts.flatMap { it.textProblems() }
     if (problems.isNotEmpty()) {
         throw AssertionError("Accessibility problems (LB-406):\n" + problems.joinToString("\n") { "- $it" })
     }
@@ -57,6 +58,10 @@ private val SemanticsNode.isControl: Boolean
             config.contains(SemanticsActions.OnLongClick) ||
             config.contains(SemanticsActions.SetProgress) ||
             config.contains(SemanticsActions.SetText)
+
+/** Whether any of the node shows: TalkBack does not see a node outside the screen, whose touch area is empty. */
+private val SemanticsNode.isOnScreen: Boolean
+    get() = !touchBoundsInRoot.isEmpty
 
 private val SemanticsNode.label: String
     get() =
