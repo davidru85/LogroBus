@@ -69,7 +69,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Split into two parts:** the arrival, live and map screens that the other criteria need do not exist yet, so they come with them.
 
 **Open / next**
-- **The pull request of this entry**, once opened, is watched until merged.
+- **The pull request of this entry, PR #43** (branch `feat/LB-406-accessibility-pass`), is open, and its watch runs. Its run is the first to show the `iOS build and tests` job with the audits, against the new 35-minute limit.
 - **Next, once it is merged:** LB-407 (favourites in OS backups; "no longer served" after 7 missed syncs), whose backup part waits for nothing, unless the owner chooses otherwise.
 - **Waiting on the owner:** as in the LB-405 entry below.
 
