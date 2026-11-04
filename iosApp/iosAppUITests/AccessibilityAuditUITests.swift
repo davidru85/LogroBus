@@ -3,7 +3,7 @@ import XCTest
 /// LB-406 (NFR-A11Y): every screen the app has passes Xcode's accessibility audit, at the default text size and at the
 /// largest: touch targets of at least 44 pt, no clipped text, Dynamic Type, contrast, and a description and trait for
 /// every element. One launch per text size walks the screens, and the issues of all of them are reported together,
-/// each with a screenshot of its screen.
+/// each with a screenshot of its screen. The default size's launch walks the screens again in dark mode.
 ///
 /// Contrast is audited only where nothing scrolls beneath the floating bars, whose scroll edge effect fades what is
 /// under them: the audit reads that faded text, and does not always name its element, so it cannot be told apart.
@@ -14,20 +14,28 @@ final class AccessibilityAuditUITests: XCTestCase {
 
     @MainActor
     func test_lb406_everyScreenPassesTheAccessibilityAudit() throws {
-        try auditEveryScreen(in: launch(), contrast: true)
+        let app = launch()
+        var issues: [String] = []
+        try auditEveryScreen(in: app, largestText: false, into: &issues)
+        try auditInDarkMode(in: app, into: &issues)
+        XCTAssertEqual(issues, [], "\n" + issues.joined(separator: "\n"))
     }
 
     @MainActor
     func test_lb406_everyScreenPassesTheAccessibilityAudit_atTheLargestTextSize() throws {
-        try auditEveryScreen(in: launch(textSize: "UICTContentSizeCategoryAccessibilityXXXL"), contrast: false)
+        let app = launch(textSize: "UICTContentSizeCategoryAccessibilityXXXL")
+        var issues: [String] = []
+        try auditEveryScreen(in: app, largestText: true, into: &issues)
+        XCTAssertEqual(issues, [], "\n" + issues.joined(separator: "\n"))
     }
 
     /// Lines with the favourites' hint, a search and a favourite, the favourites' edit sheet, a favourite's detail,
-    /// More, Settings, About data, Near me and Directions. Line 3 is a favourite only while the test needs one.
+    /// More, Settings and its Clear cache alert, About data, Near me and Directions. Line 3 is a favourite only while
+    /// the test needs one; one that an interrupted run left is removed first, as `ShellUITests` does.
     @MainActor
-    private func auditEveryScreen(in app: XCUIApplication, contrast: Bool) throws {
-        let types: XCUIAccessibilityAuditType = contrast ? .all : .all.subtracting(.contrast)
-        var issues: [String] = []
+    private func auditEveryScreen(in app: XCUIApplication, largestText: Bool, into issues: inout [String]) throws {
+        let audit = Audit(test: self, app: app, largestText: largestText)
+        let types: XCUIAccessibilityAuditType = largestText ? .all.subtracting(.contrast) : .all
         XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 10))
         let addLine3 = app.buttons["Add line 3 to favourites"]
         let removeLine3 = app.buttons["Remove line 3 from favourites"]
@@ -35,31 +43,23 @@ final class AccessibilityAuditUITests: XCTestCase {
         if removeLine3.exists { removeLine3.tap() }
         XCTAssertTrue(addLine3.waitForExistence(timeout: 5))
         scrollDown(toward: app.staticTexts["Your favourite lines"], in: app)
-        try audit("Lines", types.subtracting(.contrast), in: app, into: &issues)
+        try audit.run("Lines", types.subtracting(.contrast), into: &issues)
 
-        // Lines 2 and B1, under both headings, and nothing beneath the tab bar.
-        let search = app.searchFields.firstMatch
-        search.tap()
-        search.typeText("varea\n")
-        XCTAssertTrue(app.staticTexts["Night lines (Búho)"].waitForExistence(timeout: 5))
-        try audit("Lines, searching", types, in: app, into: &issues)
-        app.buttons["Close"].firstMatch.tap()
+        try search("varea", in: app)
+        try audit.run("Lines, searching", types, into: &issues)
+        closeSearch(in: app)
 
         scrollUp(toward: addLine3, in: app)
         addLine3.tap()
-        addTeardownBlock { @MainActor in
-            let remove = app.buttons["Remove line 3 from favourites"]
-            if remove.exists { remove.tap() }
-        }
         XCTAssertTrue(removeLine3.waitForExistence(timeout: 5))
         let edit = app.buttons["Edit favourite lines"]
         scrollDown(toward: edit, in: app)
-        try audit("Lines with a favourite", types.subtracting(.contrast), in: app, into: &issues)
+        try audit.run("Lines with a favourite", types.subtracting(.contrast), into: &issues)
 
         edit.tap()
         let sheet = app.navigationBars["Edit favourite lines"]
         XCTAssertTrue(sheet.waitForExistence(timeout: 5))
-        try audit("Edit favourite lines", types, in: app, into: &issues)
+        try audit.run("Edit favourite lines", types, into: &issues)
         sheet.buttons["Done"].tap()
         XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
 
@@ -68,96 +68,94 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons.matching(card).firstMatch.tap()
         let detail = app.navigationBars["Line 3"]
         XCTAssertTrue(detail.waitForExistence(timeout: 5))
-        try audit("Line 3", types, in: app, into: &issues)
+        try audit.run("Line 3", types, into: &issues)
         detail.buttons["Remove line 3 from favourites"].tap()
         XCTAssertTrue(detail.buttons["Add line 3 to favourites"].waitForExistence(timeout: 5))
         detail.buttons["Lines"].tap()
 
-        app.navigationBars["Lines"].buttons["More"].tap()
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5))
-        try audit("More", types, in: app, into: &issues)
-        app.buttons["Settings"].tap()
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
-        try audit("Settings", types, in: app, into: &issues)
-        // At the largest text, Clear cache is below the screen.
-        app.swipeUp()
-        app.swipeUp()
-        try audit("Settings, at its end", types, in: app, into: &issues)
-        app.navigationBars["Settings"].buttons.firstMatch.tap()
-        app.buttons["About data"].tap()
-        XCTAssertTrue(app.navigationBars["About data"].waitForExistence(timeout: 5))
-        try audit("About data", types, in: app, into: &issues)
-
+        try auditMoreAndSettings(audit, types, largestText: largestText, in: app, into: &issues)
         for (tab, title) in [("Near me", "Near me"), ("Directions", "How to get there")] {
             app.tabBars.buttons[tab].tap()
             XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5))
-            try audit(tab, types, in: app, into: &issues)
+            try audit.run(tab, types, into: &issues)
         }
-
-        XCTAssertEqual(issues, [], "\n" + issues.joined(separator: "\n"))
     }
 
-    /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
-    /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
-    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none.
+    /// The Lines search, More, Settings, its alert and About data again, with the device in dark mode: the dark
+    /// accent and secondary text on the system's dark backgrounds. The app's theme follows the device.
     @MainActor
-    private func audit(
-        _ screen: String,
+    private func auditInDarkMode(in app: XCUIApplication, into issues: inout [String]) throws {
+        XCUIDevice.shared.appearance = .dark
+        addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
+        let audit = Audit(test: self, app: app, largestText: false)
+        app.tabBars.buttons["Lines"].tap()
+        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        try search("varea", in: app)
+        try audit.run("Lines, searching, dark", .all, into: &issues)
+        closeSearch(in: app)
+        try auditMoreAndSettings(audit, .all, largestText: false, in: app, into: &issues, suffix: ", dark")
+    }
+
+    /// More, Settings, at its end at the largest text, its Clear cache alert, and About data, from the Lines root.
+    @MainActor
+    private func auditMoreAndSettings(
+        _ audit: Audit,
         _ types: XCUIAccessibilityAuditType,
+        largestText: Bool,
         in app: XCUIApplication,
-        into issues: inout [String]
+        into issues: inout [String],
+        suffix: String = ""
     ) throws {
-        let shot = XCTAttachment(screenshot: app.screenshot())
-        shot.name = screen
-        shot.lifetime = .keepAlways
-        add(shot)
-        let navigationBars = app.navigationBars.allElementsBoundByIndex.map(\.frame)
-        var found: [String] = []
-        for attempt in 1...3 {
-            found = []
-            var unnamed = false
-            try app.performAccessibilityAudit(for: types) { issue in
-                if Self.isFalsePositive(issue, navigationBars: navigationBars) { return true }
-                unnamed = unnamed || issue.element == nil
-                let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
-                found.append("\(screen): \(issue.compactDescription), \(element): \(issue.detailedDescription)")
-                return true
-            }
-            if !unnamed || attempt == 3 { break }
-            Thread.sleep(forTimeInterval: 1)
+        app.navigationBars["Lines"].buttons["More"].tap()
+        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5))
+        try audit.run("More" + suffix, types, into: &issues)
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        try audit.run("Settings" + suffix, types, into: &issues)
+        let clearCache = app.buttons["Clear cache"]
+        if largestText {
+            // Clear cache is below the screen.
+            scrollUp(toward: clearCache, in: app)
+            try audit.run("Settings, at its end" + suffix, types, into: &issues)
         }
-        issues += found
+        clearCache.tap()
+        let alert = app.alerts["Cache cleared"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        try audit.run("Settings, Clear cache's alert" + suffix, types, into: &issues)
+        alert.buttons.firstMatch.tap()
+        XCTAssertTrue(alert.waitForNonExistence(timeout: 5))
+        app.navigationBars["Settings"].buttons["More"].tap()
+        app.buttons["About data"].tap()
+        XCTAssertTrue(app.navigationBars["About data"].waitForExistence(timeout: 5))
+        try audit.run("About data" + suffix, types, into: &issues)
+        // Re-selecting the tab pops its stack to its root (FR-NAV-03).
+        app.tabBars.buttons["Lines"].tap()
+        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
     }
 
-    /// What the audit reports wrongly, each checked by hand in its screenshot (LB-406):
-    /// - **"Clipped" text that VoiceOver reads in words:** the favourites' hint and a card's headsigns show symbols
-    ///   ("☆", "→") that their labels say in words, longer than the text, which the audit measures. Removing the
-    ///   hint's label removed the issue; both wrap whole in the screenshots and the package's snapshots.
-    /// - **"Clipped" text of the system's search field:** at the largest text, its placeholder shows whole.
-    /// - **Dynamic Type in a navigation bar:** the system caps a bar button's text and shows the Large Content Viewer
-    ///   on a long press instead.
-    /// - **Dynamic Type of Settings' Data section:** its heading and footer, alone in the form, are reported as not
-    ///   scaling, yet they scale with the others at the largest text.
+    /// Searches the Lines list: "varea" leaves lines 2 and B1, under both headings, and nothing beneath the tab bar.
     @MainActor
-    private static func isFalsePositive(_ issue: XCUIAccessibilityAuditIssue, navigationBars: [CGRect]) -> Bool {
-        let label = issue.element?.label ?? ""
-        switch issue.auditType {
-        case .textClipped:
-            return label == "Tap the star on a line to pin it here" || label.hasPrefix("Towards ") ||
-                issue.element?.elementType == .searchField
-        case .dynamicType:
-            let inABar = issue.element.map { element in navigationBars.contains { $0.contains(element.frame) } }
-            return inABar == true || ["Data", "Your favourites and the lines and stops data are kept."].contains(label)
-        default:
-            return false
-        }
+    private func search(_ query: String, in app: XCUIApplication) throws {
+        let field = app.searchFields.firstMatch
+        field.tap()
+        field.typeText(query + "\n")
+        XCTAssertTrue(app.staticTexts["Night lines (Búho)"].waitForExistence(timeout: 5))
+    }
+
+    /// Ends the search with its close button: "Close" on iOS 26, "Cancel" before.
+    @MainActor
+    private func closeSearch(in app: XCUIApplication) {
+        let close = app.buttons["Close"].firstMatch
+        (close.exists ? close : app.buttons["Cancel"].firstMatch).tap()
     }
 
     /// Swipes the list up until one of `elements` can be tapped: at the largest text, line 3 is below the screen.
     @MainActor
     private func scrollUp(toward elements: XCUIElement..., in app: XCUIApplication) {
-        for _ in 0..<20 where !elements.contains(where: { $0.exists && $0.isHittable }) {
+        var swipes = 0
+        while swipes < 20, !elements.contains(where: { $0.exists && $0.isHittable }) {
             app.swipeUp(velocity: .slow)
+            swipes += 1
         }
     }
 
@@ -165,7 +163,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     /// beneath the search field.
     @MainActor
     private func scrollDown(toward element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<20 where !(element.exists && element.isHittable) { app.swipeDown(velocity: .slow) }
+        var swipes = 0
+        while swipes < 20, !(element.exists && element.isHittable) {
+            app.swipeDown(velocity: .slow)
+            swipes += 1
+        }
         app.swipeDown()
         app.swipeDown()
         XCTAssertTrue(element.isHittable, "\(element) is on screen")
@@ -178,5 +180,80 @@ final class AccessibilityAuditUITests: XCTestCase {
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
         app.launch()
         return app
+    }
+}
+
+/// One launch's audits: each runs Xcode's audit on the screen on display and reports what is not a known false
+/// positive.
+@MainActor
+private struct Audit {
+    let test: XCTestCase
+    let app: XCUIApplication
+    let largestText: Bool
+
+    /// The accessibility identifiers of texts whose labels say their symbols in words.
+    private static let spokenInWords = ["lines.favourites.hint", "lines.favourites.card.headsigns"]
+
+    /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
+    /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
+    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none.
+    func run(_ screen: String, _ types: XCUIAccessibilityAuditType, into issues: inout [String]) throws {
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = screen
+        shot.lifetime = .keepAlways
+        test.add(shot)
+        var found: [String] = []
+        for attempt in 1...3 {
+            found = []
+            var unnamed = false
+            let barButtons = app.navigationBars.buttons.allElementsBoundByIndex.map(\.frame)
+            try app.performAccessibilityAudit(for: types) { issue in
+                if isFalsePositive(issue, on: screen, barButtons: barButtons) { return true }
+                unnamed = unnamed || issue.element == nil
+                let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
+                found.append("\(screen): \(issue.compactDescription), \(element): \(issue.detailedDescription)")
+                return true
+            }
+            if !unnamed || attempt == 3 { break }
+            Thread.sleep(forTimeInterval: 1)
+        }
+        issues += found
+    }
+
+    /// What the audit reports wrongly, each checked by hand in its screenshot (LB-406), each only where it was seen:
+    /// - **"Clipped" text that VoiceOver reads in words,** on Lines: the favourites' hint and a card's headsigns show
+    ///   symbols ("☆", "→") that their labels say in words, longer than the text, which the audit measures. Removing
+    ///   the hint's label removed the issue; both wrap whole. Matched by their accessibility identifiers.
+    /// - **"Clipped" text of the system's search field,** on Lines at the largest text: its placeholder shows whole.
+    /// - **Dynamic Type of a navigation bar's button:** the system caps a bar button's text and shows the Large
+    ///   Content Viewer on a long press instead.
+    /// - **Dynamic Type of Settings' Data section:** its heading and footer, alone in the form, are reported as not
+    ///   scaling, yet they scale with the others at the largest text.
+    /// - **The system's alert,** which SwiftUI's `.alert` presents: iOS caps its text's size and draws parts that the
+    ///   audit cannot name ("potentially inaccessible text"). Its title and button are read, and its button takes the
+    ///   accent, which the contrast audit checks.
+    /// - **The search field's "Clear text" button,** 20 pt, the system's: Close beside the field ends the search.
+    private func isFalsePositive(
+        _ issue: XCUIAccessibilityAuditIssue,
+        on screen: String,
+        barButtons: [CGRect]
+    ) -> Bool {
+        if screen.contains("alert") && [.elementDetection, .dynamicType].contains(issue.auditType) { return true }
+        guard let element = issue.element else { return false }
+        switch issue.auditType {
+        case .textClipped:
+            let spokenInWords = Self.spokenInWords.contains(element.identifier)
+            let searchField = largestText && element.elementType == .searchField
+            return screen.hasPrefix("Lines") && (spokenInWords || searchField)
+        case .dynamicType:
+            let barButton = element.elementType == .button && barButtons.contains(element.frame)
+            let dataSection = screen.hasPrefix("Settings") &&
+                ["Data", "Your favourites and the lines and stops data are kept."].contains(element.label)
+            return barButton || dataSection
+        case .hitRegion:
+            return screen.hasPrefix("Lines") && element.elementType == .button && element.label == "Clear text"
+        default:
+            return false
+        }
     }
 }
