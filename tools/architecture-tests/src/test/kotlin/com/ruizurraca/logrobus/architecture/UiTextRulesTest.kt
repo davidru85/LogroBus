@@ -141,6 +141,96 @@ class UiTextRulesTest {
     }
 
     @Test
+    fun lb405_kotlinTextAnywhereInATextArgumentIsHardcoded() {
+        val source =
+            """
+            Text(if (late) "Tarde" else stringResource(R.string.on_time))
+            Text(stop.name ?: "Parada sin nombre")
+            Text(count.toString() + " paradas")
+            Text("${'$'}{if (open) "Abierta" else "Cerrada"}")
+            """.trimIndent()
+
+        assertEquals(
+            listOf("Tarde", "Parada sin nombre", " paradas", "Abierta", "Cerrada"),
+            hardcodedKotlinUiText(source).map { it.text },
+        )
+    }
+
+    @Test
+    fun lb405_kotlinPositionalDescriptionsLabelsAndMessagesAreHardcoded() {
+        val source =
+            """
+            Icon(Icons.Default.Close, "Cerrar")
+            Image(painterResource(R.drawable.map), "Mapa")
+            CustomAccessibilityAction(action = { true }, label = "Subir")
+            Modifier.semantics { onClick(label = "Abrir línea") { true } }
+            snackbars.showSnackbar(actionLabel = "Deshacer", message = "Hecho")
+            Toast.makeText(requireContext(), "Guardado", Toast.LENGTH_SHORT)
+            Text(buildAnnotatedString { append("Hacia ") })
+            builder.setContentTitle("Próximo bus")
+            """.trimIndent()
+
+        assertEquals(
+            listOf("Cerrar", "Mapa", "Subir", "Abrir línea", "Deshacer", "Hecho", "Guardado", "Hacia ", "Próximo bus"),
+            hardcodedKotlinUiText(source).map { it.text },
+        )
+    }
+
+    @Test
+    fun lb405_kotlinFormatPatternsStateAndAnimationLabelsPass() {
+        val source =
+            """
+            Text("%02d:%02d".format(Locale.ROOT, hour, minute))
+            state.copy(text = "Hola")
+            rememberInfiniteTransition(label = "now")
+            Text(text = stringResource(R.string.ok))
+            """.trimIndent()
+
+        assertEquals(emptyList<UiTextFinding>(), hardcodedKotlinUiText(source))
+    }
+
+    @Test
+    fun lb405_aKotlinPreviewWithAnExpressionBodyExemptsOnlyItself() {
+        val source =
+            """
+            @Preview
+            @Composable
+            private fun RowPreview() = RowSample()
+
+            @Composable
+            fun Real() {
+                Text("Adiós")
+            }
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(7, "Adiós")), hardcodedKotlinUiText(source))
+    }
+
+    @Test
+    fun lb405_onlyAPrivateKotlinFunctionIsAPreviewByItsName() {
+        val source =
+            """
+            @Composable
+            fun RoutePreview(route: RouteUi) {
+                Text("Ruta recomendada")
+            }
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(3, "Ruta recomendada")), hardcodedKotlinUiText(source))
+    }
+
+    @Test
+    fun lb405_aKotlinStringEndsAtItsLine_soAStrayQuoteHidesNothingAfterIt() {
+        val source =
+            """
+            val broken = "no closing quote
+            Text("Hola")
+            """.trimIndent()
+
+        assertEquals(listOf(UiTextFinding(2, "Hola")), hardcodedKotlinUiText(source))
+    }
+
+    @Test
     fun lb405_swiftTextThatIsNoCatalogueKeyIsHardcoded() {
         val source =
             """
