@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.architecture
 
+import com.ruizurraca.logrobus.architecture.UiTextRules.hardcodedKotlinUiText
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -38,7 +39,19 @@ class UiTextRulesTest {
             """.trimIndent()
 
         assertEquals(
-            listOf("Más", "Favourite", "Seleccionado", "Hoja", "Abrir", "Mover", "Subir", "Hecho", "Deshacer", "Guardado", "Línea"),
+            listOf(
+                "Más",
+                "Favourite",
+                "Seleccionado",
+                "Hoja",
+                "Abrir",
+                "Mover",
+                "Subir",
+                "Hecho",
+                "Deshacer",
+                "Guardado",
+                "Línea",
+            ),
             hardcodedKotlinUiText(source).map { it.text },
         )
     }
