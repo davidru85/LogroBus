@@ -3,9 +3,11 @@ package com.ruizurraca.logrobus.android.app
 import android.os.LocaleList
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.android.core.designsystem.R
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
@@ -28,6 +30,36 @@ class AppLocalesTest {
         assertEquals("es-DE", supportedLocales(LocaleList.forLanguageTags("de-DE,it-IT")).toLanguageTags())
         assertEquals("es", supportedLocales(LocaleList.forLanguageTags("ca")).toLanguageTags())
         assertEquals("es", supportedLocales(LocaleList.getEmptyLocaleList()).toLanguageTags())
+    }
+
+    @Test
+    fun lb405_spanishKeepsTheDevicesRegionalPreferences() {
+        // Android 14's regional preferences, such as the first day of the week, ride on the locale.
+        assertEquals("es-FR-u-fw-sun", supportedLocales(LocaleList.forLanguageTags("fr-FR-u-fw-sun")).toLanguageTags())
+    }
+
+    @Test
+    @Config(qualifiers = "fr-rFR")
+    fun lb405_onAFrenchDevice_theAppsOwnResourcesAreSpanishToo() {
+        // AppCompat reads them below Android 13 for the system's language, once "System" is chosen in Settings.
+        val application = RuntimeEnvironment.getApplication()
+
+        assertEquals(
+            "es-FR",
+            application.resources.configuration.locales
+                .toLanguageTags(),
+        )
+        // Spanish plural rules: French ones would say "a la 00:15", as for one o'clock.
+        assertEquals("a las 00:15", application.resources.getQuantityString(R.plurals.eta_clock_spoken, 0, "00:15"))
+    }
+
+    @Test
+    @Config(qualifiers = "fr-rFR")
+    fun lb405_onAFrenchDevice_theDefaultLocaleIsSpanish() {
+        // What formats without a locale of its own, such as String.format or Compose's Locale.current, agrees too.
+        ActivityScenario.launch(MainActivity::class.java).use {
+            assertEquals("es-FR", LocaleList.getDefault().toLanguageTags())
+        }
     }
 
     @Test
