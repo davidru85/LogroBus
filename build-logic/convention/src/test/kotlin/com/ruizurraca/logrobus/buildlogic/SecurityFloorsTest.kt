@@ -45,6 +45,19 @@ class SecurityFloorsTest {
     }
 
     @Test
+    fun lb002_aTestSupportModulesOwnDependenciesGetTheSecurityFloors() {
+        // LB-406's `:android:core:testing` brings Robolectric, and with it Guava, as a dependency of its own. Only
+        // tests may use a test-support module (ModuleRules), so its own classpaths are test classpaths too.
+        assertTrue(isTestSupportModule(":android:core:testing"))
+        assertTrue(isTestSupportModule(":shared:core:testing"))
+        listOf(":android:core:designsystem", ":android:app", ":shared:core:common", ":shared:umbrella").forEach {
+            assertFalse(isTestSupportModule(it), it)
+        }
+        assertTrue(getsSecurityFloors("implementation", testSupport = true))
+        assertTrue(getsSecurityFloorBoms("implementation", testSupport = true))
+    }
+
+    @Test
     fun lb002_appClasspathsAreLeftAlone() {
         // The app's versions are the catalog's: a floor never changes what ships.
         listOf(

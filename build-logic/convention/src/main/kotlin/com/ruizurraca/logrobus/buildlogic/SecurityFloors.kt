@@ -13,15 +13,22 @@ private const val SWIFT_EXPORT_CLASSPATH = "swiftExportClasspath"
  *
  * The app's own classpaths never get them: what ships has the catalog's versions.
  */
-internal fun getsSecurityFloors(name: String): Boolean =
-    name.startsWith("unified-test-platform-") || name in FLOORED_CONFIGURATIONS
+internal fun getsSecurityFloors(
+    name: String,
+    testSupport: Boolean = false,
+): Boolean = name.startsWith("unified-test-platform-") || name in FLOORED_CONFIGURATIONS
 
 /**
  * Whether a floored configuration also gets the BOMs. A BOM is a dependency, and KGP adds the Swift export tools as
  * default dependencies, which apply only while the configuration declares none: a BOM there would remove the tools
  * instead of raising them. The Swift export classpath gets the plain constraints alone.
  */
-internal fun getsSecurityFloorBoms(name: String): Boolean = getsSecurityFloors(name) && name != SWIFT_EXPORT_CLASSPATH
+internal fun getsSecurityFloorBoms(
+    name: String,
+    testSupport: Boolean = false,
+): Boolean = getsSecurityFloors(name) && name != SWIFT_EXPORT_CLASSPATH
+
+internal fun isTestSupportModule(path: String): Boolean = false
 
 private val FLOORED_CONFIGURATIONS =
     setOf("androidLintTool", SWIFT_EXPORT_CLASSPATH, "testImplementation", "androidHostTestImplementation")
