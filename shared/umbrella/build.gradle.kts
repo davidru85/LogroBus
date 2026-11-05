@@ -52,6 +52,8 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
+            // The source client over a mock engine: tests never call the source (AGENTS.md §9).
+            implementation(libs.ktor.client.mock)
         }
         getByName("androidHostTest").dependencies {
             implementation(libs.robolectric)
