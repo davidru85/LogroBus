@@ -34,6 +34,8 @@ internal object MergedManifest {
     val permissions: Set<String>
         get() {
             val elements = document.getElementsByTagName("uses-permission")
-            return (0 until elements.length).map { (elements.item(it) as Element).getAttributeNS(ANDROID, "name") }.toSet()
+            return (0 until elements.length)
+                .map { index -> (elements.item(index) as Element).getAttributeNS(ANDROID, "name") }
+                .toSet()
         }
 }

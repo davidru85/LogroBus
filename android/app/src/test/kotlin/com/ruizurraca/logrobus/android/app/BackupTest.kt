@@ -22,8 +22,6 @@ import org.robolectric.RuntimeEnvironment
 import org.w3c.dom.Element
 import org.xmlpull.v1.XmlPullParser
 import java.io.File
-import java.util.Properties
-import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * FR-FAV-03 (LB-407): the OS's backups keep the favourites and the settings, so a new device gets them back. Android
@@ -137,26 +135,10 @@ class BackupTest {
 
     private fun fullBackup() = rules("full backup", manifestRules("fullBackupContent"), section = null)
 
-    /**
-     * The XML resource that the application's [attribute] names in the merged manifest, or 0. It is read from the
-     * manifest that the build gives Robolectric, since Robolectric's parser predates Android 12 and leaves the
-     * application's data extraction rules empty.
-     */
+    /** The XML resource that the application's [attribute] names in the merged manifest, or 0. */
     private fun manifestRules(attribute: String): Int {
-        val config =
-            Properties().apply {
-                BackupTest::class.java.classLoader!!
-                    .getResourceAsStream(TEST_CONFIG)!!
-                    .use(::load)
-            }
-        val manifest =
-            DocumentBuilderFactory
-                .newInstance()
-                .apply { isNamespaceAware = true }
-                .newDocumentBuilder()
-                .parse(File(config.getProperty("android_merged_manifest")))
-        val app = manifest.getElementsByTagName("application").item(0) as Element
-        val name = app.getAttributeNS(ANDROID, attribute).removePrefix("@xml/")
+        val app = MergedManifest.document.getElementsByTagName("application").item(0) as Element
+        val name = app.getAttributeNS(MergedManifest.ANDROID, attribute).removePrefix("@xml/")
         return if (name.isEmpty()) 0 else application.resources.getIdentifier(name, "xml", application.packageName)
     }
 
@@ -229,10 +211,5 @@ class BackupTest {
 
     private companion object {
         const val LINE = 3
-
-        /** Where the build tells Robolectric about the app, its merged manifest included. */
-        const val TEST_CONFIG = "com/android/tools/test_config.properties"
-
-        const val ANDROID = "http://schemas.android.com/apk/res/android"
     }
 }
