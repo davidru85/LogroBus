@@ -74,7 +74,13 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - the tab root's collapsing bar and scroll to top on reselection, which come with the map (LB-202).
 
 **CI**
-- **The first run of PR #50 failed** on a runner flake: XCTest's accessibility audit at the largest text gave up on the first screen it audits, Lines, before the walk reached Near Me ("Audit failed to complete in time", `com.apple.xcode.xctest.accessibilityAudit` error -56, after 16 s). The test passes locally, and the default-size audit passed in the same run. No earlier run hit it, so the failed jobs were rerun once; if it recurs, the audit gets a retry on that error.
+- **The first run of PR #50 failed** on a runner flake. XCTest's accessibility audit at the largest text gave up on the first screen it audits, Lines ("Audit failed to complete in time", `com.apple.xcode.xctest.accessibilityAudit` error -56, after 16 s). The failed jobs were rerun once, and passed.
+- **The second run (42100639495), after `main` was merged in, failed in the same test class.** The default-size audit reported the Dynamic Type of Settings' picker values, "System" and "Minutes", on the screen audited as "Settings, dark".
+  - **That screenshot was light, and so were all six "dark" screenshots of both runs.** On CI the running app stayed light when the test turned the device to dark mode, so the dark audits audited light mode a second time without saying so. Locally the app turns dark.
+  - The light Settings audit earlier in the same walk passed, so the Dynamic Type report is the audit's own variance on one screen. If it recurs on a dark screen, it is checked in its screenshot like the other exclusions.
+  - **The fix:** each dark audit checks that its screenshot is mostly dark (306a3dc, red). A local run with the device left light failed on all six screens. The walk now relaunches the app once the device is dark, and waits for a dark screen (cbcf303, green). Locally the test passes, with all six screenshots dark.
+  - **Not taken:** relaunching in the app's own Dark theme, from a launch argument. Tried locally, the audit then failed the contrast of the system's search field and alert, which show white on dark, so it would have needed exclusions.
+- **The audit timeout had happened before.** `main`'s run 42011966908, earlier on 2026-11-05, hit it on the default-size launch's first screen, Lines; this entry first said that no earlier run had. As a repeated flake, it now makes the audit run again, up to three times (5732346, `AGENTS.md` §10).
 
 **Decisions**
 - **Owner (2026-11-05):** until the map and the sheet land, Near Me's root is the "Near you" section only. The row shows without location; with location the screen shows nothing, and reads location only while it shows.

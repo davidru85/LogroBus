@@ -106,6 +106,7 @@ You will need:
     - Until the map and the nearby stops arrive, the tab shows "Near you" with one row, "Turn on location to see nearby stops". Opening the tab asks for nothing; the row shows the phone's own prompt.
     - The app asks only while you use it, never in the background, and works with approximate location. If you have said no and the phone will not ask again, the row opens the app's settings, where you can turn location on.
     - The app reads your location only while the Near me tab is on screen, and stops when you switch tabs or leave the app. Nothing shows it or sends it yet: the nearby stops will use it.
+    - CI: the iPhone accessibility audit's dark-mode pass now really runs in dark mode. On CI the app had stayed light, so that pass checked light mode a second time. An audit that Xcode gives up on, on a busy CI machine, now runs again.
   - Build: the security floors of the build's tools and tests now also cover the helpers for the Android UI tests, whose Robolectric brought back an old Guava with a known advisory. Nothing in the app changes.
   - LB-408, part 1: a test now checks that the app's clock follows the bus service's clock, even when the phone's is a few minutes out, and that an arrival counted from it shows the right minutes. When the arrival lists come with LB-205, their times will count from that clock.
   - CI: the Gradle setup and the dependency graph job use `gradle/actions` 6.4.1, which fixes a security advisory (GHSA-chpw-2mqm-95cc) in a mode this project does not use.
