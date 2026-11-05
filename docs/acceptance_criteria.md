@@ -776,6 +776,18 @@ Refs: FR-FAV-03, FR-FAV-04
 - **Given** that stop reappears in a later sync, **when** "My stops" renders, **then** the "No longer served" label is gone.
 - A provisional stop made up from a pattern that API-02 lacks (DD-10), such as 384, is still served, so it never counts as missing (LB-008 part 1; for the owner to confirm).
 
+Part 1 (2026-11-05): the backups, the first two criteria. Evidence:
+- **Android (Auto Backup and a transfer to a new device):** the manifest gives data extraction rules from Android 12 and full backup content rules before it, which keep the same files: the database (favourites, places and recent searches, with the lines and stops it caches, ADR-0013) and its journal or write-ahead log, the settings file (ADR-0018) and, below Android 13, AppCompat's language file (ADR-0020). Nothing else, so a map's tile cache cannot use up Auto Backup's 25 MB.
+  - `BackupTest` saves a favourite line and the theme through the app's graph, keeps only the files each rule set backs up, as a new device would get them, and opens the graph again: both are there, for a cloud backup, a device transfer and a backup before Android 12. Dropping the database or the settings from a rule set fails it.
+  - On a Pixel 9 Pro emulator (API 37), with `bmgr` and the local transport: line 3 saved and a stand-in tile cache in `files/`, a backup, the app's data cleared, a restore. Only `databases/logrobus.db` and its journal came back, and the app opened with line 3 in "Your favourite lines".
+- **iOS (iCloud and device backups):** they keep Application Support, except a file excluded from them, and the user defaults. The database is in Application Support and not excluded, and the settings are in the standard user defaults, so both were already backed up. `IosDatabaseTest.lb407_iosBacksTheDatabaseUp` pins it. A restore on a device is left for the device check.
+- **Updates (the first criterion):** the database and the settings files stay through an update on both platforms (`lb007_…KeepsTheDatabaseInAFileAcrossLaunches`). Schema changes after the first release come with `.sqm` migrations, verified in CI (ADR-0013).
+
+Part 2, done when:
+- the third and fourth criteria hold in "My stops", with LB-204 and LB-208 (saved stops) and the daily sync of LB-008 part 2. `updateMissingSyncs` already counts the missing syncs after each successful sync (LB-008 part 1);
+- the owner has confirmed the fifth;
+- a restore has been run on an iPhone and an Android phone.
+
 ### LB-408 Server clock offset
 Refs: FR-ERR-06, spec §8.6
 

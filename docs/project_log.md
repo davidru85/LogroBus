@@ -19,6 +19,34 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-05: LB-407 part 1, favourites and settings in the OS backups
+
+**Done**
+- **PR #43 (LB-406 part 1) merged** on 2026-11-04, and `main` was synced.
+  - **CI:** its first run failed in "Android unit tests (:android:core:map)", and so the `Kotlin gate`: the Gradle Plugin Portal did not serve `kotlin-dsl`'s plugin marker in any of `gradle-retry.sh`'s three runs, as on PRs #36, #38 and #41. The failed jobs were rerun once and passed. The lasting fix, a Gradle cache with a fallback key (`ci_cd.md` §5), still waits for the owner's choice of cache provider.
+  - **The `iOS build and tests` job took 31 min 9 s** with the accessibility audits, against 17 to 23 min before them, so 3 min 51 s under its 35-minute limit. The audits add more on CI than the 6 to 7 minutes estimated. For the owner: whether to raise the limit again, or move the audits to a job of their own.
+  - **`main`'s own iOS runs:** three of the last four failed outside the code, while the pull request runs of the same commits passed. After LB-110's and LB-405's merges, macOS jobs were never started ("The job was not acquired by Runner of type hosted even after multiple attempts", GitHub's macOS arm64 capacity); after LB-403's, the Gradle wrapper's download timed out. Nothing in the repository can make GitHub start a job, so this is recorded rather than fixed.
+- **LB-407 part 1 (`feat/LB-407-favourites-persistence`):** the backups (FR-FAV-03, `architecture.md` §4.3).
+  - **Android:** the manifest gives data extraction rules (Android 12+, a cloud backup and a transfer to a new device) and full backup content rules (Android 8 to 11). Both include only the database with its journal and write-ahead log, the settings' DataStore file, and AppCompat's language file below Android 13. Before, with no rules, Android backed up every file.
+    - `BackupTest` saves a favourite line and the theme through the app's graph, keeps only the files each rule set backs up, as a new device would get them, and opens the graph again. Robolectric's manifest parser predates Android 12 and leaves the data extraction rules out of `ApplicationInfo`, so the test reads the merged manifest the build gives Robolectric.
+    - On a Pixel 9 Pro emulator (API 37), with `bmgr` and the local transport: line 3 saved, a stand-in tile cache in `files/`, a backup, the app's data cleared, a restore. Only the database and its journal came back, and the app opened with line 3 in "Your favourite lines". `force-stop` and `pm clear` leave an app stopped, and Android does not back up a stopped app ("Backup is not allowed"), so the app went to the background with Home instead. The emulator's transport and Backup Manager were set back as they were.
+  - **iOS:** iCloud and device backups already kept the database, in Application Support and not excluded, and the settings, in the standard user defaults. `IosDatabaseTest.lb407_iosBacksTheDatabaseUp` pins the database's place; it passed at once, so it has no green phase.
+  - **Part 2:** "No longer served" in "My stops" waits for saved stops (LB-204, LB-208) and the daily sync (LB-008 part 2); `updateMissingSyncs` already counts the missing syncs (LB-008 part 1).
+
+**Decisions**
+- **The database is backed up whole,** the public lines and stops it caches included. One file holds them and the favourites (ADR-0013), and splitting it would amend that ADR for a catalogue of 13 lines and about 254 stops. After a restore the sync refreshes them as usual.
+- **Android includes files by name, not by domain:** a file a library adds later, such as MapLibre's tile cache in `files/`, stays out of the backup, and cannot use up Auto Backup's 25 MB, after which Android backs up nothing. A new file with the user's data must join both rule files, and `BackupTest` shows whether it does.
+- **The language below Android 13 is restored too:** AppCompat keeps it in a file of its own (ADR-0020). From Android 13 the system keeps it and backs it up.
+- **No encryption requirement on the cloud backup:** a user without a screen lock would lose their favourites on a new phone, and Google encrypts the backup either way.
+- **Split into two parts:** the saved stops that "No longer served" labels do not exist yet.
+
+**Open / next**
+- **The pull request of this entry** is open, and its watch runs.
+- **Next, once it is merged:** LB-408 (the server clock offset), unless the owner chooses otherwise.
+- **Waiting on the owner:** the `iOS build and tests` limit (above); the fifth LB-407 criterion (provisional stops never count as missing); and as in the LB-405 entry below.
+
+---
+
 ## 2026-11-04: LB-406 part 1, accessibility checks on every screen
 
 **Done**
