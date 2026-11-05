@@ -1,0 +1,24 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "nearme.title": {
+      "comment": "Near Me: the screen's title, as its tab's (design_guidelines.md §2.1).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Near me"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca de mí"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

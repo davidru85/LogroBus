@@ -40,6 +40,29 @@ struct AppBundleTests {
     }
 
     @Test
+    func lb201_theAppSaysWhyItAsksForLocation_inSpanishAndEnglish() throws {
+        // FR-LOC-01: iOS shows the purpose in its prompt, and App Store Connect requires it once the binary uses Core
+        // Location. The app speaks Spanish and English (LB-405).
+        let purposes = try ["es", "en"].map { language in
+            let path = try #require(Bundle.main.path(forResource: language, ofType: "lproj"))
+            let bundle = try #require(Bundle(path: path))
+            return bundle.localizedString(forKey: "NSLocationWhenInUseUsageDescription", value: nil, table: "InfoPlist")
+        }
+        #expect(purposes[0].contains("ubicación"))
+        #expect(purposes[1].contains("location"))
+    }
+
+    @Test
+    func lb201_theAppAsksForLocationWhenInUseOnly_neverAlways() {
+        // security_privacy.md §3: foreground location only, and no background mode that would keep it running.
+        #expect(Bundle.main.object(forInfoDictionaryKey: "NSLocationWhenInUseUsageDescription") != nil)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "NSLocationAlwaysAndWhenInUseUsageDescription") == nil)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "NSLocationAlwaysUsageDescription") == nil)
+        let backgroundModes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []
+        #expect(!backgroundModes.contains("location"))
+    }
+
+    @Test
     func lb010_appStartsTheDependencyGraphAtLaunch() {
         // ADR-0014: the app's initialiser starts the graph once, before any screen asks SharedDependencies for it.
         #expect(SharedDependencies.shared.isReady)
