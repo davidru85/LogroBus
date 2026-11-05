@@ -23,6 +23,8 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
@@ -64,7 +66,16 @@ internal fun sharedModules(
     telemetry: Module,
     debug: Boolean,
 ): List<Module> =
-    listOf(platform, telemetry, coreModule, transitDataModule, favouritesDataModule, settingsModule, linesModule(debug))
+    listOf(
+        platform,
+        telemetry,
+        coreModule,
+        transitDataModule,
+        favouritesDataModule,
+        settingsModule,
+        linesModule(debug),
+        nearMeModule,
+    )
 
 /**
  * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of
@@ -127,6 +138,12 @@ private fun linesModule(debug: Boolean) =
         factory<ObserveLinesWithFavourites> { DefaultObserveLinesWithFavourites(get(), get()) }
         factory<SetFavouriteLine> { DefaultSetFavouriteLine(get(), get()) }
         factory<ReorderFavouriteLines> { DefaultReorderFavouriteLines(get()) }
+    }
+
+// Near Me (LB-201): location access, over the platform's location provider.
+private val nearMeModule =
+    module {
+        factory<ObserveLocationAccess> { DefaultObserveLocationAccess(get()) }
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */

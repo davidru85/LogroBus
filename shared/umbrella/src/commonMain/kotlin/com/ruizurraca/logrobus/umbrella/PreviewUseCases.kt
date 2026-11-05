@@ -2,6 +2,9 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.location.LocationFix
+import com.ruizurraca.logrobus.core.location.LocationPermission
+import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.core.preferences.EtaFormat
 import com.ruizurraca.logrobus.core.preferences.ThemePreference
 import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
@@ -16,6 +19,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -28,8 +32,8 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
@@ -41,8 +45,9 @@ import kotlin.time.Instant
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
- * lines, there are no favourite lines, and the settings are the defaults; each script replaces the last, except
- * [favouriteLine] and [settings]. Settings' own use cases come from [PreviewSettings].
+ * lines, there are no favourite lines, location is off, and the settings are the defaults; each script replaces the
+ * last, except [favouriteLine], [settings], [locationOn] and [locationOff]. Settings' own use cases come from
+ * [PreviewSettings].
  */
 class PreviewUseCases internal constructor(
     internal val settingsPreview: PreviewSettings = PreviewSettings(),
@@ -148,13 +153,28 @@ class PreviewUseCases internal constructor(
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
 
-    /** Scripts location turned on, as a granted prompt would. */
-    fun locationOn(): PreviewUseCases = this
+    /** Scripts location turned on, as a granted prompt would: the next read of location access finds it on. */
+    fun locationOn(): PreviewUseCases = apply { locationPermission.value = LocationPermission.Precise }
 
-    /** Scripts location turned off, as a revoked permission would. */
-    fun locationOff(): PreviewUseCases = this
+    /** Scripts location turned off, as a revoked permission would: the running updates end. */
+    fun locationOff(): PreviewUseCases = apply { locationPermission.value = LocationPermission.NotGranted }
 
-    override fun observeLocationAccess(): ObserveLocationAccess = ObserveLocationAccess { emptyFlow() }
+    override fun observeLocationAccess(): ObserveLocationAccess = DefaultObserveLocationAccess(location)
+
+    // Off until scripted on, as on a fresh install.
+    private val locationPermission = MutableStateFlow(LocationPermission.NotGranted)
+
+    // Like the platform providers: updates run while collected, counted, and end when the permission goes.
+    private val location =
+        object : LocationProvider {
+            override fun permission() = locationPermission.value
+
+            override fun locations(): Flow<LocationFix> =
+                flow<LocationFix> {
+                    if (permission() == LocationPermission.NotGranted) return@flow
+                    locationPermission.first { it == LocationPermission.NotGranted }
+                }.countedIn(collections)
+        }
 
     // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =
