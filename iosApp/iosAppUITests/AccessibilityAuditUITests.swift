@@ -4,7 +4,8 @@ import XCTest
 /// LB-406 (NFR-A11Y): every screen the app has passes Xcode's accessibility audit, at the default text size and at the
 /// largest: touch targets of at least 44 pt, no clipped text, Dynamic Type, contrast, and a description and trait for
 /// every element. One launch per text size walks the screens, and the issues of all of them are reported together,
-/// each with a screenshot of its screen. The default size's launch walks the screens again in dark mode.
+/// each with a screenshot of its screen. The default size's launch then turns the device to dark mode, relaunches the
+/// app, and walks the screens again.
 ///
 /// Contrast is audited only where nothing scrolls beneath the floating bars, whose scroll edge effect fades what is
 /// under them: the audit reads that faded text, and does not always name its element, so it cannot be told apart.
@@ -88,13 +89,21 @@ final class AccessibilityAuditUITests: XCTestCase {
 
     /// The Lines search, More, Settings, its alert, About data and Near me again, with the device in dark mode: the
     /// dark accent and secondary text on the system's dark backgrounds. The app's theme follows the device.
+    ///
+    /// The app relaunches once the device is dark, and the walk waits for its screen to be dark: on CI the app that
+    /// was running stayed light (PR #50). The app's own Dark theme would not need the device, but the audit then
+    /// misreads the contrast of the system's search field and alert, which show white on dark.
     @MainActor
     private func auditInDarkMode(in app: XCUIApplication, into issues: inout [String]) throws {
         XCUIDevice.shared.appearance = .dark
         addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
+        app.launch()
         let audit = Audit(test: self, app: app, largestText: false, dark: true)
-        app.tabBars.buttons["Lines"].tap()
-        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 10))
+        let deadline = Date().addingTimeInterval(10)
+        while !Audit.isMostlyDark(app.screenshot().image), Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.5)
+        }
         try search("varea", in: app)
         try audit.run("Lines, searching, dark", .all, into: &issues)
         closeSearch(in: app)
@@ -219,7 +228,8 @@ private struct Audit {
         shot.lifetime = .keepAlways
         test.add(shot)
         if dark && !Self.isMostlyDark(screenshot.image) {
-            issues.append("\(screen): the screen is not in dark mode")
+            let device = XCUIDevice.shared.appearance == .dark ? "dark" : "not dark"
+            issues.append("\(screen): the screen is not in dark mode, and the device's appearance is \(device)")
         }
         var found: [String] = []
         for attempt in 1...3 {
@@ -278,7 +288,7 @@ private struct Audit {
 
     /// Whether `image` is mostly dark: the mean luminance of a 32 × 32 reduction of it is under one half. A screen in
     /// dark mode, on its black background, is; one in light mode, on the system's light grey, is not.
-    private static func isMostlyDark(_ image: UIImage) -> Bool {
+    static func isMostlyDark(_ image: UIImage) -> Bool {
         guard let source = image.cgImage else { return false }
         let side = 32
         var pixels = [UInt8](repeating: 0, count: side * side * 4)
