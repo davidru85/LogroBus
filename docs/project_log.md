@@ -19,6 +19,27 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-05: The Guava alert again: security floors for a test-support module
+
+**Done**
+- **Dependabot alert 7 (GHSA-xxph-c9ww-hj94, high, Guava up to 33.7.1) reopened on `main` on 2026-11-04,** after PR #43 (LB-406 part 1) merged. GitHub reported it on a push.
+  - The cause: `:android:core:testing` declares Robolectric as a dependency of its own (`implementation`), so its nine classpaths resolved Robolectric's Guava 33.6.0-jre. The floors covered test configurations only, and this module's are not named as such.
+  - The fix (`fix/LB-002-guava-floor-test-support`, a red and a green commit): a test-support module, as `ModuleRules` defines it, gets the floors and BOMs on `implementation`, which all its classpaths extend. Only tests may use such a module, so its classpaths are test classpaths. `ModuleKind.isTesting` moved to `ModuleKind`, so both use one definition.
+- **Verified:**
+  - An init script resolved every configuration of every project. Before the fix, nine configurations of `:android:core:testing` resolved Guava 33.6.0-jre; after it, none resolves a Guava older than 33.7.2.
+  - The app's release runtime classpath is identical before and after.
+- **The other open alert** is still alert 6, the Kotlin Gradle plugin's, which waits on the owner (`ci_cd.md` §6).
+
+**Decisions**
+- **The same floors as on 2026-11-02,** which the owner approved then, reach one more place. No new floor and no new version.
+
+**Open / next**
+- **This entry's pull request, PR #47 and PR #48** are open, and their watches run. The alert should close once this branch reaches `main` and submits its dependency graph.
+- **Next, once the three are merged:** LB-201 part 1 (the location permission flow), unless the owner chooses otherwise, as PR #48's LB-408 entry says.
+- **Waiting on the owner:** as in the LB-407 entry below.
+
+---
+
 ## 2026-11-05: LB-407 part 1, favourites and settings in the OS backups
 
 **Done**

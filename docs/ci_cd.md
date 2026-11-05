@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. LB-002 is done (2026-10-25). The screenshot jobs came with LB-011 and the iOS ViewModel and snapshot jobs with LB-101; the nightly workflow follows in LB-412 |
-| Last updated | 2026-10-24 |
+| Last updated | 2026-11-05 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
 ## 1. Operating rule: CI runs only while the repository is public
@@ -155,7 +155,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
     | Netty | 4.1.93 and 4.1.110 (GHSA-c4c3-7fpv-j4q5) | 4.1.139.Final | the instrumented test runner (`unified-test-platform-*`) |
     | Bouncy Castle | 1.79 (GHSA-574f-3g2m-x479, GHSA-9pwp-9qqc-pr26) | 1.85 | Android lint (`androidLintTool`), the test runner and AGP's plugin classpath |
     | FreeMarker | 2.3.32 (GHSA-27j2-h3m2-8237) | 2.3.35 | AGP's plugin classpath |
-    | Guava | 32.0.1, 33.4.0 and 33.6.0 (GHSA-xxph-c9ww-hj94) | 33.7.2-jre | Android lint, the test runner, AGP's plugin classpath, and Robolectric in the unit and host tests |
+    | Guava | 32.0.1, 33.4.0 and 33.6.0 (GHSA-xxph-c9ww-hj94) | 33.7.2-jre | Android lint, the test runner, AGP's plugin classpath, and Robolectric in the unit and host tests and in `:android:core:testing` |
     | OpenTelemetry API | 1.41.0 (GHSA-rcgg-9c38-7xpx, GHSA-ccrj-gw8r-854m) | 1.67.0 | KGP's Swift export (`swiftExportClasspath`), which no build of ours runs |
     | Commons Lang | 3.16.0 (GHSA-j288-q9x7-2f5v) | 3.18.0 | Android lint, the test runner and AGP's plugin classpath |
     | HttpClient | 4.5.6 (GHSA-7r82-7xv7-xcpj) | 4.5.14 (fixed in 4.5.13; 4.5.14 is the last 4.5, which AGP's plugin classpath already uses) | Android lint and the test runner |
@@ -164,6 +164,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
 
     The fixed versions are catalog entries, under one comment that explains the floors:
     - in each module, the Android and KMP conventions add them to AGP's tool configurations, KGP's Swift export classpath and the test dependencies (`testImplementation`, `androidHostTestImplementation`), never to the app's own classpaths (`SecurityFloors.kt`);
+      - a test-support module, which only tests may use (`ModuleRules`), also gets them on `implementation`, which all its classpaths extend. `:android:core:testing` (LB-406) brings Robolectric as a dependency of its own, and its Guava 33.6.0 reopened the Guava alert on 2026-11-04, until the floors reached it;
       - Netty, Bouncy Castle and Guava come as BOMs, the others as plain constraints;
       - the Swift export classpath gets no BOM. KGP adds its tools there as default dependencies, which apply only while the configuration declares none, so a BOM would remove them instead of raising them;
     - the root `build.gradle.kts` raises Bouncy Castle, FreeMarker, Guava, Commons Lang, jose4j and JDOM on the plugin classpath.
