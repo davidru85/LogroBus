@@ -18,7 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewFontScale
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
@@ -106,13 +107,14 @@ private fun TurnOnLocationRow(onClick: () -> Unit) {
     )
 }
 
-@Preview(name = "Turn on location")
+@PreviewLightDark
+@PreviewFontScale
 @Composable
 private fun NearMeTurnOnLocationPreview() {
     LogroBusTheme { NearMeScreen(NearMePreviewData.turnOnLocation, onTurnOnLocation = {}, onOpenMore = {}) }
 }
 
-@Preview(name = "Location on")
+@PreviewLightDark
 @Composable
 private fun NearMeLocationOnPreview() {
     LogroBusTheme { NearMeScreen(NearMePreviewData.locationOn, onTurnOnLocation = {}, onOpenMore = {}) }

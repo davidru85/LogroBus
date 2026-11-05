@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.android.feature.nearme
 
 import android.Manifest
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -25,7 +26,8 @@ internal val LOCATION_PERMISSIONS =
 
 /**
  * What "Turn on location" does (FR-LOC-01): the system's prompt for [LOCATION_PERMISSIONS]. Once the system no longer
- * asks, the tap opens the app's settings instead. [onAnswered] follows each answer.
+ * asks, the tap opens the app's settings instead. [onAnswered] follows each answer. A tap while the prompt is under way
+ * does nothing.
  */
 @Composable
 internal fun rememberLocationRequest(onAnswered: () -> Unit): () -> Unit {
@@ -33,36 +35,46 @@ internal fun rememberLocationRequest(onAnswered: () -> Unit): () -> Unit {
     val answered by rememberUpdatedState(onAnswered)
     // Saved, because the activity may be recreated while the prompt shows.
     var explainedBefore by rememberSaveable { mutableStateOf(false) }
+    var asking by rememberSaveable { mutableStateOf(false) }
     val launcher =
         rememberLauncherForActivityResult(RequestMultiplePermissions()) { grants ->
-            val granted = grants.values.any { it }
-            if (activity != null && systemNoLongerAsks(granted, explainedBefore, activity.explainsLocation())) {
+            asking = false
+            // No grants at all is a cancellation, not a denial: the request was interrupted.
+            val denied = grants.isNotEmpty() && grants.values.none { it }
+            if (activity != null && denied && systemNoLongerAsks(explainedBefore, activity.explainsLocation())) {
                 activity.openAppSettings()
             }
             answered()
         }
     return remember(launcher, activity) {
         {
-            explainedBefore = activity?.explainsLocation() ?: false
-            launcher.launch(LOCATION_PERMISSIONS)
+            if (!asking) {
+                asking = true
+                explainedBefore = activity?.explainsLocation() ?: false
+                launcher.launch(LOCATION_PERMISSIONS)
+            }
         }
     }
 }
 
 /**
- * Whether the system denied location without asking. Once the user has denied it twice, the system denies at once and
- * the app may no longer explain why it asks, before or after. After a first denial the app may explain, and after a
- * second it could explain before the prompt. A first prompt dismissed without an answer looks the same as no prompt,
- * so it opens the settings too, where location can be turned on.
+ * Whether a denial came from the system without asking. Once the user has denied location twice, the system denies at
+ * once and the app may no longer explain why it asks, before or after. After a first denial the app may explain, and
+ * after a second it could explain before the prompt. A first prompt dismissed without an answer looks the same as no
+ * prompt, so it opens the settings too, where location can be turned on.
  */
 internal fun systemNoLongerAsks(
-    granted: Boolean,
     explainedBefore: Boolean,
     explainsAfter: Boolean,
-): Boolean = !granted && !explainedBefore && !explainsAfter
+): Boolean = !explainedBefore && !explainsAfter
 
 private fun Activity.explainsLocation(): Boolean = shouldShowRequestPermissionRationale(LOCATION_PERMISSIONS.first())
 
 private fun Activity.openAppSettings() {
-    startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
+    val settings = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+    try {
+        startActivity(settings)
+    } catch (_: ActivityNotFoundException) {
+        // Some managed devices have no such screen: the row then does no more than the prompt did.
+    }
 }
