@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
@@ -34,6 +35,8 @@ interface UseCases : SettingsUseCases {
     fun setFavouriteLine(): SetFavouriteLine
 
     fun reorderFavouriteLines(): ReorderFavouriteLines
+
+    fun observeLocationAccess(): ObserveLocationAccess
 }
 
 /**
@@ -56,6 +59,8 @@ object SharedDependencies : UseCases {
     override fun setFavouriteLine(): SetFavouriteLine = graph().get()
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
+
+    override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
 
     override fun observePreferences(): ObservePreferences = graph().get()
 

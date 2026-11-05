@@ -16,6 +16,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.transit.domain.Line
@@ -27,6 +28,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -145,6 +147,14 @@ class PreviewUseCases internal constructor(
     override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
+
+    /** Scripts location turned on, as a granted prompt would. */
+    fun locationOn(): PreviewUseCases = this
+
+    /** Scripts location turned off, as a revoked permission would. */
+    fun locationOff(): PreviewUseCases = this
+
+    override fun observeLocationAccess(): ObserveLocationAccess = ObserveLocationAccess { emptyFlow() }
 
     // In memory, like the database: a toggle or a new order in a preview or test shows at once, and the limit holds.
     private val favourites =
