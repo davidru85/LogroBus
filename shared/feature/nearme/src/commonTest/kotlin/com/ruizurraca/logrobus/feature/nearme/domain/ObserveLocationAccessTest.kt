@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.feature.nearme.domain
 
 import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import com.ruizurraca.logrobus.core.location.LocationFix
 import com.ruizurraca.logrobus.core.location.LocationPermission
 import com.ruizurraca.logrobus.core.location.LocationProvider
@@ -23,7 +24,7 @@ class ObserveLocationAccessTest {
                 assertEquals(LocationAccess.Off, awaitItem())
                 awaitComplete()
             }
-            assertEquals(0, provider.starts)
+            assertEquals(0, provider.calls)
         }
 
     @Test
@@ -34,6 +35,8 @@ class ObserveLocationAccessTest {
             DefaultObserveLocationAccess(provider)().test {
                 assertEquals(LocationAccess.On, awaitItem())
                 assertEquals(1, provider.running)
+                // A fix came, and stays inside: nothing shows it or sends it yet (NFR-PRIV-02).
+                expectNoEvents()
                 // The screen leaves: its collection is cancelled.
                 cancelAndIgnoreRemainingEvents()
             }
@@ -54,26 +57,41 @@ class ObserveLocationAccessTest {
             assertEquals(0, provider.running)
         }
 
+    @Test
+    fun lb201_whenTheLocationServiceFails_withThePermissionStillGranted_accessIsUnavailable() =
+        runTest {
+            val provider = FakeLocationProvider(LocationPermission.Precise)
+
+            DefaultObserveLocationAccess(provider)().test {
+                assertEquals(LocationAccess.On, awaitItem())
+                // Fused fails without Google Play services, say: asking for the permission again would not help.
+                provider.fail()
+                assertEquals(LocationAccess.Unavailable, awaitItem())
+                awaitComplete()
+            }
+        }
+
     /** Counts the updates that run, as the platform providers start and stop them with the collection. */
     private class FakeLocationProvider(
         private var permission: LocationPermission,
     ) : LocationProvider {
-        private val revoked = MutableStateFlow(false)
-        var starts = 0
+        private val ended = MutableStateFlow(false)
+        var calls = 0
             private set
         var running = 0
             private set
 
         override fun permission() = permission
 
-        // Like the platform providers: without permission it completes at once, and it completes when revoked.
+        // Like the platform providers: without permission it completes at once, and it completes when location goes.
         override fun locations(): Flow<LocationFix> =
             flow {
+                calls++
                 if (permission == LocationPermission.NotGranted) return@flow
-                starts++
                 running++
                 try {
-                    revoked.first { it }
+                    emit(LocationFix(GeoPoint(LATITUDE, LONGITUDE), accuracyMeters = 15.0))
+                    ended.first { it }
                 } finally {
                     running--
                 }
@@ -81,7 +99,18 @@ class ObserveLocationAccessTest {
 
         fun revoke() {
             permission = LocationPermission.NotGranted
-            revoked.value = true
+            ended.value = true
+        }
+
+        /** The platform service fails, and the permission stays granted. */
+        fun fail() {
+            ended.value = true
+        }
+
+        private companion object {
+            // Logroño's Plaza del Mercado.
+            const val LATITUDE = 42.4650
+            const val LONGITUDE = -2.4456
         }
     }
 }

@@ -20,6 +20,12 @@ sealed interface NearYouUi {
 
     /** Location is on. The nearby stops come with LB-203; until then the section shows nothing. */
     data object LocationOn : NearYouUi
+
+    /**
+     * Location is granted but does not work. LB-203 explains it in the section (FR-LOC-02); until then the section
+     * shows nothing, and never a row that asks for a permission the app already has.
+     */
+    data object LocationUnavailable : NearYouUi
 }
 
 /** What Near Me's screen sends its ViewModel. */
@@ -34,7 +40,7 @@ sealed interface NearMeEvent {
 object NearMeUiMapper {
     fun state(access: LocationAccess): NearMeUiState =
         when (access) {
-            LocationAccess.Off -> NearMeUiState(NearYouUi.TurnOnLocation)
+            LocationAccess.Off, LocationAccess.Unavailable -> NearMeUiState(NearYouUi.TurnOnLocation)
             LocationAccess.On -> NearMeUiState(NearYouUi.LocationOn)
         }
 }

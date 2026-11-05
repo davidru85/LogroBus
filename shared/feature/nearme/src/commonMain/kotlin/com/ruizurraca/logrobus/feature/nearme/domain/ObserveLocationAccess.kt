@@ -7,11 +7,17 @@ import kotlinx.coroutines.flow.flow
 
 /** Whether the app can locate the user (FR-LOC-01, FR-NEAR-06). */
 enum class LocationAccess {
-    /** No permission, or location is gone: the permission was revoked, or the platform service failed. */
+    /** No permission: never granted, or revoked. */
     Off,
 
     /** The user granted foreground location, approximate or precise, and updates are running. */
     On,
+
+    /**
+     * Granted, but the platform's location service failed, such as on an Android device without Google Play services.
+     * Asking for the permission again would not help.
+     */
+    Unavailable,
 }
 
 /**

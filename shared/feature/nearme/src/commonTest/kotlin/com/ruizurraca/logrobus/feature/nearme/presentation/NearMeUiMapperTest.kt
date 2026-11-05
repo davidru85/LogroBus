@@ -12,6 +12,11 @@ class NearMeUiMapperTest {
     }
 
     @Test
+    fun lb201_withLocationGrantedButUnavailable_nearYouHasNoRowAskingForIt() {
+        assertEquals(NearMeUiState(NearYouUi.LocationUnavailable), NearMeUiMapper.state(LocationAccess.Unavailable))
+    }
+
+    @Test
     fun lb201_withLocation_nearYouHasNoRow() {
         assertEquals(NearMeUiState(NearYouUi.LocationOn), NearMeUiMapper.state(LocationAccess.On))
     }
