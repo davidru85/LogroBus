@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Baseline 1.0 for the MVP (M0–M4) |
-| Last updated | 2026-10-27 |
+| Last updated | 2026-11-05 |
 | Based on | [`requirements.md`](requirements.md), spec §6 and §9, [`backlog.md`](backlog.md) |
 
 Verifiable acceptance criteria for every MVP story (epics E0–E4). A story is done only when all of its criteria pass **on both platforms** and the definition of done in `AGENTS.md` §11 is met.
@@ -793,6 +793,17 @@ Refs: FR-ERR-06, spec §8.6
 
 - **Given** the device clock is 3 min ahead of the server `Date` header, **when** an arrival expected in 5 min of server time renders, **then** it shows "5 min", not "2 min".
 - **Given** no `Date` sample yet, **when** ETAs are computed, **then** the device clock is used, and the first sample corrects them on the next render.
+
+Done (2026-11-05). Evidence:
+- **`ServerClockOffsetTest`** (`:shared:umbrella`, on the JVM and the iOS simulator) puts together the pieces the app uses: the source client over a mock engine, the server-corrected clock on a device clock 3 min ahead, and the ETA rule `EtaDisplay.of`. Before any response, an arrival the server expects in 5 min shows 2 min, from the device clock. After a response with the server's `Date`, the same arrival shows 5 min. Taking out the client's `Date` sampling, or the offset in `ServerCorrectedClock.now`, fails both tests.
+- **The pieces were built earlier:**
+  - the clock and its smoothing over 5 samples in LB-004 (`AppClockTest`);
+  - the `Date` of every response in LB-005 (`SourceClientTest`);
+  - one clock for the whole graph, which the source client corrects and everything else reads, in LB-010 (`GraphAssertions`);
+  - `EtaText`, which shows `Minutes(5)` as "5 min" on both platforms, in LB-011.
+  Detekt forbids `Clock.System.now()` outside `AppClock` (AGENTS.md §5, rule 5).
+- **The offset applies at any size,** as spec §8.6 has it, not only beyond FR-ERR-06's 60 s. Below 60 s it still matters: with the device clock 50 s ahead, an arrival 4 min 30 s away would show 3 min.
+- **The arrival rows** come with LB-205. They work out each ETA from `AppClock.now()` when they render, as `EtaDisplay.of` asks, so the first response corrects the next render.
 
 ### LB-409 Consent, analytics and crash reporting
 Refs: NFR-PRIV-03, NFR-OBS-03, OQ-16, ADR-0009. Blocked until the vendor is chosen; the contracts are LB-017.

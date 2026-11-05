@@ -19,6 +19,30 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-05: LB-408, ETAs from the server's clock
+
+**Done**
+- **PR #44 (LB-407 part 1) merged** on 2026-11-05, and `main` was synced. Dependabot's PRs #45 and #46 (`gradle/actions` 6.4.1) were replayed as PR #47, which is open, with its own entry.
+- **LB-408 (`feat/LB-408-server-clock-offset`):** FR-ERR-06, ETAs count from the server's clock.
+  - What it asks was built earlier:
+    - the server-corrected clock in LB-004;
+    - the `Date` of every response feeding it in LB-005;
+    - one clock for the whole graph in LB-010;
+    - `EtaDisplay.of`, which takes the now to count from, in LB-403.
+  - `ServerClockOffsetTest` in `:shared:umbrella` puts them together as the app does, on the JVM and the iOS simulator. With the device clock 3 min ahead, an arrival the server expects in 5 min shows 2 min before any response, and 5 min after the first. It is an acceptance test of existing behaviour, so it passed when written, with no red or green phase. Taking out the client's `Date` sampling, or the offset in `ServerCorrectedClock.now`, fails both tests.
+  - `:shared:umbrella`'s tests now use Ktor's mock engine (a test dependency, already in the catalogue).
+
+**Decisions**
+- **The offset applies at any size,** as spec §8.6 has it, not only beyond FR-ERR-06's 60 s, which the requirement allows. Below 60 s it still matters: with the device clock 50 s ahead, an arrival 4 min 30 s away would show 3 min.
+- **Done without the arrival rows:** LB-205 builds them, working out each ETA from `AppClock.now()` when it renders, as `EtaDisplay.of` asks. Swift will need the clock or the computed ETAs through `SharedDependencies`, which LB-205 adds with its use cases.
+
+**Open / next**
+- **PR #47 and the pull request of this entry** are open, and their watches run.
+- **Next, once they are merged:** LB-201 part 1, unless the owner chooses otherwise. That is the location permission flow, the manifest permissions, the iOS purpose string, and updates that stop when no visible screen needs them. Its map framing waits for LB-202 and OQ-10, and most other P0 stories wait for OQ-11 (LB-003) or OQ-10 (LB-013).
+- **Waiting on the owner:** as in the LB-407 entry below.
+
+---
+
 ## 2026-11-05: LB-407 part 1, favourites and settings in the OS backups
 
 **Done**

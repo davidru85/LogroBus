@@ -102,6 +102,7 @@ You will need:
 ### Recent changes
 
 - **2026-11-05:**
+  - LB-408: arrival times count from the bus service's clock, not the phone's, so a phone whose clock is a few minutes out still shows how many minutes a bus is away. A test now checks it from the server's reply to the minutes shown; the arrival lists come with LB-205.
   - LB-407, part 1: your favourites and settings are in the phone's backup, so a new phone gets them back.
     - Android: Auto Backup to your Google account and a transfer to a new phone keep the app's database (favourite lines, and later saved stops and places) and its settings, and nothing else. A cache can never fill the space Android gives each app's backup.
     - iPhone: iCloud and computer backups already kept both; a test now makes sure they stay where backups reach.
