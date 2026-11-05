@@ -13,7 +13,9 @@ import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -121,15 +123,67 @@ class NearMeRouteTest {
         assertNull(shadowOf(compose.activity).nextStartedActivity)
     }
 
-    private fun show(observe: ObserveLocationAccess) {
+    @Test
+    fun lb201_anInterruptedPrompt_opensNothing() {
+        show(Permission())
+
+        compose.onNodeWithText(rowText()).performClick()
+        // Android answers an interrupted request with no grants at all: a cancellation, not a denial.
+        prompts.cancel()
+
+        assertNull(shadowOf(compose.activity).nextStartedActivity)
+    }
+
+    @Test
+    fun lb201_aSecondTapWhileThePromptShows_asksOnce() {
+        show(Permission())
+
+        compose.onNodeWithText(rowText()).performClick()
+        compose.onNodeWithText(rowText()).performClick()
+
+        assertEquals(1, prompts.requests.size)
+    }
+
+    @Test
+    fun lb201_aSecondDenialAcrossARotation_doesNotOpenTheSettingsAtOnce() {
+        val restoration = StateRestorationTester(compose)
+        show(Permission(), restoration)
+        explains(true)
+
+        compose.onNodeWithText(rowText()).performClick()
+        // The activity is recreated while the prompt shows.
+        restoration.emulateSavedInstanceStateRestore()
+        explains(false)
+        prompts.answer(coarse = false, fine = false)
+
+        assertNull(shadowOf(compose.activity).nextStartedActivity)
+    }
+
+    @Test
+    fun lb201_onADeviceWithoutTheAppsSettingsScreen_theRowDoesNotCrash() {
+        // Some managed devices have none: Android then throws, as Robolectric does when it checks activities.
+        shadowOf(compose.activity.application).checkActivities(true)
+        show(Permission())
+
+        compose.onNodeWithText(rowText()).performClick()
+        prompts.answer(coarse = false, fine = false)
+
+        compose.onNodeWithText(rowText()).assertExists()
+    }
+
+    private fun show(
+        observe: ObserveLocationAccess,
+        restoration: StateRestorationTester? = null,
+    ) {
         startKoin { modules(module { factory { observe } }, nearMeUiModule) }
         val owner =
             object : ActivityResultRegistryOwner {
                 override val activityResultRegistry: ActivityResultRegistry = prompts
             }
-        compose.setContent {
+        val content: @Composable () -> Unit = {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) { NearMeRoute(onOpenMore = {}) }
         }
+        if (restoration != null) restoration.setContent(content) else compose.setContent(content)
     }
 
     private fun rowText() = compose.activity.getString(R.string.nearme_nearby_turn_on_location)
@@ -174,6 +228,12 @@ class NearMeRouteTest {
                         grants.values.map { if (it) PERMISSION_GRANTED else PERMISSION_DENIED }.toIntArray(),
                     )
             compose.runOnUiThread { dispatchResult(requestCode, Activity.RESULT_OK, result) }
+            compose.waitForIdle()
+        }
+
+        /** An interrupted request, which Android answers with no permissions and no grants. */
+        fun cancel() {
+            compose.runOnUiThread { dispatchResult(requestCode, Activity.RESULT_CANCELED, null) }
             compose.waitForIdle()
         }
     }
