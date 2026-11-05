@@ -2,23 +2,22 @@
 <!-- FR-FAV-03 (LB-407), from Android 12: what the backup to the user's Google account and a transfer to a new device
      keep. The user's own data only, the same as backup_rules.xml for older Android:
      - the database, with the favourites, places and recent searches (it also caches the lines and stops, which share
-       its file, ADR-0013), and its write-ahead log or journal, which may hold the last changes;
+       its file, ADR-0013). Android adds its journal and write-ahead log to the include itself (FullBackup), so a
+       backup taken while the app runs keeps the last changes;
      - the settings, the theme and the ETA format (ADR-0018);
-     - below Android 13, the language chosen in Settings, which AppCompat keeps (ADR-0020). From Android 13 the
-       system keeps it, and backs it up itself.
+     - the language chosen in Settings below Android 13, which AppCompat keeps in a file (ADR-0020). Restored to a
+       phone on Android 13 or later, AppCompat hands it to the system on the first launch, unless the system restored
+       a language of its own. AppCompat never deletes the file, so on a phone that was updated to Android 13 it may
+       hold an older choice, which a new phone would then take; a rare case.
      Anything else, such as a map's tile cache, can be downloaded again, and would use up Auto Backup's 25 MB. -->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="database" path="logrobus.db" />
-        <include domain="database" path="logrobus.db-wal" />
-        <include domain="database" path="logrobus.db-journal" />
         <include domain="file" path="datastore/settings.preferences_pb" />
         <include domain="file" path="androidx.appcompat.app.AppCompatDelegate.application_locales_record_file" />
     </cloud-backup>
     <device-transfer>
         <include domain="database" path="logrobus.db" />
-        <include domain="database" path="logrobus.db-wal" />
-        <include domain="database" path="logrobus.db-journal" />
         <include domain="file" path="datastore/settings.preferences_pb" />
         <include domain="file" path="androidx.appcompat.app.AppCompatDelegate.application_locales_record_file" />
     </device-transfer>
