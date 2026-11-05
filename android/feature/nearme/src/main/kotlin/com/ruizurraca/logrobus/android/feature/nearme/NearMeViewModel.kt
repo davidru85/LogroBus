@@ -34,10 +34,11 @@ class NearMeViewModel(
 
     fun onEvent(event: NearMeEvent) {
         when (event) {
-            // While location is on, its flow ends by itself if location goes, so reading it again would only
-            // restart the updates.
+            // Only without location: until access is known, the read under way gets the latest permission, and
+            // while location is on, its flow ends by itself if location goes, so reading again would only restart
+            // the updates.
             NearMeEvent.PermissionMayHaveChanged -> {
-                if (state.value.nearYou != NearYouUi.LocationOn) checks.update { it + 1 }
+                if (state.value.nearYou == NearYouUi.TurnOnLocation) checks.update { it + 1 }
             }
         }
     }

@@ -52,7 +52,7 @@ class NearMeRouteTest {
 
     @Test
     fun lb201_openingNearMeAsksForNoPermission() {
-        show(Scripted(flowOf(LocationAccess.Off)))
+        show(Permission())
 
         compose.onNodeWithText(rowText()).assertExists()
         assertEquals(emptyList<List<String>>(), prompts.requests)
@@ -60,7 +60,7 @@ class NearMeRouteTest {
 
     @Test
     fun lb201_theRowAsksForForegroundLocationOnly_approximateOrPrecise() {
-        show(Scripted(flowOf(LocationAccess.Off)))
+        show(Permission())
 
         compose.onNodeWithText(rowText()).performClick()
 
@@ -72,21 +72,21 @@ class NearMeRouteTest {
 
     @Test
     fun lb201_afterTheSystemsAnswer_accessIsReadAgain() {
-        val observe = Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.On))
-        show(observe)
+        val permission = Permission()
+        show(permission)
 
         compose.onNodeWithText(rowText()).performClick()
         // The user grants approximate location only.
+        permission.access = LocationAccess.On
         prompts.answer(coarse = true, fine = false)
 
         compose.onNodeWithText(rowText()).assertDoesNotExist()
-        assertEquals(2, observe.calls)
     }
 
     @Test
     fun lb201_whenTheSystemNoLongerAsks_theRowOpensTheAppsSettings() {
         // Denied twice before: the system denies at once, and the app may no longer explain.
-        show(Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.Off)))
+        show(Permission())
 
         compose.onNodeWithText(rowText()).performClick()
         prompts.answer(coarse = false, fine = false)
@@ -98,7 +98,7 @@ class NearMeRouteTest {
 
     @Test
     fun lb201_aFirstDenial_leavesTheRowAskingAgain() {
-        show(Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.Off)))
+        show(Permission())
 
         compose.onNodeWithText(rowText()).performClick()
         // After a first denial the app may explain, and the system will ask once more.
@@ -110,7 +110,7 @@ class NearMeRouteTest {
 
     @Test
     fun lb201_aSecondDenial_doesNotOpenTheSettingsAtOnce() {
-        show(Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.Off)))
+        show(Permission())
         explains(true)
 
         compose.onNodeWithText(rowText()).performClick()
@@ -178,17 +178,10 @@ class NearMeRouteTest {
         }
     }
 
-    /** Hands out [flows] in order, one per call: a first read, then each check. */
-    private class Scripted(
-        vararg flows: Flow<LocationAccess>,
-    ) : ObserveLocationAccess {
-        private val reads = ArrayDeque(flows.toList())
-        var calls = 0
-            private set
+    /** Location access as the system reports it at each read: off until a test grants it. */
+    private class Permission : ObserveLocationAccess {
+        var access = LocationAccess.Off
 
-        override fun invoke(): Flow<LocationAccess> {
-            calls++
-            return reads.removeFirst()
-        }
+        override fun invoke(): Flow<LocationAccess> = flowOf(access)
     }
 }
