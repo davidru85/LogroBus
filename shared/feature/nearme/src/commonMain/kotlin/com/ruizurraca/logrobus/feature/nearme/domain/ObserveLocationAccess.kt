@@ -41,7 +41,8 @@ class DefaultObserveLocationAccess(
             emit(LocationAccess.On)
             // The updates run while this collects them (FR-LOC-03). Their fixes are for the nearby stops (LB-203).
             provider.locations().collect {}
-            // The provider's flow completes when location is gone for good.
-            emit(LocationAccess.Off)
+            // The provider's flow completes when location is gone for good: revoked, or a failed platform service.
+            val revoked = provider.permission() == LocationPermission.NotGranted
+            emit(if (revoked) LocationAccess.Off else LocationAccess.Unavailable)
         }
 }

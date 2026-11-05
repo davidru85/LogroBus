@@ -40,7 +40,8 @@ sealed interface NearMeEvent {
 object NearMeUiMapper {
     fun state(access: LocationAccess): NearMeUiState =
         when (access) {
-            LocationAccess.Off, LocationAccess.Unavailable -> NearMeUiState(NearYouUi.TurnOnLocation)
+            LocationAccess.Off -> NearMeUiState(NearYouUi.TurnOnLocation)
             LocationAccess.On -> NearMeUiState(NearYouUi.LocationOn)
+            LocationAccess.Unavailable -> NearMeUiState(NearYouUi.LocationUnavailable)
         }
 }
