@@ -124,10 +124,6 @@ object ModuleRules {
     private fun ModuleKind.mayUse(owner: ModuleKind.Core): Boolean =
         this == owner || this is ModuleKind.Data || this is ModuleKind.Feature
 
-    /** The test-support modules, which only test configurations may use. */
-    private val ModuleKind.isTesting: Boolean
-        get() = this == ModuleKind.Testing || this == ModuleKind.AndroidTesting
-
     private fun String.isInGroup(group: String): Boolean = this == group || startsWith("$group.")
 
     private val ModuleKind.isShared: Boolean
@@ -148,6 +144,10 @@ object ModuleRules {
 /** Classification of a Gradle project path into an architectural role. */
 internal sealed interface ModuleKind {
     val label: String
+
+    /** The test-support modules, which only test configurations may use. */
+    val isTesting: Boolean
+        get() = this == Testing || this == AndroidTesting
 
     data class Core(
         val name: String,
