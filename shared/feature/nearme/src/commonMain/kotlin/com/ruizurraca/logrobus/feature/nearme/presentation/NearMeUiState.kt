@@ -22,6 +22,15 @@ sealed interface NearYouUi {
     data object LocationOn : NearYouUi
 }
 
+/** What Near Me's screen sends its ViewModel. */
+sealed interface NearMeEvent {
+    /**
+     * The location permission may have changed: the system's prompt was answered, or the screen is back from the
+     * system's settings. Location access is read again.
+     */
+    data object PermissionMayHaveChanged : NearMeEvent
+}
+
 object NearMeUiMapper {
     fun state(access: LocationAccess): NearMeUiState =
         when (access) {
