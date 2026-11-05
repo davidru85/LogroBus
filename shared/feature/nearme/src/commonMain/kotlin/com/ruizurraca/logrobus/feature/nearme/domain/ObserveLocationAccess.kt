@@ -1,8 +1,9 @@
 package com.ruizurraca.logrobus.feature.nearme.domain
 
+import com.ruizurraca.logrobus.core.location.LocationPermission
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 
 /** Whether the app can locate the user (FR-LOC-01, FR-NEAR-06). */
 enum class LocationAccess {
@@ -23,8 +24,18 @@ fun interface ObserveLocationAccess {
 }
 
 class DefaultObserveLocationAccess(
-    @Suppress("UnusedPrivateProperty") // Used by the green phase.
     private val provider: LocationProvider,
 ) : ObserveLocationAccess {
-    override fun invoke(): Flow<LocationAccess> = flowOf()
+    override fun invoke(): Flow<LocationAccess> =
+        flow {
+            if (provider.permission() == LocationPermission.NotGranted) {
+                emit(LocationAccess.Off)
+                return@flow
+            }
+            emit(LocationAccess.On)
+            // The updates run while this collects them (FR-LOC-03). Their fixes are for the nearby stops (LB-203).
+            provider.locations().collect {}
+            // The provider's flow completes when location is gone for good.
+            emit(LocationAccess.Off)
+        }
 }

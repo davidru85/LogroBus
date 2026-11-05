@@ -23,6 +23,9 @@ sealed interface NearYouUi {
 }
 
 object NearMeUiMapper {
-    @Suppress("UnusedParameter") // Used by the green phase.
-    fun state(access: LocationAccess): NearMeUiState = NearMeUiState()
+    fun state(access: LocationAccess): NearMeUiState =
+        when (access) {
+            LocationAccess.Off -> NearMeUiState(NearYouUi.TurnOnLocation)
+            LocationAccess.On -> NearMeUiState(NearYouUi.LocationOn)
+        }
 }
