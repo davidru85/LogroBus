@@ -164,7 +164,8 @@ Because `main` is protected, path-filtered workflows need a small always-running
 
     The fixed versions are catalog entries, under one comment that explains the floors:
     - in each module, the Android and KMP conventions add them to AGP's tool configurations, KGP's Swift export classpath and the test dependencies (`testImplementation`, `androidHostTestImplementation`), never to the app's own classpaths (`SecurityFloors.kt`);
-      - a test-support module, which only tests may use (`ModuleRules`), also gets them on `implementation`, which all its classpaths extend. `:android:core:testing` (LB-406) brings Robolectric as a dependency of its own, and its Guava 33.6.0 reopened the Guava alert on 2026-11-04, until the floors reached it;
+      - a test-support module, which only tests may use (`ModuleRules`), also gets them on its own dependencies, which its compile and runtime classpaths extend: `implementation` in an Android module, `androidMainImplementation` in a KMP one, whose common and iOS configurations get none. Its own tests' classpaths get them as test classpaths, or through the module's variant;
+      - `:android:core:testing` (LB-406) brings Robolectric as a dependency of its own: its Guava 33.6.0 reopened the Guava alert on 2026-11-04 (UTC), and these floors close it;
       - Netty, Bouncy Castle and Guava come as BOMs, the others as plain constraints;
       - the Swift export classpath gets no BOM. KGP adds its tools there as default dependencies, which apply only while the configuration declares none, so a BOM would remove them instead of raising them;
     - the root `build.gradle.kts` raises Bouncy Castle, FreeMarker, Guava, Commons Lang, jose4j and JDOM on the plugin classpath.
