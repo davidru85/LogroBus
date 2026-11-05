@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.app
 
 import android.content.pm.ApplicationInfo
+import androidx.core.app.AppLocalesStorageHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.preferences.PreferencesStore
@@ -28,7 +29,8 @@ import javax.xml.parsers.DocumentBuilderFactory
  * FR-FAV-03 (LB-407): the OS's backups keep the favourites and the settings, so a new device gets them back. Android
  * backs an app up to the user's Google account (Auto Backup), and copies it in a transfer to a new device; from
  * Android 12 by the data extraction rules, before it by the full backup content rules. Each test saves through the
- * app's graph, then restores as a new device would, keeping only the files the rules back up, and opens the app again.
+ * app, copies the files the rules back up, restores them to an app with no data, as on a new device, and opens the
+ * app again.
  */
 @RunWith(AndroidJUnit4::class)
 class BackupTest {
@@ -65,12 +67,15 @@ class BackupTest {
 
     @Test
     fun lb407_belowAndroid13TheLanguageChosenInSettingsIsRestored() {
-        // AppCompat keeps the app's language below Android 13 in this file (ADR-0020); from Android 13 the system
-        // keeps it, and backs it up itself.
-        val language = File(application.filesDir, APP_COMPAT_LOCALES_FILE).apply { writeText("en") }
-
+        // Below Android 13, AppCompat keeps the language chosen in Settings in a file of the app's (ADR-0020), which
+        // it writes and reads through androidx.core's storage helper. From Android 13 the system keeps it and backs it
+        // up itself.
         listOf(cloudBackup(), deviceTransfer(), fullBackup()).forEach { rules ->
-            assertTrue("${rules.name} leaves out the language", rules.backsUp(language))
+            AppLocalesStorageHelper.persistLocales(application, "en")
+
+            restoreOnANewDevice(backUp(rules))
+
+            assertEquals("${rules.name}: the language", "en", AppLocalesStorageHelper.readLocales(application))
         }
     }
 
@@ -79,11 +84,14 @@ class BackupTest {
             assertTrue(GlobalContext.get().get<FavouriteLinesRepository>().add(LINE) is AppResult.Success)
             assertTrue(GlobalContext.get().get<PreferencesStore>().setTheme(ThemePreference.DARK) is AppResult.Success)
         }
-        // The app's process ends before a backup, which closes the database and the settings file.
-        stopKoin()
+        val tiles = File(application.filesDir, "mbgl-offline.db").apply { writeText("tiles") }
 
-        restoreOnly(rules)
+        // A backup copies the files as they are on disk, with the app still running in the background, so the last
+        // changes may still be in the database's journal or write-ahead log.
+        restoreOnANewDevice(backUp(rules))
         initKoin(application, appVersion = "1.0.0", debug = true)
+
+        assertFalse("${rules.name}: a tile cache came back", tiles.exists())
 
         runBlocking {
             val favourites =
@@ -103,12 +111,24 @@ class BackupTest {
         }
     }
 
-    /** Deletes every file of the app that [rules] do not back up, which a new device would not get. */
-    private fun restoreOnly(rules: BackupRules) {
+    /** A copy of every file of the app that [rules] back up, by its path in the app's data directory. */
+    private fun backUp(rules: BackupRules): Map<String, ByteArray> =
         application.dataDir
-            .walkBottomUp()
-            .filter { it.isFile && !rules.backsUp(it) }
-            .forEach { it.delete() }
+            .walk()
+            .filter { it.isFile && rules.backsUp(it) }
+            .associate { it.relativeTo(application.dataDir).path to it.readBytes() }
+            .also { assertTrue("${rules.name} backed nothing up", it.isNotEmpty()) }
+
+    /** The app, stopped, gets [backup] back with no other data, as on a new device. */
+    private fun restoreOnANewDevice(backup: Map<String, ByteArray>) {
+        stopKoin()
+        application.dataDir
+            .listFiles()
+            .orEmpty()
+            .forEach { it.deleteRecursively() }
+        backup.forEach { (path, bytes) ->
+            File(application.dataDir, path).apply { parentFile!!.mkdirs() }.writeBytes(bytes)
+        }
     }
 
     private fun cloudBackup() = rules("cloud backup", manifestRules("dataExtractionRules"), "cloud-backup")
@@ -155,7 +175,7 @@ class BackupTest {
             val opens = parser.eventType == XmlPullParser.START_TAG
             when {
                 section != null && parser.name == section -> inSection = opens
-                opens && inSection && parser.name == "include" -> includes += parser.ruleFile()
+                opens && inSection && parser.name == "include" -> includes += parser.included()
                 opens && inSection && parser.name == "exclude" -> excludes += parser.ruleFile()
             }
         }
@@ -173,6 +193,19 @@ class BackupTest {
                 else -> error("A backup rule's domain this test does not know: $domain")
             }
         return File(domain, getAttributeValue(null, "path")).normalize()
+    }
+
+    /**
+     * The files an include names. Android adds a database file's journal and write-ahead log to its include itself
+     * (`FullBackup.BackupScheme`), so the rules name the database only.
+     */
+    private fun XmlPullParser.included(): List<File> {
+        val file = ruleFile()
+        return if (getAttributeValue(null, "domain") == "database") {
+            listOf(file, File("${file.path}-journal"), File("${file.path}-wal"))
+        } else {
+            listOf(file)
+        }
     }
 
     /** The directories Android never backs up, whatever the rules say. */
@@ -201,8 +234,5 @@ class BackupTest {
         const val TEST_CONFIG = "com/android/tools/test_config.properties"
 
         const val ANDROID = "http://schemas.android.com/apk/res/android"
-
-        /** AppCompat's own name for it (`AppLocalesStorageHelper`). */
-        const val APP_COMPAT_LOCALES_FILE = "androidx.appcompat.app.AppCompatDelegate.application_locales_record_file"
     }
 }
