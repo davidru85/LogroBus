@@ -19,6 +19,46 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-05: LB-408 part 1, ETAs from the server's clock
+
+**Done**
+- **PR #44 (LB-407 part 1) merged** on 2026-11-05, and `main` was synced. Dependabot's PRs #45 and #46 (`gradle/actions` 6.4.1) were replayed as PR #47, which is open, with its own entry.
+- **LB-408 part 1 (`feat/LB-408-server-clock-offset`):** FR-ERR-06, ETAs count from the server's clock.
+  - The shared pieces were built earlier, in LB-004, LB-005, LB-010, LB-011 and LB-403:
+    - LB-004: the server-corrected clock;
+    - LB-005: the `Date` of every response feeding it;
+    - LB-010: one clock bound as both `ServerCorrectedClock` and `AppClock` in the graph;
+    - LB-011: `EtaText`, which shows `Minutes(n)` as "n min";
+    - LB-403: `EtaDisplay.of`, which takes the now to count from.
+  - `ServerClockOffsetTest` in `:shared:umbrella` wires the real source client, over a mock engine, to the clock by hand, on the JVM and the iOS simulator.
+    - With the device clock 3 min ahead, an arrival the server expects in 5 min shows 2 min before any response, and 5 min after the first.
+    - With the device clock 50 s ahead, an arrival 4 min 30 s away shows 3 min before, and 4 min after.
+    - These are acceptance tests of existing behaviour, so they passed when written, with no red or green phase. Taking out the client's `Date` sampling, or the offset in `ServerCorrectedClock.now`, fails the first two; a 60 s threshold in `now` fails the third alone.
+  - `:shared:umbrella`'s tests now use Ktor's mock engine (a test dependency, already in the catalogue).
+  - **Part 2 comes with LB-205,** whose row and criteria now carry it (FR-ERR-06):
+    - its rows count each ETA from the graph's `AppClock` on both platforms;
+    - Swift reaches that clock, or the computed ETAs, through `SharedDependencies`;
+    - a test runs through the graph, with a mock engine and a device clock off by 3 min.
+
+**Reviews** (the code-reviewer and data-rules-reviewer subagents; no UI code changed, so no other review). Both asked for changes, all fixed:
+- **Marked done with no ETA rendered anywhere,** and nothing in LB-205 carried the work. LB-408 is now part 1, in progress, as LB-406 and LB-407 are, and LB-205's row and criteria name FR-ERR-06.
+- **The graph's wiring was claimed but not tested:** `GraphAssertions` shows one clock bound as both types, not that the graph's source client gets it. A `SourceClient` given its own clock in `Koin.kt` would pass every test. The docs now say so. The test through the graph needs a mock engine and a fake device clock in the graph, which LB-205's test needs too, so both come in part 2.
+- **The "any size" decision had no test:** `lb408_anOffsetUnder60SecondsCorrectsTheEtaToo` pins it.
+- **The arrivals sat on a minute's boundary** (exactly 5 min away), so a correction of a second would have flipped them: they are now 5 min 30 s away.
+- **Wording:** detekt forbids direct calls to `Clock.System.now()` and `System.currentTimeMillis()`, which is narrower than "outside `AppClock`"; Swift has no such check, which part 2 adds if Swift gets the clock. `EtaText`'s tests use 4 min, not 5. The docs list the same earlier stories everywhere, and use the future tense for what the arrival rows will do.
+- **Not changed:** the offsets are measured against the device's wall clock, so if it jumps mid-session (a time sync, or a manual change), ETAs are off by the jump until 3 fresh samples move the median, for some 10 to 60 s. Anchoring samples to a monotonic clock would fix it; neither FR-ERR-06 nor spec §8.6 asks for it, so it is noted for LB-205.
+
+**Decisions**
+- **The offset applies at any size,** as spec §8.6 has it, not only beyond FR-ERR-06's 60 s, which the requirement allows. Below 60 s it still matters: with the device clock 50 s ahead, an arrival 4 min 30 s away would show 3 min. On a device whose clock is synchronised, it adds about a second of noise (the `Date` header's whole seconds and the network's delay), well under a minute's rounding.
+- **Split into two parts:** the arrival rows that count from the clock do not exist yet.
+
+**Open / next**
+- **The pull request of this entry** is open, and its watch runs. PR #47 merged on 2026-11-05, and `main` was merged into this branch.
+- **Next, once it is merged:** LB-201 part 1, unless the owner chooses otherwise. That is the location permission flow, the manifest permissions, the iOS purpose string, and updates that stop when no visible screen needs them. Its map framing waits for LB-202 and OQ-10, and most other P0 stories wait for OQ-11 (LB-003) or OQ-10 (LB-013).
+- **Waiting on the owner:** as in the LB-407 entry below.
+
+---
+
 ## 2026-11-05: gradle/actions 6.4.1, Dependabot PRs #45 and #46
 
 **Done**

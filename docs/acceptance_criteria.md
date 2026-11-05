@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Baseline 1.0 for the MVP (M0–M4) |
-| Last updated | 2026-10-27 |
+| Last updated | 2026-11-05 |
 | Based on | [`requirements.md`](requirements.md), spec §6 and §9, [`backlog.md`](backlog.md) |
 
 Verifiable acceptance criteria for every MVP story (epics E0–E4). A story is done only when all of its criteria pass **on both platforms** and the definition of done in `AGENTS.md` §11 is met.
@@ -516,9 +516,10 @@ Refs: FR-NEAR-03, FR-HOME-02, FR-HOME-07, NFR-PERF-02
 - **Given** the arrivals request for a saved stop fails, **when** the sheet renders, **then** that stop keeps its previous arrivals with their freshness state, or shows an inline Retry if it has none (FR-ERR-03).
 
 ### LB-205 Stop detail
-Refs: FR-NEAR-04, FR-NAV-07, FR-STOP-03 to 05, spec §5.7, DD-09, DD-16
+Refs: FR-NEAR-04, FR-NAV-07, FR-STOP-03 to 05, FR-ERR-06, spec §5.7, §8.6, DD-09, DD-16
 
 - **Given** stop 38, served by lines 1 and 33, **when** stop detail opens, **then** API-06 is called with `lines=1,33&previewMinutes=60` *(spec)*.
+- **Given** the device clock is 3 min ahead of the server's `Date`, **when** an arrival the server expects in 5 min renders, **then** it shows "5 min" on both platforms (FR-ERR-06, LB-408 part 2). Shared code works the ETA out from the graph's `AppClock` when the row renders, never from the platform's clock. Swift reaches that clock, or the computed ETAs, through `SharedDependencies`. A test runs it through the graph, with a mock engine and a device clock off by 3 min.
 - **Given** the user taps a stop pin in Near Me, **then** the pin enlarges, the sheet moves to medium and shows stop detail. **When** the stop is closed, **then** the sheet returns to the lists.
 - **Given** arrivals in 30 s, 4 min and 75 min, **when** the list renders, **then** they show "Now", "4 min" and "HH:mm". An arrival more than 60 s in the past is removed.
 - **Given** an arrival with `cancellation: true`, **when** it renders, **then** it is struck through with the label "Cancelled" *(spec)*.
@@ -793,6 +794,26 @@ Refs: FR-ERR-06, spec §8.6
 
 - **Given** the device clock is 3 min ahead of the server `Date` header, **when** an arrival expected in 5 min of server time renders, **then** it shows "5 min", not "2 min".
 - **Given** no `Date` sample yet, **when** ETAs are computed, **then** the device clock is used, and the first sample corrects them on the next render.
+
+Part 1 (2026-11-05): the shared pieces, put together by hand. Evidence:
+- **`ServerClockOffsetTest`** (`:shared:umbrella`, on the JVM and the iOS simulator) wires the real source client over a mock engine to a server-corrected clock on a device clock 3 min ahead, and counts an ETA from that clock with the ETA rule `EtaDisplay.of`.
+  - Before any response, an arrival the server expects in 5 min shows 2 min, from the device clock.
+  - After a response with the server's `Date`, the same arrival shows 5 min.
+  - Taking out the client's `Date` sampling, or the offset in `ServerCorrectedClock.now`, fails both tests.
+- **The pieces were built earlier,** in LB-004, LB-005, LB-010, LB-011 and LB-403:
+  - LB-004: the clock and its smoothing over 5 samples (`AppClockTest`).
+  - LB-005: the `Date` of every response (`SourceClientTest`).
+  - LB-010: one clock bound as both `ServerCorrectedClock` and `AppClock` in the graph (`GraphAssertions`). That the graph's source client gets this instance (`Koin.kt`) is not under test yet; part 2's test runs through the graph.
+  - LB-011: `EtaText`, which shows `Minutes(n)` as "n min" on both platforms (`EtaTextTest`, `EtaTextTests`).
+  - LB-403: `EtaDisplay.of`, which takes the now to count from.
+  - In Kotlin, detekt forbids direct calls to `Clock.System.now()` and `System.currentTimeMillis()` (AGENTS.md §5, rule 5). Swift has no such check yet.
+- **The offset applies at any size,** as spec §8.6 has it, not only beyond FR-ERR-06's 60 s. Below 60 s it still matters: with the device clock 50 s ahead, an arrival 4 min 30 s away would show 3 min. `lb408_anOffsetUnder60SecondsCorrectsTheEtaToo` pins it, and a 60 s threshold in `ServerCorrectedClock.now` fails it.
+
+Part 2, done with LB-205's rows (its criterion on the device clock):
+- each ETA is worked out in shared code from the graph's `AppClock` when a row renders, so the first response corrects the next render;
+- Swift reaches that clock, or the computed ETAs, through `SharedDependencies`;
+- a test runs through the graph, with a mock engine and a device clock off by 3 min;
+- a check keeps Swift from computing ETAs with `Date()`, such as a SwiftLint rule, if Swift gets the clock.
 
 ### LB-409 Consent, analytics and crash reporting
 Refs: NFR-PRIV-03, NFR-OBS-03, OQ-16, ADR-0009. Blocked until the vendor is chosen; the contracts are LB-017.
