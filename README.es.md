@@ -96,7 +96,7 @@ La documentación técnica está en inglés.
 | --- | --- | --- |
 | M0 Cimientos | Esqueleto del proyecto, capa de datos, integración continua | En curso |
 | M1 Líneas | Sección Líneas | En curso |
-| M2 Cerca de mí | Sección Cerca de mí | Sin empezar |
+| M2 Cerca de mí | Sección Cerca de mí | En curso |
 | M3 Cómo llegar | Planificador de viajes | Sin empezar |
 | M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | En curso |
 | M5 v1.0 | Modo sin conexión, noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
@@ -104,6 +104,10 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **05-11-2026:**
+  - LB-201, parte 1: la pestaña Cerca de mí pide tu ubicación, y solo cuando tocas.
+    - Hasta que lleguen el mapa y las paradas cercanas, la pestaña muestra «Cerca de ti» con una fila, «Activa la ubicación para ver paradas cercanas». Abrir la pestaña no pide nada; la fila muestra el aviso del propio móvil.
+    - La app pide la ubicación solo mientras la usas, nunca en segundo plano, y funciona con la ubicación aproximada. Si has dicho que no y el móvil ya no vuelve a preguntar, la fila abre los ajustes de la app, donde puedes activarla.
+    - La app lee tu ubicación solo mientras la pestaña Cerca de mí está en pantalla, y deja de hacerlo al cambiar de pestaña o salir de la app. Todavía no la muestra ni la envía: la usarán las paradas cercanas.
   - LB-408, parte 1: ahora un test comprueba que el reloj de la app sigue al del servicio de autobuses, aunque el del móvil vaya desfasado unos minutos, y que una llegada contada con él muestra los minutos correctos. Cuando lleguen las listas de llegadas con LB-205, sus tiempos se contarán con ese reloj.
   - CI: la preparación de Gradle y el job del grafo de dependencias usan `gradle/actions` 6.4.1, que corrige un aviso de seguridad (GHSA-chpw-2mqm-95cc) en un modo que este proyecto no usa.
   - LB-407, parte 1: tus favoritas y tus ajustes van en la copia de seguridad del móvil, así que un móvil nuevo los recupera.

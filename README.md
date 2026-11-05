@@ -94,7 +94,7 @@ You will need:
 | --- | --- | --- |
 | M0 Foundations | Project skeleton, data layer, CI | In progress |
 | M1 Lines | Lines section | In progress |
-| M2 Near Me | Near Me section | Not started |
+| M2 Near Me | Near Me section | In progress |
 | M3 How to Get There | Trip planner | Not started |
 | M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, privacy declarations | In progress |
 | M5 v1.0 | Offline mode, news, fares, recharge points, widget, notifications, release | Not started |
@@ -102,6 +102,10 @@ You will need:
 ### Recent changes
 
 - **2026-11-05:**
+  - LB-201, part 1: the Near me tab asks for your location, and only when you tap.
+    - Until the map and the nearby stops arrive, the tab shows "Near you" with one row, "Turn on location to see nearby stops". Opening the tab asks for nothing; the row shows the phone's own prompt.
+    - The app asks only while you use it, never in the background, and works with approximate location. If you have said no and the phone will not ask again, the row opens the app's settings, where you can turn location on.
+    - The app reads your location only while the Near me tab is on screen, and stops when you switch tabs or leave the app. Nothing shows it or sends it yet: the nearby stops will use it.
   - LB-408, part 1: a test now checks that the app's clock follows the bus service's clock, even when the phone's is a few minutes out, and that an arrival counted from it shows the right minutes. When the arrival lists come with LB-205, their times will count from that clock.
   - CI: the Gradle setup and the dependency graph job use `gradle/actions` 6.4.1, which fixes a security advisory (GHSA-chpw-2mqm-95cc) in a mode this project does not use.
   - LB-407, part 1: your favourites and settings are in the phone's backup, so a new phone gets them back.

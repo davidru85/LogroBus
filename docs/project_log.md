@@ -19,6 +19,79 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-05: LB-201 part 1, the location permission flow
+
+**Done**
+- **PR #48 (LB-408 part 1) merged** on 2026-11-05, and `main` was synced. PR #49 (the Guava floors) had conflicts with it, so `main` was merged into its branch.
+  - Its first run had already passed after one rerun of a Maven Central 429. Its run after this second merge lost a job to a runner flake: "iOS ViewModel and snapshot tests (DesignSystemTests)" never got a macOS runner and was cancelled after 35 min in the queue. The failed jobs were rerun once, as its description records.
+- **LB-201 part 1 (`feat/LB-201-location-permission`):** FR-LOC-01 to 03 and FR-NEAR-06, on Near Me's root.
+  - **Shared (`:shared:feature:nearme`):**
+    - `ObserveLocationAccess` emits `Off` without permission, and starts no updates. With permission it emits `On` and keeps the provider's updates running while collected, then `Off` when location goes.
+    - `NearMeUiMapper` makes "Near you" the `TurnOnLocation` row or `LocationOn`, and `Unknown` until the first read, so the row never flashes.
+    - The graph binds the use case, `SharedDependencies` hands it to Swift, and `preview()` scripts location with `locationOn()` and `locationOff()`.
+  - **Android (`:android:feature:nearme`, `:android:app`):**
+    - `NearMeViewModel` (`WhileSubscribed(5 s)`) and `NearMeRoute`, now the Near Me tab's root.
+    - The row asks for coarse and fine location together. Once the system no longer asks, it opens the app's settings page.
+    - The manifest declares the two location permissions, and a test reads the merged manifest. `BackupTest` now reads it through the same helper.
+  - **iOS (`FeatureNearMe`, the app):**
+    - `NearMeViewModel` and `NearMeView`, now the tab's root.
+    - `CoreLocationAuthorization` shows the When In Use prompt, or opens Settings after a denial, behind a protocol that the tests fake.
+    - The view observes only while it shows and the scene is active.
+    - The purpose string ships in Spanish (build settings) and English (`InfoPlist.xcstrings`).
+  - **Tests:**
+    - Shared: provider fakes for the updates, and the mapper.
+    - Android: the ViewModel, including the 5 s stop; the route, through a recording `ActivityResultRegistry` and Robolectric's rationale shadow; the screen; screenshots with `assertAccessible`.
+    - iOS: Swift ViewModel tests with a fake authorization, snapshots, and `AppBundleTests` for the purpose string. The accessibility audit already walked the Near Me tab.
+  - **CI:** `:android:feature:nearme` joins the screenshot matrix, and `FeatureNearMeTests` the iOS package matrix and the scheme.
+  - **Docs:** the LB-201 criteria are split into parts, with part 1's evidence. Also updated: `architecture.md` §5, `design_guidelines.md` §3.2 and §9, `security_privacy.md` §3, `ci_cd.md` §3, and the backlog.
+
+**Reviews** (code-reviewer, data-rules-reviewer, android-ui-reviewer, ios-ui-reviewer). Changes were required, and all are fixed:
+- **detekt failed the Kotlin gate:** `PreviewUseCases` had 14 functions, three over the limit. Near Me's preview moved to `PreviewLocation`, which `PreviewUseCases` delegates as it does `PreviewSettings`. `locationOn()` and `locationOff()` became extensions, and the scripted updates end on a count of revocations.
+- **Android:**
+  - An answer with no grants (an interrupted request, or a second request while one was pending) counted as a denial, and opened the settings with the prompt still on screen. It is now a cancellation.
+  - A tap while the prompt shows does nothing.
+  - A device without the app's settings screen no longer crashes.
+  - A test now pins the saved rationale across a rotation.
+  - The previews are light and dark, and at 200 % font scale.
+- **Shared:**
+  - A platform service that fails with the permission granted showed "Turn on location", a row that could never work. It is now `Unavailable`, which shows nothing until LB-203 explains it.
+  - The fake counts its calls before its guard, so the no-permission test can fail.
+  - The fake now emits a fix, which nothing passes on.
+  - `IosGraphTest` lists the new accessor.
+- **iOS:**
+  - Xcode's accessibility audit reported the row's text as clipped, although it showed whole. The text now takes the row's whole width, in an `HStack` instead of a `Label`.
+  - The list keeps the grouped background with the section and without it.
+  - The observing task also needs the view on screen (`onAppear`/`onDisappear`), so a pushed screen or another tab cannot restart it.
+  - The previews use a preview authorization, in light and dark.
+  - The audit waits for the row and now visits Near Me in dark mode. A shell UI test finds the row and no system alert, with location reset to never asked.
+  - New tests: the granted branch of the row, and the two Spanish purpose texts kept equal.
+  - The comment on `.restricted` is corrected: it opens Settings, where only the restriction's owner can lift it.
+- **Process:**
+  - The earlier green commits say "No refactor needed" rather than the `TDD: refactor not needed` marker; the later ones use the marker.
+  - One green commit (ef2c22b) also changed its red test. That test's fake answered from a queue, which the resume effect's extra read emptied, so the fake now answers with the current permission.
+- **Left for later:**
+  - one `SectionHeading` in the design system for the three copies of the section heading (LB-203);
+  - the tab root's collapsing bar and scroll to top on reselection, which come with the map (LB-202).
+
+**Decisions**
+- **Owner (2026-11-05):** until the map and the sheet land, Near Me's root is the "Near you" section only. The row shows without location; with location the screen shows nothing, and reads location only while it shows.
+- **Agent:**
+  - **"The system no longer asks" on Android:** a denial with no rationale before or after the prompt. This needs no stored flag, and it also holds after process death. A first prompt dismissed without an answer looks the same and opens the settings too, where location can be turned on.
+  - **Reading location access again:** only while the row shows, after each answer and on resume. Until access is known, the read under way already gets the latest permission. While location is on, its flow ends by itself if location goes, so reading again would only restart the updates.
+  - **The purpose string** names both uses of location in the MVP: nearby stops, and trips from "My location" (LB-301).
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs. PR #49 is open too.
+- **LB-201 part 2** comes with LB-202, LB-203 and LB-410, plus the device passes (`acceptance_criteria.md`).
+- **Next, once both are merged:** the next P0 story that needs neither OQ-10 nor OQ-11, unless the owner chooses otherwise. Most of M1 and M2 waits for LB-003's fixtures (OQ-11) or the map (OQ-10, LB-013).
+- **Waiting for the owner:**
+  - the iOS job limit;
+  - Android's end-to-end encrypted backups;
+  - DD-10 provisional stops;
+  - alert 6 (Kotlin Gradle plugin);
+  - the Gradle cache provider;
+  - OQ-10 and OQ-11.
+
 ## 2026-11-05: LB-408 part 1, ETAs from the server's clock
 
 **Done**

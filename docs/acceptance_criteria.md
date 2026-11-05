@@ -488,6 +488,28 @@ Refs: FR-LOC-01 to 03, FR-NEAR-06, NFR-PRIV-02
 - **Given** the user leaves Near Me and no other visible screen needs location, **when** the tab changes, **then** location updates stop (verified with a provider fake).
 - **Given** a location fix, **when** logs and analytics are inspected, **then** they contain no coordinates.
 
+Part 1 (2026-11-05): the permission flow on Near Me's root, which is the "Near you" section alone until the map and the sheet land (owner decision, 2026-11-05). Evidence:
+- **Nothing asks before the tap:** opening Near Me shows the row and asks for nothing (`NearMeRouteTest`, `NearMeViewModelTests`). Both shells open on it: `TabNavigationTest` on Android; on iOS, `ShellUITests.test_lb201_…` finds the row and no system alert, with location reset to never asked, and the accessibility audit waits for the row, in light and dark and at the largest text.
+- **Foreground only, approximate accepted:**
+  - Android asks for `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` together. A grant of approximate location alone turns the row off. The merged manifest declares these two location permissions and no other (`LocationPermissionsTest`).
+  - iOS asks for When In Use. The app has the purpose string in Spanish and English, and no "Always" string or location background mode (`AppBundleTests`).
+  - Once the system no longer asks, the row opens the app's page in the system settings: on Android after two denials (Robolectric's rationale shadow), and on iOS after one.
+  - On Android, an interrupted request (no grants at all) opens nothing, a second tap while the prompt shows asks nothing more, a rotation during the prompt keeps the answer's meaning, and a device without the settings screen does not crash (`NearMeRouteTest`).
+- **Denied:** "Near you" is the row "Turn on location to see nearby stops" (`ObserveLocationAccessTest`, `NearMeUiMapperTest`, `NearMeScreenTest`, screenshots and snapshots in light, dark and large text). A revoked permission brings it back. A failed platform service with the permission granted is `Unavailable`, which shows no row.
+- **Updates stop with the screen:**
+  - `ObserveLocationAccessTest` runs a provider fake, whose updates run only while location access is collected.
+  - Android's ViewModel stops collecting 5 s after Near Me stops collecting its state (`NearMeViewModelTest`).
+  - On iOS, cancelling the screen's task stops the preview's updates (`NearMeViewModelTests`). The view runs that task only while it shows (`onAppear` to `onDisappear`) and the app is active; no automated test drives that gating, which part 2's device pass checks.
+- **No coordinates in logs:** nothing logs or sends a fix yet: `ObserveLocationAccessTest` has a fix arrive and nothing come out. `LocationFix` and `GeoPoint` print no coordinates (LB-004).
+
+Part 2, with the screens that use location:
+- the map frames the service area without location, and the recenter control asks for the permission first (LB-202, FR-NEAR-08);
+- saved stops, pins and stop detail keep working without location (LB-202 to LB-205);
+- "Near you" lists the nearby stops once location is on (LB-203);
+- the first prompt follows onboarding's location card (LB-410);
+- "Near you" explains a granted location whose service fails (FR-LOC-02, LB-203);
+- TalkBack and VoiceOver passes on a device, and a device pass of the prompts, approximate location, the settings fallback, and the iOS location arrow gone once another tab shows.
+
 ### LB-202 Near Me map
 Refs: FR-NEAR-01, FR-NEAR-08, FR-STOP-10, spec §7.4
 
