@@ -36,6 +36,15 @@ internal fun getsSecurityFloorBoms(
 /** Whether the project at [path] is a test-support module, which only tests may use (ModuleRules). */
 internal fun isTestSupportModule(path: String): Boolean = ModuleKind.of(path).isTesting
 
+/** What a configuration gets: nothing, the plain constraints, or the constraints and the BOMs. */
+internal enum class Floors { NONE, CONSTRAINTS, CONSTRAINTS_AND_BOMS }
+
+/** The floors that the configuration [name] of the project at [path] gets. */
+internal fun securityFloorsFor(
+    path: String,
+    name: String,
+): Floors = Floors.NONE
+
 private val FLOORED_CONFIGURATIONS =
     setOf("androidLintTool", SWIFT_EXPORT_CLASSPATH, "testImplementation", "androidHostTestImplementation")
 

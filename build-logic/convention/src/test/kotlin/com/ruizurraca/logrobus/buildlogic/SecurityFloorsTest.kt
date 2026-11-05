@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.buildlogic
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -55,6 +56,24 @@ class SecurityFloorsTest {
         }
         assertTrue(getsSecurityFloors("implementation", testSupport = true))
         assertTrue(getsSecurityFloorBoms("implementation", testSupport = true))
+    }
+
+    @Test
+    fun lb002_eachConfigurationOfEachModuleGetsItsFloors() {
+        // What raiseSecurityFloors applies, by module and configuration.
+        assertEquals(Floors.CONSTRAINTS_AND_BOMS, securityFloorsFor(":android:core:testing", "implementation"))
+        // A KMP module puts a JVM library, such as Robolectric, in androidMain; common code also targets iOS.
+        assertEquals(
+            Floors.CONSTRAINTS_AND_BOMS,
+            securityFloorsFor(":shared:core:testing", "androidMainImplementation"),
+        )
+        assertEquals(Floors.NONE, securityFloorsFor(":shared:core:testing", "commonMainImplementation"))
+        assertEquals(Floors.CONSTRAINTS_AND_BOMS, securityFloorsFor(":android:app", "testImplementation"))
+        assertEquals(Floors.CONSTRAINTS, securityFloorsFor(":shared:umbrella", "swiftExportClasspath"))
+        listOf(":android:app", ":android:core:designsystem", ":shared:core:common", ":shared:umbrella").forEach {
+            assertEquals(Floors.NONE, securityFloorsFor(it, "implementation"), it)
+            assertEquals(Floors.NONE, securityFloorsFor(it, "androidMainImplementation"), it)
+        }
     }
 
     @Test
