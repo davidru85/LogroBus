@@ -104,7 +104,7 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **05-11-2026:**
-  - LB-408: los tiempos de llegada se cuentan con el reloj del servicio de autobuses, no con el del móvil, así que un móvil con el reloj desfasado unos minutos sigue mostrando cuántos minutos faltan para el autobús. Ahora un test lo comprueba desde la respuesta del servidor hasta los minutos que se muestran; las listas de llegadas llegan con LB-205.
+  - LB-408, parte 1: ahora un test comprueba que el reloj de la app sigue al del servicio de autobuses, aunque el del móvil vaya desfasado unos minutos, y que una llegada contada con él muestra los minutos correctos. Cuando lleguen las listas de llegadas con LB-205, sus tiempos se contarán con ese reloj.
   - LB-407, parte 1: tus favoritas y tus ajustes van en la copia de seguridad del móvil, así que un móvil nuevo los recupera.
     - Android: la copia automática en tu cuenta de Google y la transferencia a un móvil nuevo guardan la base de datos de la app (las líneas favoritas, y más adelante las paradas y los lugares guardados) y sus ajustes, y nada más. Una caché nunca puede llenar el espacio que Android da a la copia de cada app.
     - iPhone: las copias de iCloud y del ordenador ya guardaban ambos; ahora un test se asegura de que sigan donde llegan las copias.

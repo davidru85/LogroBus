@@ -156,7 +156,8 @@ Done in LB-005 part 1 and the first half of part 2; the DTOs and services come w
   - The time is the `Date` header (IMF-fixdate only) plus `Age`, so a response from a cache counts from when the origin sent it.
   - A missing or unreadable header, or a time before 2026, is ignored.
   - The clock adds to the device clock the median offset of the last 5 samples (spec §8.6), so one stray sample does not move it.
-  - The offset applies at any size, not only beyond FR-ERR-06's 60 s. ETAs are worked out from the clock's `now()` when they render, so the first response corrects the next render (LB-408, `ServerClockOffsetTest`).
+  - The offset applies at any size, not only beyond FR-ERR-06's 60 s (LB-408, `ServerClockOffsetTest`).
+  - The arrival rows of LB-205 will work each ETA out from this clock's `now()` when they render, so that the first response corrects the next render (LB-408 part 2).
 - **Lenient JSON** (`api_spec.md` §3):
   - `SourceJson` is the lenient configuration.
   - `arrayAt("result", "lines")` reads a BFF envelope.
