@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 
 /// LB-406 (NFR-A11Y): every screen the app has passes Xcode's accessibility audit, at the default text size and at the
@@ -91,7 +92,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     private func auditInDarkMode(in app: XCUIApplication, into issues: inout [String]) throws {
         XCUIDevice.shared.appearance = .dark
         addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
-        let audit = Audit(test: self, app: app, largestText: false)
+        let audit = Audit(test: self, app: app, largestText: false, dark: true)
         app.tabBars.buttons["Lines"].tap()
         XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
         try search("varea", in: app)
@@ -199,6 +200,8 @@ private struct Audit {
     let test: XCTestCase
     let app: XCUIApplication
     let largestText: Bool
+    /// Whether the screens are meant to be in dark mode, which each audit then checks in its screenshot.
+    var dark = false
 
     /// The accessibility identifiers of texts whose labels say their symbols in words.
     private static let spokenInWords = ["lines.favourites.hint", "lines.favourites.card.headsigns"]
@@ -206,11 +209,18 @@ private struct Audit {
     /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
     /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
     /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none.
+    ///
+    /// A screen meant to be dark that is not is an issue too: on CI the simulator kept light mode, and the dark audits
+    /// audited light mode again without saying so (PR #50).
     func run(_ screen: String, _ types: XCUIAccessibilityAuditType, into issues: inout [String]) throws {
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        let screenshot = app.screenshot()
+        let shot = XCTAttachment(screenshot: screenshot)
         shot.name = screen
         shot.lifetime = .keepAlways
         test.add(shot)
+        if dark && !Self.isMostlyDark(screenshot.image) {
+            issues.append("\(screen): the screen is not in dark mode")
+        }
         var found: [String] = []
         for attempt in 1...3 {
             found = []
@@ -264,5 +274,33 @@ private struct Audit {
         default:
             return false
         }
+    }
+
+    /// Whether `image` is mostly dark: the mean luminance of a 32 × 32 reduction of it is under one half. A screen in
+    /// dark mode, on its black background, is; one in light mode, on the system's light grey, is not.
+    private static func isMostlyDark(_ image: UIImage) -> Bool {
+        guard let source = image.cgImage else { return false }
+        let side = 32
+        var pixels = [UInt8](repeating: 0, count: side * side * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: side,
+                height: side,
+                bitsPerComponent: 8,
+                bytesPerRow: side * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+            ) else { return false }
+            context.interpolationQuality = .high
+            context.draw(source, in: CGRect(x: 0, y: 0, width: side, height: side))
+            return true
+        }
+        guard drawn else { return false }
+        let luminance = stride(from: 0, to: pixels.count, by: 4).reduce(0.0) { total, index in
+            total + 0.2126 * Double(pixels[index]) + 0.7152 * Double(pixels[index + 1]) +
+                0.0722 * Double(pixels[index + 2])
+        }
+        return luminance / Double(side * side) / 255 < 0.5
     }
 }
