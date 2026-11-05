@@ -23,11 +23,18 @@ interface SettingsUseCases {
     fun clearCache(): ClearCache
 }
 
+/** Near Me's own use cases for Swift (LB-201): location access. */
+interface NearMeUseCases {
+    fun observeLocationAccess(): ObserveLocationAccess
+}
+
 /**
  * The use cases a Swift ViewModel can ask for (architecture.md §5.2), grouped by feature as they grow.
  * [SharedDependencies] resolves them from the graph; [SharedDependencies.preview] scripts them for previews and tests.
  */
-interface UseCases : SettingsUseCases {
+interface UseCases :
+    SettingsUseCases,
+    NearMeUseCases {
     fun observeLastSyncs(): ObserveLastSyncs
 
     fun observeLinesWithFavourites(): ObserveLinesWithFavourites
@@ -35,8 +42,6 @@ interface UseCases : SettingsUseCases {
     fun setFavouriteLine(): SetFavouriteLine
 
     fun reorderFavouriteLines(): ReorderFavouriteLines
-
-    fun observeLocationAccess(): ObserveLocationAccess
 }
 
 /**
