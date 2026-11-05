@@ -29,6 +29,7 @@ dependencies {
     implementation(projects.android.core.designsystem)
     implementation(projects.android.core.navigation)
     implementation(projects.android.feature.lines)
+    implementation(projects.android.feature.nearme)
     implementation(projects.android.feature.settings)
     implementation(libs.androidx.activity.compose)
     // The app's language and theme, chosen in Settings (ADR-0020).

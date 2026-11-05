@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.android.feature.lines.LinesViewModel
+import com.ruizurraca.logrobus.android.feature.nearme.NearMeViewModel
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataViewModel
 import com.ruizurraca.logrobus.android.feature.settings.SettingsViewModel
 import com.ruizurraca.logrobus.core.common.AppClock
@@ -48,6 +49,7 @@ class AppGraphTest {
         assertNotNull(ViewModelProvider.create(store, fromTheGraph)[AboutDataViewModel::class])
         assertNotNull(ViewModelProvider.create(store, fromTheGraph)[LinesViewModel::class])
         assertNotNull(ViewModelProvider.create(store, fromTheGraph)[SettingsViewModel::class])
+        assertNotNull(ViewModelProvider.create(store, fromTheGraph)[NearMeViewModel::class])
         store.clear()
     }
 }
