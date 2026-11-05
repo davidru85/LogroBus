@@ -103,6 +103,7 @@ You will need:
 
 - **2026-11-05:**
   - Build: the security floors of the build's tools and tests now also cover the helpers for the Android UI tests, whose Robolectric brought back an old Guava with a known advisory. Nothing in the app changes.
+  - CI: the Gradle setup and the dependency graph job use `gradle/actions` 6.4.1, which fixes a security advisory (GHSA-chpw-2mqm-95cc) in a mode this project does not use.
   - LB-407, part 1: your favourites and settings are in the phone's backup, so a new phone gets them back.
     - Android: Auto Backup to your Google account and a transfer to a new phone keep the app's database (favourite lines, and later saved stops and places) and its settings, and nothing else. A cache can never fill the space Android gives each app's backup.
     - iPhone: iCloud and computer backups already kept both; a test now makes sure they stay where backups reach.

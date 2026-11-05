@@ -105,6 +105,7 @@ La documentación técnica está en inglés.
 
 - **05-11-2026:**
   - Compilación: los mínimos de seguridad de las herramientas y los tests de la compilación cubren ahora también las utilidades de los tests de interfaz de Android, cuyo Robolectric volvía a traer un Guava antiguo con un aviso de seguridad conocido. En la app no cambia nada.
+  - CI: la preparación de Gradle y el job del grafo de dependencias usan `gradle/actions` 6.4.1, que corrige un aviso de seguridad (GHSA-chpw-2mqm-95cc) en un modo que este proyecto no usa.
   - LB-407, parte 1: tus favoritas y tus ajustes van en la copia de seguridad del móvil, así que un móvil nuevo los recupera.
     - Android: la copia automática en tu cuenta de Google y la transferencia a un móvil nuevo guardan la base de datos de la app (las líneas favoritas, y más adelante las paradas y los lugares guardados) y sus ajustes, y nada más. Una caché nunca puede llenar el espacio que Android da a la copia de cada app.
     - iPhone: las copias de iCloud y del ordenador ya guardaban ambos; ahora un test se asegura de que sigan donde llegan las copias.
