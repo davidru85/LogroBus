@@ -9,14 +9,19 @@ private const val SWIFT_EXPORT_CLASSPATH = "swiftExportClasspath"
  * - AGP's tools: the runner for instrumented tests (`unified-test-platform-*`) and Android lint (`androidLintTool`);
  * - KGP's Swift export (`swiftExportClasspath`), which no build of ours runs but the dependency graph resolves;
  * - the unit and host test dependencies (`testImplementation`, `androidHostTestImplementation`), where Robolectric
- *   brings Guava.
+ *   brings Guava;
+ * - a test-support module's own dependencies (`implementation`), since only tests may use the module: LB-406's
+ *   `:android:core:testing` brings Robolectric itself.
  *
  * The app's own classpaths never get them: what ships has the catalog's versions.
  */
 internal fun getsSecurityFloors(
     name: String,
     testSupport: Boolean = false,
-): Boolean = name.startsWith("unified-test-platform-") || name in FLOORED_CONFIGURATIONS
+): Boolean =
+    name.startsWith("unified-test-platform-") ||
+        name in FLOORED_CONFIGURATIONS ||
+        (testSupport && name in TEST_SUPPORT_CONFIGURATIONS)
 
 /**
  * Whether a floored configuration also gets the BOMs. A BOM is a dependency, and KGP adds the Swift export tools as
@@ -26,12 +31,16 @@ internal fun getsSecurityFloors(
 internal fun getsSecurityFloorBoms(
     name: String,
     testSupport: Boolean = false,
-): Boolean = getsSecurityFloors(name) && name != SWIFT_EXPORT_CLASSPATH
+): Boolean = getsSecurityFloors(name, testSupport) && name != SWIFT_EXPORT_CLASSPATH
 
-internal fun isTestSupportModule(path: String): Boolean = false
+/** Whether the project at [path] is a test-support module, which only tests may use (ModuleRules). */
+internal fun isTestSupportModule(path: String): Boolean = ModuleKind.of(path).isTesting
 
 private val FLOORED_CONFIGURATIONS =
     setOf("androidLintTool", SWIFT_EXPORT_CLASSPATH, "testImplementation", "androidHostTestImplementation")
+
+/** A test-support module's own dependencies: every classpath of the module extends `implementation`. */
+private val TEST_SUPPORT_CONFIGURATIONS = setOf("implementation")
 
 /** Libraries with a BOM, which keeps all their modules on one version. */
 private val SECURITY_FLOOR_BOMS = listOf("netty-bom", "bouncycastle-bom", "guava-bom")
@@ -49,11 +58,12 @@ internal fun Project.raiseSecurityFloors() {
     val handler = dependencies
     val boms = SECURITY_FLOOR_BOMS.map { handler.platform(libs.findLibrary(it).get()) }
     val libraries = SECURITY_FLOOR_LIBRARIES.map { libs.findLibrary(it).get() }
+    val testSupport = isTestSupportModule(path)
     // By name, so that no other configuration is realised to be filtered.
-    configurations.named { getsSecurityFloors(it) }.configureEach {
+    configurations.named { getsSecurityFloors(it, testSupport) }.configureEach {
         libraries.forEach { handler.constraints.addProvider(name, it) }
         // Through the DependencyHandler: added straight to the configuration, a BOM loses its platform attribute and
         // resolves as a plain library, so its constraints do not apply.
-        if (getsSecurityFloorBoms(name)) boms.forEach { handler.addProvider(name, it) }
+        if (getsSecurityFloorBoms(name, testSupport)) boms.forEach { handler.addProvider(name, it) }
     }
 }
