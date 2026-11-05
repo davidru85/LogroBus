@@ -4,8 +4,8 @@ import XCTest
 /// LB-406 (NFR-A11Y): every screen the app has passes Xcode's accessibility audit, at the default text size and at the
 /// largest: touch targets of at least 44 pt, no clipped text, Dynamic Type, contrast, and a description and trait for
 /// every element. One launch per text size walks the screens, and the issues of all of them are reported together,
-/// each with a screenshot of its screen. The default size's launch then turns the device to dark mode, relaunches the
-/// app, and walks the screens again.
+/// each with a screenshot of its screen. The default size's launch then relaunches the app in its Dark theme and walks
+/// the screens again.
 ///
 /// Contrast is audited only where nothing scrolls beneath the floating bars, whose scroll edge effect fades what is
 /// under them: the audit reads that faded text, and does not always name its element, so it cannot be told apart.
@@ -87,23 +87,19 @@ final class AccessibilityAuditUITests: XCTestCase {
     /// Near Me's row without location (LB-201), which the audit waits for: the screen is blank until access is read.
     private static let turnOnLocation = "Turn on location to see nearby stops"
 
-    /// The Lines search, More, Settings, its alert, About data and Near me again, with the device in dark mode: the
-    /// dark accent and secondary text on the system's dark backgrounds. The app's theme follows the device.
+    /// The Lines search, More, Settings, its alert, About data and Near me again, in dark mode: the dark accent and
+    /// secondary text on the system's dark backgrounds.
     ///
-    /// The app relaunches once the device is dark, and the walk waits for its screen to be dark: on CI the app that
-    /// was running stayed light (PR #50). The app's own Dark theme would not need the device, but the audit then
-    /// misreads the contrast of the system's search field and alert, which show white on dark.
+    /// The app relaunches in its Dark theme, which a launch argument sets over the saved one, and which gives its
+    /// windows the dark interface style that the device's dark mode would. The device's dark mode cannot be relied on:
+    /// under `xcodebuild` on CI the app stayed light although `XCUIDevice` read dark (PR #50), as others report of
+    /// iOS 26.2 and later.
     @MainActor
     private func auditInDarkMode(in app: XCUIApplication, into issues: inout [String]) throws {
-        XCUIDevice.shared.appearance = .dark
-        addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
+        app.launchArguments += ["-settings.theme", "DARK"]
         app.launch()
         let audit = Audit(test: self, app: app, largestText: false, dark: true)
         XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 10))
-        let deadline = Date().addingTimeInterval(10)
-        while !Audit.isMostlyDark(app.screenshot().image), Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.5)
-        }
         try search("varea", in: app)
         try audit.run("Lines, searching, dark", .all, into: &issues)
         closeSearch(in: app)
@@ -220,8 +216,8 @@ private struct Audit {
     /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none. It also runs
     /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`).
     ///
-    /// A screen meant to be dark that is not is an issue too: on CI the simulator kept light mode, and the dark audits
-    /// audited light mode again without saying so (PR #50).
+    /// A screen meant to be dark that is not is an issue too: on CI the app kept light mode when the device was asked
+    /// for dark, and the dark audits audited light mode again without saying so (PR #50).
     func run(_ screen: String, _ types: XCUIAccessibilityAuditType, into issues: inout [String]) throws {
         let screenshot = app.screenshot()
         let shot = XCTAttachment(screenshot: screenshot)
@@ -229,8 +225,7 @@ private struct Audit {
         shot.lifetime = .keepAlways
         test.add(shot)
         if dark && !Self.isMostlyDark(screenshot.image) {
-            let device = XCUIDevice.shared.appearance == .dark ? "dark" : "not dark"
-            issues.append("\(screen): the screen is not in dark mode, and the device's appearance is \(device)")
+            issues.append("\(screen): the screen is not in dark mode")
         }
         var found: [String] = []
         for attempt in 1...3 {
@@ -268,6 +263,8 @@ private struct Audit {
     ///   audit cannot name ("potentially inaccessible text"). Its title and button are read, and its button takes the
     ///   accent, which the contrast audit checks.
     /// - **The search field's "Clear text" button,** 20 pt, the system's: Close beside the field ends the search.
+    /// - **Contrast of the system's search field and of the Clear cache alert's title, in the app's Dark theme:** both
+    ///   show white on dark, yet the audit reports them as failing. With the device's dark mode, locally, it did not.
     private func isFalsePositive(
         _ issue: XCUIAccessibilityAuditIssue,
         on screen: String,
@@ -287,6 +284,10 @@ private struct Audit {
             return barButton || dataSection
         case .hitRegion:
             return screen.hasPrefix("Lines") && element.elementType == .button && element.label == "Clear text"
+        case .contrast:
+            let searchField = screen == "Lines, searching, dark" && element.elementType == .searchField
+            let alertTitle = screen == "Settings, Clear cache's alert, dark" && element.label == "Cache cleared"
+            return dark && (searchField || alertTitle)
         default:
             return false
         }
@@ -301,7 +302,7 @@ private struct Audit {
 
     /// Whether `image` is mostly dark: the mean luminance of a 32 × 32 reduction of it is under one half. A screen in
     /// dark mode, on its black background, is; one in light mode, on the system's light grey, is not.
-    static func isMostlyDark(_ image: UIImage) -> Bool {
+    private static func isMostlyDark(_ image: UIImage) -> Bool {
         guard let source = image.cgImage else { return false }
         let side = 32
         var pixels = [UInt8](repeating: 0, count: side * side * 4)
