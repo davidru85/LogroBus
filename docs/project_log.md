@@ -53,8 +53,26 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Split into two parts:** the arrival rows that count from the clock do not exist yet.
 
 **Open / next**
-- **PR #47 and the pull request of this entry** are open, and their watches run.
-- **Next, once they are merged:** LB-201 part 1, unless the owner chooses otherwise. That is the location permission flow, the manifest permissions, the iOS purpose string, and updates that stop when no visible screen needs them. Its map framing waits for LB-202 and OQ-10, and most other P0 stories wait for OQ-11 (LB-003) or OQ-10 (LB-013).
+- **The pull request of this entry** is open, and its watch runs. PR #47 merged on 2026-11-05, and `main` was merged into this branch.
+- **Next, once it is merged:** LB-201 part 1, unless the owner chooses otherwise. That is the location permission flow, the manifest permissions, the iOS purpose string, and updates that stop when no visible screen needs them. Its map framing waits for LB-202 and OQ-10, and most other P0 stories wait for OQ-11 (LB-003) or OQ-10 (LB-013).
+- **Waiting on the owner:** as in the LB-407 entry below.
+
+---
+
+## 2026-11-05: gradle/actions 6.4.1, Dependabot PRs #45 and #46
+
+**Done**
+- **PR #44 (LB-407 part 1) merged** on 2026-11-05, and `main` was synced.
+- **Dependabot PRs #45 and #46** bump `gradle/actions/dependency-submission` (`kotlin-checks.yml`) and `gradle/actions/setup-gradle` (`.github/actions/gradle-setup`) from 6.4.0 to 6.4.1. Both are replayed as our own commits on `chore/deps-gradle-actions-6.4.1` (`engineering_workflow.md` §9), and Dependabot's PRs are closed with a link to its PR.
+  - The new pin, `8da46b5`, is the commit that the annotated tag `v6.4.1` points to.
+  - **v6.4.1 fixes GHSA-chpw-2mqm-95cc** (high): in `download-and-submit` mode, a fork's pull request could supply a crafted dependency graph and obtain the `GITHUB_TOKEN` of the `workflow_run` job that submits it. This repository generates and submits the graph in one job (`dependency-graph: generate-and-submit`) and has no `workflow_run` workflow, so it was not affected.
+
+**Decisions**
+- **One pull request for both bumps:** they are the same upstream release, in the two places that pin it.
+
+**Open / next**
+- **The pull request of this entry** is open, and its watch runs.
+- **Next:** LB-408 (the server clock offset), on its own branch.
 - **Waiting on the owner:** as in the LB-407 entry below.
 
 ---
