@@ -19,6 +19,37 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-05: The Guava alert again: security floors for a test-support module
+
+**Done**
+- **Dependabot alert 7 (GHSA-xxph-c9ww-hj94, high, Guava up to 33.7.1) reopened on `main` on 2026-11-04,** after PR #43 (LB-406 part 1) merged. GitHub reported it on a push.
+  - The cause: `:android:core:testing` declares Robolectric as a dependency of its own (`implementation`), so its nine classpaths resolved Robolectric's Guava 33.6.0-jre. The floors covered test configurations only, and this module's are not named as such.
+  - The fix (`fix/LB-002-guava-floor-test-support`, two red and green cycles): a test-support module, as `ModuleRules` defines it, gets the floors and BOMs on its own dependencies, which its compile and runtime classpaths extend. Only tests may use such a module, so its classpaths are test classpaths.
+    - An Android module declares them in `implementation`. A KMP one, such as `:shared:core:testing`, has no `implementation` configuration: a JVM library goes in `androidMainImplementation`, and its common and iOS configurations get none.
+    - `securityFloorsFor(path, name)` decides what each configuration gets, and `raiseSecurityFloors` applies it, so the wiring is the tested decision.
+    - `ModuleKind.isTesting` moved to `ModuleKind`, so `ModuleRules` and the floors use one definition.
+- **Verified:**
+  - An init script resolved every configuration of every project. Before the fix, nine configurations of `:android:core:testing` resolved Guava 33.6.0-jre; after it, none resolves a Guava older than 33.7.2.
+  - The app's release runtime classpath is identical before and after.
+  - `:shared:core:testing` gets the BOMs on its Android classpaths only, and still compiles for iOS.
+- **The other open alert** is still alert 6, the Kotlin Gradle plugin's, which waits on the owner (`ci_cd.md` §6).
+
+**Reviews** (the code-reviewer subagent; no app code changed). It approved with nits, all fixed:
+- **`:shared:core:testing` was claimed but not covered:** it is a KMP module with no `implementation` configuration. It now gets the floors on `androidMainImplementation` (the second cycle).
+- **The wiring of `raiseSecurityFloors` had no test:** a call without the module's kind would have dropped the BOMs, and with them Guava's floor, with every test green. It now applies `securityFloorsFor`, which the tests cover.
+- **Wording:** "which all its classpaths extend" was too broad, since its own tests' classpaths get the floors otherwise. `ci_cd.md` read as if the alert were closed. The LB-002 backlog row records the extension.
+
+**CI**
+- **The first run after `main` was merged failed** in the `:shared:core:database` unit tests: Maven Central answered `429 Too Many Requests` for Robolectric's `nativeruntime-dist-compat-1.0.19.jar` in all three attempts of `gradle-retry.sh`. A change to the Gradle files starts with no cache, so every job downloads at once, as on PRs #36, #38 and #41. The failed jobs were rerun once, and passed.
+- **The lasting fix,** a Gradle cache with a fallback key, still waits for the owner's choice of cache provider.
+
+**Decisions**
+- **The same floors as on 2026-11-02,** which the owner approved then, reach one more place. No new floor and no new version.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs. PRs #47 and #48 merged on 2026-11-05, and `main` was merged into this branch after each. The alert should close once this branch reaches `main` and submits its dependency graph.
+- **Next, once it is merged:** LB-201 part 1 (the location permission flow), unless the owner chooses otherwise, as the LB-408 entry says.
+
 ## 2026-11-05: LB-408 part 1, ETAs from the server's clock
 
 **Done**

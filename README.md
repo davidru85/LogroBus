@@ -102,6 +102,7 @@ You will need:
 ### Recent changes
 
 - **2026-11-05:**
+  - Build: the security floors of the build's tools and tests now also cover the helpers for the Android UI tests, whose Robolectric brought back an old Guava with a known advisory. Nothing in the app changes.
   - LB-408, part 1: a test now checks that the app's clock follows the bus service's clock, even when the phone's is a few minutes out, and that an arrival counted from it shows the right minutes. When the arrival lists come with LB-205, their times will count from that clock.
   - CI: the Gradle setup and the dependency graph job use `gradle/actions` 6.4.1, which fixes a security advisory (GHSA-chpw-2mqm-95cc) in a mode this project does not use.
   - LB-407, part 1: your favourites and settings are in the phone's backup, so a new phone gets them back.

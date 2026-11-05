@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.buildlogic
 
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -42,6 +43,37 @@ class SecurityFloorsTest {
             "androidHostTestImplementation",
         ).forEach { assertTrue(getsSecurityFloorBoms(it), it) }
         assertFalse(getsSecurityFloorBoms("implementation"))
+    }
+
+    @Test
+    fun lb002_aTestSupportModulesOwnDependenciesGetTheSecurityFloors() {
+        // LB-406's `:android:core:testing` brings Robolectric, and with it Guava, as a dependency of its own. Only
+        // tests may use a test-support module (ModuleRules), so its own classpaths are test classpaths too.
+        assertTrue(isTestSupportModule(":android:core:testing"))
+        assertTrue(isTestSupportModule(":shared:core:testing"))
+        listOf(":android:core:designsystem", ":android:app", ":shared:core:common", ":shared:umbrella").forEach {
+            assertFalse(isTestSupportModule(it), it)
+        }
+        assertTrue(getsSecurityFloors("implementation", testSupport = true))
+        assertTrue(getsSecurityFloorBoms("implementation", testSupport = true))
+    }
+
+    @Test
+    fun lb002_eachConfigurationOfEachModuleGetsItsFloors() {
+        // What raiseSecurityFloors applies, by module and configuration.
+        assertEquals(Floors.CONSTRAINTS_AND_BOMS, securityFloorsFor(":android:core:testing", "implementation"))
+        // A KMP module puts a JVM library, such as Robolectric, in androidMain; common code also targets iOS.
+        assertEquals(
+            Floors.CONSTRAINTS_AND_BOMS,
+            securityFloorsFor(":shared:core:testing", "androidMainImplementation"),
+        )
+        assertEquals(Floors.NONE, securityFloorsFor(":shared:core:testing", "commonMainImplementation"))
+        assertEquals(Floors.CONSTRAINTS_AND_BOMS, securityFloorsFor(":android:app", "testImplementation"))
+        assertEquals(Floors.CONSTRAINTS, securityFloorsFor(":shared:umbrella", "swiftExportClasspath"))
+        listOf(":android:app", ":android:core:designsystem", ":shared:core:common", ":shared:umbrella").forEach {
+            assertEquals(Floors.NONE, securityFloorsFor(it, "implementation"), it)
+            assertEquals(Floors.NONE, securityFloorsFor(it, "androidMainImplementation"), it)
+        }
     }
 
     @Test
