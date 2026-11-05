@@ -50,6 +50,8 @@ struct AppBundleTests {
         }
         #expect(purposes[0].contains("ubicación"))
         #expect(purposes[1].contains("location"))
+        // The Spanish text is both the build setting's and the catalogue's: the two must not drift apart.
+        #expect(Bundle.main.infoDictionary?["NSLocationWhenInUseUsageDescription"] as? String == purposes[0])
     }
 
     @Test

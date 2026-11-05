@@ -1,6 +1,42 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "nearme.nearby.title": {
+      "comment": "Near Me: the heading of the nearby stops section (design_guidelines.md §3.2).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Near you"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca de ti"
+          }
+        }
+      }
+    },
+    "nearme.nearby.turn_on_location": {
+      "comment": "Near Me: without location, the one row of the nearby stops section, which opens the permission flow (FR-NEAR-06, LB-201).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on location to see nearby stops"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa la ubicación para ver paradas cercanas"
+          }
+        }
+      }
+    },
     "nearme.title": {
       "comment": "Near Me: the screen's title, as its tab's (design_guidelines.md §2.1).",
       "extractionState": "manual",

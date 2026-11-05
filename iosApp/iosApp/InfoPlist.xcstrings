@@ -1,0 +1,24 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "NSLocationWhenInUseUsageDescription": {
+      "comment": "iOS's location prompt: why the app asks (FR-LOC-01, LB-201). The Spanish source is also in project.yml.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LogroBus uses your location to show you nearby stops and plan trips from where you are."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LogroBus usa tu ubicación para mostrarte las paradas cercanas y planificar viajes desde donde estás."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

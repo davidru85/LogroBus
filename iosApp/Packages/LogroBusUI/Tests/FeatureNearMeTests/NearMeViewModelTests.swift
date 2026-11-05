@@ -69,6 +69,22 @@ struct NearMeViewModelTests {
     }
 
     @Test
+    func lb201_whenTheSystemHasAlreadyGrantedIt_theRowReadsAccessAgain() async throws {
+        // Granted in Settings while the row showed, say: no prompt, no Settings, a new read.
+        let authorization = FakeLocationAuthorization(status: .granted)
+        let viewModel = NearMeViewModel(useCases: SharedDependencies.shared.preview()) { authorization }
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.state.nearYou is NearYouUiTurnOnLocation }
+
+        viewModel.turnOnLocation()
+
+        #expect(viewModel.checks == 1)
+        #expect(authorization.prompts == 0)
+        #expect(authorization.settingsOpened == 0)
+    }
+
+    @Test
     func lb201_aGrantedPrompt_readsAccessAgain_andTheRowGoes() async throws {
         let useCases = SharedDependencies.shared.preview()
         let authorization = FakeLocationAuthorization(status: .notDetermined)

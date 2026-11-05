@@ -5,7 +5,8 @@ import UIKit
 public enum LocationAuthorizationStatus: Sendable {
     /// The system has not asked yet: its prompt shows.
     case notDetermined
-    /// Denied or restricted: only the system's Settings can turn location on.
+    /// Denied, or restricted by Screen Time or a device profile. The row opens the app's page in Settings, where a
+    /// denial can be undone; a restriction only its owner can lift.
     case denied
     /// When In Use, approximate or precise.
     case granted
@@ -24,20 +25,52 @@ public protocol LocationAuthorizing: AnyObject {
     func changes() -> AsyncStream<Void>
 }
 
-/// Core Location's authorization, for the app.
+/// Core Location's authorization, for the app. Create it on the main thread: Core Location calls its delegate on the
+/// run loop of the thread that created the manager.
 @MainActor
-public final class CoreLocationAuthorization: NSObject, LocationAuthorizing {
-    public var status: LocationAuthorizationStatus { .notDetermined }
+public final class CoreLocationAuthorization: NSObject, LocationAuthorizing, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    private var continuations: [UUID: AsyncStream<Void>.Continuation] = [:]
 
     override public init() {
         super.init()
+        manager.delegate = self
     }
 
-    public func requestWhenInUse() {}
+    public var status: LocationAuthorizationStatus {
+        switch manager.authorizationStatus {
+        case .notDetermined: .notDetermined
+        case .authorizedWhenInUse, .authorizedAlways: .granted
+        case .denied, .restricted: .denied
+        @unknown default: .denied
+        }
+    }
 
-    public func openSettings() {}
+    public func requestWhenInUse() {
+        manager.requestWhenInUseAuthorization()
+    }
+
+    public func openSettings() {
+        guard let settings = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(settings)
+    }
 
     public func changes() -> AsyncStream<Void> {
-        AsyncStream { $0.finish() }
+        let (changes, continuation) = AsyncStream<Void>.makeStream()
+        let id = UUID()
+        continuations[id] = continuation
+        continuation.onTermination = { [weak self] _ in
+            Task { @MainActor in self?.continuations[id] = nil }
+        }
+        return changes
+    }
+
+    // Also called once when the manager is created; a check then finds nothing new.
+    nonisolated public func locationManagerDidChangeAuthorization(_: CLLocationManager) {
+        MainActor.assumeIsolated {
+            for continuation in continuations.values {
+                continuation.yield()
+            }
+        }
     }
 }

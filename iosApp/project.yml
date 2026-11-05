@@ -47,6 +47,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: LogroBus
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        # FR-LOC-01 (LB-201): why the app asks for location, in Spanish; InfoPlist.xcstrings has it in English too.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "LogroBus usa tu ubicación para mostrarte las paradas cercanas y planificar viajes desde donde estás."
         # NFR-A11Y-01 (WCAG 2.2 SC 1.3.4): never locked to one orientation. Upside down is left out, as on
         # every iPhone app without a home button.
         INFOPLIST_KEY_UISupportedInterfaceOrientations: >-
