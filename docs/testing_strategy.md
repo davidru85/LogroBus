@@ -147,9 +147,9 @@ Two more things the app's tests learned with Settings (LB-403):
   - A window only checks the touch targets of the controls it shows: a test that needs a control's size makes the window tall enough, as the screenshot tests do, or scrolls to it.
 - **iOS: `iosAppUITests/AccessibilityAuditUITests`.**
   - One launch at the default text size and one at the largest walk every screen, the Clear cache alert included, and run XCUITest's `performAccessibilityAudit()` on each. Each issue is reported together with a screenshot of its screen.
-  - **Dark mode:** the default size's launch then turns the device to dark mode, relaunches the app, waits for its screen to be dark, and walks the Lines search, More, Settings, the alert, About data and Near Me again. Each of those audits also checks that its screenshot is mostly dark.
-    - Until PR #50 the app was not relaunched. On CI the running app stayed light, so the dark audits audited light mode without saying so.
-    - The app's own Dark theme, set by a launch argument, would not need the device. The audit then reports the system's search field and alert as failing contrast, although they show white on dark, so the walk uses the device's dark mode.
+  - **Dark mode:** the default size's launch then relaunches the app in its Dark theme, which a launch argument sets over the saved one, and walks the Lines search, More, Settings, the alert, About data and Near Me again. Each of those audits also checks that its screenshot is mostly dark.
+    - Until PR #50 the test turned the device to dark mode with `XCUIDevice`. Under `xcodebuild` on CI the simulator ignores that, as others report of iOS 26.2 and later, so the dark audits audited light mode without saying so. A relaunch did not help.
+    - The theme gives the app's windows the dark interface style that the device's dark mode would. In it, the audit reports the contrast of the system's search field and of the alert's title as failing, although both show white on dark; those two are named false positives, on those screens only.
   - **Contrast only where nothing scrolls beneath the floating bars.** iOS 26's scroll edge effect fades content under the tab bar and the navigation bar, and the audit reads that faded text, sometimes without naming its element. The Lines list is therefore audited for contrast while a search keeps it short, and the full list for everything else. At the largest text every text is large text (3:1), which the default size's 4.5:1 covers. `TokensTests` checks the accent and the secondary text against the system's backgrounds, raised ones and Increase Contrast included.
   - The audit sometimes reads a screen that is still settling, and cannot name an issue's element: it then runs again, up to three times. An issue that still names none is reported.
   - On a busy CI runner, XCTest sometimes gives up on an audit ("Audit failed to complete in time", error -56), on the first screen of a launch: the audit then runs again too, up to three times.
@@ -158,7 +158,8 @@ Two more things the app's tests learned with Settings (LB-403):
     - the system search field's placeholder at the largest text, and its 20 pt Clear text button (Close ends the search);
     - a navigation bar button's Dynamic Type, which the system caps and shows in the Large Content Viewer;
     - the Dynamic Type of Settings' Data heading and footer, which scale with the others;
-    - the system's alert, whose text iOS caps and whose parts the audit cannot name. Its button takes the accent, whose contrast is audited.
+    - the system's alert, whose text iOS caps and whose parts the audit cannot name. Its button takes the accent, whose contrast is audited;
+    - in the dark walk, the contrast of the system's search field and of the Clear cache alert's title, both white on dark.
   - It takes about 3.5 minutes locally and 6 to 7 on CI: the `iOS build and tests` job's limit is 35 minutes (owner decision, 2026-11-04, `ci_cd.md` §5).
 
 ### 4.8 Maestro flows
