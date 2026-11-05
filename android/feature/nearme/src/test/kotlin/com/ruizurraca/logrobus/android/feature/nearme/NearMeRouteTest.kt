@@ -1,0 +1,194 @@
+package com.ruizurraca.logrobus.android.feature.nearme
+
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager.PERMISSION_DENIED
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.core.app.ActivityOptionsCompat
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.dsl.module
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * FR-LOC-01 on Android: Near Me asks for nothing until the user taps "Turn on location", then for foreground location
+ * only, approximate or precise. Once the system no longer asks, the row opens the app's settings.
+ */
+@RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class NearMeRouteTest {
+    @get:Rule
+    val compose = createAndroidComposeRule<ComponentActivity>()
+
+    private val prompts = RecordingRegistry()
+
+    @After
+    fun stopGraph() = stopKoin()
+
+    @Test
+    fun lb201_openingNearMeAsksForNoPermission() {
+        show(Scripted(flowOf(LocationAccess.Off)))
+
+        compose.onNodeWithText(rowText()).assertExists()
+        assertEquals(emptyList<List<String>>(), prompts.requests)
+    }
+
+    @Test
+    fun lb201_theRowAsksForForegroundLocationOnly_approximateOrPrecise() {
+        show(Scripted(flowOf(LocationAccess.Off)))
+
+        compose.onNodeWithText(rowText()).performClick()
+
+        assertEquals(
+            listOf(listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)),
+            prompts.requests,
+        )
+    }
+
+    @Test
+    fun lb201_afterTheSystemsAnswer_accessIsReadAgain() {
+        val observe = Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.On))
+        show(observe)
+
+        compose.onNodeWithText(rowText()).performClick()
+        // The user grants approximate location only.
+        prompts.answer(coarse = true, fine = false)
+
+        compose.onNodeWithText(rowText()).assertDoesNotExist()
+        assertEquals(2, observe.calls)
+    }
+
+    @Test
+    fun lb201_whenTheSystemNoLongerAsks_theRowOpensTheAppsSettings() {
+        // Denied twice before: the system denies at once, and the app may no longer explain.
+        show(Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.Off)))
+
+        compose.onNodeWithText(rowText()).performClick()
+        prompts.answer(coarse = false, fine = false)
+
+        val settings = shadowOf(compose.activity).nextStartedActivity
+        assertEquals(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, settings?.action)
+        assertEquals(Uri.fromParts("package", compose.activity.packageName, null), settings?.data)
+    }
+
+    @Test
+    fun lb201_aFirstDenial_leavesTheRowAskingAgain() {
+        show(Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.Off)))
+
+        compose.onNodeWithText(rowText()).performClick()
+        // After a first denial the app may explain, and the system will ask once more.
+        explains(true)
+        prompts.answer(coarse = false, fine = false)
+
+        assertNull(shadowOf(compose.activity).nextStartedActivity)
+    }
+
+    @Test
+    fun lb201_aSecondDenial_doesNotOpenTheSettingsAtOnce() {
+        show(Scripted(flowOf(LocationAccess.Off), flowOf(LocationAccess.Off)))
+        explains(true)
+
+        compose.onNodeWithText(rowText()).performClick()
+        // The user just said no again: the next tap opens the settings, not this one.
+        explains(false)
+        prompts.answer(coarse = false, fine = false)
+
+        assertNull(shadowOf(compose.activity).nextStartedActivity)
+    }
+
+    private fun show(observe: ObserveLocationAccess) {
+        startKoin { modules(module { factory { observe } }, nearMeUiModule) }
+        val owner =
+            object : ActivityResultRegistryOwner {
+                override val activityResultRegistry: ActivityResultRegistry = prompts
+            }
+        compose.setContent {
+            CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) { NearMeRoute(onOpenMore = {}) }
+        }
+    }
+
+    private fun rowText() = compose.activity.getString(R.string.nearme_nearby_turn_on_location)
+
+    /** Whether Android lets the app explain why it asks for location, as it does after a first denial. */
+    private fun explains(explains: Boolean) {
+        val packageManager = shadowOf(compose.activity.packageManager)
+        packageManager.setShouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION, explains)
+        packageManager.setShouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, explains)
+    }
+
+    /** Stands in for the system's prompt: it records each request, and the test answers it. */
+    private inner class RecordingRegistry : ActivityResultRegistry() {
+        val requests = mutableListOf<List<String>>()
+        private var requestCode = -1
+
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: ActivityOptionsCompat?,
+        ) {
+            this.requestCode = requestCode
+            requests += (input as Array<*>).map { it as String }
+        }
+
+        fun answer(
+            coarse: Boolean,
+            fine: Boolean,
+        ) {
+            val grants =
+                mapOf(
+                    Manifest.permission.ACCESS_COARSE_LOCATION to coarse,
+                    Manifest.permission.ACCESS_FINE_LOCATION to fine,
+                )
+            // As Android does, the answer comes as the intent the contract parses.
+            val result =
+                Intent()
+                    .putExtra(RequestMultiplePermissions.EXTRA_PERMISSIONS, grants.keys.toTypedArray())
+                    .putExtra(
+                        RequestMultiplePermissions.EXTRA_PERMISSION_GRANT_RESULTS,
+                        grants.values.map { if (it) PERMISSION_GRANTED else PERMISSION_DENIED }.toIntArray(),
+                    )
+            compose.runOnUiThread { dispatchResult(requestCode, Activity.RESULT_OK, result) }
+            compose.waitForIdle()
+        }
+    }
+
+    /** Hands out [flows] in order, one per call: a first read, then each check. */
+    private class Scripted(
+        vararg flows: Flow<LocationAccess>,
+    ) : ObserveLocationAccess {
+        private val reads = ArrayDeque(flows.toList())
+        var calls = 0
+            private set
+
+        override fun invoke(): Flow<LocationAccess> {
+            calls++
+            return reads.removeFirst()
+        }
+    }
+}

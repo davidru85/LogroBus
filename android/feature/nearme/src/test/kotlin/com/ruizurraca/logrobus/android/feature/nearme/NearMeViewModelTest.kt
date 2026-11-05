@@ -86,6 +86,23 @@ class NearMeViewModelTest {
         }
 
     @Test
+    fun lb201_untilAccessIsKnown_aCheckWaitsForTheReadUnderWay() =
+        runTest {
+            val access = MutableSharedFlow<LocationAccess>()
+            val observe = Scripted(access, flowOf(LocationAccess.Off))
+            val viewModel = NearMeViewModel(observe)
+
+            viewModel.state.test {
+                assertEquals(NearMeUiState(NearYouUi.Unknown), awaitItem())
+
+                // The screen resumes as it opens, while the first read is under way.
+                viewModel.onEvent(NearMeEvent.PermissionMayHaveChanged)
+
+                assertEquals(1, observe.calls)
+            }
+        }
+
+    @Test
     fun lb201_leavingNearMeStopsTheLocationUpdates_fiveSecondsLater() =
         runTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))

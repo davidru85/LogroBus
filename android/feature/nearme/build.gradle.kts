@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
+    // The permission prompt, through the Activity Result API (FR-LOC-01).
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel)
     // koinViewModel() and the ViewModel DSL (ADR-0014). The module it exposes is a Koin type.
