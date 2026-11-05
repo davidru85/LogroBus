@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft; store declarations are prepared as the final MVP step (LB-414) |
-| Last updated | 2026-11-03 |
+| Last updated | 2026-11-05 |
 | Based on | Spec NFR-SEC-01 to 05, NFR-PRIV-01 to 05 |
 
 LogroBus has no accounts, no project-owned servers and no advertising. This document records what data the app handles, which permissions it uses, the security controls, and the draft store declarations. **It is not legal advice; the owner validates the privacy policy and the store answers before release.**
@@ -22,7 +22,7 @@ LogroBus has no accounts, no project-owned servers and no advertising. This docu
 | Precise or approximate location | OS, when the user is on Near Me or plans from "My location": Google Play services' Fused Location Provider on Android, Core Location on iOS | Memory only | Yes, as coordinates in API-07 and API-08 requests | Logroño transport BFF | Nearby stops, walking distances, trip planning |
 | Coordinates of map points and saved places used in a plan | User | Saved places: on-device database | Yes, in API-07 requests | Logroño transport BFF | Trip planning |
 | Address search text | User | No | Yes, in geocoder requests | CartoCiudad (IGN) | Address suggestions |
-| Favourites, saved places, recent searches, settings | User | On-device database and settings. The settings (LB-403) are the theme and the ETA format, as enum names, in a DataStore file on Android and the app's user defaults on iOS (ADR-0018); the app's language is kept by the OS (ADR-0020). "Clear cache" empties only the app's cache directories | Only through the user's own OS backup (Android Auto Backup, iCloud) | The user's Google or Apple account | Persistence (FR-FAV-03) |
+| Favourites, saved places, recent searches, settings | User | On-device database and settings. The settings (LB-403) are the theme and the ETA format, as enum names, in a DataStore file on Android and the app's user defaults on iOS (ADR-0018); the app's language is kept by the OS on iOS and from Android 13, and by AppCompat in a file of the app's below Android 13 (ADR-0020). "Clear cache" empties only the app's cache directories | Only through the user's own OS backup (Android Auto Backup and transfers to a new device, iCloud and device backups). Android's backup rules keep only the database, the settings file and, below Android 13, AppCompat's language file; the database also caches the public lines and stops (LB-407) | The user's Google or Apple account | Persistence (FR-FAV-03) |
 | IP address and `User-Agent` | Inherent to HTTPS | No | Yes | BFF, CartoCiudad, map tile provider | Network transport |
 | Analytics events and crash reports | Telemetry contracts (ADR-0009, LB-017): typed events and breadcrumbs with ids, counts, flags and enums only (a Konsist rule), consent-gated per kind and opt-in; crash reports carry error types and stacks, never messages (`RedactedThrowable`); no-op in release builds and console logging in debug builds until the vendor is chosen. The vendor SDKs must ship with automatic collection off and tied to consent (LB-409). `StopView` and `LineView`, with a vendor's install id and timestamps, could hint at someone's usual stops: the privacy declarations (LB-414) must cover them | none | Only with consent, once a vendor is active (likely Firebase Analytics and Crashlytics, OQ-16) | Vendor to be confirmed | Stability and product metrics |
 
@@ -50,6 +50,7 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 | Secrets | None in the binary or the repository. `scripts/checks/check-secrets.sh` runs in the pre-commit hook. Signing material lives outside the repository (`release_process.md` §3) | NFR-SEC-04 |
 | Dependencies | Dependabot alerts (enabled 2026-10-24) and update PRs. The `Dependency review` CI job fails a pull request that adds a dependency with a known critical vulnerability (`ci_cd.md` §6). Together, the review and the alerts are the NFR-SEC-05 equivalent of OWASP Dependency-Check, which is not used (owner decision, 2026-10-25). Licence allow-list (`engineering_workflow.md` §9) | NFR-SEC-05 |
 | Logging | No coordinates, no search text and no personal data in logs. Release builds log only errors: the app shell passes its build type to the shared graph (LB-010) | NFR-PRIV-02 |
+| Backups | Only the user's own data goes into the OS backups (LB-407, `architecture.md` §4.3): on Android, rules that include the database, the settings file and, below Android 13, AppCompat's language file, and nothing else; on iOS, Application Support and the user defaults. Android's cloud backup does not require client-side encryption (`disableIfNoEncryptionCapabilities` is not set): on a device without a screen lock, Google encrypts the backup on its servers but not end to end, and it would then hold the saved places' coordinates once the planner saves them (LB-311). Requiring it would leave a user without a lock with no backup at all, so a new phone would lose their favourites. For the owner to confirm before the store declarations (LB-414) | FR-FAV-03, NFR-PRIV |
 | AI agents | Agents run with project permission rules that deny reading signing material and secrets (`agent_harness.md` §4). No production credentials exist in developer environments | none |
 
 ### 4.1 Threats considered
@@ -60,7 +61,7 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 | Tampered or malformed source data | Per-item validation; atomic sync with sanity thresholds; previous dataset kept |
 | Crafted deep links | Strict parsing and range checks |
 | Network interception | HTTPS with platform trust; no cleartext |
-| Device theft | No sensitive data stored; OS sandbox; backups contain only favourites and settings |
+| Device theft | No sensitive data stored; OS sandbox; backups contain only the database (favourites, places, recents and the public lines and stops it caches) and the settings, the language included |
 | Source outage or blocking | Error states with Retry and a cached static dataset in the MVP; full offline mode in v1.0 (ADR-0008); identifying `User-Agent`; optional proxy (spec §8.10) |
 | Supply-chain compromise | Pinned versions; Dependabot; reviewed upgrades; small dependency set |
 

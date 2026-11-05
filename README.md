@@ -62,7 +62,7 @@ After cloning, run `scripts/bootstrap.sh` once: it installs the git hooks and re
 
 The shared modules already build: `./gradlew ciUnitTest` runs the unit tests and the architecture rules. If `ANDROID_HOME` is not set, create a `local.properties` file with `sdk.dir=<path to your Android SDK>`; Git ignores it.
 
-To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. It opens on the Lines list. Until the app can download the real lines, debug builds show sample lines with made-up names and colours. The favourite lines you mark are kept on the device.
+To run the Android app, start an emulator or connect a phone (Android 8.0 or later), then run `./gradlew :android:app:installDebug`. It opens on the Lines list. Until the app can download the real lines, debug builds show sample lines with made-up names and colours. The favourite lines you mark are kept on the device, and in its backup.
 
 To run the iOS app on macOS, run `scripts/ios/generate-project.sh` (it is also run by `scripts/bootstrap.sh`, and must be rerun after Kotlin changes). The script builds the shared framework and generates `iosApp/iosApp.xcodeproj`; open that project in Xcode and run the `iosApp` scheme on an iPhone simulator.
 
@@ -101,6 +101,11 @@ You will need:
 
 ### Recent changes
 
+- **2026-11-05:**
+  - LB-407, part 1: your favourites and settings are in the phone's backup, so a new phone gets them back.
+    - Android: Auto Backup to your Google account and a transfer to a new phone keep the app's database (favourite lines, and later saved stops and places) and its settings, and nothing else. A cache can never fill the space Android gives each app's backup.
+    - iPhone: iCloud and computer backups already kept both; a test now makes sure they stay where backups reach.
+    - Marking a saved stop that leaves the network as no longer served comes with the saved stops.
 - **2026-11-04:**
   - LB-406, part 1: accessibility checks on every screen.
     - Android: every screenshot test also checks its screen as TalkBack meets it. Every control has a label and a touch area of at least 48 dp, and no text is cut short, at 200 % font size too.

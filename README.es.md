@@ -62,7 +62,7 @@ Después de clonar el repositorio, ejecuta una vez `scripts/bootstrap.sh`: insta
 
 Los módulos compartidos ya compilan: `./gradlew ciUnitTest` ejecuta los tests unitarios y las reglas de arquitectura. Si `ANDROID_HOME` no está definido, crea un archivo `local.properties` con `sdk.dir=<ruta a tu Android SDK>`; Git lo ignora.
 
-Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. Se abre en la lista de Líneas. Hasta que la app pueda descargar las líneas reales, las builds debug muestran líneas de ejemplo con nombres y colores inventados. Las líneas que marques como favoritas se guardan en el dispositivo.
+Para ejecutar la app de Android, arranca un emulador o conecta un móvil (Android 8.0 o posterior) y ejecuta `./gradlew :android:app:installDebug`. Se abre en la lista de Líneas. Hasta que la app pueda descargar las líneas reales, las builds debug muestran líneas de ejemplo con nombres y colores inventados. Las líneas que marques como favoritas se guardan en el dispositivo y en su copia de seguridad.
 
 Para ejecutar la app de iOS en macOS, ejecuta `scripts/ios/generate-project.sh` (también lo ejecuta `scripts/bootstrap.sh`, y hay que repetirlo tras cambiar código Kotlin). El script compila el framework compartido y genera `iosApp/iosApp.xcodeproj`; abre ese proyecto en Xcode y ejecuta el esquema `iosApp` en un simulador de iPhone.
 
@@ -103,6 +103,11 @@ La documentación técnica está en inglés.
 
 ### Cambios recientes
 
+- **05-11-2026:**
+  - LB-407, parte 1: tus favoritas y tus ajustes van en la copia de seguridad del móvil, así que un móvil nuevo los recupera.
+    - Android: la copia automática en tu cuenta de Google y la transferencia a un móvil nuevo guardan la base de datos de la app (las líneas favoritas, y más adelante las paradas y los lugares guardados) y sus ajustes, y nada más. Una caché nunca puede llenar el espacio que Android da a la copia de cada app.
+    - iPhone: las copias de iCloud y del ordenador ya guardaban ambos; ahora un test se asegura de que sigan donde llegan las copias.
+    - Marcar como sin servicio una parada guardada que sale de la red llega con las paradas guardadas.
 - **04-11-2026:**
   - LB-406, parte 1: comprobaciones de accesibilidad en todas las pantallas.
     - Android: cada test de capturas comprueba también su pantalla tal como la recorre TalkBack. Cada control tiene etiqueta y una zona táctil de al menos 48 dp, y ningún texto queda cortado, tampoco con la letra al 200 %.
