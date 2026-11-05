@@ -61,7 +61,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 
 | Id | Story | Refs | Priority | Status |
 | --- | --- | --- | --- | --- |
-| LB-201 | Just-in-time foreground location permission; `LocationProvider` on both platforms; updates stop when no visible screen needs them. `LocationProvider` and its platform implementations landed in LB-004. Left: the permission flow, the manifest permissions and the iOS purpose string (`NSLocationWhenInUseUsageDescription`, which App Store Connect requires once the app's binary uses Core Location), and stopping updates with the screens | FR-LOC-01 to 03, FR-NEAR-06 | P0 | todo |
+| LB-201 | Just-in-time foreground location permission; `LocationProvider` on both platforms; updates stop when no visible screen needs them. `LocationProvider` and its platform implementations landed in LB-004. Left: the permission flow, the manifest permissions and the iOS purpose string (`NSLocationWhenInUseUsageDescription`, which App Store Connect requires once the app's binary uses Core Location), and stopping updates with the screens | FR-LOC-01 to 03, FR-NEAR-06 | P0 | in-progress |
 | LB-202 | Near Me map: user location, initial camera rules, stop pins with clustering, selected-stop styling | FR-NEAR-01, FR-NEAR-08, FR-STOP-10, spec §7.4 | P0 | todo |
 | LB-203 | Persistent bottom sheet with detents; "Near you" list of the 5 closest stops within 800 m, sorted by walking distance (API-08, at most 40 candidates) | FR-NEAR-02, FR-NEAR-03, FR-HOME-03, FR-STOP-11, NFR-A11Y-04 | P0 | todo |
 | LB-204 | "My stops" section: saved stops with their next 3 arrivals; empty state with "Find a stop" | FR-NEAR-03, FR-HOME-02, FR-HOME-07 (adapted) | P0 | todo |
