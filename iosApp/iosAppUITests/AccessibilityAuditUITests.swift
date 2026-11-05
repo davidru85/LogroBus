@@ -217,7 +217,8 @@ private struct Audit {
 
     /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
     /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
-    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none.
+    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none. It also runs
+    /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`).
     ///
     /// A screen meant to be dark that is not is an issue too: on CI the simulator kept light mode, and the dark audits
     /// audited light mode again without saying so (PR #50).
@@ -236,12 +237,17 @@ private struct Audit {
             found = []
             var unnamed = false
             let barButtons = app.navigationBars.buttons.allElementsBoundByIndex.map(\.frame)
-            try app.performAccessibilityAudit(for: types) { issue in
-                if isFalsePositive(issue, on: screen, barButtons: barButtons) { return true }
-                unnamed = unnamed || issue.element == nil
-                let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
-                found.append("\(screen): \(issue.compactDescription), \(element): \(issue.detailedDescription)")
-                return true
+            do {
+                try app.performAccessibilityAudit(for: types) { issue in
+                    if isFalsePositive(issue, on: screen, barButtons: barButtons) { return true }
+                    unnamed = unnamed || issue.element == nil
+                    let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
+                    let kind = issue.compactDescription
+                    found.append("\(screen): \(kind), \(element): \(issue.detailedDescription)")
+                    return true
+                }
+            } catch let error as NSError where Self.gaveUp(error) && attempt < 3 {
+                continue
             }
             if !unnamed || attempt == 3 { break }
             Thread.sleep(forTimeInterval: 1)
@@ -284,6 +290,13 @@ private struct Audit {
         default:
             return false
         }
+    }
+
+    /// Whether XCTest gave up on an audit: "Audit failed to complete in time", after about 16 s on one screen. It did
+    /// on CI, once on `main` and once in PR #50, each time on a launch's first screen, Lines, which other runs audit
+    /// in a few seconds.
+    private static func gaveUp(_ error: NSError) -> Bool {
+        error.domain == "com.apple.xcode.xctest.accessibilityAudit" && error.code == -56
     }
 
     /// Whether `image` is mostly dark: the mean luminance of a 32 × 32 reduction of it is under one half. A screen in
