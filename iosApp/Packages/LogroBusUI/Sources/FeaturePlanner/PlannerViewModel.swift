@@ -21,6 +21,8 @@ public final class PlannerViewModel {
         case .shown:
             // It reads the permission only: nothing asks for it here, and no location updates start.
             state = PlannerUiMapper.shared.state(origin: useCases.readInitialOrigin().invoke())
+        case .swap:
+            break
         }
     }
 }

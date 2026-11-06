@@ -82,6 +82,22 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
+    func test_lb304_howToGetThereOffersTheSwapButton_besideItsFields() {
+        // FR-PLAN-08, in the app: the button is there, spoken by what it does, and one tap on it leaves both fields.
+        XCUIApplication().resetAuthorizationStatus(for: .location)
+        let app = launch()
+        app.tabBars.buttons["Directions"].tap()
+
+        let swap = app.buttons["Swap origin and destination"]
+        XCTAssertTrue(swap.waitForExistence(timeout: 5))
+        XCTAssertTrue(swap.isHittable)
+        swap.tap()
+
+        XCTAssertTrue(field("Origin", showing: "Where from?", in: app).exists)
+        XCTAssertTrue(field("Destination", showing: "Where to?", in: app).exists)
+    }
+
+    @MainActor
     func test_lb012_aTabKeepsItsScreen_andReselectingItPopsToItsRoot() {
         let app = launch()
         app.navigationBars["Lines"].buttons["More"].tap()
