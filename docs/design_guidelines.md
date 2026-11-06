@@ -242,6 +242,11 @@ Results                                   Itinerary detail
   - Android: an icon button (Material Symbols `swap_vert`) beside the card, centred on it, its icon on the screen margin. iOS: a borderless button (SF Symbol `arrow.up.arrow.down`) at the trailing end of the section, whose one row holds both fields and the line between them. At least 48 dp or 44 pt to touch.
   - A screen reader reads the origin, the destination, then the button, "Intercambiar origen y destino" ("Swap origin and destination"): on Android the card is a traversal group, on iOS the fields come first by sort priority.
   - The root showing again never undoes a swap: "My location" fills an empty origin only while the destination does not hold it, and leaves either field without the permission (FR-PLAN-11).
+- **The departure (LB-303, FR-PLAN-03):** "Leave now" or a picked date and time, under the fields.
+  - **What it says:** "Salir ahora" ("Leave now"), or the picked time, HH:mm on the Madrid clock as the ETAs' clock times: "Salir a las 08:19" ("Depart at 08:19") today, "Salir mañana a las 08:19" ("Depart tomorrow at 08:19"), or "Salir el 15 ene a las 08:19" ("Depart on 15 Jan at 08:19") on another day, with the locale's day and month. The hour picks Spanish's article, "a la 01:05".
+  - **Android:** an assist chip under the card, within the screen's margins, with a trailing drop-down arrow (Material Symbols `arrow_drop_down`, decoration). It opens a menu: "Salir ahora" and "Salir a las…" ("Depart at…"). The second opens Material's date picker, then its time picker, each with "Aceptar" and "Cancelar" ("OK", "Cancel"). The time picker follows the device's 12/24-hour setting, and offers typing, or only typing where the clock face has no room.
+  - **iOS:** a section of its own under the fields' section, one row: the text in the tint, with the system's menu chevrons (`chevron.up.chevron.down`, decoration). The row is a `Menu` with the same two items. "Salir a las…" opens a sheet, "Hora de salida" ("Departure time"), with the system's graphical date and time picker, "Cancelar" and "Aceptar" ("Cancel", "Done").
+  - **Both:** the pickers open at the picked time, or at now for "Leave now", on the Madrid clock whatever the device's zone. No day before today can be picked; any time can. Cancel, back, a tap outside or a swipe down keeps the departure. A picked time stays until the user changes it: the root showing again keeps it, and so does the time passing.
 - Place search is one list, in this order: saved places, then stops, then addresses (CartoCiudad, at least 3 characters, debounced 300 ms, at most 8 results).
 - A results card shows the departure and arrival times, total duration, line badges in leg order with walk segments between them, and the total walking distance. Cards are sorted by arrival time (FR-PLAN-04).
 - Itinerary detail is a map with a step list. Steps with intermediate stops expand. Planned times are shown alongside the live ETA of the first bus leg when it departs within 60 min.
@@ -488,6 +493,11 @@ Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessi
 | `plan.origin.hint` (the empty origin, LB-301) | ¿Desde dónde? | Where from? |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
 | `plan.swap` (spoken: the swap button, LB-304) | Intercambiar origen y destino | Swap origin and destination |
+| `plan.leave_now` (the departure, and its menu's first item, LB-303) | Salir ahora | Leave now |
+| `plan.depart_at_choose` (the menu's item that opens the pickers) | Salir a las… | Depart at… |
+| `plan.depart_today`, `plan.depart_tomorrow`, `plan.depart_on` (a picked time; plurals on the hour for "a la" or "a las"; iOS keys take `%lld %@`) | Salir a las 08:19, Salir mañana a las 08:19, Salir el 15 ene a las 08:19 | Depart at 08:19, Depart tomorrow at 08:19, Depart on 15 Jan at 08:19 |
+| `plan.departure_time` (iOS: the picker sheet's title) | Hora de salida | Departure time |
+| `plan.departure_ok`, `plan.departure_cancel` (Android's pickers; iOS `plan.departure_done`, "Done") | Aceptar, Cancelar | OK, Cancel |
 | `plan.origin`, `plan.destination` (spoken, iOS: each field's name, before its value; Android `plan.origin_spoken`, `plan.destination_spoken`, "Origen, %s") | Origen, Destino | Origin, Destination |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
 | `line.badge` (spoken) | Línea %s | Line %s |

@@ -104,6 +104,11 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **06-11-2026:**
+  - LB-303: elige cuándo empieza tu viaje, ahora o en una fecha y hora.
+    - Bajo los dos campos, «Salir ahora» abre un menú: «Salir ahora», o «Salir a las…», que abre los selectores de fecha y hora del propio móvil. El viaje muestra entonces cuándo sale: «Salir a las 08:19», «Salir mañana a las 08:19» o «Salir el 15 ene a las 08:19».
+    - Las horas son las de Logroño, sea cual sea la zona horaria del móvil, y se tienen en cuenta los días de cambio de hora. No se pueden elegir días pasados.
+    - Una hora elegida se mantiene hasta que la cambias, también al volver a la pestaña.
+    - Las rutas se planificarán para esa hora cuando lleguen (LB-306).
   - LB-304: un toque intercambia dónde empieza y dónde acaba tu viaje.
     - El botón junto a los dos campos los intercambia, «Mi ubicación» incluida, que entonces puede ser donde acaba el viaje. Un segundo toque los devuelve a su sitio.
     - Volver a la pestaña mantiene el intercambio. «Mi ubicación» rellena un origen vacío solo si el viaje no acaba ya ahí, y sale de cualquiera de los campos si la app ya no puede usar tu ubicación.

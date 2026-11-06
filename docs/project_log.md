@@ -19,6 +19,46 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-06: LB-303, Leave now or Depart at
+
+**Done**
+- **PR #52 (LB-304) merged** on 2026-11-06, and `main` was synced.
+- **LB-303 (`feat/LB-303-departure-time`):** FR-PLAN-03, "Leave now" or "Depart at" a date and time.
+  - **Shared (`:shared:feature:planner`):**
+    - `PlanDeparture` is `Now` or `At(instant)`. `departureAt(now)` is what API-07 will send: the app clock's now for "Leave now", the picked moment for "Depart at". `atMadrid()` reads a picked date and time on the Madrid clock, whatever the device's zone; kotlinx-datetime moves a time in the hour skipped on the last Sunday of March on by that hour, and takes the first of the hour repeated on the last Sunday of October.
+    - `PlannerUiState` gains `DepartureUi` (`Now`, or `At` with its `DepartureDay` on the Madrid calendar: today, tomorrow or another day) and `DeparturePickerUi` (where the pickers open, and now, before whose day no date can be picked), while the pickers are open.
+    - `PlannerEvent` gains `LeaveNow`, `ChooseDepartureTime`, `CancelDepartureTime` and `DepartAt` (Madrid wall-clock fields).
+    - `PlannerUiMapper.state(places, departure, picking, now)`.
+  - **Umbrella:** `PlannerUseCases.clock()` hands Swift the app clock. `PreviewUseCases`' stands at the sample sync, 10:30 on 28 Oct 2026 in Madrid, and its initial origin still comes from `PreviewLocation`.
+  - **Android:** `PlannerViewModel` takes `AppClock` from Koin and keeps the departure and whether the pickers are open. Under the card, an assist chip says the departure and opens a menu, "Salir ahora" or "Salir a las…", whose second item opens Material's date picker (`DaysFrom`: no day before today), then its time picker (the device's 12/24-hour setting, typing where the clock face has no room).
+  - **iOS:** `PlannerViewModel` does the same on `useCases.clock()`. A section of its own holds a `Menu` row with the same items; the picker is a sheet with the system's graphical `DatePicker`, which shows and reads the Madrid clock through `Calendar.madrid`.
+  - **Strings:** `plan_leave_now`, `plan_depart_at_choose`, the plurals `plan_depart_today`, `plan_depart_tomorrow` and `plan_depart_on` (the hour picks "a la" or "a las"), and the pickers' buttons, in Spanish and English on both platforms.
+  - **Tests:** `PlanDepartureTest` and `PlannerDepartureUiTest` (shared); both ViewModels' `lb303_` tests; Android's `PlannerDepartureTest`, `PlannerRouteTest` and screenshots; iOS's end-to-end `ShellUITests.test_lb303_…` and snapshots. The other states' screenshots and snapshots show the new row.
+  - **Docs:** the acceptance criteria record the evidence and two decided behaviours, and LB-306's criteria now send `departureAt`. `design_guidelines.md` §3.3 and §9, `architecture.md`, `AGENTS.md`'s status and both READMEs are updated.
+
+**Decisions**
+- **Agent:**
+  - **LB-303 is done without its request part, for the owner to confirm.** There is no plan request until LB-306, whose criteria now send `departureAt` from `PlanDeparture.departureAt(now)`, in UTC with milliseconds as API-07's example. The value itself is tested here.
+  - **The pickers:** Android's chip follows the sketch in §3.3, with Material's dialogs; iOS keeps the inset grouped list, so the departure is a menu row in a section of its own, and the picker the system's graphical one in a sheet. The pickers open at the picked time, or at now.
+  - **No day before today; any time.** Material's time picker cannot be limited, so neither platform limits the time: a time earlier today is allowed, and the planner (LB-306) will plan it. No limit ahead either: a date beyond the timetables gets LB-307's no-route message.
+  - **A picked time stays** until the user changes it: the root showing again keeps it, and so does the time passing. A time whose day has gone by shows its date, and the pickers open at today.
+  - **The text:** HH:mm on the Madrid clock, as the ETAs' clock times, with "mañana" or the date; the hour picks Spanish's article, as `eta_clock_spoken` does.
+  - **No compile gap this time:** the mapper's new state lived beside the old one until both ViewModels moved, and the new events came with both ViewModels' red commit.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** the owner's choice. How to Get There's next P0 stories need the source's DTOs (LB-005 part 2, after LB-003's fixtures, which only the owner may have recorded) or place search (LB-302, which needs CartoCiudad's fixtures), and most others need OQ-10 or OQ-11.
+- **With the owner:** confirming that LB-303 closes with its request part in LB-306, as LB-304's results part; the TalkBack and VoiceOver passes on a device, for LB-301 part 1, LB-304 and LB-303 (the chip and the row, Material's and the system's pickers).
+- **Waiting for the owner:**
+  - the iOS job limit;
+  - Android's end-to-end encrypted backups;
+  - DD-10 provisional stops;
+  - alert 6 (Kotlin Gradle plugin);
+  - the Gradle cache provider;
+  - OQ-10 and OQ-11.
+
+---
+
 ## 2026-11-06: LB-304, swap origin and destination
 
 **Done**
