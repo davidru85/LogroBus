@@ -230,7 +230,7 @@ private struct Audit {
     /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
     /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
     /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none. It also runs
-    /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`).
+    /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`), after a pause.
     ///
     /// A screen meant to be dark that is not is an issue too: on CI the app kept light mode when the device was asked
     /// for dark, and the dark audits audited light mode again without saying so (PR #50).
@@ -258,6 +258,7 @@ private struct Audit {
                     return true
                 }
             } catch let error as NSError where Self.gaveUp(error) && attempt < 3 {
+                Thread.sleep(forTimeInterval: Self.pauseAfterGivingUp * Double(attempt))
                 continue
             }
             if !unnamed || attempt == 3 { break }
@@ -309,9 +310,14 @@ private struct Audit {
         }
     }
 
+    /// How long the audit waits before it runs again after XCTest gave up on it, times the attempt: 5 s, then 10 s.
+    /// Run again at once, in PR #51, it gave up three times on Lines, each attempt slower than the one before (6, 15
+    /// and 34 s), as if each new audit waited behind the one abandoned.
+    private static let pauseAfterGivingUp: TimeInterval = 5
+
     /// Whether XCTest gave up on an audit: "Audit failed to complete in time", after about 16 s on one screen. It did
-    /// on CI, once on `main` and once in PR #50, each time on a launch's first screen, Lines, which other runs audit
-    /// in a few seconds.
+    /// on CI, on `main` and in PRs #50 and #51, each time on a launch's first screen, Lines, which other runs audit in
+    /// a few seconds.
     private static func gaveUp(_ error: NSError) -> Bool {
         error.domain == "com.apple.xcode.xctest.accessibilityAudit" && error.code == -56
     }

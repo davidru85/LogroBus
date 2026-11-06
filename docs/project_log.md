@@ -65,6 +65,11 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - `security_privacy.md`, which now says How to Get There reads the permission only.
   - The general review also found a blocker: `SharedDependencies` had 12 functions, over detekt's `TooManyFunctions` limit of 11, which fails `./gradlew check`. Its use cases now come from one object per feature, by delegation, as `PreviewUseCases` already does; the limit stays.
 
+**CI**
+- **The first run of PR #51 (42141341518) failed** on the runner flake of PR #50: XCTest gave up on the largest text's audit of Lines, the launch's first screen ("Audit failed to complete in time", error -56). Every other job passed, the default size's and the dark audits included.
+- **The retry added in PR #50 ran, and gave up too.** The audit gave up three times in a row, each attempt slower than the one before (6, 15 and 34 s), as if each new audit waited behind the one abandoned.
+- **The fix:** after XCTest gives up, the audit waits before it runs again, 5 s and then 10 s. It still runs at most three times, and a third give-up still fails the test. The error cannot be provoked locally, so the fix is checked by the next CI runs; locally the audits still pass.
+
 **Decisions**
 - **The fields open nothing in part 1 (owner decision, 2026-11-06).** So they are plain elements, not buttons: a field that announced a button role but did nothing would mislead. They become buttons with place search, in part 2.
 - **Copy:**
