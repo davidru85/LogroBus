@@ -28,6 +28,7 @@ class IosGraphTest {
         SharedDependencies.setEtaFormat()
         SharedDependencies.clearCache()
         SharedDependencies.observeLocationAccess()
+        SharedDependencies.readInitialOrigin()
     }
 
     @Test

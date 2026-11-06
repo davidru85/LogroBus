@@ -49,7 +49,8 @@ class PreviewUseCases internal constructor(
     internal val locationPreview: PreviewLocation = PreviewLocation(collections),
 ) : UseCases,
     SettingsUseCases by settingsPreview,
-    NearMeUseCases by locationPreview {
+    NearMeUseCases by locationPreview,
+    PlannerUseCases by locationPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })

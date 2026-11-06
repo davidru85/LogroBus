@@ -15,6 +15,7 @@ import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
 import com.ruizurraca.logrobus.core.telemetry.ConsentStore
 import com.ruizurraca.logrobus.core.telemetry.CrashReporter
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
@@ -49,6 +50,8 @@ internal fun assertResolvesTheCore(koin: Koin) {
         ClearCache::class,
         // Near Me (LB-201): location access, which Android's ViewModel takes from Koin.
         ObserveLocationAccess::class,
+        // How to Get There (LB-301): the initial origin, which Android's ViewModel takes from Koin.
+        ReadInitialOrigin::class,
     ).forEach { koin.get<Any>(it) }
     // One clock for the whole app: the source client corrects it, and the polling engine and screens read it.
     assertSame(koin.get<ServerCorrectedClock>(), koin.get<AppClock>())

@@ -5,6 +5,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
@@ -28,13 +29,19 @@ interface NearMeUseCases {
     fun observeLocationAccess(): ObserveLocationAccess
 }
 
+/** How to Get There's own use cases for Swift (LB-301): the origin a new plan starts from. */
+interface PlannerUseCases {
+    fun readInitialOrigin(): ReadInitialOrigin
+}
+
 /**
  * The use cases a Swift ViewModel can ask for (architecture.md §5.2), grouped by feature as they grow.
  * [SharedDependencies] resolves them from the graph; [SharedDependencies.preview] scripts them for previews and tests.
  */
 interface UseCases :
     SettingsUseCases,
-    NearMeUseCases {
+    NearMeUseCases,
+    PlannerUseCases {
     fun observeLastSyncs(): ObserveLastSyncs
 
     fun observeLinesWithFavourites(): ObserveLinesWithFavourites
@@ -66,6 +73,8 @@ object SharedDependencies : UseCases {
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
 
     override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
+
+    override fun readInitialOrigin(): ReadInitialOrigin = graph().get()
 
     override fun observePreferences(): ObservePreferences = graph().get()
 

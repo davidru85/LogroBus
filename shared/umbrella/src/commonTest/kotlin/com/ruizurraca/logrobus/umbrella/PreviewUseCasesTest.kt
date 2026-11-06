@@ -10,6 +10,7 @@ import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
+import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.time.Instant
 
 /** architecture.md §5.2: SharedDependencies.preview() scripts the use cases for SwiftUI previews and Swift tests. */
@@ -376,6 +378,20 @@ class PreviewUseCasesTest {
             }
             assertEquals(0, preview.activeCollections)
         }
+
+    @Test
+    fun lb301_thePreviewsInitialOriginFollowsTheScriptedLocation() {
+        // One script for both tabs: location turned on in Near Me is How to Get There's origin too.
+        val preview = SharedDependencies.preview()
+        val readInitialOrigin = preview.readInitialOrigin()
+        assertNull(readInitialOrigin())
+
+        preview.locationOn()
+        assertEquals(PlanPlace.MyLocation, readInitialOrigin())
+
+        preview.locationOff()
+        assertNull(readInitialOrigin())
+    }
 
     /** The lines alone, as the Lines tab reads them. */
     private fun PreviewUseCases.lines(): Flow<AppResult<List<Line>>> =

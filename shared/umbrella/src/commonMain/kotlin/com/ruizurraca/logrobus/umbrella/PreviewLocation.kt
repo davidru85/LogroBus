@@ -5,6 +5,7 @@ import com.ruizurraca.logrobus.core.location.LocationPermission
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -18,7 +19,8 @@ import kotlinx.coroutines.flow.update
  */
 internal class PreviewLocation(
     private val collections: MutableStateFlow<Int>,
-) : NearMeUseCases {
+) : NearMeUseCases,
+    PlannerUseCases {
     private val permission = MutableStateFlow(LocationPermission.NotGranted)
 
     // Counted, so that updates running when location is turned off end even if it is turned on again at once.
@@ -46,4 +48,7 @@ internal class PreviewLocation(
         }
 
     override fun observeLocationAccess(): ObserveLocationAccess = DefaultObserveLocationAccess(provider)
+
+    // Stubbed until the green phase.
+    override fun readInitialOrigin(): ReadInitialOrigin = ReadInitialOrigin { null }
 }
