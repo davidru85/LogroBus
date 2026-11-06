@@ -48,7 +48,7 @@ class PreviewUseCases internal constructor(
     internal val settingsPreview: PreviewSettings = PreviewSettings(),
     private val collections: MutableStateFlow<Int> = MutableStateFlow(0),
     internal val locationPreview: PreviewLocation = PreviewLocation(collections),
-    plannerPreview: PreviewPlanner = PreviewPlanner(locationPreview, now = SAMPLE_SYNC),
+    internal val plannerPreview: PreviewPlanner = PreviewPlanner(locationPreview, now = SAMPLE_SYNC),
 ) : UseCases,
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
@@ -212,6 +212,12 @@ fun PreviewUseCases.locationOn(): PreviewUseCases = apply { locationPreview.turn
 
 /** Scripts location turned off (LB-201), as a revoked permission would: the running updates end. */
 fun PreviewUseCases.locationOff(): PreviewUseCases = apply { locationPreview.turnOff() }
+
+/**
+ * Scripts [minutes] passing on the clock (LB-303), past midnight say, so a test sees what a screen kept on view makes
+ * of it. An extension, so Swift chains it like the other scripts: `preview().timePasses(minutes: 1440)`.
+ */
+fun PreviewUseCases.timePasses(minutes: Int): PreviewUseCases = apply { plannerPreview.timePasses(minutes) }
 
 /** Counts the collections of this flow that are running in [collections]. */
 internal fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =

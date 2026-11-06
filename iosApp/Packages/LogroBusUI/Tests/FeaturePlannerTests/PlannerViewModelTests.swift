@@ -1,4 +1,5 @@
 @testable import FeaturePlanner
+import Observation
 import Shared
 import Testing
 
@@ -142,5 +143,23 @@ struct PlannerViewModelTests {
         viewModel.onEvent(PlannerEventShown.shared)
 
         #expect(viewModel.state.departure as? DepartureUiAt == eightNineteenToday)
+    }
+
+    @Test
+    func lb303_theRootShowingAgain_countsTheDepartureDayAgain_andTellsTheView() {
+        // Kept on view past midnight: "tomorrow" is today when the root shows again, and the view redraws.
+        let useCases = SharedDependencies.shared.preview()
+        let viewModel = PlannerViewModel(useCases: useCases)
+        viewModel.onEvent(PlannerEventShown.shared)
+        viewModel.onEvent(PlannerEventDepartAt(year: 2026, month: 10, day: 29, hour: 8, minute: 19))
+        #expect((viewModel.state.departure as? DepartureUiAt)?.relativeDay == .tomorrow)
+        nonisolated(unsafe) var told = false
+        withObservationTracking { _ = viewModel.state } onChange: { told = true }
+
+        useCases.timePasses(minutes: 24 * 60)
+        viewModel.onEvent(PlannerEventShown.shared)
+
+        #expect(told)
+        #expect((viewModel.state.departure as? DepartureUiAt)?.relativeDay == .today)
     }
 }

@@ -158,4 +158,18 @@ class PlannerViewModelTest {
 
         assertEquals(eightNineteenToday, viewModel.state.value.departure)
     }
+
+    @Test
+    fun lb303_theRootShowingAgain_countsTheDepartureDayAgain() {
+        // Kept on view past midnight: "tomorrow" is today when the root shows again.
+        var now = Instant.parse("2026-10-22T05:00:00Z")
+        val viewModel = PlannerViewModel({ PlanPlace.MyLocation }, { now })
+        viewModel.onEvent(PlannerEvent.DepartAt(year = 2026, month = 10, day = 23, hour = 8, minute = 19))
+        assertEquals(DepartureDay.TOMORROW, (viewModel.state.value.departure as DepartureUi.At).relativeDay)
+
+        now = Instant.parse("2026-10-23T05:00:00Z")
+        viewModel.onEvent(PlannerEvent.Shown)
+
+        assertEquals(DepartureDay.TODAY, (viewModel.state.value.departure as DepartureUi.At).relativeDay)
+    }
 }
