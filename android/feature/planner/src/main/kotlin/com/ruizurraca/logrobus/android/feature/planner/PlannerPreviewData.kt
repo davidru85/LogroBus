@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.android.feature.planner
 
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.planner.presentation.DepartureDay
+import com.ruizurraca.logrobus.feature.planner.presentation.DeparturePickerUi
 import com.ruizurraca.logrobus.feature.planner.presentation.DepartureUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlaceFieldUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerUiState
@@ -20,4 +21,11 @@ internal object PlannerPreviewData {
     /** "Depart at" a time on another day: the departure chip's longest text (FR-PLAN-03). */
     val departAt =
         myLocation.copy(departure = DepartureUi.At(MadridDateTime(2027, 1, 15, 8, 19), DepartureDay.OTHER))
+
+    /** Choosing a time for "Leave now": the pickers open at now, 07:00 on 22 Oct 2026 (FR-PLAN-03). */
+    val picking =
+        myLocation.copy(
+            departurePicker =
+                DeparturePickerUi(start = MadridDateTime(2026, 10, 22, 7, 0), now = MadridDateTime(2026, 10, 22, 7, 0)),
+        )
 }
