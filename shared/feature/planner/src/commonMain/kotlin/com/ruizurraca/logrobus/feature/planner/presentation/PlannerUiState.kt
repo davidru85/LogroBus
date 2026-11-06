@@ -35,9 +35,9 @@ object PlannerUiMapper {
     fun state(origin: PlanPlace?): PlannerUiState =
         PlannerUiState(origin = field(origin), destination = PlaceFieldUi.Empty)
 
-    /** The root's fields for [places]. */
-    @Suppress("UNUSED_PARAMETER")
-    fun state(places: PlanPlaces): PlannerUiState = PlannerUiState()
+    /** The root's fields for [places]: each field shows its own end, "My location" in either (FR-PLAN-08). */
+    fun state(places: PlanPlaces): PlannerUiState =
+        PlannerUiState(origin = field(places.origin), destination = field(places.destination))
 
     private fun field(place: PlanPlace?): PlaceFieldUi =
         when (place) {
