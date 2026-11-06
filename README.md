@@ -102,6 +102,12 @@ You will need:
 ### Recent changes
 
 - **2026-11-06:**
+  - LB-304: one tap swaps where your trip starts and ends.
+    - The button beside the two fields swaps them, "My location" included, which can then be where the trip ends. A second tap swaps them back.
+    - Coming back to the tab keeps your swap. "My location" fills an empty start only if the trip does not already end there, and leaves either field if the app may no longer use your location.
+    - Screen readers say "Swap origin and destination", after both fields.
+    - When routes arrive (LB-306), a swap will clear the old ones, like any other change of start or end.
+  - CI: when Xcode gives up on an accessibility audit on a busy CI machine, the audit now waits a few seconds before it runs again. Run again at once, it had given up three times in a row.
   - LB-301, part 1: the How to Get There tab shows where your trip starts and ends.
     - If the app may use your location, the trip starts from "My location"; if not, both fields are empty. The destination shows "Where to?".
     - Opening the tab asks for nothing, and does not start reading your location. If you turn location on or off in Near me or in the phone's settings, the start changes the next time the tab shows.

@@ -82,7 +82,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-301 | Origin and destination inputs: current location, saved place, stop, map long-press, address. Part 1: How to Get There's root with its two fields, the origin "My location" with the location permission granted and empty without it, and the destination empty; the fields open nothing yet (owner decision, 2026-11-06). Part 2: choosing a stop (LB-008 part 2), a saved place (LB-311), an address (LB-302) or a map point (LB-013) for either field | FR-PLAN-01, FR-PLAN-11 | P0 | in-progress |
 | LB-302 | CartoCiudad geocoder: capture fixtures, confirm parameters, debounce 300 ms, at least 3 characters, at most 8 results, La Rioja filter | FR-PLAN-02, FR-PLAN-12, `api_spec.md` §5 | P0 | todo |
 | LB-303 | "Leave now" / "Depart at" selector, sent as UTC `departureAt` | FR-PLAN-03 | P0 | todo |
-| LB-304 | One-tap swap of origin and destination | FR-PLAN-08 | P0 | in-progress |
+| LB-304 | One-tap swap of origin and destination. Done (2026-11-06): an icon button beside the fields on both platforms; the root showing again never undoes a swap. Clearing the results comes with them, in LB-306; the TalkBack and VoiceOver passes on a device are with the owner | FR-PLAN-08 | P0 | done |
 | LB-305 | Client-side check against the service area expanded by 5 km | FR-PLAN-10 | P1 | todo |
 | LB-306 | Plan request (API-07, `maxResults = 5`) and itinerary cards sorted by arrival time | FR-PLAN-04, FR-PLAN-14 | P0 | todo |
 | LB-307 | No-route messages mapped from `rejection.reason`, with criteria values | FR-PLAN-07, DD-17 | P0 | todo |

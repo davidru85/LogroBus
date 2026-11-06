@@ -19,6 +19,50 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-06: LB-304, swap origin and destination
+
+**Done**
+- **PR #51 (LB-301 part 1) merged** on 2026-11-06, after its third CI run passed, and `main` was synced.
+- **LB-304 (`feat/LB-304-swap-places`):** FR-PLAN-08, one tap swaps the trip's ends.
+  - **Shared (`:shared:feature:planner`):**
+    - `PlanPlaces` holds the trip's two ends. `swapped()` exchanges them.
+    - `following(initialOrigin)` applies FR-PLAN-11 each time the root shows. "My location" fills an empty origin unless the destination holds it, and leaves either field without the permission.
+    - `PlannerEvent.Swap`, and `PlannerUiMapper.state(places)`, which shows each end in its own field, "My location" in either.
+  - **Android:** `PlannerViewModel` keeps `PlanPlaces`. `PlannerScreen` takes `onEvent`, as the other screens do, and puts an icon button (Material Symbols `swap_vert`) beside the card, centred between the fields.
+  - **iOS:** `PlannerViewModel` keeps `PlanPlaces`. The section's one row holds both fields, the line between them, and a borderless button (`arrow.up.arrow.down`) at its trailing end. A screen reader reads the fields, then the button.
+  - **Strings:** `plan_swap` / `plan.swap`, "Intercambiar origen y destino" ("Swap origin and destination"). "Mi ubicación" moved to `plan_my_location` / `plan.my_location`, since either field can show it now.
+  - **Tests:**
+    - **Shared:** `PlanPlacesTest`, and `PlannerUiMapperTest`'s swapped state.
+    - **Android:** `PlannerViewModelTest`, `PlannerScreenTest` (a button, spoken, sends `Swap`), `PlannerRouteTest` (the tap reaches the ViewModel), and screenshots of the swapped state.
+    - **iOS:**
+      - `PlannerViewModelTests`, and snapshots of the swapped state.
+      - `ShellUITests.test_lb304_…`, end to end: location turned on from Near Me's row, the system's prompt answered in English or Spanish, then one tap on the button by its spoken label. The accessibility audits walk the button with the root.
+      - A first try, a package test that walked a hosted view's accessibility tree to find the button, found nothing, with the button in place or not: SwiftUI builds no such tree there. The UI test replaced it (a second red commit).
+      - A run stopped while the system's location prompt showed left the simulator's location denied, and the next run's `resetAuthorizationStatus` did not clear it; `simctl privacy … reset location` did. CI's fresh simulators start never asked.
+  - **Docs:** the acceptance criteria record the evidence, and LB-306's criterion now clears the results on any change of origin or destination, a swap included. `design_guidelines.md` §3.3 and §9 and `architecture.md` are updated, as are `AGENTS.md`'s status and both READMEs.
+
+**Decisions**
+- **Agent:**
+  - **A swap survives the root showing again.** FR-PLAN-11 makes "My location" the default origin, and LB-301 read it again each time the root shows. After a swap, that read would have put "My location" back in the origin, in both fields at once. It now fills an empty origin only while the destination does not hold it.
+  - **Without the permission, "My location" leaves either field**, the destination included, as it left the origin in LB-301.
+  - **Placement:** Android puts the button beside the card, as the sketch in `design_guidelines.md` §3.3 does. iOS keeps the system's inset section, so the button sits inside it, at the trailing end of one row that holds both fields. Each is at least 48 dp or 44 pt to touch.
+  - **The button is always enabled.** With both fields empty, a swap changes nothing visible, which a disabled state would only complicate.
+- **LB-304 is done without its results part.** The results arrive with LB-306, whose criterion now names the swap among the changes that clear them (FR-PLAN-14).
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-303 (Leave now / Depart at), unless the owner chooses otherwise.
+- **With the owner:** the TalkBack and VoiceOver passes on a device, for LB-301 part 1 and LB-304.
+- **Waiting for the owner:**
+  - the iOS job limit;
+  - Android's end-to-end encrypted backups;
+  - DD-10 provisional stops;
+  - alert 6 (Kotlin Gradle plugin);
+  - the Gradle cache provider;
+  - OQ-10 and OQ-11.
+
+---
+
 ## 2026-11-06: LB-301 part 1, How to Get There's origin and destination fields
 
 **Done**

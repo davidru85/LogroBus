@@ -238,6 +238,10 @@ Results                                   Itinerary detail
   - A screen reader stops once on each field and hears its name, then what it shows: "Origen, Mi ubicación".
   - The origin follows the permission each time the root shows: selected again, or back from the background.
   - Until place search arrives (LB-301 part 2), the fields open nothing, so they are not buttons (owner decision, 2026-11-06).
+- **The swap button (LB-304, FR-PLAN-08):** one tap exchanges the origin and the destination, "My location" included, which may then show as the destination.
+  - Android: an icon button (Material Symbols `swap_vert`) beside the card, centred between the fields, its icon on the screen margin. iOS: a borderless button (SF Symbol `arrow.up.arrow.down`) at the trailing end of the section, whose one row holds both fields and the line between them. At least 48 dp or 44 pt to touch.
+  - A screen reader reads the origin, the destination, then the button, "Intercambiar origen y destino" ("Swap origin and destination").
+  - The root showing again never undoes a swap: "My location" fills an empty origin only while the destination does not hold it, and leaves either field without the permission (FR-PLAN-11).
 - Place search is one list, in this order: saved places, then stops, then addresses (CartoCiudad, at least 3 characters, debounced 300 ms, at most 8 results).
 - A results card shows the departure and arrival times, total duration, line badges in leg order with walk segments between them, and the total walking distance. Cards are sorted by arrival time (FR-PLAN-04).
 - Itinerary detail is a map with a step list. Steps with intermediate stops expand. Planned times are shown alongside the live ETA of the first bus leg when it departs within 60 min.
@@ -483,6 +487,7 @@ Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessi
 | `plan.my_location` (either field: the origin with the location permission, LB-301; the destination after a swap, LB-304) | Mi ubicación | My location |
 | `plan.origin.hint` (the empty origin, LB-301) | ¿Desde dónde? | Where from? |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
+| `plan.swap` (spoken: the swap button, LB-304) | Intercambiar origen y destino | Swap origin and destination |
 | `plan.origin`, `plan.destination` (spoken, iOS: each field's name, before its value; Android `plan.origin_spoken`, `plan.destination_spoken`, "Origen, %s") | Origen, Destino | Origin, Destination |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
 | `line.badge` (spoken) | Línea %s | Line %s |
