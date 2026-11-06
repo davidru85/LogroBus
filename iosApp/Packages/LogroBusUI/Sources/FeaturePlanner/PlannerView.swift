@@ -3,7 +3,8 @@ import Shared
 import SwiftUI
 
 /// How to Get There, the root of its tab (LB-301). Until place search lands (LB-301 part 2), its origin and
-/// destination fields, which open nothing yet (owner decision, 2026-11-06), and the swap button (LB-304).
+/// destination fields, which open nothing yet (owner decision, 2026-11-06), the swap button (LB-304), and the
+/// departure row with its date and time picker (LB-303).
 public struct PlannerView: View {
     @State private var viewModel: PlannerViewModel
     @Environment(\.scenePhase) private var scenePhase
@@ -21,6 +22,10 @@ public struct PlannerView: View {
                     onSwap: { viewModel.onEvent(PlannerEventSwap.shared) }
                 )
             }
+            // FR-PLAN-03: when the trip starts, under where it goes.
+            Section {
+                DepartureMenu(departure: viewModel.state.departure) { viewModel.onEvent($0) }
+            }
         }
         // The list's background, as the other roots'.
         .scrollContentBackground(.hidden)
@@ -32,6 +37,161 @@ public struct PlannerView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { viewModel.onEvent(PlannerEventShown.shared) }
         }
+        .sheet(isPresented: picking) {
+            if let picker = viewModel.state.departurePicker {
+                DepartureTimeSheet(picker: picker) { viewModel.onEvent($0) }
+            }
+        }
+    }
+
+    /// Whether the date and time picker shows: while the state has it. Swiped down, it closes without a time.
+    private var picking: Binding<Bool> {
+        Binding(
+            get: { viewModel.state.departurePicker != nil },
+            set: { shown in
+                if !shown { viewModel.onEvent(PlannerEventCancelDepartureTime.shared) }
+            }
+        )
+    }
+}
+
+/// FR-PLAN-03: the departure, "Leave now" or the picked time (design_guidelines.md §3.3). Its menu leaves now, or opens
+/// the date and time picker.
+private struct DepartureMenu: View {
+    let departure: any DepartureUi
+    let onEvent: (any PlannerEvent) -> Void
+    @Environment(\.locale) private var locale
+
+    var body: some View {
+        let text = departureText(departure, locale: locale)
+        Menu {
+            Button { onEvent(PlannerEventLeaveNow.shared) } label: { Text("plan.leave_now", bundle: .module) }
+            Button { onEvent(PlannerEventChooseDepartureTime.shared) } label: {
+                Text("plan.depart_at_choose", bundle: .module)
+            }
+        } label: {
+            HStack {
+                // A menu centres its label's lines: wrapped at large sizes, they start at the row's edge instead.
+                text
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                // Decoration, as the system's menu rows show: a menu opens.
+                Image(systemName: "chevron.up.chevron.down")
+                    .imageScale(.small)
+                    .accessibilityHidden(true)
+            }
+            // The whole row opens the menu, as a list row's button does: at least 44 pt tall.
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(text)
+    }
+}
+
+/// What the departure row says: "Leave now", or the picked time, "Depart at 08:19", "Depart tomorrow at 08:19" or
+/// "Depart on 15 Jan at 08:19". The hour picks Spanish's article: "a la 01:05", "a las 08:19".
+private func departureText(_ departure: any DepartureUi, locale: Locale) -> Text {
+    switch onEnum(of: departure) {
+    case .now:
+        return Text("plan.leave_now", bundle: .module)
+    case .at(let departAt):
+        let time = departAt.time
+        let hour = Int(time.hour)
+        // HH:mm on the Madrid clock, the same digits in every locale, as the ETAs' clock times (spec §5.7).
+        let clock = String(format: "%02d:%02d", time.hour, time.minute)
+        switch departAt.day {
+        case .today:
+            return Text("plan.depart_today \(hour) \(clock)", bundle: .module)
+        case .tomorrow:
+            return Text("plan.depart_tomorrow \(hour) \(clock)", bundle: .module)
+        case .other:
+            return Text("plan.depart_on \(hour) \(time.dayAndMonth(locale: locale)) \(clock)", bundle: .module)
+        }
+    }
+}
+
+/// FR-PLAN-03: the system's date and time picker, open at the picker's start, on the Madrid clock whatever the device's
+/// zone; no day before today can be picked, and any time can. Done departs at the picked time; Cancel, or a swipe down,
+/// keeps the departure.
+private struct DepartureTimeSheet: View {
+    let onEvent: (any PlannerEvent) -> Void
+    private let today: Date
+    @State private var time: Date
+
+    init(picker: DeparturePickerUi, onEvent: @escaping (any PlannerEvent) -> Void) {
+        self.onEvent = onEvent
+        let today = Calendar.madrid.startOfDay(for: picker.now.madridDate)
+        self.today = today
+        // A picked time whose day has gone by opens at today.
+        _time = State(initialValue: max(picker.start.madridDate, today))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                DatePicker(selection: $time, in: today..., displayedComponents: [.date, .hourAndMinute]) {
+                    Text("plan.departure_time", bundle: .module)
+                }
+                .datePickerStyle(.graphical)
+            }
+            .navigationTitle(Text("plan.departure_time", bundle: .module))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { onEvent(PlannerEventCancelDepartureTime.shared) } label: {
+                        Text("plan.departure_cancel", bundle: .module)
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button { onEvent(time.departAt) } label: { Text("plan.departure_done", bundle: .module) }
+                }
+            }
+        }
+        // The picker shows and reads the Madrid clock (AGENTS.md §5.5).
+        .environment(\.timeZone, Calendar.madrid.timeZone)
+        .environment(\.calendar, Calendar.madrid)
+    }
+}
+
+extension Calendar {
+    /// Logroño's calendar, on which the departure picker shows and reads its times (AGENTS.md §5.5).
+    static let madrid: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        // The identifier is the IANA database's own: it always resolves.
+        calendar.timeZone = TimeZone(identifier: "Europe/Madrid") ?? .gmt
+        return calendar
+    }()
+}
+
+extension MadridDateTime {
+    /// The day and its month in `locale`: "15 ene", "15 Jan". The fields are already on the Madrid clock, so one fixed
+    /// zone carries them through the formatter unchanged.
+    func dayAndMonth(locale: Locale) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        guard let date = calendar.date(from: DateComponents(year: Int(year), month: Int(month), day: Int(day))) else {
+            return ""
+        }
+        return date.formatted(Date.FormatStyle(locale: locale, timeZone: .gmt).day().month(.abbreviated))
+    }
+
+    /// This time on the Madrid calendar, for the system's picker. The fields come from an instant, so they always
+    /// resolve.
+    var madridDate: Date {
+        let components = DateComponents(
+            year: Int(year), month: Int(month), day: Int(day), hour: Int(hour), minute: Int(minute)
+        )
+        return Calendar.madrid.date(from: components) ?? .distantPast
+    }
+}
+
+extension Date {
+    /// "Depart at" this moment, read on the Madrid clock (FR-PLAN-03).
+    var departAt: PlannerEventDepartAt {
+        let calendar = Calendar.madrid
+        func field(_ component: Calendar.Component) -> Int32 { Int32(calendar.component(component, from: self)) }
+        return PlannerEventDepartAt(
+            year: field(.year), month: field(.month), day: field(.day), hour: field(.hour), minute: field(.minute)
+        )
     }
 }
 
@@ -130,6 +290,13 @@ private struct PlaceField: View {
     let viewModel = PlannerViewModel(useCases: SharedDependencies.shared.preview().locationOn())
     viewModel.onEvent(PlannerEventShown.shared)
     viewModel.onEvent(PlannerEventSwap.shared)
+    return NavigationStack { PlannerView(viewModel: viewModel) }
+}
+
+#Preview("Departing at a time") {
+    let viewModel = PlannerViewModel(useCases: SharedDependencies.shared.preview().locationOn())
+    viewModel.onEvent(PlannerEventShown.shared)
+    viewModel.onEvent(PlannerEventDepartAt(year: 2027, month: 1, day: 15, hour: 8, minute: 19))
     return NavigationStack { PlannerView(viewModel: viewModel) }
 }
 

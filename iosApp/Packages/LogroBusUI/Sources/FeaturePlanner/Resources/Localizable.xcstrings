@@ -1,6 +1,264 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "plan.depart_at_choose": {
+      "comment": "How to Get There: the departure menu's item that opens the date and time picker (FR-PLAN-03, LB-303).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depart at…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salir a las…"
+          }
+        }
+      }
+    },
+    "plan.depart_on %lld %@ %@": {
+      "comment": "How to Get There: a departure time on another day (LB-303). The first argument is the hour, which picks Spanish's article; the second the day and month, as \"15 ene\"; the third the time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depart on %2$@ %#@article@ %3$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salir el %2$@ %#@article@ %3$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a la"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a las"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "plan.depart_today %lld %@": {
+      "comment": "How to Get There: a departure time today, HH:mm on the Madrid clock (LB-303). The first argument is the hour, which picks Spanish's article; the second the time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depart %#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salir %#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a la"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a las"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "plan.depart_tomorrow %lld %@": {
+      "comment": "How to Get There: a departure time tomorrow (LB-303). The first argument is the hour, which picks Spanish's article; the second the time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depart tomorrow %#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "at"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salir mañana %#@article@ %2$@"
+          },
+          "substitutions": {
+            "article": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a la"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "a las"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "plan.departure_cancel": {
+      "comment": "How to Get There: closes the date and time picker without changing the departure (LB-303).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "plan.departure_done": {
+      "comment": "How to Get There: confirms the picked date and time as the departure (LB-303).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aceptar"
+          }
+        }
+      }
+    },
+    "plan.departure_time": {
+      "comment": "How to Get There: the date and time picker's title and the picker's spoken name (FR-PLAN-03, LB-303).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Departure time"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hora de salida"
+          }
+        }
+      }
+    },
     "plan.destination": {
       "comment": "How to Get There: the destination field's spoken name, before what it shows (NFR-A11Y-02, LB-301).",
       "extractionState": "manual",
@@ -33,6 +291,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "¿A dónde vas?"
+          }
+        }
+      }
+    },
+    "plan.leave_now": {
+      "comment": "How to Get There: the departure row and its menu's first item, leaving when the plan is requested (FR-PLAN-03, LB-303).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave now"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salir ahora"
           }
         }
       }
