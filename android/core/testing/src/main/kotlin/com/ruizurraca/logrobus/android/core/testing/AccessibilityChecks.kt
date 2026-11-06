@@ -40,7 +40,7 @@ private const val ROUNDING = 0.5f
  * The test must run under Robolectric with native graphics: legacy graphics do not measure text, so the text checks
  * would judge it wrongly.
  */
-fun SemanticsNodeInteractionsProvider.assertAccessible() {
+fun SemanticsNodeInteractionsProvider.assertAccessible(knownIssues: Set<String> = emptySet()) {
     val graphics = runCatching { ConfigurationRegistry.get(GraphicsMode.Mode::class.java) }.getOrNull()
     if (graphics != GraphicsMode.Mode.NATIVE) {
         throw AssertionError(
