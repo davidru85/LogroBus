@@ -191,6 +191,7 @@ jobs:
           - ":android:core:designsystem"
           - ":android:feature:lines"
           - ":android:feature:nearme"
+          - ":android:feature:planner"
           - ":android:feature:settings"
     steps:
       - uses: actions/checkout@v7
