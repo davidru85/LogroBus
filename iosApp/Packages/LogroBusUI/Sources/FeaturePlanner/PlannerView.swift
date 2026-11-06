@@ -40,16 +40,23 @@ private struct PlaceField: View {
 
     let kind: Kind
     let field: any PlaceFieldUi
+    // One width for both icons, so that both texts start in line; it grows with the text.
+    @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 28
 
     var body: some View {
-        Label {
-            shown
-                // A hint in the secondary colour, as an empty text field's.
-                .foregroundStyle(field is PlaceFieldUiEmpty ? Tokens.Colors.secondaryText : Color.primary)
-        } icon: {
+        HStack(spacing: Tokens.Spacing.medium) {
             // Decoration: the field's name says which it is.
             Image(systemName: kind == .origin ? "smallcircle.filled.circle" : "mappin.and.ellipse")
                 .foregroundStyle(Tokens.Colors.secondaryText)
+                .frame(width: iconWidth)
+            // The row's whole width, so the text wraps rather than ending at its own edge: the audit took a Label's
+            // text for clipped, although it showed whole (as Near Me's row, LB-201).
+            shown
+                // A hint in the secondary colour, as an empty text field's.
+                .foregroundStyle(field is PlaceFieldUiEmpty ? Tokens.Colors.secondaryText : Color.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
