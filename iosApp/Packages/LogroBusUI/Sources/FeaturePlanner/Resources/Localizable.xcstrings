@@ -37,6 +37,24 @@
         }
       }
     },
+    "plan.my_location": {
+      "comment": "How to Get There: the user's location, in either field; the origin's with the location permission (FR-PLAN-11, FR-PLAN-08).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My location"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi ubicación"
+          }
+        }
+      }
+    },
     "plan.origin": {
       "comment": "How to Get There: the origin field's spoken name, before what it shows (NFR-A11Y-02, LB-301).",
       "extractionState": "manual",
@@ -51,24 +69,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Origen"
-          }
-        }
-      }
-    },
-    "plan.origin.current": {
-      "comment": "How to Get There: the origin with the location permission granted, the user's location (FR-PLAN-11).",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My location"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi ubicación"
           }
         }
       }

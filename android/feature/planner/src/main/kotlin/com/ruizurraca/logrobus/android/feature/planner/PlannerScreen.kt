@@ -118,7 +118,7 @@ private fun PlaceField(
     val shown =
         when (field) {
             PlaceFieldUi.Empty -> stringResource(hint)
-            PlaceFieldUi.MyLocation -> stringResource(R.string.plan_origin_current)
+            PlaceFieldUi.MyLocation -> stringResource(R.string.plan_my_location)
         }
     val description = stringResource(spoken, shown)
     // A hint in the secondary colour, as an empty text field's.

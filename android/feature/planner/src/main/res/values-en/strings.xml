@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="plan_title">How to get there</string>
-    <string name="plan_origin_current">My location</string>
+    <string name="plan_my_location">My location</string>
     <string name="plan_origin_hint">Where from?</string>
     <string name="plan_destination_hint">Where to?</string>
     <string name="plan_origin_spoken">Origin, %1$s</string>

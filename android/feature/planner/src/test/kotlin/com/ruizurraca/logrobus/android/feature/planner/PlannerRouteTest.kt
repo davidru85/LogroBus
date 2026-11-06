@@ -52,7 +52,7 @@ class PlannerRouteTest {
         compose.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
         compose.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
 
-        compose.onNodeWithContentDescription(origin(R.string.plan_origin_current)).assertExists()
+        compose.onNodeWithContentDescription(origin(R.string.plan_my_location)).assertExists()
     }
 
     private fun origin(shown: Int) = context.getString(R.string.plan_origin_spoken, context.getString(shown))

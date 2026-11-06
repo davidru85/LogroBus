@@ -480,7 +480,7 @@ Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessi
 | `settings.clear_cache`; its detail | Borrar caché; Tus favoritas y los datos de líneas y paradas se conservan. | Clear cache; Your favourites and the lines and stops data are kept. |
 | `settings.cache_cleared`, `settings.cache_failed` | Caché borrada; No se ha podido borrar la caché | Cache cleared; Couldn't clear the cache |
 | `about.title` | Sobre los datos | About data |
-| `plan.origin.current` | Mi ubicación | My location |
+| `plan.my_location` (either field: the origin with the location permission, LB-301; the destination after a swap, LB-304) | Mi ubicación | My location |
 | `plan.origin.hint` (the empty origin, LB-301) | ¿Desde dónde? | Where from? |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
 | `plan.origin`, `plan.destination` (spoken, iOS: each field's name, before its value; Android `plan.origin_spoken`, `plan.destination_spoken`, "Origen, %s") | Origen, Destino | Origin, Destination |

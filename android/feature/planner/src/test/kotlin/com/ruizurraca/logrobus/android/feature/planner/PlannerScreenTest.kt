@@ -32,7 +32,7 @@ class PlannerScreenTest {
     fun lb301_withTheLocationPermission_theOriginIsMyLocation_andTheDestinationIsEmpty() {
         show(PlannerPreviewData.myLocation)
 
-        assertField(R.string.plan_origin_spoken, R.string.plan_origin_current)
+        assertField(R.string.plan_origin_spoken, R.string.plan_my_location)
         assertField(R.string.plan_destination_spoken, R.string.plan_destination_hint)
     }
 

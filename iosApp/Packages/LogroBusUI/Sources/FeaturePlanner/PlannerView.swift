@@ -72,7 +72,7 @@ private struct PlaceField: View {
 
     private var shown: Text {
         switch onEnum(of: field) {
-        case .myLocation: Text("plan.origin.current", bundle: .module)
+        case .myLocation: Text("plan.my_location", bundle: .module)
         case .empty:
             switch kind {
             case .origin: Text("plan.origin.hint", bundle: .module)
