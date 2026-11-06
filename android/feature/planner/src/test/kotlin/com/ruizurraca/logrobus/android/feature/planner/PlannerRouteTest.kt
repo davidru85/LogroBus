@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import org.junit.After
@@ -18,6 +19,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.robolectric.annotation.GraphicsMode
+import kotlin.time.Instant
 
 /**
  * FR-PLAN-11 on Android: the origin follows the location permission whenever the root shows again, such as back from
@@ -68,7 +70,10 @@ class PlannerRouteTest {
         startKoin {
             modules(
                 plannerUiModule,
-                module { factory { ReadInitialOrigin { origin } } },
+                module {
+                    factory { ReadInitialOrigin { origin } }
+                    single { AppClock { Instant.parse("2026-10-22T05:00:00Z") } }
+                },
             )
         }
     }

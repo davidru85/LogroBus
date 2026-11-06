@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.feature.planner
 
 import androidx.lifecycle.ViewModel
+import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerEvent
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class PlannerViewModel(
     private val readInitialOrigin: ReadInitialOrigin,
+    private val clock: AppClock,
 ) : ViewModel() {
     // The trip's ends as they stand; the state is the shared mapper's of them.
     private var places = PlanPlaces(origin = readInitialOrigin())
@@ -28,7 +30,14 @@ class PlannerViewModel(
         places =
             when (event) {
                 PlannerEvent.Shown -> places.following(readInitialOrigin())
+
                 PlannerEvent.Swap -> places.swapped()
+
+                PlannerEvent.LeaveNow,
+                PlannerEvent.ChooseDepartureTime,
+                PlannerEvent.CancelDepartureTime,
+                is PlannerEvent.DepartAt,
+                -> places
             }
         fields.value = PlannerUiMapper.state(places)
     }

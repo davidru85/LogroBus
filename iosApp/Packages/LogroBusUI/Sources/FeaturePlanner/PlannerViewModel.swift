@@ -27,6 +27,8 @@ public final class PlannerViewModel {
             places = places.following(initialOrigin: useCases.readInitialOrigin().invoke())
         case .swap:
             places = places.swapped()
+        case .leaveNow, .chooseDepartureTime, .cancelDepartureTime, .departAt:
+            break
         }
     }
 }

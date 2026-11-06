@@ -20,8 +20,7 @@ import kotlinx.coroutines.flow.update
  */
 internal class PreviewLocation(
     private val collections: MutableStateFlow<Int>,
-) : NearMeUseCases,
-    PlannerUseCases {
+) : NearMeUseCases {
     private val permission = MutableStateFlow(LocationPermission.NotGranted)
 
     // Counted, so that updates running when location is turned off end even if it is turned on again at once.
@@ -50,5 +49,5 @@ internal class PreviewLocation(
 
     override fun observeLocationAccess(): ObserveLocationAccess = DefaultObserveLocationAccess(provider)
 
-    override fun readInitialOrigin(): ReadInitialOrigin = DefaultReadInitialOrigin(provider)
+    fun readInitialOrigin(): ReadInitialOrigin = DefaultReadInitialOrigin(provider)
 }

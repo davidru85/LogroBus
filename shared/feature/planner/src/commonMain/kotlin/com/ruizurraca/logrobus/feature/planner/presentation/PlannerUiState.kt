@@ -69,6 +69,24 @@ sealed interface PlannerEvent {
 
     /** The swap button: the origin becomes the destination, and the destination the origin (FR-PLAN-08). */
     data object Swap : PlannerEvent
+
+    /** The departure menu's "Leave now" (FR-PLAN-03). */
+    data object LeaveNow : PlannerEvent
+
+    /** The departure menu's "Choose a time": the date and time pickers open (FR-PLAN-03). */
+    data object ChooseDepartureTime : PlannerEvent
+
+    /** The pickers closed without a time: the departure stays as it was. */
+    data object CancelDepartureTime : PlannerEvent
+
+    /** A date and time picked on the Madrid clock (AGENTS.md §5.5): the trip departs at it, and the pickers close. */
+    data class DepartAt(
+        val year: Int,
+        val month: Int,
+        val day: Int,
+        val hour: Int,
+        val minute: Int,
+    ) : PlannerEvent
 }
 
 object PlannerUiMapper {
