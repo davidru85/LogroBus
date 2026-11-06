@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewFontScale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -113,7 +114,8 @@ private fun PlaceFields(
     state: PlannerUiState,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedCard(modifier.fillMaxWidth()) {
+    // Read whole before the swap button beside it, which would otherwise come between the fields (§3.3).
+    OutlinedCard(modifier.fillMaxWidth().semantics { isTraversalGroup = true }) {
         PlaceField(
             icon = R.drawable.ic_trip_origin,
             field = state.origin,
