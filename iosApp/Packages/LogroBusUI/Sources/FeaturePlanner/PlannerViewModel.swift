@@ -7,11 +7,10 @@ import Shared
 @MainActor
 @Observable
 public final class PlannerViewModel {
-    public private(set) var state = PlannerUiMapper.shared.state(places: PlanPlaces(origin: nil, destination: nil))
-    // The trip's ends as they stand; the state is the shared mapper's of them.
-    private var places = PlanPlaces(origin: nil, destination: nil) {
-        didSet { state = PlannerUiMapper.shared.state(places: places) }
-    }
+    /// The shared mapper's state of the trip's ends, observed through them.
+    public var state: PlannerUiState { PlannerUiMapper.shared.state(places: places) }
+    // The trip's ends as they stand: none until the root first shows.
+    private var places = PlanPlaces(origin: nil, destination: nil)
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap.
     private let useCases: any UseCases

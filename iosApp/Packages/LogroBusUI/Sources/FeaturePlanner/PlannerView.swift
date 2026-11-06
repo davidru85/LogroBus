@@ -48,7 +48,7 @@ private struct PlaceFields: View {
         HStack(spacing: Tokens.Spacing.small) {
             VStack(alignment: .leading, spacing: 0) {
                 PlaceField(kind: .origin, field: origin, iconWidth: iconWidth)
-                // The line a list draws between its rows, from where the texts start.
+                // A hairline between the fields, from where their texts start.
                 Divider().padding(.leading, iconWidth + Tokens.Spacing.medium)
                 PlaceField(kind: .destination, field: destination, iconWidth: iconWidth)
             }
@@ -124,6 +124,13 @@ private struct PlaceField: View {
     NavigationStack {
         PlannerView(viewModel: PlannerViewModel(useCases: SharedDependencies.shared.preview().locationOn()))
     }
+}
+
+#Preview("Swapped") {
+    let viewModel = PlannerViewModel(useCases: SharedDependencies.shared.preview().locationOn())
+    viewModel.onEvent(PlannerEventShown.shared)
+    viewModel.onEvent(PlannerEventSwap.shared)
+    return NavigationStack { PlannerView(viewModel: viewModel) }
 }
 
 #Preview("Without location, dark") {

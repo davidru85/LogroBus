@@ -86,7 +86,7 @@ fun PlannerScreen(
             contentPadding = padding,
         ) {
             item {
-                // The swap button beside the fields, centred between them (design_guidelines.md §3.3). Its 48 dp touch
+                // The swap button beside the fields, centred on their card (design_guidelines.md §3.3). Its 48 dp touch
                 // target keeps 12 dp around its icon, so 4 dp more put the icon's edge on the screen margin.
                 Row(
                     modifier = Modifier.padding(start = Tokens.Spacing.screenMargin, end = Tokens.Spacing.xs),
@@ -169,4 +169,11 @@ private fun PlannerMyLocationPreview() {
 @Composable
 private fun PlannerEmptyPreview() {
     LogroBusTheme { PlannerScreen(PlannerPreviewData.empty, onEvent = {}, onOpenMore = {}) }
+}
+
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun PlannerSwappedPreview() {
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.swapped, onEvent = {}, onOpenMore = {}) }
 }

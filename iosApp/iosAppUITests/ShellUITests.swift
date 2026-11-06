@@ -85,16 +85,19 @@ final class ShellUITests: XCTestCase {
     func test_lb304_withLocation_oneTapOnSwap_makesMyLocationTheDestination() {
         // FR-PLAN-08, end to end: location turned on in Near Me, as a user would, then one swap in How to Get There.
         XCUIApplication().resetAuthorizationStatus(for: .location)
+        // Location is left as it was found: never asked.
+        addTeardownBlock { @MainActor in XCUIApplication().resetAuthorizationStatus(for: .location) }
         let app = launch()
         app.tabBars.buttons["Near me"].tap()
         let turnOn = app.buttons["Turn on location to see nearby stops"]
         XCTAssertTrue(turnOn.waitForExistence(timeout: 5))
         turnOn.tap()
-        // The system's prompt speaks the simulator's language, not the app's: English on CI, Spanish here and there.
+        // The system's prompt speaks the simulator's language, not the app's: English on CI, maybe Spanish locally.
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let whileUsing = NSPredicate(format: "label IN %@", ["Allow While Using App", "Permitir al usarse la app"])
         let allow = springboard.alerts.buttons.matching(whileUsing).firstMatch
-        XCTAssertTrue(allow.waitForExistence(timeout: 10), "the system's location prompt")
+        let labels = { springboard.alerts.buttons.allElementsBoundByIndex.map(\.label) }
+        XCTAssertTrue(allow.waitForExistence(timeout: 10), "the system's location prompt, with: \(labels())")
         allow.tap()
         app.tabBars.buttons["Directions"].tap()
         XCTAssertTrue(field("Origin", showing: "My location", in: app).waitForExistence(timeout: 5))
