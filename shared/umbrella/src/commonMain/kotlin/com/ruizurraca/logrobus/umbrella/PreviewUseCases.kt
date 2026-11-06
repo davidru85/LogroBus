@@ -1,6 +1,5 @@
 package com.ruizurraca.logrobus.umbrella
 
-import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.preferences.EtaFormat
@@ -17,7 +16,6 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
-import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.transit.domain.Line
@@ -43,17 +41,18 @@ import kotlin.time.Instant
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
  * lines, there are no favourite lines, location is off, and the settings are the defaults; each script replaces the
  * last, except [favouriteLine], [settings], [locationOn] and [locationOff]. Settings' own use cases come from
- * [PreviewSettings], and Near Me's and How to Get There's initial origin from [PreviewLocation]. The clock stands at
- * [SAMPLE_SYNC] too: the data synced just now.
+ * [PreviewSettings], Near Me's from [PreviewLocation], and How to Get There's from [PreviewPlanner], over the same
+ * location, on a clock that stands at [SAMPLE_SYNC] too: the data synced just now.
  */
 class PreviewUseCases internal constructor(
     internal val settingsPreview: PreviewSettings = PreviewSettings(),
     private val collections: MutableStateFlow<Int> = MutableStateFlow(0),
     internal val locationPreview: PreviewLocation = PreviewLocation(collections),
+    plannerPreview: PreviewPlanner = PreviewPlanner(locationPreview, now = SAMPLE_SYNC),
 ) : UseCases,
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
-    PlannerUseCases {
+    PlannerUseCases by plannerPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
@@ -148,10 +147,6 @@ class PreviewUseCases internal constructor(
                     }.countedIn(collections)
             },
         )
-
-    override fun readInitialOrigin(): ReadInitialOrigin = locationPreview.readInitialOrigin()
-
-    override fun clock(): AppClock = AppClock { SAMPLE_SYNC }
 
     override fun observeLinesWithFavourites(): ObserveLinesWithFavourites =
         DefaultObserveLinesWithFavourites(lines, favourites)
