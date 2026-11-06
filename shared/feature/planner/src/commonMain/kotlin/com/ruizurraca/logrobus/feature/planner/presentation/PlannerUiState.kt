@@ -20,6 +20,15 @@ sealed interface PlaceFieldUi {
     data object MyLocation : PlaceFieldUi
 }
 
+/** What How to Get There's root sends its ViewModel. */
+sealed interface PlannerEvent {
+    /**
+     * The root shows: opened, selected again, or back from the background. The location permission may have changed
+     * meanwhile, in Near Me or in the system's settings, so the initial origin is read again (FR-PLAN-11).
+     */
+    data object Shown : PlannerEvent
+}
+
 object PlannerUiMapper {
     /** The root's fields for a new plan from [origin]: nothing is chosen for the destination yet. */
     fun state(origin: PlanPlace?): PlannerUiState =
