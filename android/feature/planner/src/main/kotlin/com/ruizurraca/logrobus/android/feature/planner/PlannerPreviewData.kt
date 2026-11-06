@@ -1,5 +1,8 @@
 package com.ruizurraca.logrobus.android.feature.planner
 
+import com.ruizurraca.logrobus.core.presentation.MadridDateTime
+import com.ruizurraca.logrobus.feature.planner.presentation.DepartureDay
+import com.ruizurraca.logrobus.feature.planner.presentation.DepartureUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlaceFieldUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerUiState
 
@@ -13,4 +16,8 @@ internal object PlannerPreviewData {
 
     /** After one swap from [myLocation]: the trip ends where the user is (FR-PLAN-08). */
     val swapped = PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation)
+
+    /** "Depart at" a time on another day: the departure chip's longest text (FR-PLAN-03). */
+    val departAt =
+        myLocation.copy(departure = DepartureUi.At(MadridDateTime(2027, 1, 15, 8, 19), DepartureDay.OTHER))
 }

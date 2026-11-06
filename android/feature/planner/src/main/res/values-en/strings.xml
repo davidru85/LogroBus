@@ -7,4 +7,20 @@
     <string name="plan_origin_spoken">Origin, %1$s</string>
     <string name="plan_destination_spoken">Destination, %1$s</string>
     <string name="plan_swap">Swap origin and destination</string>
+    <string name="plan_leave_now">Leave now</string>
+    <string name="plan_depart_at_choose">Depart at…</string>
+    <plurals name="plan_depart_today">
+        <item quantity="one">Depart at %1$s</item>
+        <item quantity="other">Depart at %1$s</item>
+    </plurals>
+    <plurals name="plan_depart_tomorrow">
+        <item quantity="one">Depart tomorrow at %1$s</item>
+        <item quantity="other">Depart tomorrow at %1$s</item>
+    </plurals>
+    <plurals name="plan_depart_on">
+        <item quantity="one">Depart on %1$s at %2$s</item>
+        <item quantity="other">Depart on %1$s at %2$s</item>
+    </plurals>
+    <string name="plan_departure_ok">OK</string>
+    <string name="plan_departure_cancel">Cancel</string>
 </resources>

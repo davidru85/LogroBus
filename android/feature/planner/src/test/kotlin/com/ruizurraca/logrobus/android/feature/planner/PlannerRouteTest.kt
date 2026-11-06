@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
@@ -24,7 +25,7 @@ import kotlin.time.Instant
 /**
  * FR-PLAN-11 on Android: the origin follows the location permission whenever the root shows again, such as back from
  * the system's settings, where the user may have turned location on or off. FR-PLAN-08: the swap button reaches the
- * ViewModel.
+ * ViewModel. FR-PLAN-03: so do the departure's menu and pickers.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -64,6 +65,22 @@ class PlannerRouteTest {
 
         compose.onNodeWithContentDescription(origin(R.string.plan_origin_hint)).assertExists()
         compose.onNodeWithContentDescription(destination(R.string.plan_my_location)).assertExists()
+    }
+
+    @Test
+    fun lb303_aTimePickedThroughTheMenuAndThePickers_isTheDeparture() {
+        // The test clock stands at 07:00 in Madrid, where the pickers open for "Leave now".
+        startGraph()
+        compose.setContent { PlannerRoute(onOpenMore = {}) }
+
+        compose.onNodeWithText(context.getString(R.string.plan_leave_now)).performClick()
+        compose.onNodeWithText(context.getString(R.string.plan_depart_at_choose)).performClick()
+        compose.onNodeWithText(context.getString(R.string.plan_departure_ok)).performClick()
+        compose.onNodeWithText(context.getString(R.string.plan_departure_ok)).performClick()
+
+        compose
+            .onNodeWithText(context.resources.getQuantityString(R.plurals.plan_depart_today, 7, "07:00"))
+            .assertExists()
     }
 
     private fun startGraph() {
