@@ -71,8 +71,8 @@ class DepartureDialogsScreenshotTest(
          * Material's own issues inside its pickers (Compose Material 3 1.5.0-beta02), which the screen cannot change
          * (design_guidelines.md §3.3). For the owner to confirm in LB-303's pull request.
          * - **The date's previous-month arrow at 200 %:** the month's name takes the room beside it, 41 dp of 48.
-         * - **The time's ":" between its fields:** a glyph in a box 24 dp wide, whose text layout overflows it, although
-         *   it shows whole.
+         * - **The time's ":" between its fields:** a glyph in a box 24 dp wide, whose text layout overflows it,
+         *   although it shows whole.
          */
         private val materialIssues =
             mapOf(

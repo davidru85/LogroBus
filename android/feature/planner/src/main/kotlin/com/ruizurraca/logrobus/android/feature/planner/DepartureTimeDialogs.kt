@@ -1,13 +1,13 @@
 package com.ruizurraca.logrobus.android.feature.planner
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.TimePickerDialogDefaults
 import androidx.compose.material3.TimePickerDisplayMode
@@ -21,17 +21,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.planner.presentation.DeparturePickerUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerEvent
 import java.time.LocalDate
 
 /**
- * FR-PLAN-03: Material's date picker, then its time picker, open at [picker]'s start on the Madrid clock
+ * FR-PLAN-03: Material's date picker, then its time input, open at [picker]'s start on the Madrid clock
  * (design_guidelines.md §3.3). No day before today can be picked; any time can. OK on the time sends the picked date
  * and time through [onPicked]; Cancel, back or a tap outside either dialog calls [onCancel].
  */
@@ -94,29 +94,21 @@ private fun TimeDialog(
             initialMinute = start.minute,
             is24Hour = DateFormat.is24HourFormat(LocalContext.current),
         )
-    // The clock face needs room: on a short window, as in landscape, only the keyboard's fields fit.
-    val height =
-        with(LocalDensity.current) {
-            LocalWindowInfo.current.containerSize.height
-                .toDp()
-        }
-    val roomy = height > TimePickerDialogDefaults.MinHeightForTimePicker
-    var typing by rememberSaveable { mutableStateOf(false) }
-    val mode = if (typing || !roomy) TimePickerDisplayMode.Input else TimePickerDisplayMode.Picker
+    // Typed, never on the clock face: its hours take touches 32 dp wide, its numbers overlap at large text, and at
+    // 200 % its buttons no longer fit. Two fields fit any window, and TalkBack reads them as text fields (LB-406).
     TimePickerDialog(
         onDismissRequest = onCancel,
+        // As wide as Material's narrowest dialog: as wide as its two fields, its buttons broke mid-word at 200 %.
+        modifier = Modifier.widthIn(min = Tokens.dialogMinWidth),
         confirmButton = {
             TextButton(onClick = { onTime(state.hour, state.minute) }, enabled = state.isInputValid) {
                 Text(stringResource(R.string.plan_departure_ok))
             }
         },
-        title = { TimePickerDialogDefaults.Title(displayMode = mode) },
-        modeToggleButton = {
-            if (roomy) TimePickerDialogDefaults.DisplayModeToggle(onDisplayModeChange = { typing = !typing }, mode)
-        },
+        title = { TimePickerDialogDefaults.Title(displayMode = TimePickerDisplayMode.Input) },
         dismissButton = { CancelButton(onCancel) },
     ) {
-        if (mode == TimePickerDisplayMode.Input) TimeInput(state) else TimePicker(state)
+        TimeInput(state)
     }
 }
 
