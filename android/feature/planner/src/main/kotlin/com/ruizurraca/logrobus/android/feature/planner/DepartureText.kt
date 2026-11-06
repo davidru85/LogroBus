@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.ruizurraca.logrobus.android.core.designsystem.clockText
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.planner.presentation.DepartureDay
 import com.ruizurraca.logrobus.feature.planner.presentation.DepartureUi
@@ -27,7 +28,8 @@ internal fun departureText(departure: DepartureUi): String =
 
         is DepartureUi.At -> {
             val time = departure.time
-            val clock = time.clockText()
+            // HH:mm on the Madrid clock, as the ETAs' clock times (spec §5.7).
+            val clock = clockText(time.hour, time.minute)
             when (departure.relativeDay) {
                 DepartureDay.TODAY -> {
                     pluralStringResource(R.plurals.plan_depart_today, time.hour, clock)
@@ -43,9 +45,6 @@ internal fun departureText(departure: DepartureUi): String =
             }
         }
     }
-
-// HH:mm on the Madrid clock, the same digits in every locale, as the ETAs' clock times (spec §5.7).
-private fun MadridDateTime.clockText(): String = String.format(Locale.ROOT, "%02d:%02d", hour, minute)
 
 /** A day and its month in the app's locale: "15 ene", "Jan 15". */
 private class DayFormat(

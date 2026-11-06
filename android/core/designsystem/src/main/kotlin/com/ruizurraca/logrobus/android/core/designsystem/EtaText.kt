@@ -32,7 +32,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import com.ruizurraca.logrobus.core.presentation.EtaDelay
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.core.presentation.EtaUi
-import java.util.Locale
 
 /**
  * An arrival's ETA, drawn and spoken as design_guidelines.md §6.3 says. Its spoken label leaves out the line, which
@@ -174,9 +173,8 @@ private fun Resources.delaySpoken(delay: EtaDelay): String =
         is EtaDelay.Early -> getQuantityString(R.plurals.eta_early_spoken, delay.minutes, delay.minutes)
     }
 
-// Spec §5.7: HH:mm on the Madrid clock, the same digits in every locale.
 private val EtaDisplay.ClockTime.text: String
-    get() = String.format(Locale.ROOT, "%02d:%02d", hour, minute)
+    get() = clockText(hour, minute)
 
 /**
  * ETAs use the emphasized title with tabular figures, so digits do not shift as they tick
