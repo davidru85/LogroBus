@@ -38,11 +38,27 @@ class PlanPlacesTest {
     }
 
     @Test
-    fun lb301_withoutThePermission_myLocationLeavesWhicheverFieldHoldsIt() {
+    fun lb301_withoutThePermission_myLocationLeavesTheOrigin() {
         val asOrigin = PlanPlaces(origin = PlanPlace.MyLocation, destination = null)
-        val asDestination = PlanPlaces(origin = null, destination = PlanPlace.MyLocation)
 
         assertEquals(PlanPlaces(), asOrigin.following(initialOrigin = null))
-        assertEquals(PlanPlaces(), asDestination.following(initialOrigin = null))
+    }
+
+    @Test
+    fun lb304_withoutThePermission_myLocationLeavesTheDestinationToo() {
+        val swapped = PlanPlaces(origin = null, destination = PlanPlace.MyLocation)
+
+        assertEquals(PlanPlaces(), swapped.following(initialOrigin = null))
+    }
+
+    @Test
+    fun lb304_afterASwap_thePermissionRevokedThenGrantedAgain_startsTheTripFromMyLocationAgain() {
+        // My location left the destination with the permission, and comes back as a new plan's origin.
+        val swapped = PlanPlaces(origin = null, destination = PlanPlace.MyLocation)
+
+        val revoked = swapped.following(initialOrigin = null)
+        val granted = revoked.following(initialOrigin = PlanPlace.MyLocation)
+
+        assertEquals(PlanPlaces(origin = PlanPlace.MyLocation, destination = null), granted)
     }
 }
