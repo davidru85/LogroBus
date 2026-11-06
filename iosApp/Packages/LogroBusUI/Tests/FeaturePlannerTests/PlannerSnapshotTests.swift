@@ -6,7 +6,8 @@ import SwiftUI
 import Testing
 
 /// AGENTS.md §9: How to Get There's root in light, dark and large text, in Spanish, with and without the location
-/// permission. References live in __Snapshots__; a missing one is recorded, and that run fails until it is committed.
+/// permission, swapped, and departing at a picked time. References live in __Snapshots__; a missing one is recorded,
+/// and that run fails until it is committed.
 @MainActor
 struct PlannerSnapshotTests {
     @Test(arguments: Appearance.allCases)
@@ -25,6 +26,14 @@ struct PlannerSnapshotTests {
     func lb304_swapped(appearance: Appearance) {
         // FR-PLAN-08: one swap from "My location": the trip ends where the user is.
         let screen = screen(SharedDependencies.shared.preview().locationOn(), then: [PlannerEventSwap.shared])
+        assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
+    }
+
+    @Test(arguments: Appearance.allCases)
+    func lb303_departAt(appearance: Appearance) {
+        // FR-PLAN-03: a time on another day than the preview clock's, the departure row's longest text.
+        let departAt = PlannerEventDepartAt(year: 2027, month: 1, day: 15, hour: 8, minute: 19)
+        let screen = screen(SharedDependencies.shared.preview().locationOn(), then: [departAt])
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 

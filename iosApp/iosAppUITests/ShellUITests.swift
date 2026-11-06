@@ -110,6 +110,29 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
+    func test_lb303_aTimePickedFromTheDepartureMenu_isTheDeparture_untilLeaveNow() {
+        // FR-PLAN-03, end to end: the departure's menu, the system's date and time picker, and back to leaving now.
+        let app = launch()
+        app.tabBars.buttons["Directions"].tap()
+        let leaveNow = app.buttons["Leave now"]
+        XCTAssertTrue(leaveNow.waitForExistence(timeout: 5))
+
+        leaveNow.tap()
+        app.buttons["Depart at…"].tap()
+        let sheet = app.navigationBars["Departure time"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
+        sheet.buttons["Done"].tap()
+
+        // The picker opened at now: the trip departs at now's minute, today unless midnight came meanwhile.
+        let departing = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Depart ")).firstMatch
+        XCTAssertTrue(departing.waitForExistence(timeout: 5))
+        departing.tap()
+        app.buttons["Leave now"].tap()
+        XCTAssertTrue(app.buttons["Leave now"].waitForExistence(timeout: 5))
+        XCTAssertFalse(departing.exists)
+    }
+
+    @MainActor
     func test_lb012_aTabKeepsItsScreen_andReselectingItPopsToItsRoot() {
         let app = launch()
         app.navigationBars["Lines"].buttons["More"].tap()
