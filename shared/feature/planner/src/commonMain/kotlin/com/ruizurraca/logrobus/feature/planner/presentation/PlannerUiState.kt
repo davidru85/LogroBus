@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.feature.planner.presentation
 
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
+import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 
 /**
  * How to Get There's root (design_guidelines.md §3.3). Until place search lands (LB-301 part 2), its origin and
@@ -33,6 +34,10 @@ object PlannerUiMapper {
     /** The root's fields for a new plan from [origin]: nothing is chosen for the destination yet. */
     fun state(origin: PlanPlace?): PlannerUiState =
         PlannerUiState(origin = field(origin), destination = PlaceFieldUi.Empty)
+
+    /** The root's fields for [places]. */
+    @Suppress("UNUSED_PARAMETER")
+    fun state(places: PlanPlaces): PlannerUiState = PlannerUiState()
 
     private fun field(place: PlanPlace?): PlaceFieldUi =
         when (place) {
