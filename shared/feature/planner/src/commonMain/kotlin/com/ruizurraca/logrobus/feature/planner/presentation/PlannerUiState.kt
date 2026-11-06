@@ -29,7 +29,7 @@ sealed interface PlannerEvent {
      */
     data object Shown : PlannerEvent
 
-    /** The swap button, between the fields: the origin becomes the destination and the other way round (FR-PLAN-08). */
+    /** The swap button: the origin becomes the destination, and the destination the origin (FR-PLAN-08). */
     data object Swap : PlannerEvent
 }
 

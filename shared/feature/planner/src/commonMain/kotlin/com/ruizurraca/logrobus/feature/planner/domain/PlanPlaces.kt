@@ -10,14 +10,16 @@ data class PlanPlaces(
 
     /**
      * FR-PLAN-11, each time the root shows: [initialOrigin] is the origin a new plan would start from now
-     * ([ReadInitialOrigin]), "My location" with the permission and none without it.
-     * - With it, "My location" fills an empty origin, unless the destination already holds it: a swap put it there.
+     * ([ReadInitialOrigin]), "My location" with the permission and none without it. Only "My location" moves here,
+     * whatever else part 2's places may be.
+     * - With the permission, "My location" fills an empty origin, unless the destination already holds it (after a
+     *   swap, for example).
      * - Without it, "My location" leaves whichever field holds it.
      */
     fun following(initialOrigin: PlanPlace?): PlanPlaces =
         when {
-            initialOrigin == null -> withoutMyLocation()
-            origin == null && destination != initialOrigin -> copy(origin = initialOrigin)
+            initialOrigin != PlanPlace.MyLocation -> withoutMyLocation()
+            origin == null && destination != PlanPlace.MyLocation -> copy(origin = PlanPlace.MyLocation)
             else -> this
         }
 
