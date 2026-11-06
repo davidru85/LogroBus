@@ -53,9 +53,14 @@ interface UseCases :
 
 /**
  * The only entry point Swift uses to reach shared code (architecture.md §5.2, ADR-0004). It hands out shared values
- * and the use cases; Swift never reaches Koin directly.
+ * and the use cases, each feature's own group through an object of its own, as [PreviewUseCases] does; Swift never
+ * reaches Koin directly.
  */
-object SharedDependencies : UseCases {
+object SharedDependencies :
+    UseCases,
+    SettingsUseCases by GraphSettingsUseCases,
+    NearMeUseCases by GraphNearMeUseCases,
+    PlannerUseCases by GraphPlannerUseCases {
     /** FR-NAV-02: the tab the app opens on. */
     val startDestination: TopLevelDestination
         get() = TopLevelDestination.start
@@ -72,10 +77,12 @@ object SharedDependencies : UseCases {
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
 
-    override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
+    /** A new set of scripted use cases, for SwiftUI previews and Swift ViewModel tests. They need no graph. */
+    fun preview(): PreviewUseCases = PreviewUseCases()
+}
 
-    override fun readInitialOrigin(): ReadInitialOrigin = graph().get()
-
+/** Settings' own use cases, from the graph (LB-403). */
+private object GraphSettingsUseCases : SettingsUseCases {
     override fun observePreferences(): ObservePreferences = graph().get()
 
     override fun setTheme(): SetTheme = graph().get()
@@ -83,12 +90,19 @@ object SharedDependencies : UseCases {
     override fun setEtaFormat(): SetEtaFormat = graph().get()
 
     override fun clearCache(): ClearCache = graph().get()
-
-    private fun graph() =
-        checkNotNull(KoinPlatform.getKoinOrNull()) {
-            "The dependency graph has not started: the app starts it at launch, and previews and tests use preview()"
-        }
-
-    /** A new set of scripted use cases, for SwiftUI previews and Swift ViewModel tests. They need no graph. */
-    fun preview(): PreviewUseCases = PreviewUseCases()
 }
+
+/** Near Me's own use cases, from the graph (LB-201). */
+private object GraphNearMeUseCases : NearMeUseCases {
+    override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
+}
+
+/** How to Get There's own use cases, from the graph (LB-301). */
+private object GraphPlannerUseCases : PlannerUseCases {
+    override fun readInitialOrigin(): ReadInitialOrigin = graph().get()
+}
+
+private fun graph() =
+    checkNotNull(KoinPlatform.getKoinOrNull()) {
+        "The dependency graph has not started: the app starts it at launch, and previews and tests use preview()"
+    }
