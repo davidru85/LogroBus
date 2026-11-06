@@ -25,6 +25,8 @@ import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.planner.domain.DefaultReadInitialOrigin
+import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
@@ -75,6 +77,7 @@ internal fun sharedModules(
         settingsModule,
         linesModule(debug),
         nearMeModule,
+        plannerModule,
     )
 
 /**
@@ -144,6 +147,12 @@ private fun linesModule(debug: Boolean) =
 private val nearMeModule =
     module {
         factory<ObserveLocationAccess> { DefaultObserveLocationAccess(get()) }
+    }
+
+// How to Get There (LB-301): the initial origin, from the platform's location permission.
+private val plannerModule =
+    module {
+        factory<ReadInitialOrigin> { DefaultReadInitialOrigin(get()) }
     }
 
 /** `architecture.md` §7: debug builds log from the debug level, release builds errors only. */
