@@ -121,8 +121,7 @@ private struct DepartureTimeSheet: View {
         self.onEvent = onEvent
         let today = Calendar.madrid.startOfDay(for: picker.now.madridDate)
         self.today = today
-        // A picked time whose day has gone by opens at today.
-        _time = State(initialValue: max(picker.start.madridDate, today))
+        _time = State(initialValue: picker.start.madridDate)
     }
 
     var body: some View {

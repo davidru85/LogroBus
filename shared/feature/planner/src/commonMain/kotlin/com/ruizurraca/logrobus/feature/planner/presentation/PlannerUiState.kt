@@ -51,8 +51,8 @@ sealed interface DepartureUi {
 enum class DepartureDay { TODAY, TOMORROW, OTHER }
 
 /**
- * Where the date and time pickers open, on the Madrid clock: at [start], the picked time, or now for "Leave now".
- * [now] is the Madrid clock's when they opened: the date picker offers no day before its own.
+ * Where the date and time pickers open, on the Madrid clock: at [start], the picked time, or now for "Leave now" or
+ * a picked time gone by. [now] is the Madrid clock's when they opened: the date picker offers no day before its own.
  */
 data class DeparturePickerUi(
     val start: MadridDateTime,
@@ -105,8 +105,8 @@ object PlannerUiMapper {
             origin = field(places.origin),
             destination = field(places.destination),
             departure = departure(departure, now),
-            // At the picked moment, or at now for "Leave now".
-            departurePicker = if (picking) picker(start = departure.departureAt(now), now = now) else null,
+            // At the picked moment, or at now for "Leave now" or a moment gone by, which the pickers no longer offer.
+            departurePicker = if (picking) picker(start = maxOf(departure.departureAt(now), now), now = now) else null,
         )
 
     private fun picker(

@@ -67,8 +67,7 @@ private fun DateDialog(
     val days = remember(today) { DaysFrom(today) }
     val state =
         rememberDatePickerState(
-            // A picked time whose day has gone by opens at today.
-            initialSelectedDate = maxOf(picker.start.date(), today),
+            initialSelectedDate = picker.start.date(),
             yearRange = today.year..DatePickerDefaults.YearRange.last,
             selectableDates = days,
         )
