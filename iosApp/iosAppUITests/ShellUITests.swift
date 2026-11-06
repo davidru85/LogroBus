@@ -129,7 +129,7 @@ final class ShellUITests: XCTestCase {
         departing.tap()
         app.buttons["Leave now"].tap()
         XCTAssertTrue(app.buttons["Leave now"].waitForExistence(timeout: 5))
-        XCTAssertFalse(departing.exists)
+        XCTAssertTrue(departing.waitForNonExistence(timeout: 5))
     }
 
     @MainActor
