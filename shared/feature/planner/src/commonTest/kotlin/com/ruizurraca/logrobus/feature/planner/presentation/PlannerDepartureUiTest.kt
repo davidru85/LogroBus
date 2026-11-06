@@ -81,6 +81,41 @@ class PlannerDepartureUiTest {
     }
 
     @Test
+    fun lb303_todayAndTomorrow_areDaysOnTheMadridClock_inWinterTime() {
+        // 23:30 UTC on 6 Nov is 00:30 on 7 Nov in Madrid (CET): 08:19 on 7 Nov is today there.
+        val afterMidnightInMadrid = Instant.parse("2026-11-06T23:30:00Z")
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 11, day = 7, hour = 8, minute = 19, now = now)
+
+        assertEquals(DepartureDay.TODAY, dayOf(departure, now = afterMidnightInMadrid))
+    }
+
+    @Test
+    fun lb303_tomorrow_isTheNextDay_onTheLastSundayOfOctober() {
+        // 23:30 CET on Sunday 25 Oct 2026, a 25-hour day: 00:10 on Monday is tomorrow, though the same day in UTC.
+        val sundayNight = Instant.parse("2026-10-25T22:30:00Z")
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 26, hour = 0, minute = 10, now = now)
+
+        assertEquals(DepartureDay.TOMORROW, dayOf(departure, now = sundayNight))
+    }
+
+    @Test
+    fun lb303_tomorrow_isTheNextDay_onTheLastSundayOfMarch() {
+        // 23:30 CEST on Sunday 29 Mar 2026, a 23-hour day: 00:10 on Monday is tomorrow, though the same day in UTC.
+        val sundayNight = Instant.parse("2026-03-29T21:30:00Z")
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 3, day = 30, hour = 0, minute = 10, now = now)
+
+        assertEquals(DepartureDay.TOMORROW, dayOf(departure, now = sundayNight))
+    }
+
+    @Test
+    fun lb303_aDepartureOnADayGoneBy_showsItsDate() {
+        // Kept from three days before, as the root keeps a picked time.
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 19, hour = 8, minute = 19, now = now)
+
+        assertEquals(DepartureDay.OTHER, dayOf(departure, now = now))
+    }
+
+    @Test
     fun lb303_thePickersAreClosed_untilATimeIsToBeChosen() {
         assertNull(state(PlanDeparture.Now).departurePicker)
     }
