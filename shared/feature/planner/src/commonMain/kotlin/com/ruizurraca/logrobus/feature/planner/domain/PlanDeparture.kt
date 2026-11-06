@@ -38,6 +38,7 @@ sealed interface PlanDeparture {
             day: Int,
             hour: Int,
             minute: Int,
+            now: Instant,
         ): At = At(LocalDateTime(year, month, day, hour, minute).toInstant(madridTimeZone))
     }
 }

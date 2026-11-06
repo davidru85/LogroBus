@@ -34,7 +34,7 @@ class PlannerDepartureUiTest {
 
     @Test
     fun lb303_departAtATimeToday_saysTheTime() {
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 8, minute = 19)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 8, minute = 19, now = now)
 
         assertEquals(
             DepartureUi.At(MadridDateTime(2026, 10, 22, 8, 19), DepartureDay.TODAY),
@@ -44,7 +44,7 @@ class PlannerDepartureUiTest {
 
     @Test
     fun lb303_departAtATimeTomorrow_saysTomorrow() {
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 8, minute = 19)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 8, minute = 19, now = now)
 
         assertEquals(
             DepartureUi.At(MadridDateTime(2026, 10, 23, 8, 19), DepartureDay.TOMORROW),
@@ -54,7 +54,7 @@ class PlannerDepartureUiTest {
 
     @Test
     fun lb303_departAtATimeOnAnotherDay_saysItsDate() {
-        val departure = PlanDeparture.atMadrid(year = 2027, month = 1, day = 15, hour = 8, minute = 19)
+        val departure = PlanDeparture.atMadrid(year = 2027, month = 1, day = 15, hour = 8, minute = 19, now = now)
 
         assertEquals(
             DepartureUi.At(MadridDateTime(2027, 1, 15, 8, 19), DepartureDay.OTHER),
@@ -66,7 +66,7 @@ class PlannerDepartureUiTest {
     fun lb303_todayAndTomorrow_areDaysOnTheMadridClock() {
         // 22:30 UTC on 22 Oct is 00:30 on 23 Oct in Madrid: 08:19 on 23 Oct is today there, though tomorrow in UTC.
         val afterMidnightInMadrid = Instant.parse("2026-10-22T22:30:00Z")
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 8, minute = 19)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 8, minute = 19, now = now)
 
         assertEquals(DepartureDay.TODAY, dayOf(departure, now = afterMidnightInMadrid))
     }
@@ -75,7 +75,7 @@ class PlannerDepartureUiTest {
     fun lb303_tomorrow_isTheNextDay_evenMinutesAway() {
         // 23:50 on 22 Oct in Madrid; 00:10 on 23 Oct is twenty minutes away, but tomorrow.
         val beforeMidnight = Instant.parse("2026-10-22T21:50:00Z")
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 0, minute = 10)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 0, minute = 10, now = now)
 
         assertEquals(DepartureDay.TOMORROW, dayOf(departure, now = beforeMidnight))
     }
@@ -95,7 +95,7 @@ class PlannerDepartureUiTest {
 
     @Test
     fun lb303_forDepartAt_thePickersOpenAtThePickedTime() {
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 8, minute = 19)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 23, hour = 8, minute = 19, now = now)
 
         assertEquals(
             DeparturePickerUi(start = MadridDateTime(2026, 10, 23, 8, 19), now = MadridDateTime(2026, 10, 22, 7, 0)),
@@ -106,7 +106,7 @@ class PlannerDepartureUiTest {
     @Test
     fun lb303_forATimeGoneBy_thePickersOpenAtNow() {
         // Kept from three days before, as the root keeps a picked time: neither its day nor its hour is offered now.
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 19, hour = 8, minute = 19)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 19, hour = 8, minute = 19, now = now)
         val now = MadridDateTime(2026, 10, 22, 7, 0)
 
         assertEquals(DeparturePickerUi(start = now, now = now), state(departure, picking = true).departurePicker)
@@ -114,7 +114,7 @@ class PlannerDepartureUiTest {
 
     @Test
     fun lb303_forATimeEarlierToday_thePickersOpenAtNow() {
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 6, minute = 30)
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 6, minute = 30, now = now)
         val now = MadridDateTime(2026, 10, 22, 7, 0)
 
         assertEquals(DeparturePickerUi(start = now, now = now), state(departure, picking = true).departurePicker)

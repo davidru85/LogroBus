@@ -42,7 +42,8 @@ public final class PlannerViewModel {
             picking = false
         case .departAt(let time):
             departure = PlanDepartureCompanion.shared.atMadrid(
-                year: time.year, month: time.month, day: time.day, hour: time.hour, minute: time.minute
+                year: time.year, month: time.month, day: time.day, hour: time.hour, minute: time.minute,
+                now: useCases.clock().now()
             )
             picking = false
         }

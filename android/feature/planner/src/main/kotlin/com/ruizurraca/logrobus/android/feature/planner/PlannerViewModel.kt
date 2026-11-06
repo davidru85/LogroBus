@@ -44,7 +44,7 @@ class PlannerViewModel(
 
     // A picked time is the departure, and the pickers close.
     private fun departAt(time: PlannerEvent.DepartAt) {
-        departure = PlanDeparture.atMadrid(time.year, time.month, time.day, time.hour, time.minute)
+        departure = PlanDeparture.atMadrid(time.year, time.month, time.day, time.hour, time.minute, clock.now())
         picking = false
     }
 
