@@ -69,6 +69,12 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The first run of PR #51 (42141341518) failed** on the runner flake of PR #50: XCTest gave up on the largest text's audit of Lines, the launch's first screen ("Audit failed to complete in time", error -56). Every other job passed, the default size's and the dark audits included.
 - **The retry added in PR #50 ran, and gave up too.** The audit gave up three times in a row, each attempt slower than the one before (6, 15 and 34 s), as if each new audit waited behind the one abandoned.
 - **The fix:** after XCTest gives up, the audit waits before it runs again, 5 s and then 10 s. It still runs at most three times, and a third give-up still fails the test. The error cannot be provoked locally, so the fix is checked by the next CI runs; locally the audits still pass.
+- **The second run (42148708782) got past Lines,** and then failed on a different false positive, on the "Edit favourite lines" sheet.
+  - **What it reported:** at the largest text, the audit flagged the Dynamic Type of the sheet's system "Done" bar button, at (295.3, 67, 74.7 × 36). The test already excludes that issue, because the system caps a bar button's text.
+  - **Why it failed anyway:** the exclusion matches a button whose frame equals a navigation bar button's frame, and this time it did not match. The screenshot shows the sheet settled.
+  - **The same issue, locally:** a diagnostic run (not committed) reports it for the same frame, as a button. There the frame equals the first navigation bar button's frame, and the exclusion holds.
+  - **Why it is a flake:** the sheet is outside this change, and it passed in every earlier run.
+  - **What was done:** the jobs ran once more, in the run of the commit that records this (`AGENTS.md` §10). If it recurs, the cause of the mismatch is the next thing to find.
 
 **Decisions**
 - **The fields open nothing in part 1 (owner decision, 2026-11-06).** So they are plain elements, not buttons: a field that announced a button role but did nothing would mislead. They become buttons with place search, in part 2.
