@@ -95,12 +95,18 @@ You will need:
 | M0 Foundations | Project skeleton, data layer, CI | In progress |
 | M1 Lines | Lines section | In progress |
 | M2 Near Me | Near Me section | In progress |
-| M3 How to Get There | Trip planner | Not started |
+| M3 How to Get There | Trip planner | In progress |
 | M4 MVP hardening | Error handling, settings, accessibility, translations, Figma designs, privacy declarations | In progress |
 | M5 v1.0 | Offline mode, news, fares, recharge points, widget, notifications, release | Not started |
 
 ### Recent changes
 
+- **2026-11-06:**
+  - LB-301, part 1: the How to Get There tab shows where your trip starts and ends.
+    - If the app may use your location, the trip starts from "My location"; if not, both fields are empty. The destination shows "Where to?".
+    - Opening the tab asks for nothing, and does not start reading your location. If you turn location on or off in Near me or in the phone's settings, the start changes the next time the tab shows.
+    - Screen readers say which field it is, then what it shows: "Origin, My location".
+    - Choosing a stop, a saved place, an address or a point on the map comes with part 2, as stops, place search and the map arrive. Until then the fields do nothing when you tap them.
 - **2026-11-05:**
   - LB-201, part 1: the Near me tab asks for your location, and only when you tap.
     - Until the map and the nearby stops arrive, the tab shows "Near you" with one row, "Turn on location to see nearby stops". Opening the tab asks for nothing; the row shows the phone's own prompt.

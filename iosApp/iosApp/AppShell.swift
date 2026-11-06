@@ -1,6 +1,7 @@
 import DesignSystem
 import FeatureLines
 import FeatureNearMe
+import FeaturePlanner
 import FeatureSettings
 import Shared
 import SwiftUI
@@ -53,12 +54,12 @@ private struct TabStack: View {
     }
 
     /// The tab's own screen: the Lines list (LB-101), which opens a line's detail on this stack (LB-103), Near Me
-    /// (LB-201), and a placeholder until How to Get There lands.
+    /// (LB-201), and How to Get There (LB-301).
     @ViewBuilder private var root: some View {
         switch destination {
         case .lines: LinesView { lineId in router.paths[destination, default: []].append(.line(lineId)) }
         case .nearMe: NearMeView()
-        case .planner: TabRootPlaceholder(destination: destination)
+        case .planner: PlannerView()
         }
     }
 }

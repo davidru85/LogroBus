@@ -100,5 +100,6 @@ schemes:
         # The Swift ViewModel tests of the LogroBusUI package (architecture.md §5.2).
         - package: LogroBusUI/FeatureLinesTests
         - package: LogroBusUI/FeatureNearMeTests
+        - package: LogroBusUI/FeaturePlannerTests
         - package: LogroBusUI/FeatureSettingsTests
         - package: LogroBusUI/DesignSystemTests

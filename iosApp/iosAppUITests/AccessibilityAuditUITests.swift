@@ -79,16 +79,14 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.tabBars.buttons["Near me"].tap()
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me", types, into: &issues)
-        app.tabBars.buttons["Directions"].tap()
-        XCTAssertTrue(app.navigationBars["How to get there"].waitForExistence(timeout: 5))
-        try audit.run("Directions", types, into: &issues)
+        try auditDirections(audit, types, in: app, into: &issues)
     }
 
     /// Near Me's row without location (LB-201), which the audit waits for: the screen is blank until access is read.
     private static let turnOnLocation = "Turn on location to see nearby stops"
 
-    /// The Lines search, More, Settings, its alert, About data and Near me again, in dark mode: the dark accent and
-    /// secondary text on the system's dark backgrounds.
+    /// The Lines search, More, Settings, its alert, About data, Near me and Directions again, in dark mode: the dark
+    /// accent and secondary text on the system's dark backgrounds.
     ///
     /// The app relaunches in its Dark theme, which a launch argument sets over the saved one, and which gives its
     /// windows the dark interface style that the device's dark mode would. The device's dark mode cannot be relied on:
@@ -107,6 +105,24 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.tabBars.buttons["Near me"].tap()
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me, dark", .all, into: &issues)
+        try auditDirections(audit, .all, in: app, into: &issues, suffix: ", dark")
+    }
+
+    /// How to Get There's root (LB-301), which the audit waits for: its fields, with the origin's hint in the
+    /// secondary text colour when location is off.
+    @MainActor
+    private func auditDirections(
+        _ audit: Audit,
+        _ types: XCUIAccessibilityAuditType,
+        in app: XCUIApplication,
+        into issues: inout [String],
+        suffix: String = ""
+    ) throws {
+        app.tabBars.buttons["Directions"].tap()
+        XCTAssertTrue(app.navigationBars["How to get there"].waitForExistence(timeout: 5))
+        let origin = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Origin")).firstMatch
+        XCTAssertTrue(origin.waitForExistence(timeout: 5))
+        try audit.run("Directions" + suffix, types, into: &issues)
     }
 
     /// More, Settings, at its end at the largest text, its Clear cache alert, and About data, from the Lines root.
@@ -214,7 +230,7 @@ private struct Audit {
     /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
     /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
     /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none. It also runs
-    /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`).
+    /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`), after a pause.
     ///
     /// A screen meant to be dark that is not is an issue too: on CI the app kept light mode when the device was asked
     /// for dark, and the dark audits audited light mode again without saying so (PR #50).
@@ -242,6 +258,7 @@ private struct Audit {
                     return true
                 }
             } catch let error as NSError where Self.gaveUp(error) && attempt < 3 {
+                Thread.sleep(forTimeInterval: Self.pauseAfterGivingUp * Double(attempt))
                 continue
             }
             if !unnamed || attempt == 3 { break }
@@ -293,9 +310,14 @@ private struct Audit {
         }
     }
 
+    /// How long the audit waits before it runs again after XCTest gave up on it, times the attempt: 5 s, then 10 s.
+    /// Run again at once, in PR #51, it gave up three times on Lines, each attempt slower than the one before (6, 15
+    /// and 34 s), as if each new audit waited behind the one abandoned.
+    private static let pauseAfterGivingUp: TimeInterval = 5
+
     /// Whether XCTest gave up on an audit: "Audit failed to complete in time", after about 16 s on one screen. It did
-    /// on CI, once on `main` and once in PR #50, each time on a launch's first screen, Lines, which other runs audit
-    /// in a few seconds.
+    /// on CI, on `main` and in PRs #50 and #51, each time on a launch's first screen, Lines, which other runs audit in
+    /// a few seconds.
     private static func gaveUp(_ error: NSError) -> Bool {
         error.domain == "com.apple.xcode.xctest.accessibilityAudit" && error.code == -56
     }

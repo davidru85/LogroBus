@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbols' "trip_origin" (outlined, Apache-2.0): the origin field (LB-301). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M480,800Q347,800 253.5,706.5Q160,613 160,480Q160,347 253.5,253.5Q347,160 480,160Q613,160 706.5,253.5Q800,347 800,480Q800,613 706.5,706.5Q613,800 480,800ZM480,640Q546,640 593,593Q640,546 640,480Q640,414 593,367Q546,320 480,320Q414,320 367,367Q320,414 320,480Q320,546 367,593Q414,640 480,640Z" />
+</vector>

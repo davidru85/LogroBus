@@ -1,0 +1,114 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "plan.destination": {
+      "comment": "How to Get There: the destination field's spoken name, before what it shows (NFR-A11Y-02, LB-301).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destination"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destino"
+          }
+        }
+      }
+    },
+    "plan.destination.hint": {
+      "comment": "How to Get There: the empty destination field's hint (design_guidelines.md §3.3).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where to?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿A dónde vas?"
+          }
+        }
+      }
+    },
+    "plan.origin": {
+      "comment": "How to Get There: the origin field's spoken name, before what it shows (NFR-A11Y-02, LB-301).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Origin"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Origen"
+          }
+        }
+      }
+    },
+    "plan.origin.current": {
+      "comment": "How to Get There: the origin with the location permission granted, the user's location (FR-PLAN-11).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My location"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi ubicación"
+          }
+        }
+      }
+    },
+    "plan.origin.hint": {
+      "comment": "How to Get There: the empty origin field's hint, without the location permission (FR-PLAN-11).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where from?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Desde dónde?"
+          }
+        }
+      }
+    },
+    "plan.title": {
+      "comment": "How to Get There: the root's title; its tab says tab.directions (design_guidelines.md §2.1 and §9).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to get there"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cómo llegar"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

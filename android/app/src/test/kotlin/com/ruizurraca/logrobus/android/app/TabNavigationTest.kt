@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.android.app
 
+import android.Manifest
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -25,12 +26,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
  * LB-012: each tab keeps its own back stack, and re-selecting a tab pops it to its root (FR-NAV-03). Each tab root
  * opens More, with Settings and About data (FR-NAV-04). "Two screens deep in Lines" is Lines, More, About data.
- * LB-103: favourite lines, end to end through the shell, from the Lines rows and a line's detail.
+ * LB-103: favourite lines, end to end through the shell, from the Lines rows and a line's detail. LB-301: How to Get
+ * There's fields, with and without the location permission.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = "en")
@@ -138,6 +141,26 @@ class TabNavigationTest {
         heading("Near me").assertIsDisplayed()
         heading("Near you").assertIsDisplayed()
         compose.onNodeWithText("Turn on location to see nearby stops").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb301_withoutLocation_howToGetTheresFieldsAreBothEmpty() {
+        // A fresh install: no location permission, so no origin (FR-PLAN-11).
+        tab("Directions").performClick()
+
+        compose.onNodeWithContentDescription("Origin, Where from?").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Destination, Where to?").assertIsDisplayed()
+    }
+
+    @Test
+    fun lb301_withLocation_howToGetThereStartsFromMyLocation() {
+        // Approximate location is enough (FR-LOC-01), granted in Near Me or the system's settings.
+        shadowOf(compose.activity.application).grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        tab("Directions").performClick()
+
+        compose.onNodeWithContentDescription("Origin, My location").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Destination, Where to?").assertIsDisplayed()
     }
 
     @Test

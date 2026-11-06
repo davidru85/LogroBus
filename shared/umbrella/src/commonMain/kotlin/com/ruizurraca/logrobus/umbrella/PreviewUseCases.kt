@@ -41,7 +41,7 @@ import kotlin.time.Instant
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
  * lines, there are no favourite lines, location is off, and the settings are the defaults; each script replaces the
  * last, except [favouriteLine], [settings], [locationOn] and [locationOff]. Settings' own use cases come from
- * [PreviewSettings], and Near Me's from [PreviewLocation].
+ * [PreviewSettings], and Near Me's and How to Get There's from [PreviewLocation].
  */
 class PreviewUseCases internal constructor(
     internal val settingsPreview: PreviewSettings = PreviewSettings(),
@@ -49,7 +49,8 @@ class PreviewUseCases internal constructor(
     internal val locationPreview: PreviewLocation = PreviewLocation(collections),
 ) : UseCases,
     SettingsUseCases by settingsPreview,
-    NearMeUseCases by locationPreview {
+    NearMeUseCases by locationPreview,
+    PlannerUseCases by locationPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
