@@ -21,6 +21,13 @@ sealed interface PlaceFieldUi {
 }
 
 object PlannerUiMapper {
-    @Suppress("UnusedParameter") // Used by the green phase.
-    fun state(origin: PlanPlace?): PlannerUiState = PlannerUiState()
+    /** The root's fields for a new plan from [origin]: nothing is chosen for the destination yet. */
+    fun state(origin: PlanPlace?): PlannerUiState =
+        PlannerUiState(origin = field(origin), destination = PlaceFieldUi.Empty)
+
+    private fun field(place: PlanPlace?): PlaceFieldUi =
+        when (place) {
+            null -> PlaceFieldUi.Empty
+            PlanPlace.MyLocation -> PlaceFieldUi.MyLocation
+        }
 }

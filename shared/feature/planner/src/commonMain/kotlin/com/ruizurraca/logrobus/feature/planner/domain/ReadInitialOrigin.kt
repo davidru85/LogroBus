@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.feature.planner.domain
 
+import com.ruizurraca.logrobus.core.location.LocationPermission
 import com.ruizurraca.logrobus.core.location.LocationProvider
 
 /**
@@ -12,7 +13,9 @@ sealed interface PlanPlace {
 }
 
 /**
- * FR-PLAN-11: the origin a new plan starts from. An interface, because Swift calls it and Swift tests replace it
+ * FR-PLAN-11: the origin a new plan starts from: the user's location with the foreground location permission,
+ * approximate or precise, and none without it. It reads the permission only: it never asks for it, which is Near Me's
+ * row (LB-201), and starts no location updates. An interface, because Swift calls it and Swift tests replace it
  * (architecture.md §5.2).
  */
 fun interface ReadInitialOrigin {
@@ -20,8 +23,8 @@ fun interface ReadInitialOrigin {
 }
 
 class DefaultReadInitialOrigin(
-    @Suppress("UnusedPrivateProperty") // Used by the green phase.
     private val provider: LocationProvider,
 ) : ReadInitialOrigin {
-    override fun invoke(): PlanPlace? = null
+    override fun invoke(): PlanPlace? =
+        if (provider.permission() == LocationPermission.NotGranted) null else PlanPlace.MyLocation
 }
