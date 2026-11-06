@@ -1,9 +1,14 @@
 package com.ruizurraca.logrobus.feature.planner.presentation
 
+import com.ruizurraca.logrobus.core.common.madridTimeZone
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
 import com.ruizurraca.logrobus.feature.planner.domain.PlanDeparture
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 /**
@@ -76,7 +81,41 @@ object PlannerUiMapper {
         departure: PlanDeparture,
         picking: Boolean,
         now: Instant,
-    ): PlannerUiState = state(places)
+    ): PlannerUiState =
+        state(places).copy(
+            departure = departure(departure, now),
+            // At the picked moment, or at now for "Leave now".
+            departurePicker = if (picking) picker(start = departure.departureAt(now), now = now) else null,
+        )
+
+    private fun picker(
+        start: Instant,
+        now: Instant,
+    ) = DeparturePickerUi(start = MadridDateTime.of(start), now = MadridDateTime.of(now))
+
+    private fun departure(
+        departure: PlanDeparture,
+        now: Instant,
+    ): DepartureUi =
+        when (departure) {
+            PlanDeparture.Now -> DepartureUi.Now
+            is PlanDeparture.At -> DepartureUi.At(MadridDateTime.of(departure.instant), day(departure.instant, now))
+        }
+
+    // Days on the Madrid calendar: ten minutes after 23:50 is tomorrow.
+    private fun day(
+        instant: Instant,
+        now: Instant,
+    ): DepartureDay {
+        val today = now.madridDate()
+        return when (instant.madridDate()) {
+            today -> DepartureDay.TODAY
+            today.plus(1, DateTimeUnit.DAY) -> DepartureDay.TOMORROW
+            else -> DepartureDay.OTHER
+        }
+    }
+
+    private fun Instant.madridDate(): LocalDate = toLocalDateTime(madridTimeZone).date
 
     /** The root's fields for [places]: each field shows its own end, "My location" in either (FR-PLAN-08). */
     fun state(places: PlanPlaces): PlannerUiState =
