@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.feature.planner
 
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
+import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.presentation.PlaceFieldUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerEvent
@@ -18,7 +19,7 @@ class PlannerViewModelTest {
     fun lb301_theFirstStateIsTheSharedMappersOfTheInitialOrigin_soNothingFlashes() {
         val viewModel = PlannerViewModel { PlanPlace.MyLocation }
 
-        assertEquals(PlannerUiMapper.state(PlanPlace.MyLocation), viewModel.state.value)
+        assertEquals(PlannerUiMapper.state(PlanPlaces(origin = PlanPlace.MyLocation)), viewModel.state.value)
     }
 
     @Test

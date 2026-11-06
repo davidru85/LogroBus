@@ -34,10 +34,6 @@ sealed interface PlannerEvent {
 }
 
 object PlannerUiMapper {
-    /** The root's fields for a new plan from [origin]: nothing is chosen for the destination yet. */
-    fun state(origin: PlanPlace?): PlannerUiState =
-        PlannerUiState(origin = field(origin), destination = PlaceFieldUi.Empty)
-
     /** The root's fields for [places]: each field shows its own end, "My location" in either (FR-PLAN-08). */
     fun state(places: PlanPlaces): PlannerUiState =
         PlannerUiState(origin = field(places.origin), destination = field(places.destination))
