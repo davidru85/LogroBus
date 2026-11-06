@@ -91,8 +91,9 @@ sealed interface PlannerEvent {
 
 object PlannerUiMapper {
     /**
-     * The root for [places] and [departure], with the pickers open while [picking]. [now] is the app clock's
-     * (spec §8.6), on which the departure's day and the pickers' start depend.
+     * The root for [places] and [departure], with the pickers open while [picking]. Each field shows its own end,
+     * "My location" in either (FR-PLAN-08). [now] is the app clock's (spec §8.6), on which the departure's day and the
+     * pickers' start depend.
      */
     fun state(
         places: PlanPlaces,
@@ -100,7 +101,9 @@ object PlannerUiMapper {
         picking: Boolean,
         now: Instant,
     ): PlannerUiState =
-        state(places).copy(
+        PlannerUiState(
+            origin = field(places.origin),
+            destination = field(places.destination),
             departure = departure(departure, now),
             // At the picked moment, or at now for "Leave now".
             departurePicker = if (picking) picker(start = departure.departureAt(now), now = now) else null,
@@ -134,10 +137,6 @@ object PlannerUiMapper {
     }
 
     private fun Instant.madridDate(): LocalDate = toLocalDateTime(madridTimeZone).date
-
-    /** The root's fields for [places]: each field shows its own end, "My location" in either (FR-PLAN-08). */
-    fun state(places: PlanPlaces): PlannerUiState =
-        PlannerUiState(origin = field(places.origin), destination = field(places.destination))
 
     private fun field(place: PlanPlace?): PlaceFieldUi =
         when (place) {

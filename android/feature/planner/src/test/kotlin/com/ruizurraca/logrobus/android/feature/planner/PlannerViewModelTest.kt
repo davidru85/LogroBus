@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.android.feature.planner
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.presentation.MadridDateTime
+import com.ruizurraca.logrobus.feature.planner.domain.PlanDeparture
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
@@ -35,7 +36,14 @@ class PlannerViewModelTest {
     fun lb301_theFirstStateIsTheSharedMappersOfTheInitialOrigin_soNothingFlashes() {
         val viewModel = viewModel()
 
-        assertEquals(PlannerUiMapper.state(PlanPlaces(origin = PlanPlace.MyLocation)), viewModel.state.value)
+        val expected =
+            PlannerUiMapper.state(
+                PlanPlaces(origin = PlanPlace.MyLocation),
+                PlanDeparture.Now,
+                false,
+                clock.now(),
+            )
+        assertEquals(expected, viewModel.state.value)
     }
 
     @Test
