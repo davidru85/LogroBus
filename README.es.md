@@ -104,6 +104,12 @@ La documentación técnica está en inglés.
 ### Cambios recientes
 
 - **06-11-2026:**
+  - LB-304: un toque intercambia dónde empieza y dónde acaba tu viaje.
+    - El botón junto a los dos campos los intercambia, «Mi ubicación» incluida, que entonces puede ser donde acaba el viaje. Un segundo toque los devuelve a su sitio.
+    - Volver a la pestaña mantiene el intercambio. «Mi ubicación» rellena un origen vacío solo si el viaje no acaba ya ahí, y sale de cualquiera de los campos si la app ya no puede usar tu ubicación.
+    - Los lectores de pantalla dicen «Intercambiar origen y destino», después de los dos campos.
+    - Cuando lleguen las rutas (LB-306), un intercambio borrará las anteriores, como cualquier otro cambio de origen o destino.
+  - CI: cuando Xcode abandona una auditoría de accesibilidad en una máquina de CI ocupada, la auditoría espera ahora unos segundos antes de volver a ejecutarse. Repetida en el acto, se había rendido tres veces seguidas.
   - LB-301, parte 1: la pestaña Cómo llegar muestra dónde empieza y dónde acaba tu viaje.
     - Si la app puede usar tu ubicación, el viaje sale de «Mi ubicación»; si no, los dos campos están vacíos. El destino muestra «¿A dónde vas?».
     - Abrir la pestaña no pide nada ni empieza a leer tu ubicación. Si activas o desactivas la ubicación en Cerca de mí o en los ajustes del móvil, el origen cambia la próxima vez que se muestra la pestaña.

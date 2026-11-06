@@ -2,12 +2,14 @@
 <resources>
     <!-- How to Get There (LB-301, design_guidelines.md §3.3 and §9, keys plan.*). Spanish (es-ES) is the default language. -->
     <string name="plan_title">Cómo llegar</string>
-    <!-- FR-PLAN-11: the origin with the location permission granted. -->
-    <string name="plan_origin_current">Mi ubicación</string>
+    <!-- The user's location, in either field: the origin's with the location permission granted (FR-PLAN-11). -->
+    <string name="plan_my_location">Mi ubicación</string>
     <!-- The hints of the empty fields. -->
     <string name="plan_origin_hint">¿Desde dónde?</string>
     <string name="plan_destination_hint">¿A dónde vas?</string>
     <!-- Spoken: each field's name, then what it shows (NFR-A11Y-02). -->
     <string name="plan_origin_spoken">Origen, %1$s</string>
     <string name="plan_destination_spoken">Destino, %1$s</string>
+    <!-- FR-PLAN-08: the button between the fields, spoken only: it shows an icon. -->
+    <string name="plan_swap">Intercambiar origen y destino</string>
 </resources>

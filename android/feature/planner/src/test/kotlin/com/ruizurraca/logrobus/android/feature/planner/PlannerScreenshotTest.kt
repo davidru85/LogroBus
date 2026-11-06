@@ -56,7 +56,7 @@ class PlannerScreenshotTest(
             val fontScale = if (variant == FONT_SCALE_2) 2f else density.fontScale
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 LogroBusTheme(darkTheme = variant == DARK) {
-                    Surface { PlannerScreen(uiState, onOpenMore = {}) }
+                    Surface { PlannerScreen(uiState, onEvent = {}, onOpenMore = {}) }
                 }
             }
         }
@@ -70,6 +70,7 @@ class PlannerScreenshotTest(
             mapOf(
                 "myLocation" to PlannerPreviewData.myLocation,
                 "empty" to PlannerPreviewData.empty,
+                "swapped" to PlannerPreviewData.swapped,
             )
 
         @JvmStatic

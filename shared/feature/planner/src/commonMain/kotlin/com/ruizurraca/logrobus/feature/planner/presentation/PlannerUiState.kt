@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.feature.planner.presentation
 
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
+import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 
 /**
  * How to Get There's root (design_guidelines.md §3.3). Until place search lands (LB-301 part 2), its origin and
@@ -27,12 +28,15 @@ sealed interface PlannerEvent {
      * meanwhile, in Near Me or in the system's settings, so the initial origin is read again (FR-PLAN-11).
      */
     data object Shown : PlannerEvent
+
+    /** The swap button: the origin becomes the destination, and the destination the origin (FR-PLAN-08). */
+    data object Swap : PlannerEvent
 }
 
 object PlannerUiMapper {
-    /** The root's fields for a new plan from [origin]: nothing is chosen for the destination yet. */
-    fun state(origin: PlanPlace?): PlannerUiState =
-        PlannerUiState(origin = field(origin), destination = PlaceFieldUi.Empty)
+    /** The root's fields for [places]: each field shows its own end, "My location" in either (FR-PLAN-08). */
+    fun state(places: PlanPlaces): PlannerUiState =
+        PlannerUiState(origin = field(places.origin), destination = field(places.destination))
 
     private fun field(place: PlanPlace?): PlaceFieldUi =
         when (place) {

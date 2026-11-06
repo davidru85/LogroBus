@@ -37,6 +37,24 @@
         }
       }
     },
+    "plan.my_location": {
+      "comment": "How to Get There: the user's location, in either field; the origin's with the location permission (FR-PLAN-11, FR-PLAN-08).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My location"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mi ubicación"
+          }
+        }
+      }
+    },
     "plan.origin": {
       "comment": "How to Get There: the origin field's spoken name, before what it shows (NFR-A11Y-02, LB-301).",
       "extractionState": "manual",
@@ -55,24 +73,6 @@
         }
       }
     },
-    "plan.origin.current": {
-      "comment": "How to Get There: the origin with the location permission granted, the user's location (FR-PLAN-11).",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "My location"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mi ubicación"
-          }
-        }
-      }
-    },
     "plan.origin.hint": {
       "comment": "How to Get There: the empty origin field's hint, without the location permission (FR-PLAN-11).",
       "extractionState": "manual",
@@ -87,6 +87,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "¿Desde dónde?"
+          }
+        }
+      }
+    },
+    "plan.swap": {
+      "comment": "How to Get There: the swap button between the fields, spoken only: it shows an icon (FR-PLAN-08, LB-304).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swap origin and destination"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intercambiar origen y destino"
           }
         }
       }

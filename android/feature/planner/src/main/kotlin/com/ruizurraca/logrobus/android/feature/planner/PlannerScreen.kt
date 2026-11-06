@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.android.feature.planner
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -18,11 +20,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewFontScale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -53,16 +57,18 @@ fun PlannerRoute(
         viewModel.onEvent(PlannerEvent.Shown)
         onPauseOrDispose {}
     }
-    PlannerScreen(state, onOpenMore = onOpenMore, modifier = modifier)
+    PlannerScreen(state, onEvent = viewModel::onEvent, onOpenMore = onOpenMore, modifier = modifier)
 }
 
 /**
  * Renders [state] under its top app bar, with the More action (FR-NAV-04). Until place search lands (LB-301 part 2),
- * the origin and destination fields only, which open nothing yet (owner decision, 2026-11-06).
+ * the origin and destination fields, which open nothing yet (owner decision, 2026-11-06), and the swap button
+ * (FR-PLAN-08), which sends [PlannerEvent.Swap] through [onEvent].
  */
 @Composable
 fun PlannerScreen(
     state: PlannerUiState,
+    onEvent: (PlannerEvent) -> Unit,
     onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,8 +85,26 @@ fun PlannerScreen(
             modifier = Modifier.fillMaxSize().consumeWindowInsets(padding),
             contentPadding = padding,
         ) {
-            item { PlaceFields(state, Modifier.padding(horizontal = Tokens.Spacing.screenMargin)) }
+            item {
+                // The swap button beside the fields, centred on their card (design_guidelines.md §3.3). Its 48 dp touch
+                // target keeps 12 dp around its icon, so 4 dp more put the icon's edge on the screen margin.
+                Row(
+                    modifier = Modifier.padding(start = Tokens.Spacing.screenMargin, end = Tokens.Spacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PlaceFields(state, Modifier.weight(1f))
+                    SwapButton(onClick = { onEvent(PlannerEvent.Swap) })
+                }
+            }
         }
+    }
+}
+
+/** FR-PLAN-08: one tap exchanges the origin and the destination. An icon, spoken as what it does. */
+@Composable
+private fun SwapButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(painterResource(R.drawable.ic_swap_vert), contentDescription = stringResource(R.string.plan_swap))
     }
 }
 
@@ -90,7 +114,8 @@ private fun PlaceFields(
     state: PlannerUiState,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedCard(modifier.fillMaxWidth()) {
+    // Read whole before the swap button beside it, which would otherwise come between the fields (§3.3).
+    OutlinedCard(modifier.fillMaxWidth().semantics { isTraversalGroup = true }) {
         PlaceField(
             icon = R.drawable.ic_trip_origin,
             field = state.origin,
@@ -118,7 +143,7 @@ private fun PlaceField(
     val shown =
         when (field) {
             PlaceFieldUi.Empty -> stringResource(hint)
-            PlaceFieldUi.MyLocation -> stringResource(R.string.plan_origin_current)
+            PlaceFieldUi.MyLocation -> stringResource(R.string.plan_my_location)
         }
     val description = stringResource(spoken, shown)
     // A hint in the secondary colour, as an empty text field's.
@@ -137,11 +162,18 @@ private fun PlaceField(
 @PreviewFontScale
 @Composable
 private fun PlannerMyLocationPreview() {
-    LogroBusTheme { PlannerScreen(PlannerPreviewData.myLocation, onOpenMore = {}) }
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.myLocation, onEvent = {}, onOpenMore = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun PlannerEmptyPreview() {
-    LogroBusTheme { PlannerScreen(PlannerPreviewData.empty, onOpenMore = {}) }
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.empty, onEvent = {}, onOpenMore = {}) }
+}
+
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun PlannerSwappedPreview() {
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.swapped, onEvent = {}, onOpenMore = {}) }
 }

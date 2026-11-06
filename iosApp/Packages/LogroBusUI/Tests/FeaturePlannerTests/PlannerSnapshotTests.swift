@@ -21,10 +21,19 @@ struct PlannerSnapshotTests {
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
-    /// The screen in its navigation stack, its fields already read, as the view's own `onAppear` reads them.
-    private func screen(_ useCases: PreviewUseCases) -> some View {
+    @Test(arguments: Appearance.allCases)
+    func lb304_swapped(appearance: Appearance) {
+        // FR-PLAN-08: one swap from "My location": the trip ends where the user is.
+        let screen = screen(SharedDependencies.shared.preview().locationOn(), then: [PlannerEventSwap.shared])
+        assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
+    }
+
+    /// The screen in its navigation stack, its fields already read, as the view's own `onAppear` reads them, then
+    /// after `events`.
+    private func screen(_ useCases: PreviewUseCases, then events: [any PlannerEvent] = []) -> some View {
         let viewModel = PlannerViewModel(useCases: useCases)
         viewModel.onEvent(PlannerEventShown.shared)
+        events.forEach(viewModel.onEvent)
         return NavigationStack { PlannerView(viewModel: viewModel) }
     }
 }

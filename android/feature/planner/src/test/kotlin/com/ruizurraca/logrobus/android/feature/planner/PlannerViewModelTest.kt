@@ -1,6 +1,7 @@
 package com.ruizurraca.logrobus.android.feature.planner
 
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
+import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.presentation.PlaceFieldUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerEvent
@@ -18,7 +19,7 @@ class PlannerViewModelTest {
     fun lb301_theFirstStateIsTheSharedMappersOfTheInitialOrigin_soNothingFlashes() {
         val viewModel = PlannerViewModel { PlanPlace.MyLocation }
 
-        assertEquals(PlannerUiMapper.state(PlanPlace.MyLocation), viewModel.state.value)
+        assertEquals(PlannerUiMapper.state(PlanPlaces(origin = PlanPlace.MyLocation)), viewModel.state.value)
     }
 
     @Test
@@ -35,5 +36,36 @@ class PlannerViewModelTest {
         origin = null
         viewModel.onEvent(PlannerEvent.Shown)
         assertEquals(PlannerUiState(origin = PlaceFieldUi.Empty), viewModel.state.value)
+    }
+
+    @Test
+    fun lb304_oneSwap_exchangesTheFields_andASecondRestoresThem() {
+        val viewModel = PlannerViewModel { PlanPlace.MyLocation }
+
+        viewModel.onEvent(PlannerEvent.Swap)
+        assertEquals(
+            PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation),
+            viewModel.state.value,
+        )
+
+        viewModel.onEvent(PlannerEvent.Swap)
+        assertEquals(
+            PlannerUiState(origin = PlaceFieldUi.MyLocation, destination = PlaceFieldUi.Empty),
+            viewModel.state.value,
+        )
+    }
+
+    @Test
+    fun lb304_afterASwap_theRootShowingAgain_keepsIt() {
+        val viewModel = PlannerViewModel { PlanPlace.MyLocation }
+        viewModel.onEvent(PlannerEvent.Swap)
+
+        // Back from another tab, or from the background, with the permission still granted.
+        viewModel.onEvent(PlannerEvent.Shown)
+
+        assertEquals(
+            PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation),
+            viewModel.state.value,
+        )
     }
 }
