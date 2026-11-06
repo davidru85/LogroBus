@@ -102,4 +102,21 @@ class PlannerDepartureUiTest {
             state(departure, picking = true).departurePicker,
         )
     }
+
+    @Test
+    fun lb303_forATimeGoneBy_thePickersOpenAtNow() {
+        // Kept from three days before, as the root keeps a picked time: neither its day nor its hour is offered now.
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 19, hour = 8, minute = 19)
+        val now = MadridDateTime(2026, 10, 22, 7, 0)
+
+        assertEquals(DeparturePickerUi(start = now, now = now), state(departure, picking = true).departurePicker)
+    }
+
+    @Test
+    fun lb303_forATimeEarlierToday_thePickersOpenAtNow() {
+        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 6, minute = 30)
+        val now = MadridDateTime(2026, 10, 22, 7, 0)
+
+        assertEquals(DeparturePickerUi(start = now, now = now), state(departure, picking = true).departurePicker)
+    }
 }
