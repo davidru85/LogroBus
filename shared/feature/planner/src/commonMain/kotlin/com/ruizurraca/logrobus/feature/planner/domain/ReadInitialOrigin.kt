@@ -16,7 +16,7 @@ sealed interface PlanPlace {
  * FR-PLAN-11: the origin a new plan starts from: the user's location with the foreground location permission,
  * approximate or precise, and none without it. It reads the permission only: it never asks for it, which is Near Me's
  * row (LB-201), and starts no location updates. An interface, because Swift calls it and Swift tests replace it
- * (architecture.md §5.2).
+ * (architecture.md §4.6).
  */
 fun interface ReadInitialOrigin {
     operator fun invoke(): PlanPlace?

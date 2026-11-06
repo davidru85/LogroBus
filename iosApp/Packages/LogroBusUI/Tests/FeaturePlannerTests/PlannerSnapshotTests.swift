@@ -48,10 +48,10 @@ enum Appearance: CaseIterable, Sendable {
             precision: 0.9995,
             perceptualPrecision: 0.98,
             layout: .device(config: phone),
-            traits: UITraitCollection(traitsFrom: [
-                UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light),
-                UITraitCollection(displayScale: 3)
-            ])
+            traits: UITraitCollection { traits in
+                traits.userInterfaceStyle = self == .dark ? .dark : .light
+                traits.displayScale = 3
+            }
         )
     }
 

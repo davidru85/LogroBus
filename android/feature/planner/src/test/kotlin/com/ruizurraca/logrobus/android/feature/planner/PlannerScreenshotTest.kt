@@ -19,8 +19,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * AGENTS.md §9: every state of How to Get There's root in light, dark and at 200 % font, in Spanish. One capture per test, on
- * [SCREENSHOT_SDK].
+ * AGENTS.md §9: every state of How to Get There's root in light, dark and at 200 % font, in Spanish. One capture per
+ * test, on [SCREENSHOT_SDK].
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
