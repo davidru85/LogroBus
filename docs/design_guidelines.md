@@ -239,8 +239,8 @@ Results                                   Itinerary detail
   - The origin follows the permission each time the root shows: selected again, or back from the background.
   - Until place search arrives (LB-301 part 2), the fields open nothing, so they are not buttons (owner decision, 2026-11-06).
 - **The swap button (LB-304, FR-PLAN-08):** one tap exchanges the origin and the destination, "My location" included, which may then show as the destination.
-  - Android: an icon button (Material Symbols `swap_vert`) beside the card, centred between the fields, its icon on the screen margin. iOS: a borderless button (SF Symbol `arrow.up.arrow.down`) at the trailing end of the section, whose one row holds both fields and the line between them. At least 48 dp or 44 pt to touch.
-  - A screen reader reads the origin, the destination, then the button, "Intercambiar origen y destino" ("Swap origin and destination").
+  - Android: an icon button (Material Symbols `swap_vert`) beside the card, centred on it, its icon on the screen margin. iOS: a borderless button (SF Symbol `arrow.up.arrow.down`) at the trailing end of the section, whose one row holds both fields and the line between them. At least 48 dp or 44 pt to touch.
+  - A screen reader reads the origin, the destination, then the button, "Intercambiar origen y destino" ("Swap origin and destination"): on Android the card is a traversal group, on iOS the fields come first by sort priority.
   - The root showing again never undoes a swap: "My location" fills an empty origin only while the destination does not hold it, and leaves either field without the permission (FR-PLAN-11).
 - Place search is one list, in this order: saved places, then stops, then addresses (CartoCiudad, at least 3 characters, debounced 300 ms, at most 8 results).
 - A results card shows the departure and arrival times, total duration, line badges in leg order with walk segments between them, and the total walking distance. Cards are sorted by arrival time (FR-PLAN-04).

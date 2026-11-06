@@ -279,7 +279,7 @@ Each shared feature module contains three packages:
 
 | Package | Contents |
 | --- | --- |
-| `domain` | Feature use cases: verb-phrase classes or `fun interface`s. Use cases consumed from Swift are exposed as interfaces, so iOS tests can replace them |
+| `domain` | Feature use cases: verb-phrase classes or `fun interface`s. Use cases consumed from Swift are exposed as interfaces, so iOS tests can replace them. Also the feature's own domain models, such as `planner`'s `PlanPlace` and `PlanPlaces` |
 | `data` | Feature-only data sources. Only `planner` (API-07, API-08, CartoCiudad) and `settings` have one |
 | `presentation` | `XUiState`, UI models, `XEvent` / `XEffect` types and pure mappers from domain to UI model |
 

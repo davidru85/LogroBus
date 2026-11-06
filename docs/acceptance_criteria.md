@@ -673,16 +673,22 @@ Refs: FR-PLAN-08, FR-PLAN-14
 
 - **Given** origin A and destination B, **when** swap is tapped once, **then** the origin is B, the destination is A, and the existing results are cleared.
 - **Given** a screen reader, **when** focus reaches the swap button, **then** it announces "Swap origin and destination". `[manual: TalkBack, VoiceOver]`
+- **Given** a swap that put "My location" in the destination, **when** the root shows again with the permission, **then** the swap stays. *(Added with the swap, 2026-11-06.)*
+- **Given** "My location" in either field, **when** the root shows again without the permission, **then** that field is empty. *(Added with the swap, 2026-11-06.)*
 
 Done (2026-11-06). Evidence:
 - **One tap swaps the ends:**
-  - Shared: `PlanPlacesTest` (a swap, and a second one that restores the trip) and `PlannerUiMapperTest` ("My location" shown as the destination).
-  - Both platforms' ViewModel tests: `lb304_oneSwap_…` and `lb304_afterASwap_theRootShowingAgain_keepsIt`. "My location" fills an empty origin only while the destination does not hold it (FR-PLAN-11, `PlanPlacesTest`).
+  - Shared: `PlanPlacesTest` (a swap, and a second one that restores the trip) and `PlannerUiMapperTest` ("My location" shown as the destination). Until LB-301 part 2 brings other places, the only trip to swap is "My location" and an empty field; a swap of two chosen places is tested then.
+  - Both platforms' ViewModel tests: `lb304_oneSwap_…` and `lb304_afterASwap_theRootShowingAgain_keepsIt`.
   - Android, through the route: `PlannerRouteTest.lb304_oneTapOnSwap_exchangesTheFields`.
   - iOS, end to end: `ShellUITests.test_lb304_withLocation_oneTapOnSwap_makesMyLocationTheDestination` turns location on from Near Me's row, answers the system's prompt, then taps the button by its spoken label.
   - Screenshots and snapshots of the swapped state, in light, dark and large text.
-- **The existing results are cleared:** How to Get There has no results until LB-306, whose criterion now names a swap among the changes that clear them (FR-PLAN-14).
-- **Screen readers:** the button is a button spoken "Swap origin and destination" (`PlannerScreenTest`; on iOS the UI test finds it by that label), read after the fields. `assertAccessible` and Xcode's audit check it. TalkBack and VoiceOver themselves are still to be checked on a device.
+- **The swap stays when the root shows again, and "My location" leaves either field without the permission:** `PlanPlacesTest` (`lb304_afterASwap_…`, `lb304_withoutThePermission_myLocationLeavesTheDestinationToo`, and a revoke then a re-grant after a swap), and both ViewModels' `lb304_afterASwap_theRootShowingAgain_keepsIt`.
+- **The existing results are cleared:** How to Get There has no results until LB-306, whose criterion now names a swap among the changes that clear them (FR-PLAN-14). Moving this part there is an agent decision for the owner to confirm in LB-304's pull request.
+- **Screen readers:**
+  - The button is a button spoken "Swap origin and destination": `PlannerScreenTest` on Android; on iOS the UI test finds it by that label. `assertAccessible` and Xcode's audit check its label and its touch target.
+  - It is read after both fields. On Android the card is a traversal group (`PlannerScreenTest.lb304_talkBackReadsBothFields_beforeTheSwapButton`). On iOS the fields' sort priority sets the order, which no automated check reads.
+  - TalkBack and VoiceOver themselves, the iOS order included, are still to be checked on a device.
 
 ### LB-305 Service-area check
 Refs: FR-PLAN-10
@@ -696,7 +702,7 @@ Refs: FR-PLAN-04, FR-PLAN-14, DD-08
 - **Given** origin 42.4650, -2.4450 and destination 42.4560, -2.4300 at 08:19, **when** a plan is requested, **then** at least one itinerary with a bus leg on line 10 or 3 is shown *(spec)*. CI checks this against `route_ok.json`; the nightly Maestro run checks it against the live source.
 - **Given** a plan request, **when** API-07 is called, **then** `maxResults` is 5, and the cards are sorted by arrival time.
 - **Given** a card, **when** it renders, **then** it shows the departure and arrival times, the total duration, the line badges in leg order and the total walking distance.
-- **Given** results are on screen, **when** the origin or the destination changes, a swap included (LB-304), **then** the old cards disappear before the new results arrive.
+- **Given** results are on screen, **when** the origin, the destination or the time changes (a swap included, LB-304; the time, LB-303), **then** the old cards disappear before the new results arrive.
 - **Given** the request fails with a network error, **when** the screen updates, **then** an error state with Retry is shown.
 
 ### LB-307 No-route messages

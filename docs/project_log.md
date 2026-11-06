@@ -39,7 +39,14 @@ A dated record of what was done and decided, newest first. Add an entry at the e
       - `ShellUITests.test_lb304_…`, end to end: location turned on from Near Me's row, the system's prompt answered in English or Spanish, then one tap on the button by its spoken label. The accessibility audits walk the button with the root.
       - A first try, a package test that walked a hosted view's accessibility tree to find the button, found nothing, with the button in place or not: SwiftUI builds no such tree there. The UI test replaced it (a second red commit).
       - A run stopped while the system's location prompt showed left the simulator's location denied, and the next run's `resetAuthorizationStatus` did not clear it; `simctl privacy … reset location` did. CI's fresh simulators start never asked.
-  - **Docs:** the acceptance criteria record the evidence, and LB-306's criterion now clears the results on any change of origin or destination, a swap included. `design_guidelines.md` §3.3 and §9 and `architecture.md` are updated, as are `AGENTS.md`'s status and both READMEs.
+  - **Docs:** the acceptance criteria record the evidence, and LB-306's criterion now clears the results on any change of origin, destination or time, a swap included. `design_guidelines.md` §3.3 and §9 and `architecture.md` are updated, as are `AGENTS.md`'s status and both READMEs.
+- **Review:** the four reviewer agents approved with findings, all acted on:
+  - **Android, TalkBack's order:** nothing made the card a traversal group, so TalkBack could read the button, centred beside the card, between the fields. Material's Surface marks itself with the deprecated `isContainer`, which a test showed is not `IsTraversalGroup`. The card now sets it (red 8471b73 then green 6c650c0, with `lb304_talkBackReadsBothFields_beforeTheSwapButton`).
+  - **Shared:** `following()` now moves "My location" only, in both branches, so part 2's other places can never be filled in or kept by it. Two tests pin "My location" leaving the destination, and a revoke then a re-grant after a swap; both were seen failing with the rule broken on purpose.
+  - **Evidence:** the iOS reading order rests on the fields' sort priority, which no automated check reads, so it joins the device pass. The two behaviours decided here are now acceptance criteria of LB-304. Only "My location" and an empty field can be swapped until part 2, which also brings a two-place swap test.
+  - **LB-301 part 2's follow-ups,** in the backlog: an origin the user empties must not get "My location" back each time the root shows, since FR-PLAN-11 is a default.
+  - **Nits:** a preview of the swapped state on both platforms; the screen test uses the shared swapped state; the iOS ViewModel's state derives from its places; the UI test resets location when it ends and lists the prompt's labels when it fails; comments and the design text say the button is centred on the card; `architecture.md` counts `PlanPlaces` among the domain models; LB-306's criterion names the time too (LB-303).
+  - **History:** between the Android red commit 245e2e6, which added `PlannerEvent.Swap`, and the iOS red commit f1b6ffe, which added its Swift case, the iOS package would not have compiled. `main` only sees the merge.
 
 **Decisions**
 - **Agent:**
@@ -47,12 +54,13 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Without the permission, "My location" leaves either field**, the destination included, as it left the origin in LB-301.
   - **Placement:** Android puts the button beside the card, as the sketch in `design_guidelines.md` §3.3 does. iOS keeps the system's inset section, so the button sits inside it, at the trailing end of one row that holds both fields. Each is at least 48 dp or 44 pt to touch.
   - **The button is always enabled.** With both fields empty, a swap changes nothing visible, which a disabled state would only complicate.
-- **LB-304 is done without its results part.** The results arrive with LB-306, whose criterion now names the swap among the changes that clear them (FR-PLAN-14).
+  - **LB-304 is done without its results part, for the owner to confirm.** The results arrive with LB-306, whose criterion now names the swap among the changes that clear them (FR-PLAN-14).
+  - **No announcement after a swap, for now.** Focus stays on the button, and the fields say what changed when the user moves back to them. Whether TalkBack and VoiceOver should announce the new trip is a question for the device pass.
 
 **Open / next**
 - **This entry's pull request** is open, and its watch runs.
 - **Next, once it is merged:** LB-303 (Leave now / Depart at), unless the owner chooses otherwise.
-- **With the owner:** the TalkBack and VoiceOver passes on a device, for LB-301 part 1 and LB-304.
+- **With the owner:** the TalkBack and VoiceOver passes on a device, for LB-301 part 1 and LB-304 (the iOS reading order, and whether a swap should be announced); and confirming that LB-304 closes with its results part in LB-306.
 - **Waiting for the owner:**
   - the iOS job limit;
   - Android's end-to-end encrypted backups;
