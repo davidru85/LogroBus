@@ -98,7 +98,7 @@ private func departureText(_ departure: any DepartureUi, locale: Locale) -> Text
         let hour = Int(time.hour)
         // HH:mm on the Madrid clock, the same digits in every locale, as the ETAs' clock times (spec §5.7).
         let clock = String(format: "%02d:%02d", time.hour, time.minute)
-        switch departAt.day {
+        switch departAt.relativeDay {
         case .today:
             return Text("plan.depart_today \(hour) \(clock)", bundle: .module)
         case .tomorrow:

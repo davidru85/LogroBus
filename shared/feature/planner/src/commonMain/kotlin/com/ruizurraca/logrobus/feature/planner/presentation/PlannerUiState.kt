@@ -38,16 +38,19 @@ sealed interface DepartureUi {
     data object Now : DepartureUi
 
     /**
-     * "Depart at" [time], on the Madrid clock. [day] counts from today there: "Depart at 08:19", "Depart tomorrow at
-     * 08:19", or "Depart on 22 Oct at 08:19".
+     * "Depart at" [time], on the Madrid clock. [relativeDay] counts from today there: "Depart at 08:19", "Depart
+     * tomorrow at 08:19", or "Depart on 22 Oct at 08:19".
      */
     data class At(
         val time: MadridDateTime,
-        val day: DepartureDay,
+        val relativeDay: DepartureDay,
     ) : DepartureUi
 }
 
-/** A departure's day, on the Madrid clock: today, tomorrow, or another day, which shows its date. */
+/**
+ * A departure's day, on the Madrid calendar: today, tomorrow, or another day, which shows its date. A day gone by is
+ * another day too: the root keeps a picked time until the user changes it (LB-303).
+ */
 enum class DepartureDay { TODAY, TOMORROW, OTHER }
 
 /**

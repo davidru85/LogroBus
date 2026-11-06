@@ -25,7 +25,7 @@ class PlannerDepartureUiTest {
     private fun dayOf(
         departure: PlanDeparture,
         now: Instant,
-    ): DepartureDay? = (state(departure, now = now).departure as? DepartureUi.At)?.day
+    ): DepartureDay? = (state(departure, now = now).departure as? DepartureUi.At)?.relativeDay
 
     @Test
     fun lb303_leaveNow_saysLeaveNow() {

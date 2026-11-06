@@ -73,7 +73,7 @@ struct PlannerViewModelTests {
     }
 
     private let eightNineteenToday = DepartureUiAt(
-        time: MadridDateTime(year: 2026, month: 10, day: 28, hour: 8, minute: 19), day: .today
+        time: MadridDateTime(year: 2026, month: 10, day: 28, hour: 8, minute: 19), relativeDay: .today
     )
 
     @Test
@@ -104,7 +104,7 @@ struct PlannerViewModelTests {
         viewModel.onEvent(PlannerEventDepartAt(year: 2026, month: 10, day: 29, hour: 8, minute: 19))
 
         let tomorrow = DepartureUiAt(
-            time: MadridDateTime(year: 2026, month: 10, day: 29, hour: 8, minute: 19), day: .tomorrow
+            time: MadridDateTime(year: 2026, month: 10, day: 29, hour: 8, minute: 19), relativeDay: .tomorrow
         )
         #expect(viewModel.state.departure as? DepartureUiAt == tomorrow)
         #expect(viewModel.state.departurePicker == nil)

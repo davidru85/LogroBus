@@ -40,8 +40,8 @@ class PlannerViewModelTest {
             PlannerUiMapper.state(
                 PlanPlaces(origin = PlanPlace.MyLocation),
                 PlanDeparture.Now,
-                false,
-                clock.now(),
+                picking = false,
+                now = clock.now(),
             )
         assertEquals(expected, viewModel.state.value)
     }

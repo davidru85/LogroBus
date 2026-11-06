@@ -28,7 +28,7 @@ internal fun departureText(departure: DepartureUi): String =
         is DepartureUi.At -> {
             val time = departure.time
             val clock = time.clockText()
-            when (departure.day) {
+            when (departure.relativeDay) {
                 DepartureDay.TODAY -> {
                     pluralStringResource(R.plurals.plan_depart_today, time.hour, clock)
                 }
