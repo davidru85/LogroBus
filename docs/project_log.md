@@ -19,6 +19,72 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-06: LB-301 part 1, How to Get There's origin and destination fields
+
+**Done**
+- **PR #50 (LB-201 part 1) merged** on 2026-11-06, after the third attempt at its dark audits held on CI, and `main` was synced.
+- **The next story:** no P0 story left can be done whole without OQ-10 or OQ-11. The owner chose LB-301 part 1 (2026-11-06) over LB-404's attributions and an engine-only LB-213 part 1.
+- **LB-301 part 1 (`feat/LB-301-planner-fields`):** FR-PLAN-11 on How to Get There's root.
+  - **Shared (`:shared:feature:planner`):**
+    - `ReadInitialOrigin` returns `PlanPlace.MyLocation` with the location permission, approximate or precise, and nothing without it. It reads the permission only: it never asks and starts no updates.
+    - `PlannerUiMapper` turns it into the two fields, `PlaceFieldUi.MyLocation` or `Empty`; the destination is `Empty`.
+    - `PlannerEvent.Shown` reads the origin again.
+    - The graph binds `ReadInitialOrigin`, and `PlannerUseCases` hands it to Swift. `PreviewLocation` serves it from the same scripted permission as Near Me's, so `locationOn()` scripts both tabs.
+  - **Android (`:android:feature:planner`):**
+    - `PlannerViewModel` starts from the origin read at once, so the first frame shows it.
+    - `PlannerRoute` sends `Shown` on resume.
+    - `PlannerScreen` draws the fields in an outlined card, each one merged for TalkBack as "Origin, My location".
+    - The shell opens `PlannerRoute` on the tab, and `TabRootPlaceholder` and the app's `plan_title` are gone.
+  - **iOS (`FeaturePlanner`):**
+    - `PlannerViewModel` reads the origin through `SharedDependencies`; `PlannerView` sends `Shown` on appear and each time the scene becomes active.
+    - Each field is one accessibility element, with the field's name as its label and what it shows as its value.
+    - The accessibility audit first reported both fields' text as clipped, at every size, although it showed whole. Each field is now an `HStack` with its text across the row's whole width, as Near Me's row since LB-201. Before, it was a `Label`, whose frame starts at the icon. The icons share one scaled width, so both texts start in line.
+    - The shell opens `PlannerView`. `TabRootPlaceholder`, `TopLevelDestination.title` and the app's `plan.title` are gone: `plan.title` lives in `FeaturePlanner`'s catalogue now.
+  - **Tests:**
+    - **Shared:** `ReadInitialOriginTest`, `PlannerUiMapperTest`; the graph and preview tests in `:shared:umbrella`.
+    - **Android:**
+      - `PlannerViewModelTest`, `PlannerScreenTest`, `PlannerRouteTest`;
+      - `PlannerScreenshotTest`: both states in light, dark and 200 %, with `assertAccessible`;
+      - `TabNavigationTest`, with and without approximate location, and `AppGraphTest`.
+    - **iOS:**
+      - the new `FeaturePlannerTests` target: ViewModel tests, and snapshots of both states in light, dark and large text;
+      - `ShellUITests.test_lb301_…`, without location;
+      - `PlannerViewTests`: the view reads the origin by itself once in a window. It fails without the view's `onAppear`, which the ViewModel tests and snapshots call for themselves;
+      - the accessibility audit now waits for the fields, and walks the root in the dark walk too.
+  - **CI:** `:android:feature:planner` joins the Android screenshot matrix, and `FeaturePlannerTests` the iOS package matrix.
+  - **Docs:**
+    - the backlog splits LB-301 in two, and the acceptance criteria record part 1's evidence;
+    - `design_guidelines.md` §3.3 describes the fields, and §9 lists the new keys `plan.origin.hint`, `plan.origin` and `plan.destination`;
+    - `architecture.md`, `ci_cd.md` and `testing_strategy.md` §4.7 are updated, as are `AGENTS.md`'s status and both READMEs.
+
+- **Review:** the four reviewer agents approved with nits, all fixed:
+  - a KDoc's section citation;
+  - a test comment over 120 characters;
+  - the deprecated `UITraitCollection(traitsFrom:)` in the new snapshot test;
+  - the missing test of the view's own read (`PlannerViewTests` above);
+  - `security_privacy.md`, which now says How to Get There reads the permission only.
+  - The general review also found a blocker: `SharedDependencies` had 12 functions, over detekt's `TooManyFunctions` limit of 11, which fails `./gradlew check`. Its use cases now come from one object per feature, by delegation, as `PreviewUseCases` already does; the limit stays.
+
+**Decisions**
+- **The fields open nothing in part 1 (owner decision, 2026-11-06).** So they are plain elements, not buttons: a field that announced a button role but did nothing would mislead. They become buttons with place search, in part 2.
+- **Copy:**
+  - The empty origin's hint is "¿Desde dónde?" ("Where from?"), as a proposal beside the destination's "¿A dónde vas?".
+  - The spoken names are "Origen" and "Destino".
+  - iOS says them as a label with a value, Android as one description, "Origen, Mi ubicación".
+- **The origin is read, not observed.** The permission can only change while the root is away: in Near Me, in the system's settings, or in the background. Reading it each time the root shows is enough, and needs no flow.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **LB-301 part 2:** choosing a stop, a saved place, an address or a map point; it waits for LB-008 part 2, LB-311, LB-302 and LB-013.
+- **Next, once it is merged:** LB-304 (swap origin and destination) and LB-303 (Leave now / Depart at), each in its own pull request, unless the owner chooses otherwise. Neither waits for OQ-10 or OQ-11.
+- **Waiting for the owner:**
+  - the iOS job limit;
+  - Android's end-to-end encrypted backups;
+  - DD-10 provisional stops;
+  - alert 6 (Kotlin Gradle plugin);
+  - the Gradle cache provider;
+  - OQ-10 and OQ-11.
+
 ## 2026-11-05: LB-201 part 1, the location permission flow
 
 **Done**

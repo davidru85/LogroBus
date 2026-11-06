@@ -97,12 +97,18 @@ La documentación técnica está en inglés.
 | M0 Cimientos | Esqueleto del proyecto, capa de datos, integración continua | En curso |
 | M1 Líneas | Sección Líneas | En curso |
 | M2 Cerca de mí | Sección Cerca de mí | En curso |
-| M3 Cómo llegar | Planificador de viajes | Sin empezar |
+| M3 Cómo llegar | Planificador de viajes | En curso |
 | M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | En curso |
 | M5 v1.0 | Modo sin conexión, noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
 
 ### Cambios recientes
 
+- **06-11-2026:**
+  - LB-301, parte 1: la pestaña Cómo llegar muestra dónde empieza y dónde acaba tu viaje.
+    - Si la app puede usar tu ubicación, el viaje sale de «Mi ubicación»; si no, los dos campos están vacíos. El destino muestra «¿A dónde vas?».
+    - Abrir la pestaña no pide nada ni empieza a leer tu ubicación. Si activas o desactivas la ubicación en Cerca de mí o en los ajustes del móvil, el origen cambia la próxima vez que se muestra la pestaña.
+    - Los lectores de pantalla dicen qué campo es y luego lo que muestra: «Origen, Mi ubicación».
+    - Elegir una parada, un lugar guardado, una dirección o un punto del mapa llega con la parte 2, a medida que lleguen las paradas, la búsqueda de lugares y el mapa. Hasta entonces, tocar los campos no hace nada.
 - **05-11-2026:**
   - LB-201, parte 1: la pestaña Cerca de mí pide tu ubicación, y solo cuando tocas.
     - Hasta que lleguen el mapa y las paradas cercanas, la pestaña muestra «Cerca de ti» con una fila, «Activa la ubicación para ver paradas cercanas». Abrir la pestaña no pide nada; la fila muestra el aviso del propio móvil.

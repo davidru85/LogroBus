@@ -41,9 +41,10 @@ The project collects **no** device identifiers, advertising ids, contacts, photo
 **As built (LB-201 part 1):**
 - **Android** declares `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` in the app's manifest. A test reads the merged manifest and finds these two location permissions, and no other: no `ACCESS_BACKGROUND_LOCATION`.
 - **iOS** sets `NSLocationWhenInUseUsageDescription`: in Spanish in the build settings, and in Spanish and English in `InfoPlist.xcstrings`. A test finds both languages, the two Spanish texts equal, and no "Always" purpose string and no `location` background mode.
-- **The prompt comes only from Near Me's "Turn on location" row**, so far; the recenter control comes with LB-202 and "My location" with LB-301. Opening Near Me asks for nothing.
+- **The prompt comes only from Near Me's "Turn on location" row**, so far; the recenter control comes with LB-202, and any prompt from How to Get There's "My location" with LB-301 part 2 or LB-306. Opening Near Me asks for nothing.
   - Android asks for both permissions at once, so the user may grant approximate location only.
   - Once the system no longer asks, the row opens the app's page in the system settings instead: on Android after two denials, and on iOS after one. An interrupted request opens nothing.
+- **How to Get There (LB-301 part 1) reads the foreground permission only:** its origin is "My location" with the permission and empty without it. It asks for nothing and starts no location updates (`ReadInitialOriginTest.lb301_readingTheOrigin_startsNoLocationUpdates`, `ShellUITests.test_lb301_…`). The fix is read when a plan is requested (LB-306).
 - **Location runs only while Near Me shows,** and stops when another tab is selected or the app leaves the foreground (FR-LOC-03): on Android 5 s after the screen stops collecting, and on iOS when the screen's task is cancelled. The fixes stay in memory, and nothing logs or sends them yet; the nearby stops (LB-203) will send them in API-08 requests.
 
 ## 4. Security controls

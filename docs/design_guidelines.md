@@ -232,6 +232,12 @@ Results                                   Itinerary detail
 ```
 
 - Origin and destination accept: current location, a saved place, a stop, a point picked by long-pressing the map, or an address (FR-PLAN-01). Origin defaults to "Mi ubicación" ("My location") when permission is granted.
+- **The fields (LB-301 part 1):**
+  - The two fields share one container: an outlined card on Android and an inset grouped section on iOS. Each field has a leading icon, which is decoration: the origin a ring (Material Symbols `trip_origin`, SF Symbol `smallcircle.filled.circle`) and the destination a pin (`location_on`, `mappin.and.ellipse`).
+  - An empty field shows its hint in the secondary text colour: "¿Desde dónde?" ("Where from?") for the origin, and "¿A dónde vas?" ("Where to?") for the destination.
+  - A screen reader stops once on each field and hears its name, then what it shows: "Origen, Mi ubicación".
+  - The origin follows the permission each time the root shows: selected again, or back from the background.
+  - Until place search arrives (LB-301 part 2), the fields open nothing, so they are not buttons (owner decision, 2026-11-06).
 - Place search is one list, in this order: saved places, then stops, then addresses (CartoCiudad, at least 3 characters, debounced 300 ms, at most 8 results).
 - A results card shows the departure and arrival times, total duration, line badges in leg order with walk segments between them, and the total walking distance. Cards are sorted by arrival time (FR-PLAN-04).
 - Itinerary detail is a map with a step list. Steps with intermediate stops expand. Planned times are shown alongside the live ETA of the first bus leg when it departs within 60 min.
@@ -475,7 +481,9 @@ Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessi
 | `settings.cache_cleared`, `settings.cache_failed` | Caché borrada; No se ha podido borrar la caché | Cache cleared; Couldn't clear the cache |
 | `about.title` | Sobre los datos | About data |
 | `plan.origin.current` | Mi ubicación | My location |
+| `plan.origin.hint` (the empty origin, LB-301) | ¿Desde dónde? | Where from? |
 | `plan.destination.hint` | ¿A dónde vas? | Where to? |
+| `plan.origin`, `plan.destination` (spoken, iOS: each field's name, before its value; Android `plan.origin_spoken`, `plan.destination_spoken`, "Origen, %s") | Origen, Destino | Origin, Destination |
 | `freshness.updated_ago` | Actualizado hace %d s | Updated %d s ago |
 | `line.badge` (spoken) | Línea %s | Line %s |
 | `eta.now` | Ahora | Now |

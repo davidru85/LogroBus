@@ -622,6 +622,35 @@ Refs: FR-PLAN-01, FR-PLAN-11
 - **Given** a stop, a saved place, an address or a point picked on the map with a long press, **when** it is chosen for either field, **then** the field shows its name, or the coordinates for a map point.
 - **Given** a screen reader, **when** focus reaches either field, **then** its role and current value are announced. `[manual: TalkBack, VoiceOver]`
 
+Part 1 (2026-11-06): How to Get There's root with its two fields, which open nothing until place search lands (owner decision, 2026-11-06). Evidence:
+- **With the location permission, the origin is "My location":**
+  - `ReadInitialOriginTest` covers approximate and precise location.
+  - `PlannerUiMapperTest` and both platforms' ViewModel tests check the fields.
+  - Android end to end with approximate location granted: `TabNavigationTest.lb301_withLocation_…`.
+  - Screenshots and snapshots in light, dark and large text.
+- **Without it, both fields are empty:** the same tests check this, plus:
+  - `TabNavigationTest.lb301_withoutLocation_…` on Android;
+  - on iOS, `ShellUITests.test_lb301_…`, with location reset to never asked.
+  - The empty fields show their hints: "Where from?" and "Where to?".
+- **The origin follows the permission:** it is read again each time the root shows.
+  - `PlannerRouteTest`: back from the background on Android.
+  - `PlannerViewModelTest` on Android and `PlannerViewModelTests` on iOS: shown again after a grant or a revocation.
+  - `PlannerViewTests` on iOS: the view reads the origin by itself once it is in a window.
+  - iOS also reads it again each time the scene becomes active. No automated test drives that; part 2's device pass checks it.
+- **Opening the root asks for nothing and starts no location updates:**
+  - `ReadInitialOriginTest.lb301_readingTheOrigin_startsNoLocationUpdates`;
+  - `ShellUITests.test_lb301_…`, which finds no system alert.
+- **A screen reader stops once on each field,** and hears its name, then its value: "Origin, My location".
+  - Android: `PlannerScreenTest` checks the merged node's description.
+  - iOS: an accessibility label and value; `ShellUITests` finds each field by them.
+  - The accessibility audit walks the root at the default and the largest text, and in dark mode.
+- **Fields are not buttons yet:** they open nothing, so they announce no button role (`PlannerScreenTest.lb301_theFieldsOpenNothingYet`).
+
+Part 2, with the sources of a place:
+- choosing a stop (LB-008 part 2), a saved place (LB-311), an address (LB-302) or a map point (LB-013) for either field, which then shows its name, or the coordinates of a map point;
+- the fields become buttons that open place search, so their role is announced;
+- the TalkBack and VoiceOver passes on a device, and a device pass of the origin on iOS after a change in Settings.
+
 ### LB-302 CartoCiudad geocoder and place search
 Refs: FR-PLAN-02, FR-PLAN-12, `api_spec.md` §5
 
