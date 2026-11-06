@@ -3,7 +3,7 @@ import Shared
 import SwiftUI
 
 /// How to Get There, the root of its tab (LB-301). Until place search lands (LB-301 part 2), its origin and
-/// destination fields only, which open nothing yet (owner decision, 2026-11-06).
+/// destination fields, which open nothing yet (owner decision, 2026-11-06), and the swap button (LB-304).
 public struct PlannerView: View {
     @State private var viewModel: PlannerViewModel
     @Environment(\.scenePhase) private var scenePhase
@@ -15,8 +15,11 @@ public struct PlannerView: View {
     public var body: some View {
         List {
             Section {
-                PlaceField(kind: .origin, field: viewModel.state.origin)
-                PlaceField(kind: .destination, field: viewModel.state.destination)
+                PlaceFields(
+                    origin: viewModel.state.origin,
+                    destination: viewModel.state.destination,
+                    onSwap: { viewModel.onEvent(PlannerEventSwap.shared) }
+                )
             }
         }
         // The list's background, as the other roots'.
@@ -32,6 +35,39 @@ public struct PlannerView: View {
     }
 }
 
+/// The section's one row: both fields with the line between them, and the swap button at its trailing end, centred
+/// between them (design_guidelines.md §3.3). A screen reader reads the fields, then the button.
+private struct PlaceFields: View {
+    let origin: any PlaceFieldUi
+    let destination: any PlaceFieldUi
+    let onSwap: () -> Void
+    // One width for both icons, so that both texts start in line; it grows with the text.
+    @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 28
+
+    var body: some View {
+        HStack(spacing: Tokens.Spacing.small) {
+            VStack(alignment: .leading, spacing: 0) {
+                PlaceField(kind: .origin, field: origin, iconWidth: iconWidth)
+                // The line a list draws between its rows, from where the texts start.
+                Divider().padding(.leading, iconWidth + Tokens.Spacing.medium)
+                PlaceField(kind: .destination, field: destination, iconWidth: iconWidth)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilitySortPriority(1)
+            // FR-PLAN-08: one tap exchanges the origin and the destination. An icon, spoken as what it does.
+            Button(action: onSwap) {
+                Image(systemName: "arrow.up.arrow.down")
+                    .frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
+                    .contentShape(Rectangle())
+            }
+            // Its own button: the row is not one.
+            .buttonStyle(.borderless)
+            .accessibilityLabel(Text("plan.swap", bundle: .module))
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
 /// One field: what it shows, or its hint when empty. A screen reader hears the field's name, then what it shows.
 private struct PlaceField: View {
     enum Kind {
@@ -40,8 +76,7 @@ private struct PlaceField: View {
 
     let kind: Kind
     let field: any PlaceFieldUi
-    // One width for both icons, so that both texts start in line; it grows with the text.
-    @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 28
+    let iconWidth: CGFloat
 
     var body: some View {
         HStack(spacing: Tokens.Spacing.medium) {
@@ -56,8 +91,10 @@ private struct PlaceField: View {
                 .foregroundStyle(field is PlaceFieldUiEmpty ? Tokens.Colors.secondaryText : Color.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
-                .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         }
+        // A list row's height, as each field had its own row before the swap button joined them (LB-304).
+        .padding(.vertical, Tokens.Spacing.small)
+        .frame(minHeight: Tokens.minTouchTarget)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
         .accessibilityValue(shown)

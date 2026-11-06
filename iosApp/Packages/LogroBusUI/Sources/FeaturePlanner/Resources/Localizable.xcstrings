@@ -91,6 +91,24 @@
         }
       }
     },
+    "plan.swap": {
+      "comment": "How to Get There: the swap button between the fields, spoken only: it shows an icon (FR-PLAN-08, LB-304).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swap origin and destination"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intercambiar origen y destino"
+          }
+        }
+      }
+    },
     "plan.title": {
       "comment": "How to Get There: the root's title; its tab says tab.directions (design_guidelines.md §2.1 and §9).",
       "extractionState": "manual",
