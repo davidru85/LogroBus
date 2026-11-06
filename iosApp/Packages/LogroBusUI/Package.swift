@@ -72,6 +72,21 @@ package.targets.append(
     )
 )
 
+// How to Get There's ViewModel and snapshot tests (LB-301).
+package.targets.append(
+    .testTarget(
+        name: "FeaturePlannerTests",
+        dependencies: [
+            "DesignSystem",
+            "FeaturePlanner",
+            "Shared",
+            .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+        ],
+        exclude: ["__Snapshots__"],
+        linkerSettings: linksShared
+    )
+)
+
 // Near Me's ViewModel and snapshot tests (LB-201).
 package.targets.append(
     .testTarget(

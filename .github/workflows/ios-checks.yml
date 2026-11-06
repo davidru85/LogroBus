@@ -120,6 +120,7 @@ jobs:
           - DesignSystemTests
           - FeatureLinesTests
           - FeatureNearMeTests
+          - FeaturePlannerTests
           - FeatureSettingsTests
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
