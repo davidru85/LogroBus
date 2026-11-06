@@ -79,16 +79,14 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.tabBars.buttons["Near me"].tap()
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me", types, into: &issues)
-        app.tabBars.buttons["Directions"].tap()
-        XCTAssertTrue(app.navigationBars["How to get there"].waitForExistence(timeout: 5))
-        try audit.run("Directions", types, into: &issues)
+        try auditDirections(audit, types, in: app, into: &issues)
     }
 
     /// Near Me's row without location (LB-201), which the audit waits for: the screen is blank until access is read.
     private static let turnOnLocation = "Turn on location to see nearby stops"
 
-    /// The Lines search, More, Settings, its alert, About data and Near me again, in dark mode: the dark accent and
-    /// secondary text on the system's dark backgrounds.
+    /// The Lines search, More, Settings, its alert, About data, Near me and Directions again, in dark mode: the dark
+    /// accent and secondary text on the system's dark backgrounds.
     ///
     /// The app relaunches in its Dark theme, which a launch argument sets over the saved one, and which gives its
     /// windows the dark interface style that the device's dark mode would. The device's dark mode cannot be relied on:
@@ -107,6 +105,24 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.tabBars.buttons["Near me"].tap()
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me, dark", .all, into: &issues)
+        try auditDirections(audit, .all, in: app, into: &issues, suffix: ", dark")
+    }
+
+    /// How to Get There's root (LB-301), which the audit waits for: its fields, with the origin's hint in the
+    /// secondary text colour when location is off.
+    @MainActor
+    private func auditDirections(
+        _ audit: Audit,
+        _ types: XCUIAccessibilityAuditType,
+        in app: XCUIApplication,
+        into issues: inout [String],
+        suffix: String = ""
+    ) throws {
+        app.tabBars.buttons["Directions"].tap()
+        XCTAssertTrue(app.navigationBars["How to get there"].waitForExistence(timeout: 5))
+        let origin = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Origin")).firstMatch
+        XCTAssertTrue(origin.waitForExistence(timeout: 5))
+        try audit.run("Directions" + suffix, types, into: &issues)
     }
 
     /// More, Settings, at its end at the largest text, its Clear cache alert, and About data, from the Lines root.

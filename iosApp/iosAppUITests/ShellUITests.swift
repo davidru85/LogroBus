@@ -66,6 +66,22 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
+    func test_lb301_withoutLocation_howToGetTheresFieldsAreBothEmpty() {
+        // Location never asked, as on a fresh install: no origin (FR-PLAN-11).
+        XCUIApplication().resetAuthorizationStatus(for: .location)
+        let app = launch()
+
+        app.tabBars.buttons["Directions"].tap()
+
+        // Each field is one element, its name then what it shows.
+        XCTAssertTrue(field("Origin", showing: "Where from?", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(field("Destination", showing: "Where to?", in: app).exists)
+        // Nothing asks for location here either.
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        XCTAssertFalse(springboard.alerts.firstMatch.waitForExistence(timeout: 2), "no location prompt on opening")
+    }
+
+    @MainActor
     func test_lb012_aTabKeepsItsScreen_andReselectingItPopsToItsRoot() {
         let app = launch()
         app.navigationBars["Lines"].buttons["More"].tap()
@@ -286,6 +302,13 @@ final class ShellUITests: XCTestCase {
         XCTAssertTrue(tabs[labels[0]].waitForExistence(timeout: 10))
         XCTAssertEqual((0..<tabs.count).map { tabs.element(boundBy: $0).label }, labels)
         XCTAssertTrue(tabs[labels[0]].isSelected)
+    }
+
+    /// How to Get There's field named `name`, showing `value`.
+    @MainActor
+    private func field(_ name: String, showing value: String, in app: XCUIApplication) -> XCUIElement {
+        let field = NSPredicate(format: "label == %@ AND value == %@", name, value)
+        return app.descendants(matching: .any).matching(field).firstMatch
     }
 
     @MainActor
