@@ -6,4 +6,5 @@
     <string name="plan_destination_hint">Where to?</string>
     <string name="plan_origin_spoken">Origin, %1$s</string>
     <string name="plan_destination_spoken">Destination, %1$s</string>
+    <string name="plan_swap">Swap origin and destination</string>
 </resources>

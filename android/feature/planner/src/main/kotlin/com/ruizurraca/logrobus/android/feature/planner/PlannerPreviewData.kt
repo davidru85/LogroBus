@@ -10,4 +10,7 @@ internal object PlannerPreviewData {
 
     /** Without it: both fields are empty. */
     val empty = PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.Empty)
+
+    /** After one swap from [myLocation]: the trip ends where the user is (FR-PLAN-08). */
+    val swapped = PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation)
 }

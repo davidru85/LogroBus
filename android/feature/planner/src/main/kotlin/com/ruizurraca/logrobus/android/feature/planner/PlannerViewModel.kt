@@ -24,6 +24,7 @@ class PlannerViewModel(
     fun onEvent(event: PlannerEvent) {
         when (event) {
             PlannerEvent.Shown -> fields.value = PlannerUiMapper.state(readInitialOrigin())
+            PlannerEvent.Swap -> Unit
         }
     }
 }

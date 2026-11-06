@@ -10,4 +10,6 @@
     <!-- Spoken: each field's name, then what it shows (NFR-A11Y-02). -->
     <string name="plan_origin_spoken">Origen, %1$s</string>
     <string name="plan_destination_spoken">Destino, %1$s</string>
+    <!-- FR-PLAN-08: the button between the fields, spoken only: it shows an icon. -->
+    <string name="plan_swap">Intercambiar origen y destino</string>
 </resources>

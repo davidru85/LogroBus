@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -20,7 +21,8 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * FR-PLAN-11 on Android: the origin follows the location permission whenever the root shows again, such as back from
- * the system's settings, where the user may have turned location on or off.
+ * the system's settings, where the user may have turned location on or off. FR-PLAN-08: the swap button reaches the
+ * ViewModel.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -38,12 +40,7 @@ class PlannerRouteTest {
 
     @Test
     fun lb301_backFromTheBackground_theOriginFollowsThePermission() {
-        startKoin {
-            modules(
-                plannerUiModule,
-                module { factory { ReadInitialOrigin { origin } } },
-            )
-        }
+        startGraph()
         compose.setContent { PlannerRoute(onOpenMore = {}) }
         compose.onNodeWithContentDescription(origin(R.string.plan_origin_hint)).assertExists()
 
@@ -55,5 +52,28 @@ class PlannerRouteTest {
         compose.onNodeWithContentDescription(origin(R.string.plan_my_location)).assertExists()
     }
 
+    @Test
+    fun lb304_oneTapOnSwap_exchangesTheFields() {
+        origin = PlanPlace.MyLocation
+        startGraph()
+        compose.setContent { PlannerRoute(onOpenMore = {}) }
+
+        compose.onNodeWithContentDescription(context.getString(R.string.plan_swap)).performClick()
+
+        compose.onNodeWithContentDescription(origin(R.string.plan_origin_hint)).assertExists()
+        compose.onNodeWithContentDescription(destination(R.string.plan_my_location)).assertExists()
+    }
+
+    private fun startGraph() {
+        startKoin {
+            modules(
+                plannerUiModule,
+                module { factory { ReadInitialOrigin { origin } } },
+            )
+        }
+    }
+
     private fun origin(shown: Int) = context.getString(R.string.plan_origin_spoken, context.getString(shown))
+
+    private fun destination(shown: Int) = context.getString(R.string.plan_destination_spoken, context.getString(shown))
 }

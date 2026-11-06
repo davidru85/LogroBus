@@ -36,4 +36,35 @@ class PlannerViewModelTest {
         viewModel.onEvent(PlannerEvent.Shown)
         assertEquals(PlannerUiState(origin = PlaceFieldUi.Empty), viewModel.state.value)
     }
+
+    @Test
+    fun lb304_oneSwap_exchangesTheFields_andASecondRestoresThem() {
+        val viewModel = PlannerViewModel { PlanPlace.MyLocation }
+
+        viewModel.onEvent(PlannerEvent.Swap)
+        assertEquals(
+            PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation),
+            viewModel.state.value,
+        )
+
+        viewModel.onEvent(PlannerEvent.Swap)
+        assertEquals(
+            PlannerUiState(origin = PlaceFieldUi.MyLocation, destination = PlaceFieldUi.Empty),
+            viewModel.state.value,
+        )
+    }
+
+    @Test
+    fun lb304_afterASwap_theRootShowingAgain_keepsIt() {
+        val viewModel = PlannerViewModel { PlanPlace.MyLocation }
+        viewModel.onEvent(PlannerEvent.Swap)
+
+        // Back from another tab, or from the background, with the permission still granted.
+        viewModel.onEvent(PlannerEvent.Shown)
+
+        assertEquals(
+            PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation),
+            viewModel.state.value,
+        )
+    }
 }

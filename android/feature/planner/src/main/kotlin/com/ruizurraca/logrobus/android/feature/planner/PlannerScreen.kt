@@ -53,7 +53,7 @@ fun PlannerRoute(
         viewModel.onEvent(PlannerEvent.Shown)
         onPauseOrDispose {}
     }
-    PlannerScreen(state, onOpenMore = onOpenMore, modifier = modifier)
+    PlannerScreen(state, onEvent = viewModel::onEvent, onOpenMore = onOpenMore, modifier = modifier)
 }
 
 /**
@@ -63,6 +63,7 @@ fun PlannerRoute(
 @Composable
 fun PlannerScreen(
     state: PlannerUiState,
+    onEvent: (PlannerEvent) -> Unit,
     onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -137,11 +138,11 @@ private fun PlaceField(
 @PreviewFontScale
 @Composable
 private fun PlannerMyLocationPreview() {
-    LogroBusTheme { PlannerScreen(PlannerPreviewData.myLocation, onOpenMore = {}) }
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.myLocation, onEvent = {}, onOpenMore = {}) }
 }
 
 @PreviewLightDark
 @Composable
 private fun PlannerEmptyPreview() {
-    LogroBusTheme { PlannerScreen(PlannerPreviewData.empty, onOpenMore = {}) }
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.empty, onEvent = {}, onOpenMore = {}) }
 }

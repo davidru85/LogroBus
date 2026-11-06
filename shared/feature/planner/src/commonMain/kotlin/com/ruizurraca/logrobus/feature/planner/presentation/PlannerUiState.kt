@@ -28,6 +28,9 @@ sealed interface PlannerEvent {
      * meanwhile, in Near Me or in the system's settings, so the initial origin is read again (FR-PLAN-11).
      */
     data object Shown : PlannerEvent
+
+    /** The swap button, between the fields: the origin becomes the destination and the other way round (FR-PLAN-08). */
+    data object Swap : PlannerEvent
 }
 
 object PlannerUiMapper {
