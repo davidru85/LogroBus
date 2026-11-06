@@ -6,13 +6,14 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.ruizurraca.logrobus.feature.planner.presentation.PlaceFieldUi
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerEvent
 import com.ruizurraca.logrobus.feature.planner.presentation.PlannerUiState
 import org.junit.Assert.assertEquals
@@ -74,10 +75,28 @@ class PlannerScreenTest {
 
     @Test
     fun lb304_afterASwap_theDestinationShowsMyLocation_andTheOriginItsHint() {
-        show(PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation))
+        show(PlannerPreviewData.swapped)
 
         assertField(R.string.plan_origin_spoken, R.string.plan_origin_hint)
         assertField(R.string.plan_destination_spoken, R.string.plan_my_location)
+    }
+
+    @Test
+    fun lb304_talkBackReadsBothFields_beforeTheSwapButton() {
+        show(PlannerPreviewData.myLocation)
+        val origin = spoken(R.string.plan_origin_spoken, R.string.plan_my_location)
+        val destination = spoken(R.string.plan_destination_spoken, R.string.plan_destination_hint)
+        val swap = hasContentDescription(context.getString(R.string.plan_swap))
+
+        // A traversal group is read whole before what follows it: the card holds both fields, and not the button,
+        // which is centred beside them and would otherwise come between them.
+        compose
+            .onNode(
+                SemanticsMatcher.expectValue(SemanticsProperties.IsTraversalGroup, true) and
+                    hasAnyDescendant(origin) and
+                    hasAnyDescendant(destination) and
+                    !hasAnyDescendant(swap),
+            ).assertExists()
     }
 
     @Test
@@ -92,6 +111,11 @@ class PlannerScreenTest {
 
         assertEquals(1, opened)
     }
+
+    private fun spoken(
+        name: Int,
+        shown: Int,
+    ) = hasContentDescription(context.getString(name, context.getString(shown)))
 
     private fun show(state: PlannerUiState) {
         compose.setContent { PlannerScreen(state, onEvent = {}, onOpenMore = {}) }
