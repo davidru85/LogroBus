@@ -9,6 +9,7 @@ import com.ruizurraca.logrobus.core.preferences.UserPreferences
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.feature.lines.domain.FavouriteToggle
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
+import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -319,6 +320,60 @@ class PreviewUseCasesTest {
                 cancelAndIgnoreRemainingEvents()
             }
 
+            assertEquals(0, preview.activeCollections)
+        }
+
+    @Test
+    fun lb201_thePreviewHasNoLocation_untilItIsScriptedOn() =
+        runTest {
+            assertEquals(LocationAccess.Off, SharedDependencies.preview().observeLocationAccess()().first())
+            assertEquals(
+                LocationAccess.On,
+                SharedDependencies
+                    .preview()
+                    .locationOn()
+                    .observeLocationAccess()()
+                    .first(),
+            )
+        }
+
+    @Test
+    fun lb201_locationTurnedOnInThePreviewShowsAtTheNextRead_asAGrantedPrompt() =
+        runTest {
+            val preview = SharedDependencies.preview()
+            val observeLocationAccess = preview.observeLocationAccess()
+            assertEquals(LocationAccess.Off, observeLocationAccess().first())
+
+            preview.locationOn()
+
+            assertEquals(LocationAccess.On, observeLocationAccess().first())
+        }
+
+    @Test
+    fun lb201_thePreviewCountsTheLocationUpdatesThatAreRunning() =
+        runTest {
+            val preview = SharedDependencies.preview().locationOn()
+
+            preview.observeLocationAccess()().test {
+                assertEquals(LocationAccess.On, awaitItem())
+                assertEquals(1, preview.activeCollections)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertEquals(0, preview.activeCollections)
+        }
+
+    @Test
+    fun lb201_locationTurnedOffInThePreviewEndsTheUpdates_asARevokedPermission() =
+        runTest {
+            val preview = SharedDependencies.preview().locationOn()
+
+            preview.observeLocationAccess()().test {
+                assertEquals(LocationAccess.On, awaitItem())
+                preview.locationOff()
+                assertEquals(LocationAccess.Off, awaitItem())
+                awaitComplete()
+            }
             assertEquals(0, preview.activeCollections)
         }
 

@@ -71,3 +71,18 @@ package.targets.append(
         linkerSettings: linksShared
     )
 )
+
+// Near Me's ViewModel and snapshot tests (LB-201).
+package.targets.append(
+    .testTarget(
+        name: "FeatureNearMeTests",
+        dependencies: [
+            "DesignSystem",
+            "FeatureNearMe",
+            "Shared",
+            .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+        ],
+        exclude: ["__Snapshots__"],
+        linkerSettings: linksShared
+    )
+)

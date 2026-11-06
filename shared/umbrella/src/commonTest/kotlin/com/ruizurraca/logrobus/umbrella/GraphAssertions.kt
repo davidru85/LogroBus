@@ -14,6 +14,7 @@ import com.ruizurraca.logrobus.core.preferences.PreferencesStore
 import com.ruizurraca.logrobus.core.telemetry.AnalyticsTracker
 import com.ruizurraca.logrobus.core.telemetry.ConsentStore
 import com.ruizurraca.logrobus.core.telemetry.CrashReporter
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.AppCaches
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
@@ -46,6 +47,8 @@ internal fun assertResolvesTheCore(koin: Koin) {
         SetTheme::class,
         SetEtaFormat::class,
         ClearCache::class,
+        // Near Me (LB-201): location access, which Android's ViewModel takes from Koin.
+        ObserveLocationAccess::class,
     ).forEach { koin.get<Any>(it) }
     // One clock for the whole app: the source client corrects it, and the polling engine and screens read it.
     assertSame(koin.get<ServerCorrectedClock>(), koin.get<AppClock>())

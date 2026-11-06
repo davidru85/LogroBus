@@ -51,6 +51,21 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
+    func test_lb201_nearMeShowsTheRowThatTurnsLocationOn_andAsksForNothing() {
+        // Location never asked, as on a fresh install.
+        XCUIApplication().resetAuthorizationStatus(for: .location)
+        let app = launch()
+
+        app.tabBars.buttons["Near me"].tap()
+
+        XCTAssertTrue(app.buttons["Turn on location to see nearby stops"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Near you"].exists)
+        // FR-LOC-01: opening Near Me shows no prompt; only the row asks.
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        XCTAssertFalse(springboard.alerts.firstMatch.waitForExistence(timeout: 2), "no location prompt on opening")
+    }
+
+    @MainActor
     func test_lb012_aTabKeepsItsScreen_andReselectingItPopsToItsRoot() {
         let app = launch()
         app.navigationBars["Lines"].buttons["More"].tap()

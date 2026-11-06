@@ -1,9 +1,11 @@
+import UIKit
 import XCTest
 
 /// LB-406 (NFR-A11Y): every screen the app has passes Xcode's accessibility audit, at the default text size and at the
 /// largest: touch targets of at least 44 pt, no clipped text, Dynamic Type, contrast, and a description and trait for
 /// every element. One launch per text size walks the screens, and the issues of all of them are reported together,
-/// each with a screenshot of its screen. The default size's launch walks the screens again in dark mode.
+/// each with a screenshot of its screen. The default size's launch then relaunches the app in its Dark theme and walks
+/// the screens again.
 ///
 /// Contrast is audited only where nothing scrolls beneath the floating bars, whose scroll edge effect fades what is
 /// under them: the audit reads that faded text, and does not always name its element, so it cannot be told apart.
@@ -30,8 +32,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
 
     /// Lines with the favourites' hint, a search and a favourite, the favourites' edit sheet, a favourite's detail,
-    /// More, Settings and its Clear cache alert, About data, Near me and Directions. Line 3 is a favourite only while
-    /// the test needs one; one that an interrupted run left is removed first, as `ShellUITests` does.
+    /// More, Settings and its Clear cache alert, About data, Near me with its row and Directions. Line 3 is a favourite
+    /// only while the test needs one; one that an interrupted run left is removed first, as `ShellUITests` does.
     @MainActor
     private func auditEveryScreen(in app: XCUIApplication, largestText: Bool, into issues: inout [String]) throws {
         let audit = Audit(test: self, app: app, largestText: largestText)
@@ -74,26 +76,37 @@ final class AccessibilityAuditUITests: XCTestCase {
         detail.buttons["Lines"].tap()
 
         try auditMoreAndSettings(audit, types, largestText: largestText, in: app, into: &issues)
-        for (tab, title) in [("Near me", "Near me"), ("Directions", "How to get there")] {
-            app.tabBars.buttons[tab].tap()
-            XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5))
-            try audit.run(tab, types, into: &issues)
-        }
+        app.tabBars.buttons["Near me"].tap()
+        XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
+        try audit.run("Near me", types, into: &issues)
+        app.tabBars.buttons["Directions"].tap()
+        XCTAssertTrue(app.navigationBars["How to get there"].waitForExistence(timeout: 5))
+        try audit.run("Directions", types, into: &issues)
     }
 
-    /// The Lines search, More, Settings, its alert and About data again, with the device in dark mode: the dark
-    /// accent and secondary text on the system's dark backgrounds. The app's theme follows the device.
+    /// Near Me's row without location (LB-201), which the audit waits for: the screen is blank until access is read.
+    private static let turnOnLocation = "Turn on location to see nearby stops"
+
+    /// The Lines search, More, Settings, its alert, About data and Near me again, in dark mode: the dark accent and
+    /// secondary text on the system's dark backgrounds.
+    ///
+    /// The app relaunches in its Dark theme, which a launch argument sets over the saved one, and which gives its
+    /// windows the dark interface style that the device's dark mode would. The device's dark mode cannot be relied on:
+    /// under `xcodebuild` on CI the app stayed light although `XCUIDevice` read dark (PR #50), as others report of
+    /// iOS 26.2 and later.
     @MainActor
     private func auditInDarkMode(in app: XCUIApplication, into issues: inout [String]) throws {
-        XCUIDevice.shared.appearance = .dark
-        addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
-        let audit = Audit(test: self, app: app, largestText: false)
-        app.tabBars.buttons["Lines"].tap()
-        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        app.launchArguments += ["-settings.theme", "DARK"]
+        app.launch()
+        let audit = Audit(test: self, app: app, largestText: false, dark: true)
+        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 10))
         try search("varea", in: app)
         try audit.run("Lines, searching, dark", .all, into: &issues)
         closeSearch(in: app)
         try auditMoreAndSettings(audit, .all, largestText: false, in: app, into: &issues, suffix: ", dark")
+        app.tabBars.buttons["Near me"].tap()
+        XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
+        try audit.run("Near me, dark", .all, into: &issues)
     }
 
     /// More, Settings, at its end at the largest text, its Clear cache alert, and About data, from the Lines root.
@@ -176,6 +189,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     @MainActor
     private func launch(textSize: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
+        // Location never asked, as on a fresh install, so Near Me shows its "Turn on location" row (LB-201).
+        app.resetAuthorizationStatus(for: .location)
         app.launchArguments += ["-AppleLanguages", "(\"en\")", "-AppleLocale", "en_GB"]
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
         app.launch()
@@ -190,29 +205,44 @@ private struct Audit {
     let test: XCTestCase
     let app: XCUIApplication
     let largestText: Bool
+    /// Whether the screens are meant to be in dark mode, which each audit then checks in its screenshot.
+    var dark = false
 
     /// The accessibility identifiers of texts whose labels say their symbols in words.
     private static let spokenInWords = ["lines.favourites.hint", "lines.favourites.card.headsigns"]
 
     /// Audits the screen on display for `types`, and adds each issue that is not a known false positive to `issues`,
     /// named after the screen, its kind and its element. The audit sometimes reads a screen that is still settling,
-    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none.
+    /// and then cannot name an issue's element: it runs again, up to three times, while an issue has none. It also runs
+    /// again when XCTest gives up on it, as it did on busy CI runners (`gaveUp(_:)`).
+    ///
+    /// A screen meant to be dark that is not is an issue too: on CI the app kept light mode when the device was asked
+    /// for dark, and the dark audits audited light mode again without saying so (PR #50).
     func run(_ screen: String, _ types: XCUIAccessibilityAuditType, into issues: inout [String]) throws {
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        let screenshot = app.screenshot()
+        let shot = XCTAttachment(screenshot: screenshot)
         shot.name = screen
         shot.lifetime = .keepAlways
         test.add(shot)
+        if dark && !Self.isMostlyDark(screenshot.image) {
+            issues.append("\(screen): the screen is not in dark mode")
+        }
         var found: [String] = []
         for attempt in 1...3 {
             found = []
             var unnamed = false
             let barButtons = app.navigationBars.buttons.allElementsBoundByIndex.map(\.frame)
-            try app.performAccessibilityAudit(for: types) { issue in
-                if isFalsePositive(issue, on: screen, barButtons: barButtons) { return true }
-                unnamed = unnamed || issue.element == nil
-                let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
-                found.append("\(screen): \(issue.compactDescription), \(element): \(issue.detailedDescription)")
-                return true
+            do {
+                try app.performAccessibilityAudit(for: types) { issue in
+                    if isFalsePositive(issue, on: screen, barButtons: barButtons) { return true }
+                    unnamed = unnamed || issue.element == nil
+                    let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
+                    let kind = issue.compactDescription
+                    found.append("\(screen): \(kind), \(element): \(issue.detailedDescription)")
+                    return true
+                }
+            } catch let error as NSError where Self.gaveUp(error) && attempt < 3 {
+                continue
             }
             if !unnamed || attempt == 3 { break }
             Thread.sleep(forTimeInterval: 1)
@@ -233,6 +263,8 @@ private struct Audit {
     ///   audit cannot name ("potentially inaccessible text"). Its title and button are read, and its button takes the
     ///   accent, which the contrast audit checks.
     /// - **The search field's "Clear text" button,** 20 pt, the system's: Close beside the field ends the search.
+    /// - **Contrast of the system's search field and of the Clear cache alert's title, in the app's Dark theme:** both
+    ///   show white on dark, yet the audit reports them as failing. With the device's dark mode, locally, it did not.
     private func isFalsePositive(
         _ issue: XCUIAccessibilityAuditIssue,
         on screen: String,
@@ -252,8 +284,47 @@ private struct Audit {
             return barButton || dataSection
         case .hitRegion:
             return screen.hasPrefix("Lines") && element.elementType == .button && element.label == "Clear text"
+        case .contrast:
+            let searchField = screen == "Lines, searching, dark" && element.elementType == .searchField
+            let alertTitle = screen == "Settings, Clear cache's alert, dark" && element.label == "Cache cleared"
+            return dark && (searchField || alertTitle)
         default:
             return false
         }
+    }
+
+    /// Whether XCTest gave up on an audit: "Audit failed to complete in time", after about 16 s on one screen. It did
+    /// on CI, once on `main` and once in PR #50, each time on a launch's first screen, Lines, which other runs audit
+    /// in a few seconds.
+    private static func gaveUp(_ error: NSError) -> Bool {
+        error.domain == "com.apple.xcode.xctest.accessibilityAudit" && error.code == -56
+    }
+
+    /// Whether `image` is mostly dark: the mean luminance of a 32 × 32 reduction of it is under one half. A screen in
+    /// dark mode, on its black background, is; one in light mode, on the system's light grey, is not.
+    private static func isMostlyDark(_ image: UIImage) -> Bool {
+        guard let source = image.cgImage else { return false }
+        let side = 32
+        var pixels = [UInt8](repeating: 0, count: side * side * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: side,
+                height: side,
+                bitsPerComponent: 8,
+                bytesPerRow: side * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+            ) else { return false }
+            context.interpolationQuality = .high
+            context.draw(source, in: CGRect(x: 0, y: 0, width: side, height: side))
+            return true
+        }
+        guard drawn else { return false }
+        let luminance = stride(from: 0, to: pixels.count, by: 4).reduce(0.0) { total, index in
+            total + 0.2126 * Double(pixels[index]) + 0.7152 * Double(pixels[index + 1]) +
+                0.0722 * Double(pixels[index + 2])
+        }
+        return luminance / Double(side * side) / 255 < 0.5
     }
 }

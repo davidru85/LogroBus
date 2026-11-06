@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- FR-LOC-01: foreground location, asked for just in time on Near Me (LB-201). Coarse and fine together, so that
+         the user may grant approximate location only. Never background location (security_privacy.md §3). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <!-- The launcher icon arrives with the Figma designs (LB-413). The app's languages, which Android 13+ offers in
          its per-app language setting (ADR-0020). The backups keep the user's own data only (FR-FAV-03): the rules
          from Android 12, the full backup content before it. -->

@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
@@ -22,11 +23,18 @@ interface SettingsUseCases {
     fun clearCache(): ClearCache
 }
 
+/** Near Me's own use cases for Swift (LB-201): location access. */
+interface NearMeUseCases {
+    fun observeLocationAccess(): ObserveLocationAccess
+}
+
 /**
  * The use cases a Swift ViewModel can ask for (architecture.md §5.2), grouped by feature as they grow.
  * [SharedDependencies] resolves them from the graph; [SharedDependencies.preview] scripts them for previews and tests.
  */
-interface UseCases : SettingsUseCases {
+interface UseCases :
+    SettingsUseCases,
+    NearMeUseCases {
     fun observeLastSyncs(): ObserveLastSyncs
 
     fun observeLinesWithFavourites(): ObserveLinesWithFavourites
@@ -56,6 +64,8 @@ object SharedDependencies : UseCases {
     override fun setFavouriteLine(): SetFavouriteLine = graph().get()
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
+
+    override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
 
     override fun observePreferences(): ObservePreferences = graph().get()
 

@@ -27,6 +27,7 @@ class IosGraphTest {
         SharedDependencies.setTheme()
         SharedDependencies.setEtaFormat()
         SharedDependencies.clearCache()
+        SharedDependencies.observeLocationAccess()
     }
 
     @Test

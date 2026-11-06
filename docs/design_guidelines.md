@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft |
-| Last updated | 2026-10-22 |
+| Last updated | 2026-11-05 |
 | Based on | Spec §7; `requirements.md` (FR-NAV, FR-LINE-12 to 16, FR-NEAR, FR-PLAN-11 to 14); ADR-0002, ADR-0003, ADR-0005 |
 
 **Figma designs for the MVP will be delivered near the end of the MVP (LB-413).** Until then, this document's wireframes and the neutral placeholder theme are the reference. When the Figma file arrives, it becomes the visual source of truth and is linked here.
@@ -197,6 +197,8 @@ Three sections, in the order of the owner's sketch (owner decision, 2026-11-03),
   - Line filter chips and a "Group by line" toggle (FR-STOP-04, FR-STOP-07).
   - Actions: Save stop with an alias (FR-STOP-08) and Directions to this stop (FR-STOP-09), which switches to How to Get There with the destination set.
 - **Without location permission**, the map shows the whole service area. The "Cerca de ti" section becomes one row, "Activa la ubicación para ver paradas cercanas" ("Turn on location to see nearby stops"), which opens the permission flow. Saved stops and pins keep working (FR-LOC-02).
+  - **The permission flow (LB-201):** the system's prompt for foreground location, where the user may grant approximate location only. Once the system no longer asks (on Android after two denials, on iOS after one), the row opens the app's page in the system settings instead. Nothing asks for location before the user taps the row or, with LB-202, the recenter control.
+  - **Until the map (LB-202) and the sheet (LB-203), as built in LB-201 part 1 (owner decision, 2026-11-05):** Near Me's root is a list under the "Cerca de mí" title and the More action. Without location it shows the "Cerca de ti" heading and the row, with a location icon; with location it shows nothing yet, and reads location while it shows. When location is granted but the platform's service fails, it shows nothing either, never the row; LB-203 explains it in the section (FR-LOC-02).
 - **No saved stops:** "Guarda una parada para ver aquí sus próximos autobuses" ("Save a stop to see its next buses here"), with a "Buscar parada" ("Find a stop") action (FR-HOME-07, adapted).
 - **Layers:** Stops (always on), Buses (live vehicles, FR-LIVE-01), Routes ("Show all routes", FR-LIVE-05), and in v1.0 Recharge points. A layer's state persists across sessions.
 
@@ -443,8 +445,11 @@ Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessi
 | `lines.favourites.position` (spoken, a row's place in the edit sheet; iOS `lines.favourites.position %lld %lld`) | 2 de 3 | 2 of 3 |
 | `lines.favourites.move_up`, `lines.favourites.move_down` (screen readers' actions) | Subir, Bajar | Move up, Move down |
 | `lines.favourites.limit` (Android, plural; iOS `lines.favourites.limit %lld` and `lines.favourites.limit_hint`) | Ya tienes 20 líneas favoritas, el máximo. Quita alguna para añadir otra. | You already have 20 favourite lines, the most you can save. Remove one to add another. |
+| `nearme.title` (the screen's title, as its tab's) | Cerca de mí | Near me |
 | `nearme.saved.title` | Mis paradas | My stops |
 | `nearme.nearby.title` | Cerca de ti | Near you |
+| `nearme.nearby.turn_on_location` (FR-NEAR-06) | Activa la ubicación para ver paradas cercanas | Turn on location to see nearby stops |
+| `NSLocationWhenInUseUsageDescription` (iOS's prompt, in `InfoPlist.xcstrings`) | LogroBus usa tu ubicación para mostrarte las paradas cercanas y planificar viajes desde donde estás. | LogroBus uses your location to show you nearby stops and plan trips from where you are. |
 | `plan.title` | Cómo llegar | How to get there |
 | `action.more` (spoken; iOS `more.action`) | Más | More |
 | `action.navigate_up` (spoken, Android) | Atrás | Back |

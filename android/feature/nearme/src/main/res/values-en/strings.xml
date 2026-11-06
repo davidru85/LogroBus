@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nearme_title">Near me</string>
+    <string name="nearme_nearby_title">Near you</string>
+    <string name="nearme_nearby_turn_on_location">Turn on location to see nearby stops</string>
+</resources>

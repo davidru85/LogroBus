@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Near Me (LB-201, design_guidelines.md §3.2 and §9, keys tab.near_me and nearme.*). Spanish (es-ES) is the default language. -->
+    <string name="nearme_title">Cerca de mí</string>
+    <string name="nearme_nearby_title">Cerca de ti</string>
+    <!-- FR-NEAR-06: without location, the one row of "Near you", which opens the permission flow (FR-LOC-01). -->
+    <string name="nearme_nearby_turn_on_location">Activa la ubicación para ver paradas cercanas</string>
+</resources>

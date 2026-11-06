@@ -131,6 +131,16 @@ class TabNavigationTest {
     }
 
     @Test
+    fun lb201_nearMesRootShowsNearYou_withTheRowThatTurnsLocationOn() {
+        // A fresh install: location is off, and nothing asks for it until the row is tapped (FR-LOC-01).
+        tab("Near me").performClick()
+
+        heading("Near me").assertIsDisplayed()
+        heading("Near you").assertIsDisplayed()
+        compose.onNodeWithText("Turn on location to see nearby stops").assertIsDisplayed()
+    }
+
+    @Test
     fun lb012_aTabSwitchSettlesOnTheMotionSchemesEffectsSpring() {
         // design_guidelines.md §4: screens change on the expressive motion scheme's effects spring, which settles well
         // before the library's 700 ms fade; until then both screens are in the semantics tree.

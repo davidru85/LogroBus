@@ -39,26 +39,32 @@ import kotlin.time.Instant
 /**
  * The real use cases over scripted repositories (architecture.md §5.2), so previews show what the shared mappers make
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
- * lines, there are no favourite lines, and the settings are the defaults; each script replaces the last, except
- * [favouriteLine] and [settings]. Settings' own use cases come from [PreviewSettings].
+ * lines, there are no favourite lines, location is off, and the settings are the defaults; each script replaces the
+ * last, except [favouriteLine], [settings], [locationOn] and [locationOff]. Settings' own use cases come from
+ * [PreviewSettings], and Near Me's from [PreviewLocation].
  */
 class PreviewUseCases internal constructor(
     internal val settingsPreview: PreviewSettings = PreviewSettings(),
+    private val collections: MutableStateFlow<Int> = MutableStateFlow(0),
+    internal val locationPreview: PreviewLocation = PreviewLocation(collections),
 ) : UseCases,
-    SettingsUseCases by settingsPreview {
+    SettingsUseCases by settingsPreview,
+    NearMeUseCases by locationPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
     private val cachedLines = MutableStateFlow(SampleLines.all)
     private val favouriteLineIds = MutableStateFlow(emptyList<Int>())
-    private val collections = MutableStateFlow(0)
 
     @Volatile private var failing = false
 
     // What the static sync answers; null scripts one that never ends.
     @Volatile private var sync: AppResult<Unit>? = AppResult.Success(Unit)
 
-    /** How many collections of these use cases are running: a test sees that leaving a screen stops its own. */
+    /**
+     * How many collections of these use cases are running, the location updates included: a test sees that leaving a
+     * screen stops its own. Location access is counted only while location is on, when its updates run (LB-201).
+     */
     val activeCollections: Int
         get() = collections.value
 
@@ -195,6 +201,15 @@ fun PreviewUseCases.settings(
     etaFormat: EtaFormat,
 ): PreviewUseCases = apply { settingsPreview.script(theme, etaFormat) }
 
+/**
+ * Scripts location turned on (LB-201), as a granted prompt would: the next read of location access finds it on. An
+ * extension, so Swift chains it like the other scripts: `preview().locationOn()`.
+ */
+fun PreviewUseCases.locationOn(): PreviewUseCases = apply { locationPreview.turnOn() }
+
+/** Scripts location turned off (LB-201), as a revoked permission would: the running updates end. */
+fun PreviewUseCases.locationOff(): PreviewUseCases = apply { locationPreview.turnOff() }
+
 /** Counts the collections of this flow that are running in [collections]. */
-private fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =
+internal fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =
     onStart { collections.update { count -> count + 1 } }.onCompletion { collections.update { count -> count - 1 } }
