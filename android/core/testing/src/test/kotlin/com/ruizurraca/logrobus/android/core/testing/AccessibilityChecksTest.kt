@@ -28,6 +28,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -291,5 +292,50 @@ class AccessibilityChecksTest {
         val failure = assertThrows(AssertionError::class.java) { compose.assertAccessible() }
 
         assertTrue(failure.message, "GraphicsMode.Mode.NATIVE" in failure.message.orEmpty())
+    }
+
+    @Test
+    fun lb406_aKnownIssue_isLeftOut_andAnyOtherStillFails() {
+        // A component's own issue, which the screen cannot change, is named; anything else still fails.
+        compose.setContent {
+            Column {
+                Text("Hospital San Pedro", Modifier.width(40.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Gran Vía", Modifier.width(20.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+
+        val failure =
+            assertThrows(AssertionError::class.java) {
+                compose.assertAccessible(knownIssues = setOf(HOSPITAL_CUT_SHORT))
+            }
+
+        assertFalse(failure.message, "Hospital San Pedro" in failure.message.orEmpty())
+        assertTrue(failure.message, "Gran Vía" in failure.message.orEmpty())
+    }
+
+    @Test
+    fun lb406_aKnownIssueAlone_passes() {
+        compose.setContent {
+            Text("Hospital San Pedro", Modifier.width(40.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+
+        compose.assertAccessible(knownIssues = setOf(HOSPITAL_CUT_SHORT))
+    }
+
+    @Test
+    fun lb406_aKnownIssueThatNoLongerOccurs_fails() {
+        // Say, after a library update that fixed it: the exemption must go, not stay to hide a new issue.
+        compose.setContent { Text("Hospital San Pedro") }
+
+        val failure =
+            assertThrows(AssertionError::class.java) {
+                compose.assertAccessible(knownIssues = setOf(HOSPITAL_CUT_SHORT))
+            }
+
+        assertTrue(failure.message, "no longer" in failure.message.orEmpty())
+    }
+
+    private companion object {
+        const val HOSPITAL_CUT_SHORT = "\"Hospital San Pedro\" is cut short"
     }
 }

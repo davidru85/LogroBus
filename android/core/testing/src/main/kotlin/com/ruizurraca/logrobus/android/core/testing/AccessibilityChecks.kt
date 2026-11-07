@@ -39,8 +39,11 @@ private const val ROUNDING = 0.5f
  * A node hidden from accessibility services is skipped as a control, and so are its children when it merges them.
  * The test must run under Robolectric with native graphics: legacy graphics do not measure text, so the text checks
  * would judge it wrongly.
+ *
+ * [knownIssues] names, word for word, problems inside a library component that the screen cannot change, each with
+ * its reason where the test lists it. They are left out; one that no longer occurs fails, so that its exemption goes.
  */
-fun SemanticsNodeInteractionsProvider.assertAccessible() {
+fun SemanticsNodeInteractionsProvider.assertAccessible(knownIssues: Set<String> = emptySet()) {
     val graphics = runCatching { ConfigurationRegistry.get(GraphicsMode.Mode::class.java) }.getOrNull()
     if (graphics != GraphicsMode.Mode.NATIVE) {
         throw AssertionError(
@@ -50,8 +53,9 @@ fun SemanticsNodeInteractionsProvider.assertAccessible() {
     }
     val controls = onAllNodes(isRoot()).fetchSemanticsNodes().flatMap { it.reachableByTalkBack() }
     val texts = onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().flatMap { it.withDescendants() }
-    val problems =
+    val found =
         controls.filter { it.isControl }.flatMap { it.controlProblems() } + texts.flatMap { it.textProblems() }
+    val problems = found.filterNot { it in knownIssues } + (knownIssues - found.toSet()).map { "$it: no longer occurs" }
     if (problems.isNotEmpty()) {
         throw AssertionError("Accessibility problems (LB-406):\n" + problems.joinToString("\n") { "- $it" })
     }

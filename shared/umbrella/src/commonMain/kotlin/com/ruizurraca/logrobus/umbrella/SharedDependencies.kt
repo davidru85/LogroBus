@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.umbrella
 
+import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
@@ -29,9 +30,14 @@ interface NearMeUseCases {
     fun observeLocationAccess(): ObserveLocationAccess
 }
 
-/** How to Get There's own use cases for Swift (LB-301): the origin a new plan starts from. */
+/**
+ * How to Get There's own use cases for Swift: the origin a new plan starts from (LB-301), and the app clock, which
+ * the departure's day and the pickers' start count from (LB-303, spec §8.6).
+ */
 interface PlannerUseCases {
     fun readInitialOrigin(): ReadInitialOrigin
+
+    fun clock(): AppClock
 }
 
 /**
@@ -97,9 +103,11 @@ private object GraphNearMeUseCases : NearMeUseCases {
     override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
 }
 
-/** How to Get There's own use cases, from the graph (LB-301). */
+/** How to Get There's own use cases, from the graph (LB-301, LB-303). */
 private object GraphPlannerUseCases : PlannerUseCases {
     override fun readInitialOrigin(): ReadInitialOrigin = graph().get()
+
+    override fun clock(): AppClock = graph().get()
 }
 
 private fun graph() =

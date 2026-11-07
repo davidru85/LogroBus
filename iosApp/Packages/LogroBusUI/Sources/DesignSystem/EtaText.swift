@@ -166,9 +166,8 @@ enum EtaStrings {
         }
     }
 
-    // Spec §5.7: HH:mm on the Madrid clock, the same digits in every locale.
     private static func clockText(_ clock: EtaDisplayClockTime) -> String {
-        String(format: "%02d:%02d", clock.hour, clock.minute)
+        DesignSystem.clockText(hour: Int(clock.hour), minute: Int(clock.minute))
     }
 
     private static func isNow(_ display: Skie.Presentation.EtaDisplay.__Sealed) -> Bool {

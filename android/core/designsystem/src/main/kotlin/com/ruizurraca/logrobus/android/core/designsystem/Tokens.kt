@@ -132,4 +132,7 @@ object Tokens {
 
     /** The smallest touch target (spec §7.5, AGENTS.md §7). */
     val minTouchTarget = 48.dp
+
+    /** Material 3's narrowest dialog, for one that would otherwise be only as wide as its content (LB-303). */
+    val dialogMinWidth = 280.dp
 }

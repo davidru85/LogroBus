@@ -12,4 +12,24 @@
     <string name="plan_destination_spoken">Destino, %1$s</string>
     <!-- FR-PLAN-08: the button between the fields, spoken only: it shows an icon. -->
     <string name="plan_swap">Intercambiar origen y destino</string>
+    <!-- FR-PLAN-03: the departure chip under the fields, and its menu. -->
+    <string name="plan_leave_now">Salir ahora</string>
+    <string name="plan_depart_at_choose">Salir a las…</string>
+    <!-- A picked departure time, HH:mm on the Madrid clock: "a la" for the hour 1, "a las" otherwise. The quantity is the hour. -->
+    <plurals name="plan_depart_today">
+        <item quantity="one">Salir a la %1$s</item>
+        <item quantity="other">Salir a las %1$s</item>
+    </plurals>
+    <plurals name="plan_depart_tomorrow">
+        <item quantity="one">Salir mañana a la %1$s</item>
+        <item quantity="other">Salir mañana a las %1$s</item>
+    </plurals>
+    <!-- On another day: its date, as "15 ene", then the time. -->
+    <plurals name="plan_depart_on">
+        <item quantity="one">Salir el %1$s a la %2$s</item>
+        <item quantity="other">Salir el %1$s a las %2$s</item>
+    </plurals>
+    <!-- The date and time pickers' buttons. -->
+    <string name="plan_departure_ok">Aceptar</string>
+    <string name="plan_departure_cancel">Cancelar</string>
 </resources>
