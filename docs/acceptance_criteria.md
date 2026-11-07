@@ -667,18 +667,18 @@ Refs: FR-PLAN-03
 - **Given** "Leave now", **when** a plan is requested, **then** `departureAt` is `AppClock.now()` in UTC.
 - **Given** "Depart at" 08:19 on 22 Oct 2026 (CEST), **when** a plan is requested, **then** `departureAt` is `2026-10-22T06:19:00.000Z`.
 - **Given** "Depart at" 08:19 on 15 Jan 2027 (CET), **when** a plan is requested, **then** `departureAt` is `2027-01-15T07:19:00.000Z`.
-- **Given** the departure, **when** "Depart at" is chosen, **then** the date and time pickers open at the picked time, or at now for "Leave now", on the Madrid clock, and offer no day before today. *(Added with the selector, 2026-11-06.)*
+- **Given** the departure, **when** "Depart at" is chosen, **then** the date and time pickers open at the picked time, or at now for "Leave now" or a picked time gone by, on the Madrid clock, and offer no day before today. *(Added with the selector, 2026-11-06.)*
 - **Given** a picked time, **when** the root shows again, **then** the time stays. *(Added with the selector, 2026-11-06.)*
 
 Done (2026-11-06). Evidence:
-- **`departureAt`:** `PlanDepartureTest` (shared, on the Android host and the iOS simulator). "Leave now" departs at the app clock's now; "Depart at" 08:19 on 22 Oct 2026 departs at `2026-10-22T06:19:00.000Z`, and on 15 Jan 2027 at `2027-01-15T07:19:00.000Z`. The last Sundays of March (a skipped time moves on by the hour) and October (a repeated time is the first, in summer time) are tested too.
+- **`departureAt`:** `PlanDepartureTest` (shared, on the Android host and the iOS simulator). "Leave now" departs at the app clock's now; "Depart at" 08:19 on 22 Oct 2026 departs at `2026-10-22T06:19:00.000Z`, and on 15 Jan 2027 at `2027-01-15T07:19:00.000Z`. The last Sundays of March (a skipped time moves on by the hour) and October (a repeated time is the first, in summer time, unless that has gone by; then the second) are tested too.
 - **When a plan is requested:** there is no plan request until LB-306, whose criteria now send `departureAt` from the departure. Moving that part there is an agent decision for the owner to confirm in LB-303's pull request, as LB-304's results part was.
 - **The selector:**
-  - Shared: `PlannerDepartureUiTest`, the text's day on the Madrid calendar (after midnight in Madrid, its today is UTC's tomorrow) and the pickers' start.
-  - Both ViewModels' `lb303_` tests: the menu's events, the pickers opening at now on the app clock, a cancel, "Leave now" again, and a picked time staying when the root shows again.
-  - Android: `PlannerDepartureTest` (the chip, a button; its text in Spanish and English, with "a la" in the hour 1; the menu; the date, then the time; cancel on either; no day before today), `PlannerRouteTest` through the ViewModel, and screenshots of the longest text.
-  - iOS: `ShellUITests.test_lb303_…` end to end (the menu, the system's picker, Done, then "Leave now"), and snapshots of the longest text in light, dark and large text.
-- **Screen readers:** the chip and the row are buttons spoken by their text; `assertAccessible` and Xcode's audit check the root. The pickers are Material's and the system's own, which the device pass covers `[manual: TalkBack, VoiceOver]`.
+  - Shared: `PlannerDepartureUiTest`, the text's day on the Madrid calendar in summer and winter time and on both clock-change Sundays (after midnight in Madrid, its today is UTC's tomorrow), and the pickers' start, now for a time gone by.
+  - Both ViewModels' `lb303_` tests: the menu's events, the pickers opening at now on the app clock, a cancel, "Leave now" again, a picked time staying when the root shows again, and its day counted again then (on iOS, the view told of it).
+  - Android: `PlannerDepartureTest` (the chip, a button; its text in Spanish and English, with "a la" in the hour 1; the menu; the date, then the time; cancel on either; no day before today), `PlannerRouteTest` through the ViewModel, and screenshots of the longest text. `DepartureDialogsScreenshotTest` captures the date's and the time's dialogs in light, dark and at 200 %, and at 200 % on SDK 33's linear scaling, with `assertAccessible` on each.
+  - iOS: `ShellUITests.test_lb303_…` end to end (the menu, the system's picker, Done, then "Leave now"); `MadridClockTests`, the picker's conversions from New York's and Tokyo's zones, in summer and winter time; snapshots of the longest text in light, dark and large text, and of every text in Spanish and English.
+- **Screen readers:** the chip and the row are buttons spoken by their text. `assertAccessible` checks the root and both dialogs; Xcode's audit checks the root and the "Departure time" sheet, at the default and the largest text and in dark mode. The pickers' own issues, Material's and the system's, are exempted by name on the owner's decision (2026-11-07, `design_guidelines.md` §3.3). How TalkBack and VoiceOver read the pickers is for the device pass `[manual: TalkBack, VoiceOver]`.
 
 ### LB-304 Swap origin and destination
 Refs: FR-PLAN-08, FR-PLAN-14

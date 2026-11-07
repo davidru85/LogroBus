@@ -103,7 +103,7 @@ You will need:
 
 - **2026-11-06:**
   - LB-303: choose when your trip starts, now or at a date and time.
-    - Under the two fields, "Leave now" opens a menu: "Leave now", or "Depart at…", which opens the phone's own date and time pickers. The trip then shows when it departs: "Depart at 08:19", "Depart tomorrow at 08:19" or "Depart on 15 Jan at 08:19".
+    - Under the two fields, "Leave now" opens a menu: "Leave now", or "Depart at…", which opens a date picker, then a time you type on Android, and the iPhone's own date and time picker. The trip then shows when it departs: "Depart at 08:19", "Depart tomorrow at 08:19" or "Depart on 15 Jan at 08:19".
     - Times are Logroño's, whatever time zone the phone is set to, and the days the clocks change are handled. Days gone by cannot be picked.
     - A picked time stays until you change it, also when you come back to the tab.
     - The routes will be planned for that time when they arrive (LB-306).
