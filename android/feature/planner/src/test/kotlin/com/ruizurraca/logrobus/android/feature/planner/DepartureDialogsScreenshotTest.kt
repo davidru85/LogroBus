@@ -97,7 +97,8 @@ class DepartureDialogsScreenshotTest(
 
 /**
  * NFR-A11Y-03: the departure's time dialog at 200 % on SDK 33, whose font scaling is linear, unlike 34's on, and so
- * makes the time's large digits twice their size.
+ * makes the time's large digits twice their size. Checked, not captured: SDK 33's drawing of rounded corners differs
+ * between macOS and CI's Linux, so its image would not compare (PR #53); SDK 36's captures do.
  */
 @RunWith(org.robolectric.RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -122,7 +123,6 @@ class DepartureTimeDialogLinearScalingTest {
         compose.onNodeWithText(context.getString(R.string.plan_departure_ok)).performClick()
         compose.waitForIdle()
 
-        compose.onNode(isDialog()).captureRoboImage("src/test/screenshots/Planner_timeDialog_linearFontScale2.png")
         compose.assertAccessible()
     }
 }
