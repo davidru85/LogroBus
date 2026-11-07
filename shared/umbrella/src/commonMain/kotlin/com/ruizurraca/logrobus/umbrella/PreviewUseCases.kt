@@ -41,16 +41,18 @@ import kotlin.time.Instant
  * of the script. By default every dataset synced at [SAMPLE_SYNC], 10:30 in Madrid, the cache holds the sample
  * lines, there are no favourite lines, location is off, and the settings are the defaults; each script replaces the
  * last, except [favouriteLine], [settings], [locationOn] and [locationOff]. Settings' own use cases come from
- * [PreviewSettings], and Near Me's and How to Get There's from [PreviewLocation].
+ * [PreviewSettings], Near Me's from [PreviewLocation], and How to Get There's from [PreviewPlanner], over the same
+ * location, on a clock that stands at [SAMPLE_SYNC] too: the data synced just now.
  */
 class PreviewUseCases internal constructor(
     internal val settingsPreview: PreviewSettings = PreviewSettings(),
     private val collections: MutableStateFlow<Int> = MutableStateFlow(0),
     internal val locationPreview: PreviewLocation = PreviewLocation(collections),
+    internal val plannerPreview: PreviewPlanner = PreviewPlanner(locationPreview, now = SAMPLE_SYNC),
 ) : UseCases,
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
-    PlannerUseCases by locationPreview {
+    PlannerUseCases by plannerPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =
         MutableStateFlow<Map<StaticDataset, Instant>?>(StaticDataset.entries.associateWith { SAMPLE_SYNC })
@@ -210,6 +212,12 @@ fun PreviewUseCases.locationOn(): PreviewUseCases = apply { locationPreview.turn
 
 /** Scripts location turned off (LB-201), as a revoked permission would: the running updates end. */
 fun PreviewUseCases.locationOff(): PreviewUseCases = apply { locationPreview.turnOff() }
+
+/**
+ * Scripts [minutes] passing on the clock (LB-303), past midnight say, so a test sees what a screen kept on view makes
+ * of it. An extension, so Swift chains it like the other scripts: `preview().timePasses(minutes: 1440)`.
+ */
+fun PreviewUseCases.timePasses(minutes: Int): PreviewUseCases = apply { plannerPreview.timePasses(minutes) }
 
 /** Counts the collections of this flow that are running in [collections]. */
 internal fun <T> Flow<T>.countedIn(collections: MutableStateFlow<Int>): Flow<T> =

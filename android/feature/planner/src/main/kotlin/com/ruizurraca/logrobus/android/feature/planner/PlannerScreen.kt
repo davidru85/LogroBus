@@ -62,8 +62,9 @@ fun PlannerRoute(
 
 /**
  * Renders [state] under its top app bar, with the More action (FR-NAV-04). Until place search lands (LB-301 part 2),
- * the origin and destination fields, which open nothing yet (owner decision, 2026-11-06), and the swap button
- * (FR-PLAN-08), which sends [PlannerEvent.Swap] through [onEvent].
+ * the origin and destination fields, which open nothing yet (owner decision, 2026-11-06), the swap button
+ * (FR-PLAN-08), and the departure chip with its date and time pickers (FR-PLAN-03). Each sends its events through
+ * [onEvent].
  */
 @Composable
 fun PlannerScreen(
@@ -96,6 +97,17 @@ fun PlannerScreen(
                     SwapButton(onClick = { onEvent(PlannerEvent.Swap) })
                 }
             }
+            item {
+                // Under the fields, within the screen's margins, where its text wraps at large sizes.
+                DepartureChip(
+                    state.departure,
+                    onEvent,
+                    Modifier.padding(horizontal = Tokens.Spacing.screenMargin).padding(top = Tokens.Spacing.s),
+                )
+            }
+        }
+        state.departurePicker?.let { picker ->
+            DepartureTimeDialogs(picker, onPicked = onEvent, onCancel = { onEvent(PlannerEvent.CancelDepartureTime) })
         }
     }
 }
@@ -176,4 +188,17 @@ private fun PlannerEmptyPreview() {
 @Composable
 private fun PlannerSwappedPreview() {
     LogroBusTheme { PlannerScreen(PlannerPreviewData.swapped, onEvent = {}, onOpenMore = {}) }
+}
+
+@PreviewLightDark
+@Composable
+private fun PlannerPickingPreview() {
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.picking, onEvent = {}, onOpenMore = {}) }
+}
+
+@PreviewLightDark
+@PreviewFontScale
+@Composable
+private fun PlannerDepartAtPreview() {
+    LogroBusTheme { PlannerScreen(PlannerPreviewData.departAt, onEvent = {}, onOpenMore = {}) }
 }

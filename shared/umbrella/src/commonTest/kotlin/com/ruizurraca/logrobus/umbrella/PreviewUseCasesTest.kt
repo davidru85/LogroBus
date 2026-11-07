@@ -393,6 +393,22 @@ class PreviewUseCasesTest {
         assertNull(readInitialOrigin())
     }
 
+    @Test
+    fun lb303_thePreviewsClock_standsAtTheSampleSync() {
+        // 10:30 on 28 Oct 2026 in Madrid: How to Get There's departure counts from it in previews and Swift tests.
+        assertEquals(Instant.parse("2026-10-28T09:30:00Z"), SharedDependencies.preview().clock().now())
+    }
+
+    @Test
+    fun lb303_thePreviewsClock_movesOn_asTimePasses() {
+        val preview = SharedDependencies.preview()
+        val clock = preview.clock()
+
+        preview.timePasses(minutes = 24 * 60)
+
+        assertEquals(Instant.parse("2026-10-29T09:30:00Z"), clock.now())
+    }
+
     /** The lines alone, as the Lines tab reads them. */
     private fun PreviewUseCases.lines(): Flow<AppResult<List<Line>>> =
         observeLinesWithFavourites()().map { result ->

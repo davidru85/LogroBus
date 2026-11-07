@@ -19,6 +19,67 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-06: LB-303, Leave now or Depart at
+
+**Done**
+- **PR #52 (LB-304) merged** on 2026-11-06, and `main` was synced.
+- **LB-303 (`feat/LB-303-departure-time`):** FR-PLAN-03, "Leave now" or "Depart at" a date and time.
+  - **Shared (`:shared:feature:planner`):**
+    - `PlanDeparture` is `Now` or `At(instant)`. `departureAt(now)` is what API-07 will send: the app clock's now for "Leave now", the picked moment for "Depart at". `atMadrid(time, now)` reads a picked date and time on the Madrid clock, whatever the device's zone, and `PlannerEvent.DepartAt.departure(now)` calls it with the pickers' fields; kotlinx-datetime moves a time in the hour skipped on the last Sunday of March on by that hour, and the hour repeated on the last Sunday of October is its first pass unless that has gone by.
+    - `PlannerUiState` gains `DepartureUi` (`Now`, or `At` with its `DepartureDay` on the Madrid calendar: today, tomorrow or another day) and `DeparturePickerUi` (where the pickers open, and now, before whose day no date can be picked), while the pickers are open.
+    - `PlannerEvent` gains `LeaveNow`, `ChooseDepartureTime`, `CancelDepartureTime` and `DepartAt` (Madrid wall-clock fields).
+    - `PlannerUiMapper.state(places, departure, picking, now)`.
+  - **Umbrella:** `PlannerUseCases.clock()` hands Swift the app clock. `PreviewUseCases` delegates How to Get There's group to `PreviewPlanner`: the initial origin over `PreviewLocation`'s script, and a clock that stands at the sample sync, 10:30 on 28 Oct 2026 in Madrid, until `timePasses(minutes:)` moves it on.
+    - `scripts/checks/run-all.sh` first failed on detekt's `TooManyFunctions`: the two overrides took `PreviewUseCases` to 13 functions, over 11. `PreviewPlanner` holds them now, as `PreviewSettings` and `PreviewLocation` hold theirs (bd3bde65).
+  - **Android:** `PlannerViewModel` takes `AppClock` from Koin and keeps the departure and whether the pickers are open. Under the card, an assist chip (`DepartureChip`) says the departure and opens a menu, "Salir ahora" or "Salir a las…", whose second item opens Material's date picker (`DaysFrom`: no day before today), then its time input, two typed fields in a dialog at least `Tokens.dialogMinWidth` wide. `clockText` in the design system formats HH:mm for the ETAs and the chip.
+  - **iOS:** `PlannerViewModel` does the same on `useCases.clock()`, and stores the state, mapped again on every event. A section of its own holds a `Menu` row with the same items; the picker is a sheet, presented by item, with the system's graphical `DatePicker`, which shows and reads the Madrid clock through `Calendar.madrid` (`MadridClock.swift`). The design system's `clockText` formats HH:mm here too.
+  - **`:android:core:testing`:** `assertAccessible(knownIssues)` leaves out problems named word for word, and fails on any other and on a named one that no longer occurs.
+  - **Strings:** `plan_leave_now`, `plan_depart_at_choose`, the plurals `plan_depart_today`, `plan_depart_tomorrow` and `plan_depart_on` (the hour picks "a la" or "a las"), and the pickers' buttons, in Spanish and English on both platforms.
+  - **Tests:** `PlanDepartureTest` and `PlannerDepartureUiTest` (shared); both ViewModels' `lb303_` tests; Android's `PlannerDepartureTest`, `PlannerRouteTest`, screenshots, and `DepartureDialogsScreenshotTest` with `assertAccessible` on both dialogs; iOS's end-to-end `ShellUITests.test_lb303_…`, `MadridClockTests`, snapshots of the row and of every text, and the "Departure time" sheet in `AccessibilityAuditUITests`' walk. The other states' screenshots and snapshots show the new row.
+  - **Docs:** the acceptance criteria record the evidence and two decided behaviours, and LB-306's criteria now send `departureAt`. `design_guidelines.md` §3.3 and §9, `architecture.md`, `AGENTS.md`'s status and both READMEs are updated.
+
+- **Review:** the four reviewer agents asked for changes, with no blockers; every finding was acted on, or answered below.
+  - **Where the pickers open for a time gone by** was decided in each view, differently (Android today at the picked HH:mm, iOS today at 00:00), and untested. The shared mapper opens them at now (4ce3194a, then 23575f9d).
+  - **October's repeated hour:** a time picked during its second pass resolved to the first, an hour ago. `atMadrid()` takes now and takes the second once the first has gone by (635d74a1, then 742f63f3). With now it took six parameters, over detekt's five, which `run-all.sh` caught: it takes a `LocalDateTime`, internal, and the event builds it (330414ef).
+  - **Time-zone tests** in winter time and on both clock-change Sundays, seen failing with the days counted in UTC; a day gone by shows its date. `DepartureUi.At.day` became `relativeDay`, apart from its time's day of the month.
+  - **The dialogs had no screenshots and no accessibility checks.** Checked, the time picker's clock face failed at once: hours with 32 dp touches, numbers overlapping at large text, and at 200 % its OK broken mid-word. The time is typed now, and the dialog takes Material's narrowest dialog width, so its buttons stay on one line, at 200 % with SDK 33's linear scaling too. Two of Material's own issues remain, named in `assertAccessible`'s new `knownIssues`. Robolectric's default 320 dp screen cut the dialogs, so they run on a phone-sized one.
+  - **iOS:** the Madrid conversions are tested from New York's and Tokyo's zones (a GMT calendar fails them; `NSTimeZone.default` does not move `TimeZone.current`, so a calendar on the device's zone would fail on CI's UTC simulators only); every text has a snapshot in both languages; the sheet is in the audit's walk, where the system picker's own issues are left out by name (`isTheSystemPickersOwn`) and its title in dark mode joins the Dark theme's known contrast false positives; the state is stored, so a "tomorrow" that midnight changed reaches the view when the root shows again (a test with the preview clock moved on); the sheet keeps its content while it slides away; the day and month are formatted on the Gregorian calendar; a preview of the open sheet; and the UI test waits for the old row to go.
+  - **Nits:** one HH:mm formatter per platform in the design system; `PlannerScreen.kt` passed detekt's function count once the chip moved to `DepartureChip.kt`; the docs name `PreviewPlanner`, and the READMEs say whose pickers each platform shows.
+  - **Not acted on, with reasons:** the year in another day's date (no day gone by can be picked, so a date without a year is ambiguous only beyond a year ahead); VoiceOver reading "15 ene" rather than the month's full name (for the device pass); Material's calendar marking today by the device's own clock (a Material limitation, in §3.3); and the red commit ab598e6, which brought `clock()`'s plumbing whole, as its body says.
+
+**CI**
+- **Run 1 (42356647912):** `verifyRoborazziDebug` failed on `Planner_timeDialog_linearFontScale2.png` alone, and the Kotlin gate with it. The diff was the antialiasing of the dialog's rounded corners: Robolectric's SDK 33 draws them differently on CI's Linux than on macOS, where the reference was recorded; SDK 36's captures match on both. A fault in the branch, not a flake: that test now checks accessibility at linear scaling without a capture, and its reference went. No tolerance was added.
+- **Run 2 (42357253375):** "Android screenshots (:android:app)" failed in `TabNavigationTest.lb101_reselectingLinesAtItsRootScrollsTheListToItsTop`, at its first check: after scrolling the Lines list to "Line B3", "Line 1" still showed. A runner flake: the branch does not touch the Lines list, the same job passed on run 1 with the same code, and the failure has no earlier record here. The failed jobs were rerun once. If it recurs, the test should wait for the scroll to settle.
+
+**Decisions**
+- **Agent:**
+  - **LB-303 is done without its request part, for the owner to confirm.** There is no plan request until LB-306, whose criteria now send `departureAt` from `PlanDeparture.departureAt(now)`, in UTC with milliseconds as API-07's example. The value itself is tested here.
+  - **The pickers:** Android's chip follows the sketch in §3.3, with Material's dialogs; iOS keeps the inset grouped list, so the departure is a menu row in a section of its own, and the picker the system's graphical one in a sheet. The pickers open at the picked time, or at now for "Leave now" or a time gone by.
+  - **Android's time is typed,** never on the clock face, whose touch targets and large-text layout fail the checks (Review above).
+- **Owner (2026-11-07):** the pickers' own accessibility issues are exempted by name ("Eximir por nombre"), over leaving the pickers unchecked or building pickers of our own.
+  - Android: Material's date picker's previous-month arrow at 200 % (41 dp of 48) and the time input's ":" glyph, in `assertAccessible`'s `knownIssues`; an exemption fails once its issue no longer occurs.
+  - iOS: the system date picker's own Dynamic Type, contrast and unattributed-text issues on the "Departure time" sheet, inside its frame only; the sheet's title and buttons are still audited.
+- **Agent (continued):**
+  - **The day it says is counted again on every event,** the root showing again included, not at midnight: no timer may run (AGENTS.md §5.7).
+  - **No day before today; any time.** Material's time picker cannot be limited, so neither platform limits the time: a time earlier today is allowed, and the planner (LB-306) will plan it. No limit ahead either: a date beyond the timetables gets LB-307's no-route message.
+  - **A picked time stays** until the user changes it: the root showing again keeps it, and so does the time passing. A time whose day has gone by shows its date, and the pickers open at now.
+  - **The text:** HH:mm on the Madrid clock, as the ETAs' clock times, with "mañana" or the date; the hour picks Spanish's article, as `eta_clock_spoken` does.
+  - **No compile gap this time:** the mapper's new state lived beside the old one until both ViewModels moved, and the new events came with both ViewModels' red commit.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** the owner's choice. How to Get There's next P0 stories need the source's DTOs (LB-005 part 2, after LB-003's fixtures, which only the owner may have recorded) or place search (LB-302, which needs CartoCiudad's fixtures), and most others need OQ-10 or OQ-11.
+- **With the owner:** confirming that LB-303 closes with its request part in LB-306, as LB-304's results part; the TalkBack and VoiceOver passes on a device, for LB-301 part 1, LB-304 and LB-303 (the chip and the row, Material's and the system's pickers).
+- **Waiting for the owner:**
+  - the iOS job limit;
+  - Android's end-to-end encrypted backups;
+  - DD-10 provisional stops;
+  - alert 6 (Kotlin Gradle plugin);
+  - the Gradle cache provider;
+  - OQ-10 and OQ-11.
+
+---
+
 ## 2026-11-06: LB-304, swap origin and destination
 
 **Done**

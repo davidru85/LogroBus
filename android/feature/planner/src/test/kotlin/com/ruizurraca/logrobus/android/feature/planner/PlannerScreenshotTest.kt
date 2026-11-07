@@ -71,6 +71,7 @@ class PlannerScreenshotTest(
                 "myLocation" to PlannerPreviewData.myLocation,
                 "empty" to PlannerPreviewData.empty,
                 "swapped" to PlannerPreviewData.swapped,
+                "departAt" to PlannerPreviewData.departAt,
             )
 
         @JvmStatic
