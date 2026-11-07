@@ -109,7 +109,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     }
 
     /// How to Get There's root (LB-301), which the audit waits for: its fields, with the origin's hint in the
-    /// secondary text colour when location is off.
+    /// secondary text colour when location is off. Then the departure's picker (LB-303), a sheet with its title, its
+    /// buttons and the system's date and time picker.
     @MainActor
     private func auditDirections(
         _ audit: Audit,
@@ -123,6 +124,14 @@ final class AccessibilityAuditUITests: XCTestCase {
         let origin = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Origin")).firstMatch
         XCTAssertTrue(origin.waitForExistence(timeout: 5))
         try audit.run("Directions" + suffix, types, into: &issues)
+
+        app.buttons["Leave now"].tap()
+        app.buttons["Depart at…"].tap()
+        let sheet = app.navigationBars["Departure time"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
+        try audit.run("Departure time" + suffix, types, into: &issues)
+        sheet.buttons["Cancel"].tap()
+        XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
     }
 
     /// More, Settings, at its end at the largest text, its Clear cache alert, and About data, from the Lines root.
@@ -248,9 +257,11 @@ private struct Audit {
             found = []
             var unnamed = false
             let barButtons = app.navigationBars.buttons.allElementsBoundByIndex.map(\.frame)
+            let systemPicker = screen.hasPrefix("Departure time") ? app.datePickers.firstMatch.frame : nil
             do {
                 try app.performAccessibilityAudit(for: types) { issue in
                     if isFalsePositive(issue, on: screen, barButtons: barButtons) { return true }
+                    if let systemPicker, isTheSystemPickersOwn(issue, picker: systemPicker) { return true }
                     unnamed = unnamed || issue.element == nil
                     let element = issue.element.map { "\"\($0.label)\" at \($0.frame)" } ?? "no element"
                     let kind = issue.compactDescription
@@ -280,8 +291,22 @@ private struct Audit {
     ///   audit cannot name ("potentially inaccessible text"). Its title and button are read, and its button takes the
     ///   accent, which the contrast audit checks.
     /// - **The search field's "Clear text" button,** 20 pt, the system's: Close beside the field ends the search.
-    /// - **Contrast of the system's search field and of the Clear cache alert's title, in the app's Dark theme:** both
-    ///   show white on dark, yet the audit reports them as failing. With the device's dark mode, locally, it did not.
+    /// - **Contrast of the system's search field, of the Clear cache alert's title and of the departure sheet's title
+    ///   (LB-303), in the app's Dark theme:** all show white on dark, yet the audit reports them as failing. With the
+    ///   device's dark mode, locally, it did not.
+    /// Whether `issue` is the system's date picker's own, on How to Get There's departure sheet (LB-303), where the
+    /// sheet shows `picker`, its frame. Exempted by name on the owner's decision (2026-11-07), since the app cannot
+    /// change them; the sheet's title and buttons are still audited:
+    /// - **Dynamic Type:** the calendar's month and day numbers keep their size at the largest text.
+    /// - **Contrast:** the picker's time label, the system's own colours.
+    /// - **Unattributed text and Dynamic Type,** with no element: the picker is all the sheet draws besides its bar.
+    private func isTheSystemPickersOwn(_ issue: XCUIAccessibilityAuditIssue, picker: CGRect) -> Bool {
+        let pickersKinds: [XCUIAccessibilityAuditType] = [.dynamicType, .contrast, .elementDetection]
+        guard pickersKinds.contains(issue.auditType) else { return false }
+        guard let element = issue.element else { return issue.auditType != .contrast }
+        return picker.insetBy(dx: -1, dy: -1).contains(element.frame)
+    }
+
     private func isFalsePositive(
         _ issue: XCUIAccessibilityAuditIssue,
         on screen: String,
@@ -304,7 +329,8 @@ private struct Audit {
         case .contrast:
             let searchField = screen == "Lines, searching, dark" && element.elementType == .searchField
             let alertTitle = screen == "Settings, Clear cache's alert, dark" && element.label == "Cache cleared"
-            return dark && (searchField || alertTitle)
+            let sheetTitle = screen == "Departure time, dark" && element.label == "Departure time"
+            return dark && (searchField || alertTitle || sheetTitle)
         default:
             return false
         }
