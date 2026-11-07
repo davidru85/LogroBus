@@ -12,7 +12,7 @@ import kotlin.time.Instant
  * For display, and for where a date or time picker opens (LB-303): it carries no offset, so the repeated hour on the
  * last Sunday of October gives two instants the same value. Never compare, sort or convert it back to an instant in
  * business logic; keep the `Instant` for that. A picked time goes back to shared code as fields, which it reads on
- * the Madrid clock (`PlanDeparture.atMadrid`).
+ * the Madrid clock (`PlannerEvent.DepartAt.departure`).
  */
 data class MadridDateTime(
     val year: Int,

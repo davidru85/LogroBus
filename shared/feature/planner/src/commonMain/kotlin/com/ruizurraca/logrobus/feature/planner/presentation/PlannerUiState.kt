@@ -7,6 +7,7 @@ import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlaces
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
@@ -89,7 +90,11 @@ sealed interface PlannerEvent {
         val day: Int,
         val hour: Int,
         val minute: Int,
-    ) : PlannerEvent
+    ) : PlannerEvent {
+        /** The departure this picks, read on the Madrid clock at [now], the app clock's ([PlanDeparture.atMadrid]). */
+        fun departure(now: Instant): PlanDeparture.At =
+            PlanDeparture.atMadrid(LocalDateTime(year, month, day, hour, minute), now)
+    }
 }
 
 object PlannerUiMapper {

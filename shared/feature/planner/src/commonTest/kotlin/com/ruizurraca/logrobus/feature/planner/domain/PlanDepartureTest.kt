@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.feature.planner.domain
 
+import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -18,14 +19,14 @@ class PlanDepartureTest {
 
     @Test
     fun lb303_departAt0819On22Oct2026_departsAt0619Utc_inSummerTime() {
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 8, minute = 19, now = now)
+        val departure = PlanDeparture.atMadrid(LocalDateTime(2026, 10, 22, 8, 19), now)
 
         assertEquals(Instant.parse("2026-10-22T06:19:00.000Z"), departure.departureAt(now))
     }
 
     @Test
     fun lb303_departAt0819On15Jan2027_departsAt0719Utc_inWinterTime() {
-        val departure = PlanDeparture.atMadrid(year = 2027, month = 1, day = 15, hour = 8, minute = 19, now = now)
+        val departure = PlanDeparture.atMadrid(LocalDateTime(2027, 1, 15, 8, 19), now)
 
         assertEquals(Instant.parse("2027-01-15T07:19:00.000Z"), departure.departureAt(now))
     }
@@ -33,7 +34,7 @@ class PlanDepartureTest {
     @Test
     fun lb303_departAt_inTheHourSkippedOnTheLastSundayOfMarch_movesOnByThatHour() {
         // 29 Mar 2026: at 02:00 CET the clocks go to 03:00 CEST, so 02:30 never shows. It means 03:30 CEST.
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 3, day = 29, hour = 2, minute = 30, now = now)
+        val departure = PlanDeparture.atMadrid(LocalDateTime(2026, 3, 29, 2, 30), now)
 
         assertEquals(Instant.parse("2026-03-29T01:30:00Z"), departure.departureAt(now))
     }
@@ -43,7 +44,7 @@ class PlanDepartureTest {
         // 25 Oct 2026: at 03:00 CEST the clocks go back to 02:00 CET, so 02:30 shows twice. Picked the evening before,
         // it means the first one.
         val eveningBefore = Instant.parse("2026-10-24T20:00:00Z")
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 25, hour = 2, minute = 30, eveningBefore)
+        val departure = PlanDeparture.atMadrid(LocalDateTime(2026, 10, 25, 2, 30), eveningBefore)
 
         assertEquals(Instant.parse("2026-10-25T00:30:00Z"), departure.departureAt(eveningBefore))
     }
@@ -52,14 +53,14 @@ class PlanDepartureTest {
     fun lb303_departAt_inTheRepeatedHour_onceItsFirstPassHasGoneBy_isTheSecond_inWinterTime() {
         // 02:40 CET, the hour's second pass: 02:50 an hour ago has gone by, so 02:50 means the one ten minutes away.
         val secondPass = Instant.parse("2026-10-25T01:40:00Z")
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 25, hour = 2, minute = 50, secondPass)
+        val departure = PlanDeparture.atMadrid(LocalDateTime(2026, 10, 25, 2, 50), secondPass)
 
         assertEquals(Instant.parse("2026-10-25T01:50:00Z"), departure.departureAt(secondPass))
     }
 
     @Test
     fun lb303_departAt_departsAtThePickedTime_whateverTheTimeNow() {
-        val departure = PlanDeparture.atMadrid(year = 2026, month = 10, day = 22, hour = 8, minute = 19, now = now)
+        val departure = PlanDeparture.atMadrid(LocalDateTime(2026, 10, 22, 8, 19), now)
 
         assertEquals(departure.departureAt(now), departure.departureAt(Instant.parse("2027-06-01T00:00:00Z")))
     }

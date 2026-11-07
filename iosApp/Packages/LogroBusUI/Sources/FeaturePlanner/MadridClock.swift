@@ -2,7 +2,7 @@ import Foundation
 import Shared
 
 // FR-PLAN-03 on iOS: the departure picker shows and reads the Madrid clock, whatever the device's zone and calendar
-// (AGENTS.md §5.5); shared code reads the picked fields on that clock (`PlanDeparture.atMadrid`).
+// (AGENTS.md §5.5); shared code reads the picked fields on that clock (`PlannerEventDepartAt.departure(now:)`).
 
 extension Calendar {
     /// Logroño's calendar, on which the departure picker shows and reads its times (AGENTS.md §5.5).

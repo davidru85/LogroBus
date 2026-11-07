@@ -44,10 +44,7 @@ public final class PlannerViewModel {
         case .cancelDepartureTime:
             picking = false
         case .departAt(let time):
-            departure = PlanDepartureCompanion.shared.atMadrid(
-                year: time.year, month: time.month, day: time.day, hour: time.hour, minute: time.minute,
-                now: useCases.clock().now()
-            )
+            departure = time.departure(now: useCases.clock().now())
             picking = false
         }
         state = PlannerUiMapper.shared.state(
