@@ -49,6 +49,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 **CI**
 - **Run 1 (42356647912):** `verifyRoborazziDebug` failed on `Planner_timeDialog_linearFontScale2.png` alone, and the Kotlin gate with it. The diff was the antialiasing of the dialog's rounded corners: Robolectric's SDK 33 draws them differently on CI's Linux than on macOS, where the reference was recorded; SDK 36's captures match on both. A fault in the branch, not a flake: that test now checks accessibility at linear scaling without a capture, and its reference went. No tolerance was added.
+- **Run 2 (42357253375):** "Android screenshots (:android:app)" failed in `TabNavigationTest.lb101_reselectingLinesAtItsRootScrollsTheListToItsTop`, at its first check: after scrolling the Lines list to "Line B3", "Line 1" still showed. A runner flake: the branch does not touch the Lines list, the same job passed on run 1 with the same code, and the failure has no earlier record here. The failed jobs were rerun once. If it recurs, the test should wait for the scroll to settle.
 
 **Decisions**
 - **Agent:**
