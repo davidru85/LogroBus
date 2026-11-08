@@ -1,0 +1,40 @@
+{
+  "result": {
+    "activities": [
+      {
+        "confidenceLevel": "CERTAIN",
+        "delaySeconds": -54,
+        "directionRef": "Ida",
+        "latitude": 42.463141,
+        "lineRef": "2",
+        "locationRecordedAtTime": "2026-11-08T09:35:13Z",
+        "longitude": -2.463196,
+        "monitored": true,
+        "nextStopAimedArrivalTime": "2026-11-08T10:37:07Z",
+        "nextStopExpectedArrivalTime": "2026-11-08T10:36:35Z",
+        "nextStopRef": "0076",
+        "predictionInaccurate": false,
+        "publishedLineName": "YAGÜE-VAREA",
+        "vehicleMonitoringRef": "2847",
+        "vehicleRef": "2847"
+      },
+      {
+        "confidenceLevel": "CERTAIN",
+        "delaySeconds": 11,
+        "directionRef": "Vuelta",
+        "latitude": 42.462487,
+        "lineRef": "2",
+        "locationRecordedAtTime": "2026-11-08T09:35:12Z",
+        "longitude": -2.42653,
+        "monitored": true,
+        "nextStopAimedArrivalTime": "2026-11-08T10:35:01Z",
+        "nextStopExpectedArrivalTime": "2026-11-08T10:35:12Z",
+        "nextStopRef": "0092",
+        "predictionInaccurate": false,
+        "publishedLineName": "VAREA-YAGÜE",
+        "vehicleMonitoringRef": "2883",
+        "vehicleRef": "2883"
+      }
+    ]
+  }
+}

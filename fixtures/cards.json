@@ -1,0 +1,292 @@
+{
+  "data": [
+    {
+      "buttonLink": "https://transporteurbano.logrono.es/news-and-notices",
+      "buttonText": "Al día sobre el transporte urbano",
+      "createdAt": "2026-09-30T17:20:35.369Z",
+      "description": "Info general, desvíos e intervenciones para el transporte urbano de Logroño",
+      "documentId": "legg3e5hzt1rlu8638lcqe72",
+      "id": 81,
+      "image": {
+        "alternativeText": "Bus urbano",
+        "caption": null,
+        "createdAt": "2026-08-17T09:46:13.723Z",
+        "documentId": "ammb5n7cqnna9e7coj8zr1lo",
+        "ext": ".jpg",
+        "formats": {
+          "large": {
+            "ext": ".jpg",
+            "hash": "large_AUTOBUS_SIN_CAPAS_2_f8cc09d257",
+            "height": 780,
+            "mime": "image/jpeg",
+            "name": "large_AUTOBÚS SIN CAPAS 2.jpg",
+            "path": null,
+            "size": 118.14,
+            "sizeInBytes": 118136,
+            "url": "/uploads/large_AUTOBUS_SIN_CAPAS_2_f8cc09d257.jpg",
+            "width": 1000
+          },
+          "medium": {
+            "ext": ".jpg",
+            "hash": "medium_AUTOBUS_SIN_CAPAS_2_f8cc09d257",
+            "height": 585,
+            "mime": "image/jpeg",
+            "name": "medium_AUTOBÚS SIN CAPAS 2.jpg",
+            "path": null,
+            "size": 71.93,
+            "sizeInBytes": 71933,
+            "url": "/uploads/medium_AUTOBUS_SIN_CAPAS_2_f8cc09d257.jpg",
+            "width": 750
+          },
+          "small": {
+            "ext": ".jpg",
+            "hash": "small_AUTOBUS_SIN_CAPAS_2_f8cc09d257",
+            "height": 390,
+            "mime": "image/jpeg",
+            "name": "small_AUTOBÚS SIN CAPAS 2.jpg",
+            "path": null,
+            "size": 37.13,
+            "sizeInBytes": 37130,
+            "url": "/uploads/small_AUTOBUS_SIN_CAPAS_2_f8cc09d257.jpg",
+            "width": 500
+          },
+          "thumbnail": {
+            "ext": ".jpg",
+            "hash": "thumbnail_AUTOBUS_SIN_CAPAS_2_f8cc09d257",
+            "height": 156,
+            "mime": "image/jpeg",
+            "name": "thumbnail_AUTOBÚS SIN CAPAS 2.jpg",
+            "path": null,
+            "size": 8.39,
+            "sizeInBytes": 8394,
+            "url": "/uploads/thumbnail_AUTOBUS_SIN_CAPAS_2_f8cc09d257.jpg",
+            "width": 200
+          }
+        },
+        "hash": "AUTOBUS_SIN_CAPAS_2_f8cc09d257",
+        "height": 1756,
+        "id": 160,
+        "mime": "image/jpeg",
+        "name": "AUTOBÚS SIN CAPAS 2.jpg",
+        "previewUrl": null,
+        "provider": "local",
+        "provider_metadata": null,
+        "publishedAt": "2026-08-17T09:46:13.723Z",
+        "size": 403.24,
+        "updatedAt": "2026-08-17T09:46:21.368Z",
+        "url": "/uploads/AUTOBUS_SIN_CAPAS_2_f8cc09d257.jpg",
+        "width": 2252
+      },
+      "order": 1,
+      "publishedAt": "2026-09-30T17:20:35.382Z",
+      "title": "Noticias del servicio",
+      "updatedAt": "2026-09-30T17:20:35.369Z"
+    },
+    {
+      "buttonLink": "https://transporteurbano.logrono.es/recharge-points",
+      "buttonText": "Ver puntos",
+      "createdAt": "2026-04-06T16:10:47.266Z",
+      "description": "Mira todos los puntos donde recargar los títulos de transporte urbano de Logroño.",
+      "documentId": "vmao525qb4k9lqx7nb46vjx1",
+      "id": 40,
+      "image": {
+        "alternativeText": null,
+        "caption": null,
+        "createdAt": "2026-06-17T11:04:25.874Z",
+        "documentId": "cdxq6kuk4ebcc9zef79ua5p0",
+        "ext": ".png",
+        "formats": {
+          "large": {
+            "ext": ".png",
+            "hash": "large_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0",
+            "height": 617,
+            "mime": "image/png",
+            "name": "large_a17e0075dbec3492e20ab6bdacf02fa732090814 - copia.png",
+            "path": null,
+            "size": 1368.11,
+            "sizeInBytes": 1368111,
+            "url": "/uploads/large_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0.png",
+            "width": 1000
+          },
+          "medium": {
+            "ext": ".png",
+            "hash": "medium_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0",
+            "height": 463,
+            "mime": "image/png",
+            "name": "medium_a17e0075dbec3492e20ab6bdacf02fa732090814 - copia.png",
+            "path": null,
+            "size": 782.85,
+            "sizeInBytes": 782846,
+            "url": "/uploads/medium_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0.png",
+            "width": 750
+          },
+          "small": {
+            "ext": ".png",
+            "hash": "small_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0",
+            "height": 308,
+            "mime": "image/png",
+            "name": "small_a17e0075dbec3492e20ab6bdacf02fa732090814 - copia.png",
+            "path": null,
+            "size": 357.42,
+            "sizeInBytes": 357416,
+            "url": "/uploads/small_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0.png",
+            "width": 500
+          },
+          "thumbnail": {
+            "ext": ".png",
+            "hash": "thumbnail_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0",
+            "height": 151,
+            "mime": "image/png",
+            "name": "thumbnail_a17e0075dbec3492e20ab6bdacf02fa732090814 - copia.png",
+            "path": null,
+            "size": 93.41,
+            "sizeInBytes": 93410,
+            "url": "/uploads/thumbnail_a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0.png",
+            "width": 245
+          }
+        },
+        "hash": "a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0",
+        "height": 770,
+        "id": 104,
+        "mime": "image/png",
+        "name": "a17e0075dbec3492e20ab6bdacf02fa732090814 - copia.png",
+        "previewUrl": null,
+        "provider": "local",
+        "provider_metadata": null,
+        "publishedAt": "2026-06-17T11:04:25.874Z",
+        "size": 488.83,
+        "updatedAt": "2026-06-17T11:04:25.874Z",
+        "url": "/uploads/a17e0075dbec3492e20ab6bdacf02fa732090814_copia_887d8657a0.png",
+        "width": 1248
+      },
+      "order": 2,
+      "publishedAt": "2026-07-02T07:35:39.446Z",
+      "title": "Puntos de recarga",
+      "updatedAt": "2026-07-02T07:35:39.431Z"
+    },
+    {
+      "buttonLink": "https://transporteurbano.logrono.es/lines",
+      "buttonText": "Ver líneas",
+      "createdAt": "2026-04-07T10:40:28.056Z",
+      "description": "Detalle de líneas del transporte urbano de Logroño",
+      "documentId": "t7savd34tjim5tgcm224z7io",
+      "id": 41,
+      "image": {
+        "alternativeText": null,
+        "caption": null,
+        "createdAt": "2026-07-01T08:18:32.660Z",
+        "documentId": "t5ottt67opdftzs5q997dhvi",
+        "ext": ".png",
+        "formats": {
+          "small": {
+            "ext": ".png",
+            "hash": "small_imagen_2026_07_01_101814539_ebf30fc4af",
+            "height": 398,
+            "mime": "image/png",
+            "name": "small_imagen_2026-07-01_101814539.png",
+            "path": null,
+            "size": 346.49,
+            "sizeInBytes": 346490,
+            "url": "/uploads/small_imagen_2026_07_01_101814539_ebf30fc4af.png",
+            "width": 500
+          },
+          "thumbnail": {
+            "ext": ".png",
+            "hash": "thumbnail_imagen_2026_07_01_101814539_ebf30fc4af",
+            "height": 156,
+            "mime": "image/png",
+            "name": "thumbnail_imagen_2026-07-01_101814539.png",
+            "path": null,
+            "size": 66.9,
+            "sizeInBytes": 66900,
+            "url": "/uploads/thumbnail_imagen_2026_07_01_101814539_ebf30fc4af.png",
+            "width": 196
+          }
+        },
+        "hash": "imagen_2026_07_01_101814539_ebf30fc4af",
+        "height": 511,
+        "id": 108,
+        "mime": "image/png",
+        "name": "imagen_2026-07-01_101814539.png",
+        "previewUrl": null,
+        "provider": "local",
+        "provider_metadata": null,
+        "publishedAt": "2026-07-01T08:18:32.661Z",
+        "size": 149.21,
+        "updatedAt": "2026-07-01T08:18:32.660Z",
+        "url": "/uploads/imagen_2026_07_01_101814539_ebf30fc4af.png",
+        "width": 642
+      },
+      "order": 3,
+      "publishedAt": "2026-07-02T07:35:53.718Z",
+      "title": "Líneas de transporte",
+      "updatedAt": "2026-07-02T07:35:53.704Z"
+    },
+    {
+      "buttonLink": "https://logrono.es/muévete-por-logroño",
+      "buttonText": "Muévete",
+      "createdAt": "2026-04-29T14:09:58.116Z",
+      "description": "¡Ahora es más fácil!",
+      "documentId": "xg8u99b9n5xk2r3e6yse2cdf",
+      "id": 38,
+      "image": {
+        "alternativeText": null,
+        "caption": null,
+        "createdAt": "2026-07-02T06:39:46.932Z",
+        "documentId": "ricjbck3044vyczumwa79mg4",
+        "ext": ".png",
+        "formats": {
+          "small": {
+            "ext": ".png",
+            "hash": "small_Transporte_Publico_134436cff7",
+            "height": 143,
+            "mime": "image/png",
+            "name": "small_Transporte+Publico.png",
+            "path": null,
+            "size": 129.26,
+            "sizeInBytes": 129263,
+            "url": "/uploads/small_Transporte_Publico_134436cff7.png",
+            "width": 500
+          },
+          "thumbnail": {
+            "ext": ".png",
+            "hash": "thumbnail_Transporte_Publico_134436cff7",
+            "height": 70,
+            "mime": "image/png",
+            "name": "thumbnail_Transporte+Publico.png",
+            "path": null,
+            "size": 34.81,
+            "sizeInBytes": 34806,
+            "url": "/uploads/thumbnail_Transporte_Publico_134436cff7.png",
+            "width": 245
+          }
+        },
+        "hash": "Transporte_Publico_134436cff7",
+        "height": 150,
+        "id": 113,
+        "mime": "image/png",
+        "name": "Transporte+Publico.png",
+        "previewUrl": null,
+        "provider": "local",
+        "provider_metadata": null,
+        "publishedAt": "2026-07-02T06:39:46.932Z",
+        "size": 37.57,
+        "updatedAt": "2026-07-02T06:39:46.932Z",
+        "url": "/uploads/Transporte_Publico_134436cff7.png",
+        "width": 525
+      },
+      "order": 4,
+      "publishedAt": "2026-07-02T06:39:51.156Z",
+      "title": "Muévete por Logroño",
+      "updatedAt": "2026-07-02T06:39:51.142Z"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageCount": 1,
+      "pageSize": 50,
+      "total": 4
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "criteria": {
+    "directMarginMin": 15,
+    "maxBusWaitMin": 30,
+    "maxWalkFromBusM": 600,
+    "maxWalkToBusM": 700
+  },
+  "rejection": {
+    "details": {},
+    "reason": "walk-too-far"
+  },
+  "routes": []
+}
