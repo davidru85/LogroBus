@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Repository public since 2026-10-23 (LB-415), with `main` protected. The policy, Kotlin (tests, Android build and lint, ktlint, detekt, Kover, dependency review) and iOS workflows run on every pull request, behind the required gates. LB-002 is done (2026-10-25). The screenshot jobs came with LB-011 and the iOS ViewModel and snapshot jobs with LB-101; the nightly workflow follows in LB-412 |
-| Last updated | 2026-11-05 |
+| Last updated | 2026-11-08 |
 | Related | `engineering_workflow.md`, `testing_strategy.md`, `release_process.md`, `agent_harness.md`, ADR-0006 |
 
 ## 1. Operating rule: CI runs only while the repository is public
@@ -77,7 +77,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | Workflow | Schedule | Jobs (one per concern) | Story |
 | --- | --- | --- | --- |
 | `nightly.yml` | Daily | Android instrumented tests; iOS 18 fallback snapshots; Maestro critical journeys (non-blocking). Created when the first of them exists. No OWASP Dependency-Check: the dependency review and Dependabot alerts are the NFR-SEC-05 equivalent (§6, owner decision 2026-10-25) | LB-412, or the first instrumented test |
-| `weekly-fixtures.yml` | Weekly | Re-record fixtures and detect contract drift; opens an issue on drift | LB-003 |
+| `weekly-fixtures.yml` | Weekly, Mondays 04:17 UTC (also `workflow_dispatch`) | `Fixtures` re-records every committed fixture and compares its shape with the source (`scripts/record-fixtures.sh --check`); `Contract drift` opens one issue per ISO week when the check fails (§5.1) | LB-003 |
 | `release.yml` | On a `v*` tag | Android upload; iOS upload | M5 (`release_process.md` §7) |
 
 ## 4. Path filters and gating
@@ -136,6 +136,16 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - **macOS runners that are slow or never come** (PR #37 and PR #38, 2026-11-02): with five macOS jobs at once, one matrix job built the framework and the app in 18 minutes with cold caches and reached its 20-minute limit; twice, GitHub never assigned a job a runner ("not acquired … capacity constraints" on macOS arm64). The matrix jobs' limit is 30 minutes since PR #38 (owner decision). A job that gets no runner cannot be prevented from the pipeline: rerun it.
 - **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
   - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.
+
+### 5.1 The weekly fixture check (`weekly-fixtures.yml`, LB-003)
+
+- **What it does.** Every Monday at 04:17 UTC, and on demand through `workflow_dispatch`, the `Fixtures` job records the 17 endpoints of spec §10.2 plus the two CartoCiudad captures, 19 in all, into a temporary directory, with `scripts/record-fixtures.sh --check`. It compares the JSON *shape* of each capture, the key paths and their types, with the committed file in `fixtures/`, and fails when a field was added, removed or changed type.
+- **Why the shape and not the bytes.** The live endpoints answer with new values every minute: ETAs, timestamps and vehicle positions. A byte diff would fail on every run, while the shape is the part that the app's contract tests rely on (risk R1, [`api_spec.md`](api_spec.md) §9, [`testing_strategy.md`](testing_strategy.md) §4.3).
+- **How it calls the source.** At most one request per second, the project `User-Agent` and `Accept-Encoding: gzip`, following spec §8.7 and risk R2. Each fixture takes one request, so a run takes about 25 s.
+- **Why `timeout-minutes: 10`.** The run itself takes about 25 s; the limit caps a run that hangs on a slow endpoint (the requests time out at 10 s, the static ones at 30 s) and stays within §2's hard limit. The `Contract drift` job needs 3 minutes: it only calls `gh`.
+- **On drift it opens an issue and blocks nothing.** The `Contract drift` job runs only when `Fixtures` failed. It opens one issue per ISO week, titled `Contract drift: weekly fixtures <year>-W<week>`, unless an issue with that exact title is already open, so a retried run does not open a second one. The issue carries the failing run's URL, the drift lines the checker printed, the link to [`playbooks/record-fixtures.md`](playbooks/record-fixtures.md), and the reminder that a shape change is risk R1 and belongs in [`api_spec.md`](api_spec.md) §10. The drift lines come from the first job: it writes them to its `report` output, which is cheaper than recording the 19 endpoints a second time. The workflow is not part of any gate (§3–4), so a drift never blocks a merge.
+- **It never commits.** `--check` writes nothing and no step commits: a human or an agent re-records, reviews the diff and opens the pull request, as the playbook says.
+- **Security.** The workflow needs no secret. `Contract drift` is the only job outside a pull request with a write permission (`issues: write`, §6), and the checker's output, which quotes the untrusted source, reaches the shell through `env:`, never through `run:`.
 
 ## 6. Workflow security
 

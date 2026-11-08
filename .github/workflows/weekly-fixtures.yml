@@ -1,0 +1,137 @@
+# Weekly fixtures: re-record every committed fixture and fail when the source's
+# contract (the JSON shape) changed (risk R1, docs/testing_strategy.md §4.3).
+# The check writes nothing and the workflow never commits: a human or an agent
+# re-records and reviews, following docs/playbooks/record-fixtures.md.
+#
+# Owner rule: CI runs only while the repository is public (docs/ci_cd.md §1).
+# This workflow is not part of any gate, so a failed run opens an issue instead
+# of blocking a merge (docs/ci_cd.md §5.1).
+name: Weekly fixtures
+
+on:
+  schedule:
+    # Mondays, 04:17 UTC. Off the hour so the run does not meet GitHub's
+    # busiest scheduling minute.
+    - cron: '17 4 * * 1'
+  # A manual run, for a drift reported by hand or after a source outage.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time: a manual run must not cancel a scheduled one and hide a
+# drift, and a scheduled run must not cancel a manual one.
+concurrency:
+  group: weekly-fixtures
+  cancel-in-progress: false
+
+jobs:
+  fixtures:
+    name: Fixtures
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      # The drift lines the checker printed, for the issue that contract-drift
+      # opens. Carried as an output so that the endpoints are not recorded twice.
+      report: ${{ steps.check.outputs.report }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # Both tools are preinstalled on ubuntu-latest and both are prerequisites
+      # of scripts/record-fixtures.sh, which fails at its first command without
+      # them; this step names the missing one.
+      - name: jq and curl are available
+        run: |
+          for tool in jq curl; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "::error::$tool is required by scripts/record-fixtures.sh and is missing from this runner"
+              exit 1
+            fi
+          done
+          jq --version
+          curl --version
+      # --check records into a temporary directory and compares the JSON shape
+      # (scripts/ci/fixture-shape.sh) with the committed fixture: no values, no
+      # writes, exit code 1 on drift. One request per endpoint, at least one
+      # second apart, about 25 s in all (spec §8.7, risk R2).
+      - name: Compare the live contract with the committed fixtures
+        id: check
+        run: |
+          status=0
+          output="$(bash scripts/record-fixtures.sh --check 2>&1)" || status=$?
+          printf '%s\n' "$output"
+          {
+            echo 'report<<RECORD_FIXTURES_REPORT'
+            printf '%s\n' "$output"
+            echo 'RECORD_FIXTURES_REPORT'
+          } >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+  contract-drift:
+    # Only after a failed check. It reports the drift and never blocks a merge:
+    # the fix is docs/playbooks/record-fixtures.md.
+    name: Contract drift
+    needs: fixtures
+    if: ${{ always() && !github.event.repository.private && needs.fixtures.result == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    # The only write permission of the workflow, and only for the issue
+    # (docs/ci_cd.md §6). It runs no code from a pull request: it only reads the
+    # failed job's output.
+    permissions:
+      contents: read
+      issues: write
+    env:
+      # gh authenticates with the job's token; no repository secret is involved.
+      # The job has no checkout, so gh is told the repository explicitly.
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PLAYBOOK_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/docs/playbooks/record-fixtures.md
+      # Untrusted output reaches the shell through env:, never through run:
+      # (docs/ci_cd.md §6).
+      REPORT: ${{ needs.fixtures.outputs.report }}
+    steps:
+      - name: Open this week's drift issue, unless it is already open
+        run: |
+          set -euo pipefail
+
+          # ISO year and week of the run, so that a drift is reported once per
+          # week even when the run is retried: "Contract drift: weekly fixtures 2026-W45".
+          title="Contract drift: weekly fixtures $(date -u +%G-W%V)"
+
+          existing="$(gh issue list --state open --limit 100 --search "in:title \"$title\"" --json title --jq '.[].title')"
+          if printf '%s\n' "$existing" | grep -Fxq -- "$title"; then
+            echo "An open issue already reports this drift: $title"
+            exit 0
+          fi
+
+          body_file="$RUNNER_TEMP/contract-drift.md"
+          {
+            echo "The weekly fixture check found a contract drift: a field was added, removed or changed type in a live response (risk R1)."
+            echo
+            echo "- Failing run: $RUN_URL"
+            echo "- Workflow: \`.github/workflows/weekly-fixtures.yml\`, job \`fixtures\`"
+            echo
+            echo "## What the checker printed"
+            echo
+            echo '```'
+            if [ -n "$REPORT" ]; then
+              printf '%s\n' "$REPORT"
+            else
+              echo "The failing job's log carries the drift lines (the report output was empty)."
+            fi
+            echo '```'
+            echo
+            echo "## What to do"
+            echo
+            echo "Follow the fixture recorder playbook: $PLAYBOOK_URL"
+            echo
+            echo "Re-record with \`scripts/record-fixtures.sh\`, review the shape diff, and update the DTOs, mappers and contract tests. A shape change is risk R1 and must be recorded in \`docs/api_spec.md\` §10 before the fixtures are committed."
+            echo
+            echo "This workflow never commits and is not a required check: a human or an agent re-records and reviews."
+          } >"$body_file"
+
+          gh issue create --title "$title" --body-file "$body_file"
