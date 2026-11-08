@@ -119,38 +119,55 @@ jobs:
 
           # Sanitise before the text reaches the issue body:
           #   - ANSI colour and \r go, so the lines are plain text;
-          #   - at most 200 lines and 16 000 bytes, with a line saying how many
-          #     lines were cut, so the body stays well inside GitHub's limit;
           #   - "RECORD_FIXTURES_REPORT" alone on a line is a reserved report
-          #     delimiter, replaced rather than echoed;
-          #   - any run of three or more backticks becomes ''' so no fence can be
-          #     opened, and the body indents the excerpt four spaces below, which
-          #     is what actually makes a fence impossible to close.
-          excerpt_file="$RUNNER_TEMP/contract-drift-lines.txt"
-          # LC_ALL=C: length() then counts bytes on every awk, so the cap below
-          # is exactly 16 000 bytes and never more than 16 000 characters.
+          #     delimiter, replaced rather than echoed, and any run of three or
+          #     more backticks becomes ''' so neither can forge an output or open
+          #     a fence;
+          #   - the last 200 lines and 16 000 bytes, taken from the END of the
+          #     log because the checker's lines are the last thing the failed
+          #     step printed, headed by how many earlier lines were omitted.
+          # The body then indents the excerpt four spaces, which is what makes a
+          # fence impossible to close.
+          scrubbed_file="$RUNNER_TEMP/fixtures-log-scrubbed.txt"
           sed -E $'s/\x1b\\[[0-9;?]*[ -/]*[@-~]//g' "$log_file" | tr -d '\r' |
-            LC_ALL=C awk -v max_lines=200 -v max_bytes=16000 '
-              BEGIN { kept = 0; bytes = 0; dropped = 0 }
-              {
-                gsub(/```+/, "'"'''"'")
-                if ($0 ~ /^[[:space:]]*RECORD_FIXTURES_REPORT[[:space:]]*$/) {
-                  $0 = "[line withheld: it is the record-fixtures report delimiter]"
-                }
-                if (kept >= max_lines || bytes + length($0) + 1 > max_bytes) {
-                  dropped++
-                  next
-                }
-                print
-                kept++
-                bytes += length($0) + 1
+            awk '{
+                   gsub(/```+/, "'"'''"'")
+                   if ($0 ~ /^[[:space:]]*RECORD_FIXTURES_REPORT[[:space:]]*$/) {
+                     $0 = "[line withheld: it is the record-fixtures report delimiter]"
+                   }
+                   print
+                 }' >"$scrubbed_file"
+          excerpt_file="$RUNNER_TEMP/contract-drift-lines.txt"
+          # LC_ALL=C: length() then counts bytes on every awk, so the cap is
+          # exactly 16 000 bytes, and never more than 16 000 characters. The
+          # notice printed when lines are omitted counts against it too, hence
+          # the reserve.
+          LC_ALL=C awk -v max_lines=200 -v max_bytes=16000 -v reserve=160 '
+            { line[NR] = $0; len[NR] = length($0) + 1 }
+            END {
+              if (NR == 0) exit
+              budget = max_bytes - reserve
+              start = NR - max_lines + 1
+              if (start < 1) start = 1
+              bytes = 0
+              first = NR + 1
+              for (i = NR; i >= start; i--) {
+                if (bytes + len[i] > budget) break
+                bytes += len[i]
+                first = i
               }
-              END {
-                if (dropped > 0) {
-                  printf "[log excerpt truncated: %d more line(s) did not fit the %d-line, %d-byte cap; open the run for the rest]\n", dropped, max_lines, max_bytes
-                }
+              # A single line longer than the whole cap: keep its head, so the
+              # excerpt is never empty and the note below still applies.
+              if (first > NR) {
+                first = NR
+                line[NR] = substr(line[NR], 1, budget - 64) " [line truncated: longer than the cap]"
               }
-            ' >"$excerpt_file"
+              if (first > 1) {
+                printf "[log excerpt truncated: %d earlier line(s) omitted, the last %d kept, at most %d bytes; open the run for the rest]\n", first - 1, NR - first + 1, max_bytes
+              }
+              for (i = first; i <= NR; i++) print line[i]
+            }
+          ' "$scrubbed_file" >"$excerpt_file"
           if [ ! -s "$excerpt_file" ]; then
             printf 'The failed job log was empty or could not be read; open the run: %s\n' "$RUN_URL" >"$excerpt_file"
           fi
