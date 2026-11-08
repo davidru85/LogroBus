@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft, pre-scaffold |
-| Last updated | 2026-11-06 |
+| Last updated | 2026-11-08 |
 | Based on | Spec §10.1–10.2, NFR-MNT-01, `architecture.md` §8 |
 
 This document covers what we test, at which level, with which tools, and what every pull request must include. The test harness described in §4 is built during M0, in stories LB-003 to LB-010.
@@ -73,16 +73,22 @@ This document covers what we test, at which level, with which tools, and what ev
 
 ### 4.2 Fixtures
 
-- `fixtures/` holds the golden payloads listed in spec §10.2 and `api_spec.md` §9.
+- `fixtures/` holds the golden payloads listed in spec §10.2 and `api_spec.md` §9: 19 files since LB-003.
 - Recorded fixtures are named `<endpoint>_<variant>_<yyyy-mm-dd>.json`. Hand-written ones start with `synthetic_` (for example `synthetic_vm_dd05_cest.json`).
-- Recorded fixtures are never edited by hand. If a test needs a variation, add a synthetic fixture.
+- Two recorded names keep no date but carry the spec's own baseline date in the suffix, because spec §10.2 lists them that way: `lines_2026-10-22.json` and `stops_2026-10-22.json`. The recorder writes every new capture under the name spec §10.2 gives it, so the filename is the identity of the endpoint, not the day of the run.
+- Recorded fixtures are never edited by hand. If a test needs a variation, add a synthetic fixture. None was needed for the `"[object Object]"` `lineRef`: the live capture of `vm_all_with_object_lineRef.json` carries it (DD-06).
 
 ### 4.3 Fixture recorder (`scripts/record-fixtures.sh`, LB-003)
 
-- Fetches each endpoint once, at no more than 1 request per second, with the app's `User-Agent` and `Accept-Encoding: gzip`.
-- Writes pretty-printed JSON to `fixtures/` with today's date.
-- Compares the JSON *shape* (the set of key paths and value types, extracted with `jq`) with the previous capture of the same endpoint, and prints a diff.
-- Exits non-zero when the shape changed. The weekly CI job (`ci_cd.md` §3) uses this exit code to flag contract drift (risk R1).
+- The recorder exists: it is the only place in the project that may call the live source. Unit, contract and integration tests decode the captures in `fixtures/` and never call it.
+- Modes: `--list` prints the 19 endpoints and touches no network; the default records every endpoint once; `--check` records into a temporary directory, writes nothing and compares the shape.
+- Fetches each endpoint once, at least 1 second apart, with the project `User-Agent` and `Accept-Encoding: gzip`. A run takes about 25 s.
+- Writes pretty-printed JSON to `fixtures/` with sorted keys (`jq --sort-keys --indent 2`), under the fixture name spec §10.2 gives the endpoint (§4.2). Captures are staged in a temporary directory and moved into place only when the whole run succeeded, so a failure leaves the committed files untouched.
+- Compares the JSON *shape* (the set of key paths and value types, one line per path) with the committed fixture, and prints `+ path type` for an added path, `- path type` for a removed one and `~ path old->new` for a changed type. `scripts/ci/fixture-shape.sh` holds the only implementation; an array collapses to `[]`, an integer and a float are both `number`, and a null on either side is never drift.
+- Exits non-zero when the shape changed, which is how the weekly job flags contract drift (risk R1, [`ci_cd.md`](ci_cd.md) §5.1). `weekly-fixtures.yml` runs `--check` every Monday and opens one issue per ISO week on drift; it is in no gate, so a drift never blocks a merge.
+- **The test-scope guard.** A JDK `InetAddressResolverProvider` in `:shared:core:testing`, on every JVM test classpath through the conventions, resolves loopback only and fails any other host name with `NETWORK GUARD` (§1 rule 2). `TestNetworkGuardTest` checks the registration, the marker and loopback; `NetworkGuardProbeTest` proves it reaches an ordinary module.
+  - The guard covers JVM tests only. Kotlin/Native tests have no JVM resolver and stay on Ktor's `MockEngine`.
+  - Robolectric used to fetch its Android framework jar from that same JVM, which the guard refuses. The build now resolves the jars once through Gradle, with its retries and cache, and hands them to the test run with `robolectric.offline=true` and `robolectric.dependency.dir`, where a missing jar fails instead of falling back to the network.
 
 ### 4.4 Time and time zones
 

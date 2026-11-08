@@ -153,6 +153,9 @@ done
 [ -f "$root/version.properties" ] || die "no version.properties at $root"
 version="$(sed -n 's/^VERSION_NAME=//p' "$root/version.properties")"
 [ -n "$version" ] || die "version.properties declares no VERSION_NAME"
+# The User-Agent of spec §8.7 names the platform and the OS version. The recorder runs under bash, so it reads them
+# from the kernel rather than pretending to be a phone; `uname -s` is "Darwin" on macOS and "Linux" on the CI runner.
+os="$(uname -s)-$(uname -r)"
 
 source_base="$(strip_trailing_slash "$source_base")"
 geocoder_base="$(strip_trailing_slash "$geocoder_base")"
@@ -198,7 +201,7 @@ while IFS='|' read -r id method base path body timeout file; do
     --connect-timeout 5 --max-time "$timeout"
     --output "$body_file" --write-out '%{http_code}'
     --request "$method"
-    --header "User-Agent: LogronoBus/$version (fixture recorder macOS; +https://github.com/davidru85/LogroBus)"
+    --header "User-Agent: LogronoBus/$version (fixture recorder $os; +https://github.com/davidru85/LogroBus)"
     --header 'Accept: application/json'
     --header 'Accept-Encoding: gzip'
   )
