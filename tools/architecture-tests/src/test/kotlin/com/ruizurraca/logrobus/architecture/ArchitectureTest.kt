@@ -226,6 +226,23 @@ class ArchitectureTest {
     }
 
     @Test
+    fun lb003_theWrapperRetriesItsOwnDownload() {
+        // Twice on 2026-11-08 every Kotlin job died at about 20 s with the wrapper's own
+        // "Downloading ... gradle-9.7.1-bin.zip failed: timeout (10000ms)": a cold GRADLE_USER_HOME on a fresh runner,
+        // thirty jobs at once, and a 10 s read timeout with no retry (docs/ci_cd.md §5). scripts/ci/gradle-retry.sh
+        // cannot help, because ./gradlew itself is what failed.
+        val properties =
+            Properties().apply { File(root, "gradle/wrapper/gradle-wrapper.properties").reader().use { load(it) } }
+
+        fun setting(name: String) = properties.getProperty(name)?.trim()?.toIntOrNull()
+
+        assertTrue((setting("networkTimeout") ?: 0) >= MIN_WRAPPER_TIMEOUT_MS, "networkTimeout")
+        assertTrue((setting("retries") ?: 0) >= MIN_WRAPPER_RETRIES, "retries")
+        // The checksum is what makes a retried download safe to accept.
+        assertTrue(!properties.getProperty("distributionSha256Sum").isNullOrBlank(), "distributionSha256Sum")
+    }
+
+    @Test
     fun lb002_iosGateWaitsForEveryIosJob() {
         val workflow = File(root, ".github/workflows/ios-checks.yml")
         assertTrue(workflow.isFile, "ios-checks.yml exists")
@@ -518,5 +535,7 @@ private const val TELEMETRY_PACKAGE = "com.ruizurraca.logrobus.core.telemetry"
 private val TELEMETRY_PAYLOADS = setOf("AnalyticsEvent", "Breadcrumb")
 
 // About a minute of backoff in all (2 + 4 + 8 + 16 + 32 s), against Gradle's default of 3 s.
+private const val MIN_WRAPPER_TIMEOUT_MS = 120_000
+private const val MIN_WRAPPER_RETRIES = 3
 private const val MIN_DOWNLOAD_TENTATIVES = 6
 private const val MIN_DOWNLOAD_BACKOFF_MS = 2_000
