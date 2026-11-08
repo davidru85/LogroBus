@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source and the typed services over it, checked against the real payloads (LB-005, done) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device is built, and waits for the source's data formats (LB-008, in progress), and so do the rules that clean up that data (LB-006, in progress); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source and the typed services over it, checked against the real payloads (LB-005, done) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device is built, and waits for the source's data formats (LB-008, in progress), and so do the rules that clean up that data (LB-006, done for the lines and stops); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -104,6 +104,10 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-08:**
+  - LB-006, part 2: the rules that turn the source's line and stop payloads into the catalogue the app stores.
+    - `DefaultStaticNormaliser` reuses every rule part 1 built and adds what needs the payload's shapes: the colour and the readable ink on it, each direction's headsign, and the route geometry as the concatenation of its segments at precision 6.
+    - The source lists 257 stops across its patterns but only serves 254, so the three it omits are synthesised as provisional stops, named and positioned from the pattern, so that no stop on a route is a hole.
+    - `DataQualityReport` counts what a normalisation dropped and repaired, by cause, and keeps not one value of the source: an item with no id, no name or no position, one outside the service area and a repeated id are each counted, and the sync still only fails on an unusable payload.
   - LB-005, part 2: the app's typed view of the source, checked against the real payloads.
     - Every endpoint the MVP reads now has a DTO and a service: lines and stops, live vehicles, estimated arrivals, and the planner's routes and walking distances. Each request takes the timeout its endpoint deserves, and API-06's list of lines goes out with its commas intact.
     - 16 contract tests decode the recorded captures and pin what the spec promises: 13 lines and no line 8, 254 stops, 57 vehicle activities of which 40 carry the source's `"[object Object]"` line reference, 32 calls on line 1 split between both directions, and a refused plan that still explains itself.
