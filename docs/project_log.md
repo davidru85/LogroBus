@@ -31,7 +31,12 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Docs:** `acceptance_criteria.md` with the evidence, `testing_strategy.md` §4.1 for the mechanism and the harness pieces that do not exist yet, and `backlog.md`.
 
 **Review**
-- PENDING_REVIEW
+- Self-review against `docs/playbooks/review-checklists.md`, with the gate runs as the evidence, instead of reviewer agents this time:
+  - **The contract tests read real files, not a lucky path.** Truncating `fixtures/lines_2026-10-22.json` to three lines made `lb005_theLineFixtureDecodesEveryLine` fail, and restoring it brought the suite back.
+  - **The simulator needed a second variable.** The first `iosSimulatorArm64Test` run failed with `LOGROBUS_FIXTURES_DIR is not set`: `xcrun simctl spawn` forwards only `SIMCTL_CHILD_`-prefixed variables. The convention sets both now, and all 7 transit plus 9 planner cases pass on the simulator.
+  - **Coverage caught real missing tests,** not a threshold to move: `:shared:feature:planner` was at 76.744 %, so the four error paths of `PlannerApi` — a non-JSON reply, a collection that is not an array, no collection at all, and a failed call passing through — gained tests of their own.
+  - **`testing_strategy.md` §4.1 named components that do not exist.** `TestAppClock`, `TestDispatchers`, `mockSource`, `Fake*Repository` and `FakeRemoteConfig` are the specified harness, and only `FixtureLoader` is built; the table now says so instead of reading as a description of the tree.
+  - **Two facts the captures corrected:** `et_line1_60min.json` holds 32 calls, not the 44 a live probe had returned (the fixture is a different capture, and the test asserts 32), and `route_ok.json` carries no `rejection` key at all, so `rejection == null` has to come from a default.
 
 **CI**
 - Not run yet: the pull request is open and its watch runs.
