@@ -43,6 +43,10 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             // Host tests may use Robolectric, as :shared:core:location does.
             tasks.withType(Test::class.java).configureEach { jvmArgs(ROBOLECTRIC_JDK_ACCESS) }
 
+            // Robolectric reads its framework jars from the directory Gradle fills, so it never downloads them: with
+            // the guard below installed, a download would fail (LB-003).
+            configureRobolectricOffline()
+
             // LB-003: a host test never resolves the live source (docs/testing_strategy.md §1 rule 2).
             configureTestNetworkGuard { guard ->
                 extensions.configure<KotlinMultiplatformExtension> {

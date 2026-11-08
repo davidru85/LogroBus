@@ -48,6 +48,10 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         dependsOn("testDebugUnitTest")
     }
 
+    // Robolectric reads its framework jars from the directory Gradle fills, so it never downloads them: with the guard
+    // configured below installed, a download would fail (LB-003).
+    configureRobolectricOffline()
+
     raiseSecurityFloors()
     configureDetekt(listOf("detektMain", "detektTest"))
     verifyModuleRules()

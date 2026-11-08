@@ -47,11 +47,17 @@ internal const val NETWORK_GUARD_NAME: String = "LogroBus TestNetworkGuard"
 internal const val NETWORK_GUARD_MARKER: String = "NETWORK GUARD: real network access is forbidden in tests"
 
 /** Loopback only: `localhost`, `127.0.0.0/8` and `::1`. */
-@Suppress("MagicNumber") // The four octets of an IPv4 address, and the largest value one takes.
 private fun String.isLoopbackAddress(): Boolean {
     val text = removeSurrounding("[", "]")
-    if (text.equals("localhost", ignoreCase = true)) return true
-    if (text.contains(':')) return text == "::1" || text == "0:0:0:0:0:0:0:1"
+    return when {
+        text.equals("localhost", ignoreCase = true) -> true
+        text.contains(':') -> text == "::1" || text == "0:0:0:0:0:0:0:1"
+        else -> isLoopbackIpv4(text)
+    }
+}
+
+@Suppress("MagicNumber") // The four octets of an IPv4 address, and the largest value one takes.
+private fun isLoopbackIpv4(text: String): Boolean {
     val octets = text.split('.')
     return octets.size == 4 &&
         octets[0] == "127" &&
