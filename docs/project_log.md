@@ -19,6 +19,40 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-08: LB-005 part 2, the DTOs, the services and their contract tests
+
+**Done**
+- **PR #54 (LB-003) merged** on 2026-11-08, and `main` was synced to `c3e9d717`.
+- **LB-005 part 2 (`feat/LB-005-part2-dtos`):** `api_spec.md` §1–4, DD-07, DD-15, NFR-REL-02.
+  - **The DTOs:** API-01 to API-06 in `:shared:transit:data`'s new `dto` package, API-07 and API-08 in `:shared:feature:planner`'s. Every field nullable with a default, every class `internal`, and the envelopes `JsonArray` where the items must decode one by one.
+  - **The services:** `LinesApi` (API-01, 02, `Static`), `RealtimeApi` (API-03 to 06, `Live`), `PlannerApi` (API-07, 08, `Live`). Queries travel as a map, so API-06's `lines=1,33` keeps its commas; the POST bodies are encoded with `explicitNulls = false`, so a request never sends `"maxResults": null`.
+  - **The contract tests:** 16 cases over the 10 fixtures that cover API-01 to API-08, asserting measured counts and the fields the spec pins — 13 lines with no line 8, 254 stops, 57 activities of which 40 carry `"[object Object]"`, 32 line-1 calls split 21 × 401 and 11 × 402, 5 routes with `[Walk, Bus, Walk]`, a `walk-too-far` rejection with no routes, 2 walk distances.
+  - **`FixtureLoader`** in `:shared:core:testing`: `read(name)` on every target, no new dependency, the directory in `LOGROBUS_FIXTURES_DIR`.
+  - **Docs:** `acceptance_criteria.md` with the evidence, `testing_strategy.md` §4.1 for the mechanism and the harness pieces that do not exist yet, and `backlog.md`.
+
+**Review**
+- PENDING_REVIEW
+
+**CI**
+- Not run yet: the pull request is open and its watch runs.
+
+**Decisions**
+- **Agent:**
+  - **The DTOs live in the data layer, not in `:shared:core:network`:** the network core holds the client and the lenient JSON helpers, and each feature's `data` package holds its own DTOs (ADR-0007, `architecture.md` §4.2).
+  - **No `serializersModule` for the polymorphic leg:** a `@Serializable sealed interface` gets a generated serializer that already knows its subclasses. Verified by decoding all three planner fixtures, so `SourceJson` stays as it is.
+  - **`FixtureLoader` uses no okio,** which `testing_strategy.md` §4.1 named: okio's `FileSystem.SYSTEM` is not in its common metadata, and a platform `expect`/`actual` does the job with no new dependency. The doc now describes the mechanism.
+  - **The simulator gets its own variable form:** `simctl spawn` forwards only `SIMCTL_CHILD_`-prefixed variables, so the convention sets both. Without it the contract tests passed on the JVM and failed on the simulator, which the first iOS run of this branch showed.
+  - **Coverage, not a threshold:** `:shared:feature:planner` fell to 76.7 % once `PlannerApi` existed, so its four error paths were covered rather than the 80 % floor lowered.
+  - **The API services are not bound in Koin yet:** they are `internal` to their modules, and the graph that consumes them belongs to LB-008 part 2, which is what wires the sync. Binding them now would export internals for nothing.
+  - **`testing_strategy.md` §4.1 disclosed its own drift:** only `FixtureLoader` exists of the listed harness components; `TestAppClock`, `TestDispatchers`, `mockSource` and the fakes do not, and each arrives with the story that needs it.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-006 part 2 (the mappers over these DTOs, the `StaticNormaliser`, DD-10's provisional stops, the direction cache and the `DataQualityReport`).
+- **Waiting for the owner:** unchanged from the LB-003 entry (OQ-11, the device passes, the iOS job limit, Android's backups, DD-10, alert 6, the Gradle cache provider, OQ-10).
+
+---
+
 ## 2026-11-08: LB-003, golden fixtures and recorder
 
 **Done**

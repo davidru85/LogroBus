@@ -43,6 +43,10 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             // Host tests may use Robolectric, as :shared:core:location does.
             tasks.withType(Test::class.java).configureEach { jvmArgs(ROBOLECTRIC_JDK_ACCESS) }
 
+            // LB-005: every test task, on every target, reads fixtures/ through the same variable
+            // (docs/testing_strategy.md §4.1).
+            configureTestFixtureDirectory()
+
             // Robolectric reads its framework jars from the directory Gradle fills, so it never downloads them: with
             // the guard below installed, a download would fail (LB-003).
             configureRobolectricOffline()

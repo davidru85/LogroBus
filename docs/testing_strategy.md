@@ -62,9 +62,10 @@ This document covers what we test, at which level, with which tools, and what ev
 
 | Component | Purpose |
 | --- | --- |
+| **Status (2026-11-08):** only `FixtureLoader` exists so far, with the network guard of LB-003. The other components below are the harness this document specifies and are **not built yet**; each arrives with the story that first needs it (LB-006 part 2 and LB-009 for the clocks and fakes). Read the rows as the contract, not as a description of the tree | |
 | `TestAppClock` | Settable `now()`, `advanceBy(duration)`, and a configurable server offset. Replaces `AppClock` in every test |
 | `TestDispatchers` | `StandardTestDispatcher` wiring for `AppDispatchers`, used with `runTest` virtual time |
-| `FixtureLoader` | Reads `fixtures/<name>.json` through Okio. The fixtures directory reaches the tests through a Gradle-provided system property or generated constant, so commonTest works on every target |
+| `FixtureLoader` | Reads `fixtures/<name>.json`. The directory reaches the test process in `LOGROBUS_FIXTURES_DIR`, which the conventions set on every test task: a `Test` on the JVM, and a `KotlinNativeTest` through `simctl spawn`, which forwards only `SIMCTL_CHILD_`-prefixed variables, so the build sets both. An environment variable rather than a system property, because a Kotlin/Native test binary has no JVM to read one. On the JVM the loader falls back to the nearest ancestor with `settings.gradle.kts` and `fixtures/`, for a test started from an IDE. As built in LB-005 part 2, with no new dependency (`FixtureLoaderTest`, `TransitContractTest`) |
 | `mockSource { … }` | Small DSL over Ktor `MockEngine`: `get("/api/linesDiscovery/stops") respondsWith fixture("stops_2026-10-22.json")`, `respondsWith status(503)`, `respondsWith timeout()`, `withDateHeader(instant)` |
 | `Fake*Repository` | In-memory implementations of every domain repository interface, with controllable emissions and errors |
 | `FakeLocationProvider` | Scripted permission states and location sequences |
