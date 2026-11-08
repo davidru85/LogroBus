@@ -38,6 +38,8 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         val composeBom = platform(libs.findLibrary("compose-bom").get())
         add("implementation", composeBom)
         add("testImplementation", composeBom)
+        // LB-003: a unit test never resolves the live source (docs/testing_strategy.md §1 rule 2).
+        configureTestNetworkGuard { guard -> add("testImplementation", guard) }
     }
 
     tasks.register("ciUnitTest") {

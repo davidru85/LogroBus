@@ -43,6 +43,13 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
             // Host tests may use Robolectric, as :shared:core:location does.
             tasks.withType(Test::class.java).configureEach { jvmArgs(ROBOLECTRIC_JDK_ACCESS) }
 
+            // LB-003: a host test never resolves the live source (docs/testing_strategy.md §1 rule 2).
+            configureTestNetworkGuard { guard ->
+                extensions.configure<KotlinMultiplatformExtension> {
+                    sourceSets.getByName("androidHostTest").dependencies { implementation(guard) }
+                }
+            }
+
             tasks.register("ciUnitTest") {
                 group = "verification"
                 description = "Runs the module's unit tests on the JVM (Android host tests), as CI does."
