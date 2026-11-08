@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Baseline 1.0 for the MVP (M0–M4) |
-| Last updated | 2026-11-05 |
+| Last updated | 2026-11-08 |
 | Based on | [`requirements.md`](requirements.md), spec §6 and §9, [`backlog.md`](backlog.md) |
 
 Verifiable acceptance criteria for every MVP story (epics E0–E4). A story is done only when all of its criteria pass **on both platforms** and the definition of done in `AGENTS.md` §11 is met.
@@ -68,6 +68,17 @@ Done when:
 - A fixture with at least one `"[object Object]"` `lineRef` exists. If the live capture lacks one, a hand-made copy prefixed `synthetic_` is added.
 - The weekly CI job re-records the fixtures and fails with a readable diff when a field is added, removed or changes type.
 - No unit or integration test calls the live source. A test-scope network guard fails any real HTTP request.
+
+Done (2026-11-08). Evidence:
+- **Recorder and endpoint coverage:** `scripts/record-fixtures.sh` is the only place that may call the live source. `--list` prints its 19 endpoints: the 16 fixtures of spec §10.2, both API-07 routes included, `sections.json` (API-12's fifth path, which the spec's list omits) and the two CartoCiudad captures. `FixtureRecorderScriptTest.lb003_theRecorderCoversEveryFixtureOfTheSpec` (`tools/architecture-tests`) compares the list with the spec's names, offline. A body above 16 MiB fails its endpoint with a message naming it and leaves `fixtures/` alone, capped with `--max-filesize` on the wire and checked again after decompression (`lb003_anOversizedBodyFailsTheEndpoint`).
+- **Pacing and `User-Agent`:** one request per endpoint, at least a second apart, with the project `User-Agent` (`lb003_requestsAreAtLeastOneSecondApart`, `lb003_aCaptureSendsTheProjectUserAgent`, same file, against a local stub).
+- **Canonical output:** `jq --sort-keys --indent 2` (`lb003_aCaptureIsPrettyPrintedWithSortedKeys`). A second `--check` run straight after the capture listed all 19 as `unchanged`, although the values and the sizes had moved: the shape is what is compared.
+- **The defect as it arrives:** `fixtures/vm_all_with_object_lineRef.json` carries the source's own `"[object Object]"` value (DD-06) in 40 of its 57 activities, at `result.activities[].lineRef` and, with it, `publishedLineName`, so no hand-made copy prefixed `synthetic_` was needed.
+- **The weekly job:** `.github/workflows/weekly-fixtures.yml`, Mondays 04:17 UTC and on demand, documented in [`ci_cd.md`](ci_cd.md) §5.1. `Fixtures` runs `--check`, and drift exits 1 through `scripts/ci/fixture-shape.sh`, which collapses an array to `[]`, reads an integer and a float as `number`, reads `null` and `unknown` as open types, so neither they nor anything beneath them is drift, reports the value when a path holds both `null` and a value, and reads an array's element path as `unknown` when it holds nothing, so a collection that became empty or was empty and now holds items is not drift in either direction (`lb003_aShapeDiffReportsAnAddedField`, `lb003_aShapeDiffReportsARemovedField`, `lb003_aShapeDiffReportsATypeChange`, `lb003_anIdenticalShapeReportsNoDiff`, `lb003_aNullAndAValueAreTheSameShape`, `lb003_anIntegerAndAFloatAreTheSameShape`, `lb003_anEmptyCollectionIsTheSameShapeAsAPopulatedOne`, `lb003_anAddedFieldOnANonEmptyCollectionIsStillDrift`, `lb003_checkModeFailsOnDriftAndPassesOnAnUnchangedShape`). On drift, `Contract drift` opens one issue per ISO week. The workflow is in no gate, so drift never blocks a merge.
+- **No test reaches the source:** a JDK `InetAddressResolverProvider` in `:shared:core:testing`, on the test classpath of every module that uses the Android or the KMP library convention, the two test-support modules excepted, resolves loopback only and fails any other host name with `NETWORK GUARD`. `TestNetworkGuardTest` (3 cases: the service loader finds the guard, a real host fails with the marker, loopback still resolves) and `NetworkGuardProbeTest` in `:shared:core:network` (2 cases: the source's host is unresolvable, loopback still resolves) prove it. The guard covers JVM tests only: Kotlin/Native tests have no JVM resolver and stay on `MockEngine`. It stops host names only, since a numeric IP literal never reaches a resolver.
+- **Robolectric follows from it.** Robolectric used to download its Android framework jar from the test JVM, which the guard would refuse, so the build resolves the jars through Gradle and hands them over with `robolectric.offline=true` and `robolectric.dependency.dir`, a miss being a failure rather than a request. A test never downloads that jar any more.
+- **Owner decision (2026-11-08):** the 19 captures are committed with OQ-11 still open, and merging them is the owner's legal call.
+- The workflow has not run on CI yet: this evidence is local, and nothing here claims a workflow result.
 
 ### LB-004 `:shared:core` common, config and location
 Refs: spec §8.6, §8.9, FR-ERR-06, NFR-REL-05

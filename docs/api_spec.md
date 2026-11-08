@@ -3,8 +3,8 @@
 | Field | Value |
 | --- | --- |
 | Status | Living document |
-| Last updated | 2026-10-27 |
-| Last verified against the live source | 2026-10-22 (capture in spec v0.1) |
+| Last updated | 2026-11-08 |
+| Last verified against the live source | 2026-11-08 (full capture, LB-003) |
 | Derived from | Spec §3.2, §4, §5, §8.7, §8.9 |
 
 This is the engineering contract for every remote call the app makes: the source BFF at `transporteurbano.logrono.es`, the CartoCiudad geocoder and remote config. The functional spec captured the source contracts once, on 22 Oct 2026. **This document is where they are kept current.** When you observe a change, update this file, re-record the affected fixture, and add a row to §10 and an entry to `project_log.md`.
@@ -388,10 +388,22 @@ The keys and defaults are spec §8.9, plus the additions marked *new*. Defaults 
 
 ## 9. Fixtures
 
-Golden payloads live in `fixtures/` and are captured with `scripts/record-fixtures.sh` (LB-003). The set is spec §10.2 plus the geocoder captures. A weekly CI job re-records them and fails on schema diffs. Synthetic fixtures for the CET/CEST tests of DD-05 are hand-written and prefixed `synthetic_`.
+Golden payloads live in `fixtures/` and are captured with `scripts/record-fixtures.sh` (LB-003), the only place in the project that may call the live source. The set is spec §10.2 plus API-12's fifth path and the two geocoder captures: 19 files, taken on 2026-11-08.
+
+- **Source, daily sync:** `lines_2026-10-22.json`, `stops_2026-10-22.json`.
+- **Source, live:** `vm_all_with_object_lineRef.json`, `vm_line2.json`, `et_line1_60min.json`, `et_stop38.json`.
+- **Source, on demand:** `route_ok.json` (five routes), `route_rejected.json` (a `walk-too-far` rejection), `walk_distances.json`.
+- **Source, 7-day TTL (v1.0):** `fares.json`, `recharge_points.json`.
+- **CMS:** `news_page1.json`, `news_header.json`, `sections.json`, `cards.json`, `pies.json`, `rrss.json`.
+- **CartoCiudad:** `geocoder_candidates_logrono.json`, `geocoder_find.json`.
+
+`--check` records again into a temporary directory, writes nothing and compares the JSON *shape* of each capture with the committed file, one key path and type per line; it exits 1 when a path was added, removed or changed type outside a branch that is open on one side. The same shape implementation, `scripts/ci/fixture-shape.sh`, serves both modes and collapses an array to `[]`, so the number of items is not part of the contract. An array always reports its element path `a[]`, with type `unknown` when it holds nothing. `null` and `unknown` are the open types: a path whose type is one of them on a side, and anything beneath it on that side, is not drift, so a nullable field, or a collection that emptied or filled, reads as unchanged; every other type is compared. A path that holds both `null` and a value reports the value, and a path that appears or disappears elsewhere is drift whatever it carries, `null` included. A field that appears on the elements of a non-empty collection is still drift. The weekly workflow `weekly-fixtures.yml` runs that check ([`ci_cd.md`](ci_cd.md) §5.1); it is in no gate. Synthetic fixtures for the CET/CEST tests of DD-05 are hand-written and prefixed `synthetic_`.
 
 ## 10. Contract change log
 
 | Date | Endpoint | Change observed | Action |
 | --- | --- | --- | --- |
 | 2026-10-22 | All | Initial capture (spec v0.1) | Baseline |
+| 2026-11-08 | All | No shape change: the first full capture after the spec baseline | Fixtures recorded by LB-003; no DTO or mapper change |
+| 2026-11-08 | API-03 | DD-06 is far wider than the spec's sample: 40 of 57 vehicles carry `"[object Object]"` in both `lineRef` and `publishedLineName`, not 1 of 57. Shape unchanged | Mapped to `lineId = null` as DD-06 already says (LB-006 part 2); no code change here. The fallback matters for 70 % of the fleet, so it is a P0 path, not an edge case |
+| 2026-11-08 | API-07 | `fixtures/route_rejected.json` carries `"reason": "walk-too-far"`, which §4.7's table does not list: it would fall to `plan.error.generic` | Map it to the `walk-too-far-destination` message in LB-306, or add a message key |

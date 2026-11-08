@@ -1,0 +1,577 @@
+{
+  "result": {
+    "cachedAt": "2026-11-08T09:35:00.013Z",
+    "products": [
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes FN20 Lardero",
+        "price": 2000,
+        "productCode": "63",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes FN20 Villamediana",
+        "price": 2000,
+        "productCode": "62",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes FN50",
+        "price": 1250,
+        "productCode": "49",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes FN50 Villamediana",
+        "price": 1250,
+        "productCode": "64",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Mundial Frisbee",
+        "endPeriod": "2026-07-19T00:00:00+02:00",
+        "literalDescription": "Mundial Frisbee",
+        "maxQuantity": 60,
+        "name": "Mundial Frisbee",
+        "price": 0,
+        "productCode": "115",
+        "startPeriod": "2026-07-11T00:00:00+02:00"
+      },
+      {
+        "description": "Billete ordinario",
+        "endPeriod": null,
+        "literalDescription": "Billete ordinario",
+        "maxQuantity": 60,
+        "name": "Sencillo",
+        "price": 100,
+        "productCode": "81",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Billete ordinario servicio nocturno",
+        "endPeriod": null,
+        "literalDescription": "Billete ordinario servicio nocturno",
+        "maxQuantity": 60,
+        "name": "Buho",
+        "price": 100,
+        "productCode": "82",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Anónima. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Anónima. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus",
+        "price": 529,
+        "productCode": "21",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado Villamediana",
+        "price": 250,
+        "productCode": "72",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado Lardero",
+        "price": 250,
+        "productCode": "73",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida",
+        "price": 163,
+        "productCode": "74",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida FN20",
+        "price": 130,
+        "productCode": "75",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida FN50",
+        "price": 82,
+        "productCode": "76",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida FN20 Villamediana",
+        "price": 130,
+        "productCode": "77",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida FN20 Lardero",
+        "price": 130,
+        "productCode": "78",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado FN50",
+        "price": 125,
+        "productCode": "47",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante",
+        "price": 538,
+        "productCode": "23",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante FN20 Villamediana",
+        "price": 430,
+        "productCode": "54",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante FN50 Villamediana",
+        "price": 269,
+        "productCode": "55",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante FN20 Lardero",
+        "price": 430,
+        "productCode": "56",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante FN50 Lardero",
+        "price": 269,
+        "productCode": "57",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Bonopeque",
+        "endPeriod": null,
+        "literalDescription": "Bonopeque",
+        "maxQuantity": 1,
+        "name": "Bonopeque",
+        "price": 0,
+        "productCode": "6",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Familiar",
+        "endPeriod": null,
+        "literalDescription": "Familiar",
+        "maxQuantity": 1,
+        "name": "Familiar",
+        "price": 0,
+        "productCode": "8",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Empleado",
+        "endPeriod": null,
+        "literalDescription": "Empleado",
+        "maxQuantity": 1,
+        "name": "Empleado",
+        "price": 0,
+        "productCode": "9",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado FN20 Lardero",
+        "price": 200,
+        "productCode": "59",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado FN50 Villamediana",
+        "price": 125,
+        "productCode": "60",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado FN50 Lardero",
+        "price": 125,
+        "productCode": "61",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida FN50 Villamediana",
+        "price": 82,
+        "productCode": "79",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Tarifa reducida FN50 Lardero",
+        "price": 82,
+        "productCode": "80",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes FN50 Lardero",
+        "price": 1250,
+        "productCode": "65",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes",
+        "price": 2500,
+        "productCode": "7",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Renovable por 30 días.\nValidez 30 días desde el primer uso.",
+        "maxQuantity": 1,
+        "name": "Bonomes FN20",
+        "price": 2000,
+        "productCode": "48",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Sencillo FN20",
+        "price": 80,
+        "productCode": "83",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado FN20 Villamediana",
+        "price": 200,
+        "productCode": "58",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado",
+        "price": 250,
+        "productCode": "11",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus FN20",
+        "price": 423,
+        "productCode": "40",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus FN50",
+        "price": 265,
+        "productCode": "41",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Búho FN20",
+        "price": 80,
+        "productCode": "84",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Sencillo FN50",
+        "price": 50,
+        "productCode": "85",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Búho FN50",
+        "price": 50,
+        "productCode": "86",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Sencillo Niño",
+        "price": 0,
+        "productCode": "87",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Trasbordo",
+        "price": 0,
+        "productCode": "88",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Día movilidad",
+        "endPeriod": null,
+        "literalDescription": "Día movilidad",
+        "maxQuantity": 60,
+        "name": "Día movilidad",
+        "price": 0,
+        "productCode": "95",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Bonopeque Lardero",
+        "endPeriod": null,
+        "literalDescription": "Bonopeque Lardero",
+        "maxQuantity": 1,
+        "name": "Bonopeque Lardero",
+        "price": 0,
+        "productCode": "36",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante Villamediana",
+        "price": 538,
+        "productCode": "33",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante FN20",
+        "price": 430,
+        "productCode": "42",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante FN50",
+        "price": 269,
+        "productCode": "43",
+        "startPeriod": "2025-09-01T00:00:00+02:00"
+      },
+      {
+        "description": "Bonopeque Villamediana",
+        "endPeriod": null,
+        "literalDescription": "Bonopeque Villamediana",
+        "maxQuantity": 1,
+        "name": "Bonopeque Villamediana",
+        "price": 0,
+        "productCode": "35",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Jubilado FN20",
+        "price": 200,
+        "productCode": "46",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "",
+        "endPeriod": null,
+        "literalDescription": " 10 viajes ",
+        "maxQuantity": 1,
+        "name": "10 viajes QR",
+        "price": 529,
+        "productCode": "93",
+        "startPeriod": "2026-01-28T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 20 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 20 viajes.",
+        "maxQuantity": 60,
+        "name": "Estudiante Lardero",
+        "price": 538,
+        "productCode": "34",
+        "startPeriod": "2014-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus FN20 Villamediana",
+        "price": 423,
+        "productCode": "50",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      },
+      {
+        "description": " 1 viajes ",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 60,
+        "name": "Sencillo EMV",
+        "price": 100,
+        "productCode": "91",
+        "startPeriod": "2000-01-01T00:00:00+01:00"
+      },
+      {
+        "description": "",
+        "endPeriod": null,
+        "literalDescription": " 1 viajes ",
+        "maxQuantity": 1,
+        "name": "Sencillo QR",
+        "price": 100,
+        "productCode": "92",
+        "startPeriod": "2026-01-28T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus FN20 Lardero",
+        "price": 423,
+        "productCode": "51",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus FN50 Villamediana",
+        "price": 265,
+        "productCode": "52",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      },
+      {
+        "description": "Personalizada. Recargable por tramos de 10 viajes.",
+        "endPeriod": null,
+        "literalDescription": "Personalizada. Recargable por tramos de 10 viajes.",
+        "maxQuantity": 60,
+        "name": "Bonobus FN50 Lardero",
+        "price": 265,
+        "productCode": "53",
+        "startPeriod": "2004-01-15T00:00:00+01:00"
+      }
+    ]
+  }
+}

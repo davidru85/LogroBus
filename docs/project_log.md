@@ -19,6 +19,68 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-08: LB-003, golden fixtures and recorder
+
+**Done**
+- **PR #53 (LB-303) merged** on 2026-11-07, after the two CI fixes its entry records, and `main` was synced to `1066aa3e`.
+- **LB-003 (`feat/LB-003-golden-fixtures`):** spec §10.2, `api_spec.md` §9, NFR-PRIV-02.
+  - **`scripts/record-fixtures.sh`:** the only place that may call the live source. One table of 19 endpoints (spec §10.2's 16, both API-07 routes included, plus API-12's `sections.json` and the two CartoCiudad calls), each recorded once, at least a second apart, with `LogronoBus/<VERSION_NAME> (fixture recorder <kernel>)` and `Accept-Encoding: gzip`. A whole run is staged in a temporary directory beside `fixtures/` and moved into place only when every endpoint answered, so a failure leaves the committed captures untouched. `--list` prints the table with no network; `--check` records into a temporary directory, writes nothing, prints the shape diff and exits 1 on drift.
+  - **`scripts/ci/fixture-shape.sh`:** the one shape implementation, `jq`. One line per key path and type, arrays collapsed to `[]` so the item count is not part of the contract, an integer and a float both `number` (the source mixes `42.0` and `42`), and an array that reports its element path `a[]` as `unknown` when it holds nothing, so a collection that became empty, or was empty and now holds items, is not drift in either direction. `null` and `unknown` are the open types: neither they nor anything beneath them is drift, while a path that appears or disappears elsewhere is a change whatever it carries, `null` included and unless it sits beneath an open path. Diff lines are `+ path type`, `- path type` and `~ path old->new`.
+  - **`fixtures/`:** 19 captures, 3.5 MB, canonicalised with `jq --sort-keys --indent 2`. A second `--check` right after recorded all 19 as `unchanged` although values and sizes had moved.
+  - **`.github/workflows/weekly-fixtures.yml`:** every Monday at 04:17 UTC and on demand, `Fixtures` runs `--check` and `Contract drift` opens one issue per ISO week, titled `Contract drift: weekly fixtures <year>-W<week>`, with the run URL, the drift lines read back from the failed job's log (never passed through `$GITHUB_OUTPUT`, since they quote the source's own key names) and the playbook link. It is in no gate, so a drift never blocks a merge. Documented in `ci_cd.md` §5.1.
+  - **Test-scope network guard:** a JDK `InetAddressResolverProvider` in `:shared:core:testing`, put by `logrobus.kmp.library` (`androidHostTest`) and `configureAndroidModule` (`testImplementation`) on the test classpath of every module that uses one of those two conventions, except the two test-support modules, which make no request; `:build-logic:convention:test` and `:tools:architecture-tests:test` get neither. Loopback only; any other host name throws `NETWORK GUARD: real network access is forbidden in tests`. `lookupByAddress` still delegates, so reverse lookups work.
+  - **Robolectric had to follow:** it fetched its Android framework jar from the test JVM through `MavenArtifactFetcher`, into `~/.m2`, which CI never caches and which `project_log.md` already records flaking. With the guard in place that fetch would fail, so `RobolectricOffline.kt` resolves four jars through Gradle (the target 37, `SCREENSHOT_SDK` 36, `LINEAR_FONT_SCALING_SDK` 33 and the shared KMP modules' API 23 fallback) and hands them over with `robolectric.offline=true` and `robolectric.dependency.dir`. The four jars are about 663 MB, downloaded once into Gradle's cache and copied into each module's `build/`. One configuration per SDK, because one would conflict-resolve three versions of the same module to the highest.
+  - **Tests:** `FixtureRecorderScriptTest` (JUnit 5 in `:tools:architecture-tests`: the real script against a Python stub bound to 127.0.0.1 for the recording cases, `scripts/ci/fixture-shape.sh --diff` on two documents with no server for the shape cases, and three cases that need neither a server nor a network: `--list`, the two-mode error and the staging-directory check), `TestNetworkGuardTest` (3) and `NetworkGuardProbeTest` (2).
+  - **Docs:** `acceptance_criteria.md` with the evidence, `api_spec.md` §9 and §10, `ci_cd.md` §1 and §5.1, `testing_strategy.md` §4.2–4.3, the recorder playbook, `backlog.md`, `AGENTS.md` §2 and §4, both READMEs, and `.gitignore` for a staging directory a killed run leaves behind.
+
+**Review**
+- Four reviewers ran: scripts-and-CI, docs-and-fixtures, security, and the agent's own gate runs.
+- **Fixed:**
+  - **A body that is not a JSON object or array was accepted.** An empty, `null` or scalar body canonicalised to a 0-byte fixture that a later `--check` compared against itself and reported `unchanged`; the recorder now requires `jq -e 'type == "object" or type == "array"'` (NFR-REL-02).
+  - **A second mode word was silently ignored:** `--list --check` listed and exited 0, so a caller believed it had checked the fixtures. Two modes are an error now.
+  - **An empty collection read as every child path removed,** so a night-time `activities: []` would have opened a false drift issue every week. An array now reports its element path `a[]` with type `unknown`, and the diff reads `unknown` as compatible with any element type, so a collection that became empty is not drift.
+  - **The recorder had no cap on a response body.** Every request carries `--max-filesize`, and the decompressed size is checked after the download: a broken or hostile source must not fill the disk beside `fixtures/`.
+  - **The workflow passed untrusted JSON key names through `$GITHUB_OUTPUT`,** where they could forge job outputs or close the issue body's code fence. The drift job now reads the failed run's log and sanitises it.
+  - **A staging directory a killed run leaves behind** is now ignored by git.
+  - **The docs claimed** the app's `User-Agent`, 13 stub-driven cases, "every JVM test classpath", and a null rule that a new key breaks.
+- **Not acted on, with reasons:**
+  - **A numeric IP literal bypasses every JDK resolver,** so the guard stops host names only, and the docs now say exactly that. A socket-level control would need `--add-security-manager` or a byte-level rewrite of the JDK.
+  - **The four framework jars are copied into each module's `build/`,** about 660 MB per module, which is the price of the guard staying absolute (measured; the download itself happens once, in Gradle's cache).
+  - **`localhost.` with a trailing dot is a false negative.**
+- **Flagged, then decided by the owner:** `fixtures/recharge_points.json` publishes about 100 named private shopkeepers with their street addresses. The privacy review called it personal data; the owner chose to keep it (see Decisions), so the dataset is named in `security_privacy.md` instead.
+
+**CI**
+- **Run 1** (42473163535): every Kotlin job died at about 20 s, and the iOS run too, on the Gradle wrapper's own download: `Downloading from https://services.gradle.org/distributions/gradle-9.7.1-bin.zip failed: timeout (10000ms)`. A fresh runner has an empty `GRADLE_USER_HOME` and thirty jobs asked at once; the wrapper allowed a 10 s read and no retry, and `scripts/ci/gradle-retry.sh` cannot help because `./gradlew` is what failed.
+- **Run 2** (42473359481): the same failure, 17 jobs at about 20 s. Recurring, so the pipeline was made resilient instead of rerun a second time: `gradle-wrapper.properties` now waits up to 120 s and retries four times, 2 s apart, with the distribution checksum still pinned, and `lb003_theWrapperRetriesItsOwnDownload` keeps both floors (red first: the test failed on `networkTimeout=10000` and `retries=0`). `ci_cd.md` §5 records it.
+- **Run 3** (42473618515): the first run past the wrapper. Every job but two passed; `Shared unit tests (:shared:core:presentation)` and `Android unit tests (:android:feature:planner)` burned the wrapper's five retries on `502` and `504` from `services.gradle.org`, an upstream outage rather than the branch.
+- **Run 4** (42474654968, iOS 42474655004): the Kotlin workflow passed **every** job with the same hardened wrapper, during the same outage fading out. That is the evidence that the flake fix works: the retries survive a slow or briefly failing distribution host.
+- **Run 5, on the tree this pull request ends on:** every job passed but one. `Shared unit tests (:shared:core:preferences)` got `403 Forbidden` from `repo.maven.apache.org` for `kotlin-stdlib:2.4.0` and `kotlin-gradle-plugin:2.4.0`, a transient block; both answer 200 from this machine minutes later, and the same job passed in run 4. Rerun once, per the rule, and the run was watched to the end.
+- **The result:** both workflows green — Kotlin 47/47 jobs, iOS 9/9 — on `776a3273`, the last commit of this pull request: 63 checks passed, `MERGEABLE` and `CLEAN`. Every commit after that one, if any, touches this log alone and re-runs the whole pipeline.
+- **Not the branch:** four separate bursts of `502`/`504` from `services.gradle.org` in two hours, which cost runs 3, 5 and 6. The wrapper fix turned a 20-second death into eight minutes of retries; what it cannot do is outlast an outage longer than that. A mirror for `distributionUrl` would, but that is the owner's decision, so it is not in this change.
+
+**Decisions**
+- **Owner (2026-11-07, carried into this session):** LB-003 is the next task.
+- **Owner (2026-11-08):** the captures are committed with OQ-11 still open; the merge, and with it the legal reading of committing public operator data, is the owner's.
+- **Owner (2026-11-08), the guard's scope:** host names only is a decided limitation, not a defect. A numeric IP literal never reaches a JDK resolver, and a socket-level control would need `--add-security-manager` or a byte-level rewrite of the JDK.
+- **Owner (2026-11-08), `recharge_points.json`:** keep the capture rather than replace it with a shape-only `synthetic_` copy. It is API-11's public answer, the fixture is API-11's contract, and `testing_strategy.md` §4.2 forbids hand-editing a recorded capture. The dataset is recorded in `security_privacy.md` §2 and the decision here, so the privacy review's finding is answered rather than dropped.
+- **Agent:**
+  - **The guard stays absolute.** No carve-out for Maven Central: the framework jars come from Gradle instead, which also turns a `~/.m2` download that CI never cached into a cached one.
+  - **The wrapper outlasts the distribution host,** not only the dependency repositories: a 10 s read timeout with no retry could not survive thirty fresh runners asking `services.gradle.org` at once, and it failed that way twice in one session.
+  - **`sections.json` is recorded** although spec §10.2 omits it: it is API-12's fifth path and the same capture costs one request.
+  - **The route fixtures use fixed instants and public places** from `api_spec.md` §4.7, so the rejection is reproducible; `route_rejected.json` keeps the `walk-too-far` rejection the source now sends, with no routes, and `route_ok.json` the five routes.
+  - **`synthetic_` was not needed:** the live `vm_all_with_object_lineRef.json` carries `"[object Object]"` in 40 of 57 activities, at `result.activities[].lineRef` and `publishedLineName`.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-005 part 2 (the DTOs and services, whose contract tests now have the fixtures), then LB-006 part 2, LB-008 part 2 and LB-101 part 2.
+- **Waiting for the owner:**
+  - OQ-11, now that the captures are in the repository and `recharge_points.json` is committed under the decision above;
+  - the TalkBack and VoiceOver passes already listed in the LB-303 entry;
+  - the iOS job limit, Android's backups, DD-10's provisional stops, alert 6 and the Gradle cache provider;
+  - OQ-10.
+
+---
+
 ## 2026-11-06: LB-303, Leave now or Depart at
 
 **Done**

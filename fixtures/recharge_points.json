@@ -1,0 +1,966 @@
+{
+  "result": {
+    "rechargePoints": [
+      {
+        "address": "C/Portales 11, Agoncillo",
+        "id": 1,
+        "lat": 42.44608,
+        "lng": -2.29072,
+        "name": "Mercedes Zorzano",
+        "type": "Estanco"
+      },
+      {
+        "address": "Avenida la rioja 14, Albelda",
+        "id": 2,
+        "lat": 42.35785,
+        "lng": -2.47463,
+        "name": "María García",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle labradores 6, Albeda",
+        "id": 3,
+        "lat": 42.36018,
+        "lng": -2.47564,
+        "name": "Catalina Novoa Villoslada",
+        "type": "Papelería"
+      },
+      {
+        "address": "Calle pintor Moreda 15, Alberite",
+        "id": 4,
+        "lat": 42.4057,
+        "lng": -2.43965,
+        "name": "Maria Jesús Bermejo Valencia",
+        "type": "Librería"
+      },
+      {
+        "address": "Calle pintor Moreda 19 bajo, Alberite",
+        "id": 5,
+        "lat": 42.40558,
+        "lng": -2.43916,
+        "name": "Golosinas Mónica",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Avenida de Navarra 12, Alberite",
+        "id": 6,
+        "lat": 42.40662,
+        "lng": -2.43946,
+        "name": "Cármen Sicilia Ponce de León",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Tejerias 2, Alfaro",
+        "id": 7,
+        "lat": 42.17483,
+        "lng": -1.74949,
+        "name": "Jesús Martinez Ausejo",
+        "type": "Librería"
+      },
+      {
+        "address": "Calle san Antón 7, Alfaro",
+        "id": 8,
+        "lat": 42.1793,
+        "lng": -2.7488,
+        "name": "Manuela Gardarrez",
+        "type": "Librería"
+      },
+      {
+        "address": "Calle puerto Munilo, Arnedo",
+        "id": 9,
+        "lat": 42.22145,
+        "lng": -2.10497,
+        "name": "Aranzau Ezquerro",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Juan Carlos I 40, Arnedo",
+        "id": 10,
+        "lat": 42.22676,
+        "lng": -2.10081,
+        "name": "Correos Arnedo",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle Mayor 9, Arrubal",
+        "id": 11,
+        "lat": 42.43453,
+        "lng": -2.25194,
+        "name": "Maria Victoria Sancho Gil",
+        "type": "Estanco"
+      },
+      {
+        "address": "Avenida constitución 4, Autol",
+        "id": 12,
+        "lat": 42.21629,
+        "lng": -2.00335,
+        "name": "Concepción García Delgado",
+        "type": "Mini Market"
+      },
+      {
+        "address": "Calle cavas 1, Calahorra",
+        "id": 13,
+        "lat": 42.30249,
+        "lng": -1.96288,
+        "name": "Asunción Muro Ovejas",
+        "type": "Panaderia"
+      },
+      {
+        "address": "Plaza de la constitución, Calahorra",
+        "id": 14,
+        "lat": 42.30644,
+        "lng": -1.96667,
+        "name": "Guillermo Berlanca Muñoz",
+        "type": "Revistas"
+      },
+      {
+        "address": "Calle general Gallarza 32, Calahorra",
+        "id": 15,
+        "lat": 42.30598,
+        "lng": -1.96743,
+        "name": "Damian Escobes Briegas",
+        "type": "Revistas - Papelería"
+      },
+      {
+        "address": "Calle de la fuente 3, Castañares",
+        "id": 16,
+        "lat": 42.51188,
+        "lng": -2.93219,
+        "name": "Francisco Javier García Ortún",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle victoria 10 bajo, Cenicero",
+        "id": 17,
+        "lat": 42.48137,
+        "lng": -2.64371,
+        "name": "Maria Pilar Perez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle victoria 34, Cenicero",
+        "id": 18,
+        "lat": 42.48129,
+        "lng": -2.64249,
+        "name": "Marcos Jimenez Zapatero",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Ricardo Ruiz de Azcarraga 10, Cenicero",
+        "id": 19,
+        "lat": 42.48161,
+        "lng": -2.6395,
+        "name": "Cenicero",
+        "type": "Estanco"
+      },
+      {
+        "address": "Avenida de la constitucion 17, Cervera",
+        "id": 20,
+        "lat": 42.00684,
+        "lng": -1.9525,
+        "name": "Begoña Calahorra",
+        "type": "Alimentación"
+      },
+      {
+        "address": "Calle escultor Daniel 6, Cervera",
+        "id": 21,
+        "lat": 42.00575,
+        "lng": -1.9528,
+        "name": "Correos Cervera Del Río Alhama",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle mayor 89, Corera",
+        "id": 22,
+        "lat": 42.3439,
+        "lng": -2.21982,
+        "name": "Jesús Saenz Saenz",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Plaza coso 17, Entrena",
+        "id": 23,
+        "lat": 42.38771,
+        "lng": -2.52992,
+        "name": "Miguel Angel Ubis",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle mayor 11, Fuenmayor",
+        "id": 24,
+        "lat": 42.46728,
+        "lng": -2.55865,
+        "name": "Felix Granado Aguado",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle ubeda 3, Fuenmayor",
+        "id": 25,
+        "lat": 42.46657,
+        "lng": -2.56085,
+        "name": "María Angeles Amo Garcia",
+        "type": "Estanco"
+      },
+      {
+        "address": "Avenida de la rioja 3-5, Fuenmayor",
+        "id": 26,
+        "lat": 42.46531,
+        "lng": -2.56115,
+        "name": "Correos Fuenmayor",
+        "type": "Correos"
+      },
+      {
+        "address": "Carretera Arnedo 2, Gravalos",
+        "id": 27,
+        "lat": 42.10835,
+        "lng": -1.99859,
+        "name": "Elena García Hierro",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle la Ventilla 65, Haro",
+        "id": 28,
+        "lat": 42.57438,
+        "lng": -2.85027,
+        "name": "Luis Javier Mahave Arnaez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Arrabal 3, Haro",
+        "id": 29,
+        "lat": 42.57664,
+        "lng": -2.84707,
+        "name": "Servicios Integrales",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Calle doctores Castroviejo 3, Lardero",
+        "id": 30,
+        "lat": 42.42748,
+        "lng": -2.45991,
+        "name": "Carrefour Express Lardero",
+        "type": "Alimentación"
+      },
+      {
+        "address": "Calle Fermín Gurbindo, Lardero",
+        "id": 31,
+        "lat": 42.42614,
+        "lng": -2.45776,
+        "name": "Correos Lardero",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle Bretón de los Herreros 3, Lardero",
+        "id": 32,
+        "lat": 42.42703,
+        "lng": -2.46161,
+        "name": "Juan Ignacio Aquesolo",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Gran via 45, Logroño",
+        "id": 33,
+        "lat": 42.46394,
+        "lng": -2.4511,
+        "name": "Clemencia Perez Bajo",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle vara del Rey 81, Logroño",
+        "id": 34,
+        "lat": 42.45639,
+        "lng": -2.44731,
+        "name": "Vicente Jalón Martínez",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Avenida de Colón 20, Logroño",
+        "id": 35,
+        "lat": 42.46208,
+        "lng": -2.44045,
+        "name": "María Blanca García Domingo",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle vara de Rey 56, Logroño",
+        "id": 36,
+        "lat": 42.4589,
+        "lng": -2.44677,
+        "name": "Jose Alfredo Blazquez Leria",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Avenida de la Paz 82, Logroño",
+        "id": 37,
+        "lat": 42.46387,
+        "lng": -2.43309,
+        "name": "Ana María Garcia Tobalina",
+        "type": "Revistas"
+      },
+      {
+        "address": "Calle Fermín Irigaray, Logroño",
+        "id": 38,
+        "lat": 42.46447,
+        "lng": -2.43524,
+        "name": "Jose Manuel Santamaría Oyuelos",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Avenida de la paz 36, Logroño",
+        "id": 39,
+        "lat": 42.46508,
+        "lng": -2.43823,
+        "name": "María Balbina Saenz de Jubera Pinillos",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Marques de Murrieta, Logroño",
+        "id": 40,
+        "lat": 42.46453,
+        "lng": -2.4576,
+        "name": "Julia Mangado Aragón",
+        "type": "Estanco"
+      },
+      {
+        "address": "Avenida de Colón 11, Logroño",
+        "id": 41,
+        "lat": 42.46399,
+        "lng": -2.43912,
+        "name": "Cristina Martínez",
+        "type": "Revistero"
+      },
+      {
+        "address": "Calle Gonzalo de Berceo 29, Logroño",
+        "id": 42,
+        "lat": 42.4662,
+        "lng": -2.45876,
+        "name": "María José Pejenaute Moraga",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle república argentina 17, Logroño",
+        "id": 43,
+        "lat": 42.46187,
+        "lng": -2.44863,
+        "name": "Rosa Margarita Fernández Saenz",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Huesca 30, Logroño",
+        "id": 44,
+        "lat": 42.45993,
+        "lng": -2.45223,
+        "name": "Ramon Bermudez Olano",
+        "type": "Librería"
+      },
+      {
+        "address": "Calle Piqueras 89, Logroño",
+        "id": 45,
+        "lat": 42.45382,
+        "lng": -2.42586,
+        "name": "María Concepción Ojeda Tejada",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle vara de rey, Logroño",
+        "id": 46,
+        "lat": 42.46046,
+        "lng": -2.44594,
+        "name": "Araceli Teran Calvo",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Calahorra 13, Logroño",
+        "id": 47,
+        "lat": 42.46144,
+        "lng": -2.40857,
+        "name": "Varios Muchachos S.L.",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Calle Chile 39, Logroño",
+        "id": 48,
+        "lat": 42.45748,
+        "lng": -2.45674,
+        "name": "Juana Mayoral Pinillos",
+        "type": "Revistas"
+      },
+      {
+        "address": "Avenida Colón 65, Logroño",
+        "id": 49,
+        "lat": 42.45964,
+        "lng": -2.44122,
+        "name": "Alvaro López Eguiluz",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Estamberra 13, Logroño",
+        "id": 50,
+        "lat": 42.456,
+        "lng": -2.4353,
+        "name": "Francisco Martínez Olivas",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle hermanos Moroy 19, Logroño",
+        "id": 51,
+        "lat": 42.46595,
+        "lng": -2.4469,
+        "name": "José Ignacio Martínez",
+        "type": "Revistas"
+      },
+      {
+        "address": "Calle Jorge Vigón 1, Logroño",
+        "id": 52,
+        "lat": 42.46395,
+        "lng": -2.44955,
+        "name": "Oscar Martinez Martinez",
+        "type": "Revistas"
+      },
+      {
+        "address": "Avenida club deportivo 61, Logroño",
+        "id": 53,
+        "lat": 42.45852,
+        "lng": -2.46509,
+        "name": "Estefano Redi Bareta",
+        "type": "Librería"
+      },
+      {
+        "address": "Calle Gonzalo de Berceo 29, Logroño",
+        "id": 54,
+        "lat": 42.4662,
+        "lng": -2.45876,
+        "name": "María Carmen García Rodríguez",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle Piqueras 98, Logroño",
+        "id": 55,
+        "lat": 42.45084,
+        "lng": -2.42737,
+        "name": "Fundosa Galena S.L.U.",
+        "type": "Revistero"
+      },
+      {
+        "address": "Plaza Alferez provisional, Logroño",
+        "id": 56,
+        "lat": 42.46626,
+        "lng": -2.45133,
+        "name": "Sergio Manzarares Gomez",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Plaza maestro Lopez 1, Logroño",
+        "id": 57,
+        "lat": 42.46719,
+        "lng": -2.43151,
+        "name": "Ascensión Perez Gil",
+        "type": "Panaderia"
+      },
+      {
+        "address": "Calle Huesca 41, Logroño",
+        "id": 58,
+        "lat": 42.46036,
+        "lng": -2.45497,
+        "name": "Miguel Angel Cañas",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Pio XII, 23 bajo, Logroño",
+        "id": 59,
+        "lat": 42.46007,
+        "lng": -2.44246,
+        "name": "Diego Saez Martinez",
+        "type": "Revistas"
+      },
+      {
+        "address": "Calle ronda de los cuarteles 52, Logroño",
+        "id": 60,
+        "lat": 42.46892,
+        "lng": -2.46271,
+        "name": "Los Sauces Rioja S.L.",
+        "type": "Chucheria - Papelería"
+      },
+      {
+        "address": "Calle Huesca 16, Logroño",
+        "id": 61,
+        "lat": 42.45919,
+        "lng": -2.44894,
+        "name": "Eduardo Fernandez Jimenez",
+        "type": "Librería"
+      },
+      {
+        "address": "Calle siete infantes de Lara 3, Logroño",
+        "id": 62,
+        "lat": 42.45872,
+        "lng": -2.46056,
+        "name": "Pilar Fernandez Iñiguez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Avenida de Portugal 1, Logroño",
+        "id": 63,
+        "lat": 42.46423,
+        "lng": -2.44825,
+        "name": "Jose Pujades Martinez",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Vara del Rey 54, Logroño",
+        "id": 64,
+        "lat": 42.4589,
+        "lng": -2.44679,
+        "name": "Anastasio Martinez Ezquerro",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Calle Fuenmayor 41, Logroño",
+        "id": 65,
+        "lat": 42.46777,
+        "lng": -2.47606,
+        "name": "Jesus Javier León",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle pedregales 11, Logroño",
+        "id": 66,
+        "lat": 42.45614,
+        "lng": -2.43544,
+        "name": "David Saenz Perales",
+        "type": "Panadería"
+      },
+      {
+        "address": "Calle Albia de Castro 10, Logroño",
+        "id": 67,
+        "lat": 42.46226,
+        "lng": -2.43756,
+        "name": "Leticia Sainz Vela",
+        "type": "Loterías - Chuches"
+      },
+      {
+        "address": "Calle Chile 12, Logroño",
+        "id": 68,
+        "lat": 42.46324,
+        "lng": -2.4536,
+        "name": "Jose Musito Perez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Jorge Vigón 64, Logroño",
+        "id": 69,
+        "lat": 42.46065,
+        "lng": -2.43712,
+        "name": "Ruben Javier Garcia Ferrer",
+        "type": "Panadería"
+      },
+      {
+        "address": "Calle Portillejo 41, Logroño",
+        "id": 70,
+        "lat": 42.46688,
+        "lng": -2.46682,
+        "name": "Jose Agustín Zorzano",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle Gonzalo de Berecio 32, Logroño",
+        "id": 71,
+        "lat": 42.46655,
+        "lng": -2.45873,
+        "name": "Eliseo Estefania Martinez",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Calle Portales 29, Logroño",
+        "id": 72,
+        "lat": 42.46628,
+        "lng": -2.44526,
+        "name": "Maria Esther de Pablo García",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Gran via 14, Logroño",
+        "id": 73,
+        "lat": 42.46374,
+        "lng": -2.44754,
+        "name": "Mostafa Majdi El Mofadad",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Juan Boscán 11, Logroño",
+        "id": 74,
+        "lat": 42.45617,
+        "lng": -2.43728,
+        "name": "Ka Vazhur S.C.",
+        "type": "Mini Market"
+      },
+      {
+        "address": "Calle Cigüeña 61, Logroño",
+        "id": 75,
+        "lat": 42.46433,
+        "lng": -2.42842,
+        "name": "Javier Arandia Aznar",
+        "type": "Loterias"
+      },
+      {
+        "address": "Avenida Perez Galdós, Logroño",
+        "id": 76,
+        "lat": 42.46207,
+        "lng": -2.45153,
+        "name": "Ana Isabel Tricio Sotil",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Gran via 2, Logroño",
+        "id": 77,
+        "lat": 42.45734,
+        "lng": -2.46152,
+        "name": "Kiosko Victorio",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Avenida Pio XII 2, Logroño",
+        "id": 78,
+        "lat": 42.46045,
+        "lng": -2.445,
+        "name": "La estación S.C.",
+        "type": "Revistas - Estación autobus"
+      },
+      {
+        "address": "Avenida de la Paz 37, Logroño",
+        "id": 79,
+        "lat": 42.46489,
+        "lng": -2.43625,
+        "name": "Maria Julia Saiz Oses",
+        "type": "Panaderia"
+      },
+      {
+        "address": "Calle Somosierra 18, Logroño",
+        "id": 80,
+        "lat": 42.46046,
+        "lng": -2.44961,
+        "name": "Ignacio Gabriel Cornago",
+        "type": "Revistas"
+      },
+      {
+        "address": "Calle Fuenmayor 39, Logroño",
+        "id": 81,
+        "lat": 42.46776,
+        "lng": -2.47545,
+        "name": "Pangstea alimentación",
+        "type": "Alimentación"
+      },
+      {
+        "address": "Calle caballero de la Rosa 18, Logroño",
+        "id": 82,
+        "lat": 42.46514,
+        "lng": -2.42894,
+        "name": "Estrella Alvarez de Eulate",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle concepción arenal 1, Logroño",
+        "id": 83,
+        "lat": 42.47336,
+        "lng": -2.45064,
+        "name": "Marcos Martinez Manero",
+        "type": "Alimentación"
+      },
+      {
+        "address": "Calle Pio XII 2, Logroño",
+        "id": 84,
+        "lat": 42.46047,
+        "lng": -2.445,
+        "name": "Jose Luis Cámara",
+        "type": "Loterias"
+      },
+      {
+        "address": "Calle Lirios 3, Logroño",
+        "id": 85,
+        "lat": 42.46039,
+        "lng": -2.42082,
+        "name": "Pablo Buzón Rios",
+        "type": "Alimentación"
+      },
+      {
+        "address": "Calle Huesca 26, Logroño",
+        "id": 86,
+        "lat": 42.45984,
+        "lng": -2.45155,
+        "name": "Yolanda Preciado Ezquerro",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle once de junio 1, Logroño",
+        "id": 87,
+        "lat": 42.46561,
+        "lng": -2.45033,
+        "name": "Correos Logroño",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle duquesa de la victoria 77, Logroño",
+        "id": 88,
+        "lat": 42.46319,
+        "lng": -2.43252,
+        "name": "Correos Logroño",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle barrera 22, Logroño",
+        "id": 89,
+        "lat": 42.45938,
+        "lng": -2.45944,
+        "name": "Correos Logroño",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle Eibar 15, Logroño",
+        "id": 90,
+        "lat": 42.46493,
+        "lng": -2.46671,
+        "name": "Carol Aragón Blanco",
+        "type": "Peluqueria"
+      },
+      {
+        "address": "Avenida gran via 43, Logroño",
+        "id": 91,
+        "lat": 42.4638,
+        "lng": -2.4507,
+        "name": "Julio de Miguel Sicilia",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle somosierra 15, Logroño",
+        "id": 92,
+        "lat": 42.45988,
+        "lng": -2.44792,
+        "name": "Mari Angeles Vallejo",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle cigüeña 46, Logroño",
+        "id": 93,
+        "lat": 42.46439,
+        "lng": -2.42966,
+        "name": "Hilario Virumbrales Taboada",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle San Millán 10, Logroño",
+        "id": 94,
+        "lat": 42.46504,
+        "lng": -2.43284,
+        "name": "Maria Emilia García Martínez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Vara del Rey 66, Logroño",
+        "id": 96,
+        "lat": 42.45813,
+        "lng": -2.44707,
+        "name": "Lucia García Escudero Dominguez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle muro de Cervantes 10, Logroño",
+        "id": 97,
+        "lat": 42.46633,
+        "lng": -2.44243,
+        "name": "Jovijas S.L.",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Avenida Colón 1, Logroño",
+        "id": 98,
+        "lat": 42.4651,
+        "lng": -2.43881,
+        "name": "Jovijas S.L.",
+        "type": "Chucherias"
+      },
+      {
+        "address": "Calle la cigüeñar 77, Logroño",
+        "id": 99,
+        "lat": 42.46433,
+        "lng": -2.42846,
+        "name": "Pedro Jose Jimeno Rojo",
+        "type": "Video Club"
+      },
+      {
+        "address": "Avenida autonomía de la Rioja 2, Logroño",
+        "id": 100,
+        "lat": 42.46259,
+        "lng": -2.43245,
+        "name": "Antonio Miguel Leon",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle Marciano García, Murillo del rio Leza",
+        "id": 101,
+        "lat": 42.40198,
+        "lng": -2.32399,
+        "name": "Primitiva Santos Martinez",
+        "type": "Estanco"
+      },
+      {
+        "address": "Paseo de los Curas 5, Nájera",
+        "id": 102,
+        "lat": 42.41761,
+        "lng": -2.72888,
+        "name": "Blanca Castuera Trenado",
+        "type": "Librería"
+      },
+      {
+        "address": "Paseo San Julián 7, Nájera",
+        "id": 103,
+        "lat": 42.41616,
+        "lng": -2.73135,
+        "name": "Azofra Lacalle Roberto",
+        "type": "Librería"
+      },
+      {
+        "address": "Avenida de Logroño 10, Nájera",
+        "id": 104,
+        "lat": 42.41841,
+        "lng": -2.72258,
+        "name": "Concepción Rodriguez",
+        "type": "Librería"
+      },
+      {
+        "address": "Paseo de San Julian 14, Nájera",
+        "id": 105,
+        "lat": 42.41498,
+        "lng": -2.73132,
+        "name": "Correos Najera",
+        "type": "Correos"
+      },
+      {
+        "address": "Plaza de la Fuente 18, Nalda",
+        "id": 106,
+        "lat": 42.33421,
+        "lng": -2.4871,
+        "name": "Maria Antonia Millan Gil",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle San Francisco 5, Navarrete",
+        "id": 107,
+        "lat": 42.42799,
+        "lng": -2.56218,
+        "name": "Jose María Ubis Lozano",
+        "type": "Estanco"
+      },
+      {
+        "address": "Plaza de la Paz 4, Ollauri",
+        "id": 108,
+        "lat": 42.5427,
+        "lng": -2.83321,
+        "name": "Teresa Ortiz de Viñastre",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle Alberco 14, Ortigosa de Cameros",
+        "id": 109,
+        "lat": 42.54266,
+        "lng": -2.83318,
+        "name": "Maria Carmen San Pedro Merino",
+        "type": "Comestibles"
+      },
+      {
+        "address": "Carretera Logroño 10, Oyon",
+        "id": 110,
+        "lat": 42.49942,
+        "lng": -2.43602,
+        "name": "Estación de Servicio Oyon",
+        "type": "Gasolinera"
+      },
+      {
+        "address": "Calle Boticón 2, Ribafrecha",
+        "id": 111,
+        "lat": 42.35515,
+        "lng": -2.38717,
+        "name": "Embutidos Santolaya",
+        "type": "Carnicería"
+      },
+      {
+        "address": "Calle Felipe Corres 7, San Asensio",
+        "id": 112,
+        "lat": 42.49716,
+        "lng": -2.74844,
+        "name": "Victoria Gomez Ruiz",
+        "type": "Estanco"
+      },
+      {
+        "address": "Calle la Hiedra 3, San Millan de la cogolla",
+        "id": 113,
+        "lat": 42.32906,
+        "lng": -2.86314,
+        "name": "Guillermo Santamaria Serrano",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Plaza Hermosilla, Santo Domingo de la Calzada",
+        "id": 114,
+        "lat": 42.43891,
+        "lng": -2.95339,
+        "name": "Janry Santo Domingo",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Avenida de Burgos, Santo Domingo de la Calzada",
+        "id": 115,
+        "lat": 42.44186,
+        "lng": -2.95504,
+        "name": "Garcia Arranz Jose Luis",
+        "type": "Kiosko"
+      },
+      {
+        "address": "Calle Real 29, Tirgo",
+        "id": 116,
+        "lat": 42.54655,
+        "lng": -2.94768,
+        "name": "Luis Ortun",
+        "type": "Bar"
+      },
+      {
+        "address": "Calle Calvo Sotelo 13, Tricio",
+        "id": 117,
+        "lat": 42.40093,
+        "lng": -2.71977,
+        "name": "Ana Maria Sacristan Hernando",
+        "type": "Autoservicio"
+      },
+      {
+        "address": "Calle Navarro Villoslada 2, Viana",
+        "id": 118,
+        "lat": 42.51502,
+        "lng": -2.37221,
+        "name": "Ballesteros Prensa y Loteria",
+        "type": "Prensa - Lotería"
+      },
+      {
+        "address": "Plaza de Don Candido Sarramian, Villamendia de Iregua",
+        "id": 119,
+        "lat": 42.42645,
+        "lng": -2.41886,
+        "name": "Emiliano García",
+        "type": "Pastelería"
+      },
+      {
+        "address": "Calle Anastasio Mateo 10, Villamendia de Iregua",
+        "id": 120,
+        "lat": 42.42801,
+        "lng": -2.41802,
+        "name": "Correos Villamediana de Iregua",
+        "type": "Correos"
+      },
+      {
+        "address": "Calle Gonzalo de Berceo, Villamendia de Iregua",
+        "id": 121,
+        "lat": 42.42184,
+        "lng": -2.41591,
+        "name": "Ana Rosa Yanguela",
+        "type": "Chucherias"
+      }
+    ]
+  }
+}

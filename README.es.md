@@ -101,8 +101,19 @@ La documentación técnica está en inglés.
 | M4 Consolidación del MVP | Gestión de errores, ajustes, accesibilidad, traducciones, diseños de Figma, declaraciones de privacidad | En curso |
 | M5 v1.0 | Modo sin conexión, noticias, tarifas, puntos de recarga, widget, notificaciones, publicación | Sin empezar |
 
+Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), así que las historias que esperaban a ellos ya no están bloqueadas: los tests de contrato de LB-005 parte 2, y LB-006 parte 2, LB-008 parte 2 y LB-101 parte 2.
+
 ### Cambios recientes
 
+- **08-11-2026:**
+  - LB-003: los datos de ejemplo grabados, y el grabador que los mantiene fieles.
+    - `fixtures/` guarda 19 capturas de la fuente y del geocodificador, 3,5 MB, tomadas el 8 de noviembre de 2026: una petición por endpoint, con al menos un segundo entre ellas, con el `User-Agent` del proyecto, las claves ordenadas y dos espacios de sangrado.
+    - `scripts/record-fixtures.sh` es el único sitio que puede llamar a la fuente en directo. Prepara las capturas en un directorio temporal y las mueve a su sitio solo si la ejecución entera salió bien, así que un fallo deja intactas las ya guardadas; `--list` imprime los endpoints y no toca la red, y `--check` vuelve a grabar y compara la forma del JSON, sin escribir nada y con código de salida 1 si algo difiere.
+    - Un flujo de trabajo semanal ejecuta `--check` todos los lunes y abre una incidencia por semana ISO cuando un campo aparece, desaparece o cambia de tipo. No está en ninguna puerta: una diferencia nunca bloquea una fusión, y la fusión sigue siendo decisión del propietario.
+    - Las capturas conservan los defectos de la fuente tal como llegan: en `vm_all_with_object_lineRef.json`, 40 de las 57 actividades de autobús llevan un `lineRef` que vale `"[object Object]"` (DD-06), así que los DTO se escriben contra lo que devuelve la fuente, no contra lo que espera la especificación.
+    - Ningún test unitario ni de integración puede ya llegar a la fuente: un resolutor del JDK en `:shared:core:testing`, presente en el classpath de tests de todo módulo que use la convención de librería KMP o la de Android (salvo los dos módulos de soporte de tests, que no hacen peticiones), resuelve solo loopback y falla cualquier otro nombre de host con `NETWORK GUARD`. Los tests de Kotlin/Native siguen con `MockEngine`, y los jars del framework de Robolectric se resuelven con Gradle, así que la JVM de tests nunca los descarga.
+    - Lo cubren tests: los casos de grabación ejecutan el verdadero `scripts/record-fixtures.sh` contra un servidor de prueba local en 127.0.0.1, los casos de formas llaman directamente a `scripts/ci/fixture-shape.sh --diff` sin servidor, tres casos no necesitan ni servidor ni red, y 5 comprueban la guarda, 2 de ellos desde los tests de un módulo corriente, donde solo las convenciones podían haberla puesto.
+    - Los términos de reutilización de los datos (OQ-11) siguen abiertos. Las capturas ya están en el repositorio, y fusionarlas es decisión del propietario.
 - **06-11-2026:**
   - LB-303: elige cuándo empieza tu viaje, ahora o en una fecha y hora.
     - Bajo los dos campos, «Salir ahora» abre un menú: «Salir ahora», o «Salir a las…», que abre un selector de fecha y luego una hora que escribes en Android, y el selector de fecha y hora del propio iPhone. El viaje muestra entonces cuándo sale: «Salir a las 08:19», «Salir mañana a las 08:19» o «Salir el 15 ene a las 08:19».

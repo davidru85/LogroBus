@@ -38,6 +38,8 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         val composeBom = platform(libs.findLibrary("compose-bom").get())
         add("implementation", composeBom)
         add("testImplementation", composeBom)
+        // LB-003: a unit test never resolves the live source (docs/testing_strategy.md §1 rule 2).
+        configureTestNetworkGuard { guard -> add("testImplementation", guard) }
     }
 
     tasks.register("ciUnitTest") {
@@ -45,6 +47,10 @@ internal fun Project.configureAndroidModule(android: CommonExtension) {
         description = "Runs the module's unit tests on the JVM (debug variant, Robolectric), as CI does."
         dependsOn("testDebugUnitTest")
     }
+
+    // Robolectric reads its framework jars from the directory Gradle fills, so it never downloads them: with the guard
+    // configured below installed, a download would fail (LB-003).
+    configureRobolectricOffline()
 
     raiseSecurityFloors()
     configureDetekt(listOf("detektMain", "detektTest"))

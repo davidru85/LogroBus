@@ -1,0 +1,198 @@
+# Weekly fixtures: re-record every committed fixture and fail when the source's
+# contract (the JSON shape) changed (risk R1, docs/testing_strategy.md §4.3).
+# The check writes nothing and the workflow never commits: a human or an agent
+# re-records and reviews, following docs/playbooks/record-fixtures.md.
+#
+# Owner rule: CI runs only while the repository is public (docs/ci_cd.md §1).
+# This workflow is not part of any gate, so a failed run opens an issue instead
+# of blocking a merge (docs/ci_cd.md §5.1).
+name: Weekly fixtures
+
+on:
+  schedule:
+    # Mondays, 04:17 UTC. Off the hour so the run does not meet GitHub's
+    # busiest scheduling minute.
+    - cron: '17 4 * * 1'
+  # A manual run, for a drift reported by hand or after a source outage.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time: a manual run must not cancel a scheduled one and hide a
+# drift, and a scheduled run must not cancel a manual one.
+concurrency:
+  group: weekly-fixtures
+  cancel-in-progress: false
+
+jobs:
+  fixtures:
+    name: Fixtures
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # Both tools are preinstalled on ubuntu-latest and both are prerequisites
+      # of scripts/record-fixtures.sh, which fails at its first command without
+      # them; this step names the missing one.
+      - name: jq and curl are available
+        run: |
+          for tool in jq curl; do
+            command -v "$tool" >/dev/null 2>&1 || { echo "::error::$tool is required by scripts/record-fixtures.sh and is missing from this runner"; exit 1; }
+          done
+      # --check records into a temporary directory and compares the JSON shape
+      # (scripts/ci/fixture-shape.sh) with the committed fixture: no values, no
+      # writes, exit code 1 on drift. One request per endpoint, at least one
+      # second apart, about 25 s in all (spec §8.7, risk R2). The step fails
+      # with the checker's own exit code and its output is not captured: those
+      # lines quote the source's own JSON key names, and untrusted text must
+      # never reach $GITHUB_OUTPUT, where a key holding the delimiter would let
+      # the rest of the run's output be parsed as further outputs
+      # (docs/ci_cd.md §6). contract-drift reads the failed job's log instead.
+      - name: Compare the live contract with the committed fixtures
+        run: bash scripts/record-fixtures.sh --check
+
+  contract-drift:
+    # Only after a failed check. It reports the drift and never blocks a merge:
+    # the fix is docs/playbooks/record-fixtures.md.
+    name: Contract drift
+    needs: fixtures
+    if: ${{ always() && !github.event.repository.private && needs.fixtures.result == 'failure' }}
+    runs-on: ubuntu-latest
+    # Three minutes: it downloads the failed job's log and files one issue.
+    timeout-minutes: 3
+    # The only write permission of the workflow, and only for the issue
+    # (docs/ci_cd.md §6). actions: read is what gh needs to download the failed
+    # job's log; contents: read is what the repository listing costs. It runs no
+    # code from a pull request.
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    env:
+      # gh authenticates with the job's token; no repository secret is involved.
+      # The job has no checkout, so gh is told the repository explicitly.
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.run_id }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      PLAYBOOK_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/docs/playbooks/record-fixtures.md
+    steps:
+      # The log is read here rather than passed from the fixtures job on
+      # purpose: the checker prints one line per key path of the live response,
+      # so the log carries names the source chose. A name holding
+      # "RECORD_FIXTURES_REPORT" would close the heredoc of a job output and let
+      # the rest of the run's output be parsed as further outputs. Reading the
+      # log keeps every byte of untrusted text out of $GITHUB_OUTPUT.
+      - name: Open this week's drift issue, unless it is already open
+        run: |
+          set -euo pipefail
+
+          # ISO year and week of the run, so that a drift is reported once per
+          # week even when the run is retried: "Contract drift: weekly fixtures 2026-W45".
+          title="Contract drift: weekly fixtures $(date -u +%G-W%V)"
+
+          existing="$(gh issue list --state open --limit 100 --search "in:title \"$title\"" --json title --jq '.[].title')"
+          if printf '%s\n' "$existing" | grep -Fxq -- "$title"; then
+            echo "An open issue already reports this drift: $title"
+            exit 0
+          fi
+
+          # Read-only: the failed job's log, which holds the checker's lines. gh
+          # refuses logs with `gh run view --log-failed` while the run is still
+          # in progress ("logs will be available when it is complete"), and this
+          # job always runs inside that run, so the same log is fetched from the
+          # API: list the run's failed jobs, then download each one's log.
+          # A failure here becomes the excerpt, not a second failure: the issue
+          # must still be filed, with the run URL, when the log cannot be read.
+          log_file="$RUNNER_TEMP/fixtures-log.txt"
+          : >"$log_file"
+          failed_jobs="$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --paginate \
+            --jq '.jobs[] | select(.conclusion == "failure") | .id')" || true
+          while IFS= read -r job_id; do
+            [ -n "$job_id" ] || continue
+            gh api "repos/$GH_REPO/actions/jobs/$job_id/logs" --allow-escape-sequences >>"$log_file" 2>&1 || true
+          done <<<"$failed_jobs"
+
+          # Sanitise before the text reaches the issue body:
+          #   - ANSI colour and \r go, so the lines are plain text;
+          #   - "RECORD_FIXTURES_REPORT" alone on a line is a reserved report
+          #     delimiter, replaced rather than echoed, and any run of three or
+          #     more backticks becomes ''' so neither can forge an output or open
+          #     a fence;
+          #   - the last 200 lines and 16 000 bytes, taken from the END of the
+          #     log because the checker's lines are the last thing the failed
+          #     step printed, headed by how many earlier lines were omitted.
+          # The body then indents the excerpt four spaces, which is what makes a
+          # fence impossible to close.
+          scrubbed_file="$RUNNER_TEMP/fixtures-log-scrubbed.txt"
+          sed -E $'s/\x1b\\[[0-9;?]*[ -/]*[@-~]//g' "$log_file" | tr -d '\r' |
+            awk '{
+                   gsub(/```+/, "'"'''"'")
+                   if ($0 ~ /^[[:space:]]*RECORD_FIXTURES_REPORT[[:space:]]*$/) {
+                     $0 = "[line withheld: it is the record-fixtures report delimiter]"
+                   }
+                   print
+                 }' >"$scrubbed_file"
+          excerpt_file="$RUNNER_TEMP/contract-drift-lines.txt"
+          # LC_ALL=C: length() then counts bytes on every awk, so the cap is
+          # exactly 16 000 bytes, and never more than 16 000 characters. The
+          # notice printed when lines are omitted counts against it too, hence
+          # the reserve.
+          LC_ALL=C awk -v max_lines=200 -v max_bytes=16000 -v reserve=160 '
+            { line[NR] = $0; len[NR] = length($0) + 1 }
+            END {
+              if (NR == 0) exit
+              budget = max_bytes - reserve
+              start = NR - max_lines + 1
+              if (start < 1) start = 1
+              bytes = 0
+              first = NR + 1
+              for (i = NR; i >= start; i--) {
+                if (bytes + len[i] > budget) break
+                bytes += len[i]
+                first = i
+              }
+              # A single line longer than the whole cap: keep its head, so the
+              # excerpt is never empty and the note below still applies.
+              if (first > NR) {
+                first = NR
+                line[NR] = substr(line[NR], 1, budget - 64) " [line truncated: longer than the cap]"
+              }
+              if (first > 1) {
+                printf "[log excerpt truncated: %d earlier line(s) omitted, the last %d kept, at most %d bytes; open the run for the rest]\n", first - 1, NR - first + 1, max_bytes
+              }
+              for (i = first; i <= NR; i++) print line[i]
+            }
+          ' "$scrubbed_file" >"$excerpt_file"
+          if [ ! -s "$excerpt_file" ]; then
+            printf 'The failed job log was empty or could not be read; open the run: %s\n' "$RUN_URL" >"$excerpt_file"
+          fi
+
+          body_file="$RUNNER_TEMP/contract-drift.md"
+          {
+            echo "The weekly fixture check failed: a field was added, removed or changed type in a live response (contract drift, risk R1), a committed fixture is missing, or an endpoint did not answer. The lines below say which."
+            echo
+            echo "- Failing run: $RUN_URL"
+            echo "- Workflow: \`.github/workflows/weekly-fixtures.yml\`, job \`fixtures\`"
+            echo
+            echo "## The failed job's log"
+            echo
+            # Four spaces, not a fence: indented code cannot be closed by the
+            # log's own text, whereas a fence closing early would inject markup
+            # into a public issue.
+            awk '{ printf "    %s\n", $0 }' "$excerpt_file"
+            echo
+            echo "## What to do"
+            echo
+            echo "Follow the fixture recorder playbook: $PLAYBOOK_URL"
+            echo
+            echo "Re-record with \`scripts/record-fixtures.sh\`, review the shape diff, and update the DTOs, mappers and contract tests. A shape change is risk R1 and must be recorded in \`docs/api_spec.md\` §10 before the fixtures are committed."
+            echo
+            echo "This workflow never commits and is not a required check: a human or an agent re-records and reviews."
+          } >"$body_file"
+
+          gh issue create --title "$title" --body-file "$body_file"

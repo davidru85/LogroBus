@@ -1,0 +1,56 @@
+{
+  "data": [
+    {
+      "createdAt": "2026-04-14T15:03:00.751Z",
+      "documentId": "anvgjv6avy2krij8wjvf1ap5",
+      "icono": "brand-instagram",
+      "id": 4,
+      "nombre": "Instagram",
+      "orden": 1,
+      "publishedAt": "2026-04-14T15:18:47.275Z",
+      "updatedAt": "2026-04-14T15:18:47.242Z",
+      "url": "https://www.instagram.com/aytologrono/"
+    },
+    {
+      "createdAt": "2026-04-14T15:19:49.414Z",
+      "documentId": "zbdvmsfkvh72tjberufxbnqi",
+      "icono": "brand-facebook",
+      "id": 6,
+      "nombre": "Facebook",
+      "orden": 2,
+      "publishedAt": "2026-04-14T15:19:49.436Z",
+      "updatedAt": "2026-04-14T15:19:49.414Z",
+      "url": "https://www.facebook.com/AytoLogrono/?locale=es_ES"
+    },
+    {
+      "createdAt": "2026-04-14T15:22:09.354Z",
+      "documentId": "oqrgwfuus2w3abfv58dpehpk",
+      "icono": "brand-youtube",
+      "id": 8,
+      "nombre": "YouTube",
+      "orden": 3,
+      "publishedAt": "2026-04-14T15:22:09.445Z",
+      "updatedAt": "2026-04-14T15:22:09.354Z",
+      "url": "https://www.youtube.com/channel/UCS3NNV-DpVZLP8K4OoUW8ng"
+    },
+    {
+      "createdAt": "2026-04-14T15:23:13.449Z",
+      "documentId": "zhv6za1nlyy3vp8suq48g0y5",
+      "icono": "brand-x",
+      "id": 11,
+      "nombre": "X",
+      "orden": 4,
+      "publishedAt": "2026-04-14T15:25:45.171Z",
+      "updatedAt": "2026-04-14T15:25:45.144Z",
+      "url": "https://x.com/AytoLogrono"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageCount": 1,
+      "pageSize": 10,
+      "total": 4
+    }
+  }
+}
