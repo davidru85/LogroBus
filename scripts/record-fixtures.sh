@@ -17,6 +17,11 @@
 #
 # Endpoint ids restrict the run: scripts/record-fixtures.sh API-03 GEO-01. An unknown id is an error.
 #
+# Every response body is capped at MAX_BODY_BYTES (16 MiB, an order of magnitude above the largest fixture the source
+# serves today): --max-filesize stops an oversized transfer on the wire, and the size on disk is checked again after
+# decompression, because --compressed makes the wire cap approximate. A body above the cap fails its endpoint with a
+# message naming it, and nothing reaches fixtures/.
+#
 # Environment, for tests only (never for a real capture):
 #   RECORD_BASE_URL           Source base URL, default https://transporteurbano.logrono.es (api_spec.md §1).
 #   RECORD_GEOCODER_BASE_URL  CartoCiudad base URL, default https://www.cartociudad.es/geocoder/api/geocoder.
@@ -33,6 +38,11 @@ source_base="${RECORD_BASE_URL:-https://transporteurbano.logrono.es}"
 geocoder_base="${RECORD_GEOCODER_BASE_URL:-https://www.cartociudad.es/geocoder/api/geocoder}"
 fixtures_dir="${RECORD_FIXTURES_DIR:-$root/fixtures}"
 min_interval="${RECORD_MIN_INTERVAL:-1}"
+
+# The largest fixture the source serves today is sections.json at about 1.1 MB. The cap leaves an order of magnitude
+# of headroom and exists so that a broken or hostile source cannot fill the disk beside fixtures/: every capture is
+# written into the staging directory before anyone looks at it (risk R2, NFR-REL-02).
+MAX_BODY_BYTES=16777216
 
 # The endpoint table: one row per fixture. Ids, paths and bodies come from docs/api_spec.md §2, the fixture names from
 # spec §10.2 plus the two geocoder captures of api_spec.md §5. "source" and "geocoder" select the base URL, "-" is
@@ -113,10 +123,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Exactly one mode, and it must come first: `--list --check` used to run the first and exit 0, which let a caller
+# believe it had checked the fixtures when it had only listed them.
 mode='record'
 case "${1:-}" in
-  --list) mode='list' ;;
-  --check) mode='check' ;;
+  --list)
+    mode='list'
+    shift
+    ;;
+  --check)
+    mode='check'
+    shift
+    ;;
   -h | --help)
     usage
     exit 0
@@ -127,9 +145,13 @@ case "${1:-}" in
     exit 1
     ;;
 esac
-if [ "$mode" != 'record' ]; then
-  shift
-fi
+case "${1:-}" in
+  --*)
+    printf 'record-fixtures: one mode at a time: %s\n' "$1" >&2
+    usage >&2
+    exit 1
+    ;;
+esac
 
 selected=""
 for id in "$@"; do
@@ -198,6 +220,7 @@ while IFS='|' read -r id method base path body timeout file; do
   body_file="$staging/$id.body"
   curl_args=(
     --silent --show-error --compressed
+    --max-filesize "$MAX_BODY_BYTES"
     --connect-timeout 5 --max-time "$timeout"
     --output "$body_file" --write-out '%{http_code}'
     --request "$method"
@@ -209,15 +232,34 @@ while IFS='|' read -r id method base path body timeout file; do
   if [ "$body" != '-' ]; then
     curl_args+=(--header 'Content-Type: application/json' --data "$body")
   fi
-  status="$(curl "${curl_args[@]}" "$url")" || die "$id: the request to $url failed"
+  # Only the body reaches the staging directory, so a failure here can never touch fixtures/.
+  curl_status=0
+  status="$(curl "${curl_args[@]}" "$url")" || curl_status=$?
+  if [ "$curl_status" -ne 0 ]; then
+    # curl exits 63 when --max-filesize is what stopped the transfer; name the cap rather than the transfer.
+    if [ "$curl_status" -eq 63 ]; then
+      die "$id: $url answered a body above the $MAX_BODY_BYTES-byte cap (curl exit 63); fixtures/ is untouched"
+    fi
+    die "$id: the request to $url failed (curl exit $curl_status); fixtures/ is untouched"
+  fi
 
   case "$status" in
     2*) ;;
     *) die "$id: $url answered $status, not a 2xx; fixtures/ is untouched" ;;
   esac
 
-  if ! jq empty "$body_file" 2>/dev/null; then
-    die "$id: $url answered a body that is not JSON; fixtures/ is untouched"
+  # `--compressed` makes `--max-filesize` a cap on the wire, and a gzip bomb decompresses far beyond it: the size
+  # that matters is the one on disk, after curl has inflated the body (risk R2, NFR-REL-02).
+  body_bytes="$(bytes_of "$body_file")"
+  if [ "$body_bytes" -gt "$MAX_BODY_BYTES" ]; then
+    die "$id: $url answered $body_bytes bytes, above the $MAX_BODY_BYTES-byte cap; fixtures/ is untouched"
+  fi
+
+  # api_spec.md §3: every source response is an object or an array. `jq empty` alone is not enough: it accepts a
+  # zero-length body, `null` and a scalar, and canonicalising one of those writes an empty or shapeless fixture that a
+  # later `--check` compares against itself and reports unchanged. NFR-REL-02 treats such a body as an error.
+  if ! jq -e 'type == "object" or type == "array"' "$body_file" >/dev/null 2>&1; then
+    die "$id: $url answered a body that is not a JSON object or array; fixtures/ is untouched"
   fi
 
   # Canonical form: sorted keys and two-space indent, so re-recording unchanged data produces no diff (LB-003).

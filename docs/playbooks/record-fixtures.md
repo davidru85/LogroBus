@@ -9,8 +9,8 @@
 
 This playbook calls the **live** source. Run it only when it is needed, never in a loop, and respect the 1 request per second limit built into the script.
 
-1. Run `scripts/record-fixtures.sh` (optionally with endpoint ids). It writes the captures to `fixtures/` and prints one line per fixture, `<id>  <file>  <bytes>  unchanged|written|DRIFT`. Use `--check` first when you only want to know whether the source moved: it prints the same lines plus the shape diff and writes nothing.
-   - A shape diff is one line per change: `+ path type` for an added path, `- path type` for a removed one, `~ path old->new` for a changed type. A null against a value is never a diff.
+1. Run `scripts/record-fixtures.sh` (optionally with endpoint ids). It writes the captures to `fixtures/` and prints one line per fixture, `<id>  <file>  <bytes>  unchanged|written|DRIFT`. Use `--check` first when you only want to know whether the source moved: it prints the same lines plus the shape diff and writes nothing. A body above 16 MiB fails the endpoint with a message naming it, and `fixtures/` stays untouched.
+   - A shape diff is one line per change: `+ path type` for an added path, `- path type` for a removed one, `~ path old->new` for a changed type. An array always reports its element path `a[]`, `unknown` when it holds nothing. `null` and `unknown` are the open types: a path whose type is one of them on a side, and anything beneath it on that side, is not drift, so a nullable field or a collection that emptied or filled is not a diff; every other type is compared. A path that holds both `null` and a value reports the value, and a path that appears or disappears elsewhere is drift whatever it carries, `null` included.
 2. **If the shape did not change:** keep the new files only if they add value, such as a new edge case. Otherwise discard them.
 3. **If the shape changed** (the script exits non-zero):
    - Record the change in the change log of [`api_spec.md`](../api_spec.md) (§10), and update the affected endpoint section.

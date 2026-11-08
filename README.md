@@ -105,12 +105,12 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 - **2026-11-08:**
   - LB-003: the golden fixtures, and the recorder that keeps them true.
-    - `fixtures/` holds 19 captures of the source and of the geocoder, 3.5 MB, taken on 8 November 2026: one request per endpoint, at least a second apart, with the app's own `User-Agent`, sorted keys and two-space indentation.
+    - `fixtures/` holds 19 captures of the source and of the geocoder, 3.5 MB, taken on 8 November 2026: one request per endpoint, at least a second apart, with the project `User-Agent`, sorted keys and two-space indentation.
     - `scripts/record-fixtures.sh` is the only place that may call the live source. It stages the captures in a temporary directory and moves them into place only when the whole run succeeded, so a failure leaves the committed ones untouched; `--list` prints the endpoints and touches no network, and `--check` records again and compares the JSON shape, writing nothing and exiting 1 on drift.
     - A weekly workflow runs `--check` every Monday, and opens one issue per ISO week when a field is added, removed or changes type. It is in no gate: drift never blocks a merge, and the merge stays with the owner.
     - The captures keep the source's defects as they arrive: in `vm_all_with_object_lineRef.json`, 40 of the 57 bus activities carry a `lineRef` of `"[object Object]"` (DD-06), so the DTOs are written against what the source returns, not against what the spec expects.
-    - No unit or integration test can reach the source any more: a JDK resolver in `:shared:core:testing`, on every JVM test classpath, resolves loopback only and fails any other host name with `NETWORK GUARD`. Kotlin/Native tests stay on `MockEngine`, and the Robolectric framework jars are resolved through Gradle so the test JVM never downloads them.
-    - 18 tests cover it: 13 run the recorder against a local stub, and 5 check the guard, 2 of them from an ordinary module's tests, where only the conventions could have put it.
+    - No unit or integration test can reach the source any more: a JDK resolver in `:shared:core:testing`, on the test classpath of every module that uses the Android or the KMP library convention (the two test-support modules excepted, since they make no request), resolves loopback only and fails any other host name with `NETWORK GUARD`. Kotlin/Native tests stay on `MockEngine`, and the Robolectric framework jars are resolved through Gradle so the test JVM never downloads them.
+    - Tests cover it: the recording cases run the real `scripts/record-fixtures.sh` against a local stub bound to 127.0.0.1, the shape cases call `scripts/ci/fixture-shape.sh --diff` directly with no server, three cases need neither a server nor a network, and 5 check the guard, 2 of them from an ordinary module's tests, where only the conventions could have put it.
     - The terms of data reuse (OQ-11) are still open. The captures are committed, and merging them is the owner's decision.
 - **2026-11-06:**
   - LB-303: choose when your trip starts, now or at a date and time.

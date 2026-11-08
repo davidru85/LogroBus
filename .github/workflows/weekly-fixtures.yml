@@ -31,10 +31,6 @@ jobs:
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    outputs:
-      # The drift lines the checker printed, for the issue that contract-drift
-      # opens. Carried as an output so that the endpoints are not recorded twice.
-      report: ${{ steps.check.outputs.report }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -50,30 +46,14 @@ jobs:
       # --check records into a temporary directory and compares the JSON shape
       # (scripts/ci/fixture-shape.sh) with the committed fixture: no values, no
       # writes, exit code 1 on drift. One request per endpoint, at least one
-      # second apart, about 25 s in all (spec §8.7, risk R2).
+      # second apart, about 25 s in all (spec §8.7, risk R2). The step fails
+      # with the checker's own exit code and its output is not captured: those
+      # lines quote the source's own JSON key names, and untrusted text must
+      # never reach $GITHUB_OUTPUT, where a key holding the delimiter would let
+      # the rest of the run's output be parsed as further outputs
+      # (docs/ci_cd.md §6). contract-drift reads the failed job's log instead.
       - name: Compare the live contract with the committed fixtures
-        id: check
-        run: |
-          set +e
-          output="$(bash scripts/record-fixtures.sh --check 2>&1)"
-          status=$?
-          set -e
-          printf '%s\n' "$output"
-          {
-            echo "status=$status"
-            echo 'report<<RECORD_FIXTURES_REPORT'
-            printf '%s\n' "$output"
-            echo 'RECORD_FIXTURES_REPORT'
-          } >> "$GITHUB_OUTPUT"
-      # A separate step, so that the report is an output even when the run
-      # failed: contract-drift reads it instead of recording the endpoints again.
-      # A source that did not answer is reported too, with its own line from the
-      # check, rather than only a shape difference.
-      - name: Fail on drift
-        if: ${{ steps.check.outputs.status != '0' }}
-        run: |
-          echo "::error::The fixture check failed: a shape changed or an endpoint did not answer. Run scripts/record-fixtures.sh --check locally and follow docs/playbooks/record-fixtures.md."
-          exit 1
+        run: bash scripts/record-fixtures.sh --check
 
   contract-drift:
     # Only after a failed check. It reports the drift and never blocks a merge:
@@ -82,24 +62,31 @@ jobs:
     needs: fixtures
     if: ${{ always() && !github.event.repository.private && needs.fixtures.result == 'failure' }}
     runs-on: ubuntu-latest
+    # Three minutes: it downloads the failed job's log and files one issue.
     timeout-minutes: 3
     # The only write permission of the workflow, and only for the issue
-    # (docs/ci_cd.md §6). It runs no code from a pull request: it only reads the
-    # failed job's output.
+    # (docs/ci_cd.md §6). actions: read is what gh needs to download the failed
+    # job's log; contents: read is what the repository listing costs. It runs no
+    # code from a pull request.
     permissions:
       contents: read
+      actions: read
       issues: write
     env:
       # gh authenticates with the job's token; no repository secret is involved.
       # The job has no checkout, so gh is told the repository explicitly.
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.run_id }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       PLAYBOOK_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/docs/playbooks/record-fixtures.md
-      # Untrusted output reaches the shell through env:, never through run:
-      # (docs/ci_cd.md §6).
-      REPORT: ${{ needs.fixtures.outputs.report }}
     steps:
+      # The log is read here rather than passed from the fixtures job on
+      # purpose: the checker prints one line per key path of the live response,
+      # so the log carries names the source chose. A name holding
+      # "RECORD_FIXTURES_REPORT" would close the heredoc of a job output and let
+      # the rest of the run's output be parsed as further outputs. Reading the
+      # log keeps every byte of untrusted text out of $GITHUB_OUTPUT.
       - name: Open this week's drift issue, unless it is already open
         run: |
           set -euo pipefail
@@ -114,6 +101,58 @@ jobs:
             exit 0
           fi
 
+          # Read-only: the failed job's log, which holds the checker's lines. gh
+          # refuses logs with `gh run view --log-failed` while the run is still
+          # in progress ("logs will be available when it is complete"), and this
+          # job always runs inside that run, so the same log is fetched from the
+          # API: list the run's failed jobs, then download each one's log.
+          # A failure here becomes the excerpt, not a second failure: the issue
+          # must still be filed, with the run URL, when the log cannot be read.
+          log_file="$RUNNER_TEMP/fixtures-log.txt"
+          : >"$log_file"
+          failed_jobs="$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --paginate \
+            --jq '.jobs[] | select(.conclusion == "failure") | .id')" || true
+          while IFS= read -r job_id; do
+            [ -n "$job_id" ] || continue
+            gh api "repos/$GH_REPO/actions/jobs/$job_id/logs" --allow-escape-sequences >>"$log_file" 2>&1 || true
+          done <<<"$failed_jobs"
+
+          # Sanitise before the text reaches the issue body:
+          #   - ANSI colour and \r go, so the lines are plain text;
+          #   - at most 200 lines and 16 000 bytes, with a line saying how many
+          #     lines were cut, so the body stays well inside GitHub's limit;
+          #   - "RECORD_FIXTURES_REPORT" alone on a line is a reserved report
+          #     delimiter, replaced rather than echoed;
+          #   - any run of three or more backticks becomes ''' so no fence can be
+          #     opened, and the body indents the excerpt four spaces below, which
+          #     is what actually makes a fence impossible to close.
+          excerpt_file="$RUNNER_TEMP/contract-drift-lines.txt"
+          sed -E $'s/\x1b\\[[0-9;?]*[ -/]*[@-~]//g' "$log_file" | tr -d '\r' |
+            awk -v max_lines=200 -v max_bytes=16000 '
+              BEGIN { kept = 0; bytes = 0; dropped = 0 }
+              {
+                gsub(/```+/, "'"'''"'")
+                if ($0 ~ /^[[:space:]]*RECORD_FIXTURES_REPORT[[:space:]]*$/) {
+                  $0 = "[line withheld: it is the record-fixtures report delimiter]"
+                }
+                if (kept >= max_lines || bytes + length($0) + 1 > max_bytes) {
+                  dropped++
+                  next
+                }
+                print
+                kept++
+                bytes += length($0) + 1
+              }
+              END {
+                if (dropped > 0) {
+                  printf "[log excerpt truncated: %d more line(s) did not fit the %d-line, %d-byte cap; open the run for the rest]\n", dropped, max_lines, max_bytes
+                }
+              }
+            ' >"$excerpt_file"
+          if [ ! -s "$excerpt_file" ]; then
+            printf 'The failed job log was empty or could not be read; open the run: %s\n' "$RUN_URL" >"$excerpt_file"
+          fi
+
           body_file="$RUNNER_TEMP/contract-drift.md"
           {
             echo "The weekly fixture check failed: a field was added, removed or changed type in a live response (contract drift, risk R1), a committed fixture is missing, or an endpoint did not answer. The lines below say which."
@@ -121,15 +160,12 @@ jobs:
             echo "- Failing run: $RUN_URL"
             echo "- Workflow: \`.github/workflows/weekly-fixtures.yml\`, job \`fixtures\`"
             echo
-            echo "## What the checker printed"
+            echo "## The failed job's log"
             echo
-            echo '```'
-            if [ -n "$REPORT" ]; then
-              printf '%s\n' "$REPORT"
-            else
-              echo "The failing job's log carries the drift lines (the report output was empty)."
-            fi
-            echo '```'
+            # Four spaces, not a fence: indented code cannot be closed by the
+            # log's own text, whereas a fence closing early would inject markup
+            # into a public issue.
+            awk '{ printf "    %s\n", $0 }' "$excerpt_file"
             echo
             echo "## What to do"
             echo

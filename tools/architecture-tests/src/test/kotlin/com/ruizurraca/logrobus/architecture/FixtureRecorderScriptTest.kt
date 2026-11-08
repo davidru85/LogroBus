@@ -16,12 +16,14 @@ import java.util.concurrent.TimeUnit
  * docs/testing_strategy.md §4.3), so nothing else in the suite would notice when it drifts from the contract:
  * the request headers, the canonical output, the one request per second, the atomic replace and the shape gate.
  *
- * Every test runs the real script against a local stub server written here with python3 and bound to 127.0.0.1 on a
- * free port. The recorder reaches it through `RECORD_BASE_URL`, `RECORD_GEOCODER_BASE_URL` and `RECORD_FIXTURES_DIR`,
- * the overrides that exist for these tests. No test touches `fixtures/` or the live source (AGENTS.md §9).
+ * The recording cases run the real script against a local stub server written here with python3 and bound to
+ * 127.0.0.1 on a free port. The recorder reaches it through `RECORD_BASE_URL`, `RECORD_GEOCODER_BASE_URL` and
+ * `RECORD_FIXTURES_DIR`, the overrides that exist for these tests. No test touches `fixtures/` or the live source
+ * (AGENTS.md §9).
  *
- * The shape assertions use scripts/ci/fixture-shape.sh, and the canonical form jq produces, because both tools are
- * already a prerequisite of the recorder itself.
+ * The shape cases call scripts/ci/fixture-shape.sh --diff straight on two documents, with no server; the endpoint
+ * table is read through `--list`, which needs neither a network nor jq. The canonical form the recorder writes is
+ * asserted with jq, because both tools are already a prerequisite of the recorder itself.
  */
 class FixtureRecorderScriptTest {
     @TempDir
@@ -193,6 +195,70 @@ class FixtureRecorderScriptTest {
     }
 
     @Test
+    fun lb003_anEmptyCollectionIsTheSameShapeAsAPopulatedOne() {
+        // A night-time `activities: []` or an empty `news` list used to read as every child path removed, because an
+        // empty array contributed no element row at all. The element path of an empty array reports `unknown`, and
+        // the diff reads `unknown` as compatible with any type and any path beneath it (risk R1).
+        val populated = """{"r":{"a":[{"id":1}]}}"""
+        val empty = """{"r":{"a":[]}}"""
+
+        val emptied = shapeDiff(populated, empty)
+
+        assertEquals(0, emptied.exitCode, emptied.output)
+        assertEquals("", emptied.output.trim())
+
+        val filled = shapeDiff(empty, populated)
+
+        assertEquals(0, filled.exitCode, filled.output)
+        assertEquals("", filled.output.trim())
+    }
+
+    @Test
+    fun lb003_anAddedFieldOnANonEmptyCollectionIsStillDrift() {
+        // The empty-collection rule must not swallow the drift the gate exists for.
+        val result = shapeDiff("""{"r":{"a":[{"id":1}]}}""", """{"r":{"a":[{"id":1,"x":2}]}}""")
+
+        assertEquals(1, result.exitCode, result.output)
+        assertEquals(listOf("+ r.a[].x number"), result.output.lines().filter { it.isNotBlank() })
+    }
+
+    @Test
+    fun lb003_anOversizedBodyFailsTheEndpoint() {
+        // A broken or hostile source must not fill the disk beside fixtures/: the recorder caps a body at
+        // MAX_BODY_BYTES (16 MiB, an order of magnitude above the ~1.1 MB the source serves today, risk R2). Both
+        // paths must fail the endpoint, name it and leave fixtures/ alone (NFR-REL-02).
+        val padding = "a".repeat(OVERSIZED_BODY_BYTES)
+        val oversized = """{"padding":"$padding"}"""
+        val cases =
+            listOf(
+                // A declared Content-Length above the cap: curl --max-filesize stops the transfer on the wire.
+                Triple(Route("/api/linesDiscovery/lines", 200, oversized), "API-01", "lines_2026-10-22.json"),
+                // A gzip body small on the wire and above the cap once decompressed: --compressed makes the wire
+                // cap approximate, so only the check after the download catches this one.
+                Triple(
+                    Route("/api/linesDiscovery/stops", 200, oversized, "gzip"),
+                    "API-02",
+                    "stops_2026-10-22.json",
+                ),
+            )
+
+        cases.forEach { (route, endpoint, name) ->
+            val stub = startStub(route)
+            val fixtures = fixtures()
+            val committed = File(fixtures, name).apply { writeText("{\n  \"previous\": true\n}\n") }
+            val before = committed.readBytes()
+
+            val result = recorder(stub.baseUrl, fixtures, "0", endpoint)
+
+            assertNotEquals(0, result.exitCode, "$name: ${result.output}")
+            assertTrue(result.output.contains(endpoint), "the failure must name the endpoint: ${result.output}")
+            assertTrue(result.output.contains("cap"), "the failure must name the cap: ${result.output}")
+            assertArrayEquals(before, committed.readBytes(), "$name: an oversized body must not replace a fixture")
+            assertEquals(listOf(name), fixtures.list()!!.sorted(), "$name: an oversized body must not add a fixture")
+        }
+    }
+
+    @Test
     fun lb003_checkModeFailsOnDriftAndPassesOnAnUnchangedShape() {
         // The weekly CI job runs --check: it must fail on a new field and pass when only the data moved.
         val fixtures = fixtures()
@@ -216,6 +282,41 @@ class FixtureRecorderScriptTest {
 
         assertEquals(1, absent.exitCode, absent.output)
         assertTrue(absent.output.contains("missing"), absent.output)
+    }
+
+    @Test
+    fun lb003_aBodyThatIsNotAnObjectIsRejected_evenWhenItIsEmptyOrScalar() {
+        // `jq empty` accepts a zero-length body, `null` and a scalar, and `jq .` then writes nothing or a value that
+        // has no shape at all. A weekly --check would compare two empty shapes and report unchanged over a fixture
+        // that had been destroyed, so a body that is not an object or an array fails the endpoint (NFR-REL-02).
+        listOf("", "null", "42", "\"a word\"").forEach { body ->
+            val stub = startStub(Route("/api/linesDiscovery/lines", 200, body))
+            val fixtures = fixtures()
+            File(fixtures, "lines_2026-10-22.json").writeText("""{"previous":true}""")
+            val before = File(fixtures, "lines_2026-10-22.json").readBytes()
+
+            val result = recorder(stub.baseUrl, fixtures, "0", "API-01")
+
+            assertNotEquals(0, result.exitCode, "body [$body] must be rejected: ${result.output}")
+            assertTrue(result.output.contains("API-01"), result.output)
+            assertArrayEquals(before, File(fixtures, "lines_2026-10-22.json").readBytes(), "body [$body]")
+        }
+    }
+
+    @Test
+    fun lb003_twoModeWordsAreAnError_ratherThanSilentlyListing() {
+        // A caller that passed two modes got the first one and exit 0: `--list --check` listed and never checked.
+        val result = run(listOf("bash", script.path, "--list", "--check"), emptyMap())
+
+        assertNotEquals(0, result.exitCode, result.output)
+    }
+
+    @Test
+    fun lb003_theStagingDirectoryIsIgnoredByGit() {
+        // A killed run leaves .record-fixtures.XXXXXX beside fixtures/. It holds a whole capture, so it must never
+        // appear in a change set.
+        val pattern = File(repositoryRoot, ".gitignore").readLines().map { it.trim() }
+        assertTrue(pattern.any { it == ".record-fixtures.*/" }, "the staging directory must be ignored: $pattern")
     }
 
     @Test
@@ -256,6 +357,8 @@ class FixtureRecorderScriptTest {
         val path: String,
         val status: Int,
         val body: String,
+        /** The `Content-Encoding` the stub answers with: "identity" unless a test wants a decompressed body. */
+        val encoding: String = "identity",
     )
 
     private inner class Stub(
@@ -284,7 +387,8 @@ class FixtureRecorderScriptTest {
         val stubDir = File(dir, "stub-${stubCount++}").apply { mkdirs() }
         val routesFile =
             File(stubDir, "routes.tsv").apply {
-                writeText(routes.joinToString("") { "${it.path}\t${it.status}\t${it.body}\n" })
+                // path \t status \t encoding \t body: the body is last, so a tab inside it is harmless.
+                writeText(routes.joinToString("") { "${it.path}\t${it.status}\t${it.encoding}\t${it.body}\n" })
             }
         val log = File(stubDir, "requests.log")
         val portFile = File(stubDir, "port")
@@ -388,6 +492,11 @@ class FixtureRecorderScriptTest {
         const val STOP_SECONDS = 5L
         const val POLL_MILLIS = 25L
 
+        // Above the recorder's 16 MiB MAX_BODY_BYTES. The identity route declares that length, so curl
+        // --max-filesize stops it on the wire; the gzip route is small on the wire and only exceeds the cap once
+        // decompressed, so the post-download check is the one that catches it.
+        const val OVERSIZED_BODY_BYTES = 17 * 1024 * 1024
+
         // The recorder sleeps a whole second between requests. The slack only absorbs the millisecond rounding of
         // the stub's timestamps, so a request that came less than a second after the previous one still fails.
         const val MIN_GAP_SECONDS = 0.999
@@ -420,11 +529,14 @@ class FixtureRecorderScriptTest {
 
         /**
          * A stand-in for the source: answers each path from its route table and appends one tab-separated line per
-         * request (path, epoch seconds, User-Agent, Accept-Encoding, Content-Type, body). It binds 127.0.0.1 on port
-         * 0, so the kernel picks a free port, which the server writes to the file it receives as its third argument.
+         * request (path, epoch seconds, User-Agent, Accept-Encoding, Content-Type, body). A route whose encoding is
+         * "gzip" is compressed before it is sent, so a test can hand the recorder a body that is small on the wire
+         * and large once decompressed. It binds 127.0.0.1 on port 0, so the kernel picks a free port, which the
+         * server writes to the file it receives as its third argument.
          */
         val STUB =
             """
+            import gzip
             import sys
             import time
             from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -436,8 +548,8 @@ class FixtureRecorderScriptTest {
                     for line in source:
                         line = line.rstrip("\n")
                         if line:
-                            route_path, status, body = line.split("\t")
-                            routes[route_path] = (int(status), body)
+                            route_path, status, encoding, body = line.split("\t", 3)
+                            routes[route_path] = (int(status), encoding, body)
                 return routes
 
 
@@ -464,10 +576,14 @@ class FixtureRecorderScriptTest {
                             self.headers.get("Content-Type") or "",
                             body,
                         ]) + "\n")
-                    status, payload = routes.get(self.path, (404, "{}"))
+                    status, encoding, payload = routes.get(self.path, (404, "identity", "{}"))
                     encoded = payload.encode("utf-8")
+                    if encoding == "gzip":
+                        encoded = gzip.compress(encoded)
                     self.send_response(status)
                     self.send_header("Content-Type", "application/json")
+                    if encoding != "identity":
+                        self.send_header("Content-Encoding", encoding)
                     self.send_header("Content-Length", str(len(encoded)))
                     self.end_headers()
                     self.wfile.write(encoded)

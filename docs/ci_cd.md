@@ -24,7 +24,7 @@
 The owner decides when to go public. This checklist was run on 2026-10-23, before the repository was made public:
 - [x] Review the spec for content that should not be published. Spec §3.4 names non-production hosts and spec §3.3 names test payment pages left in production. Both come from the public web bundle and contain no credentials. **The owner decided to publish the spec unchanged.**
 - [x] Decide the project licence (OQ-21). **No licence is granted: all rights reserved.** There is no `LICENSE` file; both READMEs state it.
-- [ ] Confirm the data-reuse position (OQ-11). **Still open:** it gates the app release, and the repository holds no source data yet. Revisit it before LB-003 commits the golden fixtures to the public repository.
+- [ ] Confirm the data-reuse position (OQ-11). **Still open:** the 19 golden fixture captures were committed to the public repository by owner decision on 2026-11-08 (recorded in [`acceptance_criteria.md`](acceptance_criteria.md) §LB-003), and the item still gates the app release: it must be resolved before any public release.
 - [x] Confirm that no secrets exist in the git history. Every blob reachable from any ref was scanned (34 commits, 174 blobs, no findings). GitHub secret scanning and push protection are enabled.
 - [x] After going public: confirm that the policy jobs run on a test PR (PR #4: all six ran and passed), then run `scripts/github/protect-main.sh` and check through the GitHub API that the protection is active.
 
@@ -139,7 +139,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
 
 ### 5.1 The weekly fixture check (`weekly-fixtures.yml`, LB-003)
 
-- **What it does.** Every Monday at 04:17 UTC, and on demand through `workflow_dispatch`, the `Fixtures` job records every fixture of spec §10.2 plus the two CartoCiudad captures, 19 in all, into a temporary directory, with `scripts/record-fixtures.sh --check`. It compares the JSON *shape* of each capture, the key paths and their types, with the committed file in `fixtures/`, and fails when a field was added, removed or changed type.
+- **What it does.** Every Monday at 04:17 UTC, and on demand through `workflow_dispatch`, the `Fixtures` job records every fixture of spec §10.2, plus `sections.json` (API-12's fifth path, which the spec's list omits) and the two CartoCiudad captures, 19 in all, into a temporary directory, with `scripts/record-fixtures.sh --check`. It compares the JSON *shape* of each capture, the key paths and their types, with the committed file in `fixtures/`, and fails when a field was added, removed or changed type.
 - **Why the shape and not the bytes.** The live endpoints answer with new values every minute: ETAs, timestamps and vehicle positions. A byte diff would fail on every run, while the shape is the part that the app's contract tests rely on (risk R1, [`api_spec.md`](api_spec.md) §9, [`testing_strategy.md`](testing_strategy.md) §4.3).
 - **How it calls the source.** At most one request per second, the project `User-Agent` and `Accept-Encoding: gzip`, following spec §8.7 and risk R2. Each fixture takes one request, so a run takes about 25 s.
 - **Why `timeout-minutes: 10`.** The run itself takes about 25 s; the limit caps a run that hangs on a slow endpoint (the requests time out at 10 s, the static ones at 30 s) and stays within §2's hard limit. The `Contract drift` job needs 3 minutes: it only calls `gh`.
