@@ -39,7 +39,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **`koverVerify` holds** for `:shared:transit:data`.
 
 **CI**
-- Not run yet: the pull request is open and its watch runs.
+- **One run, green:** Kotlin 47/47 jobs and iOS 9/9, 63 checks, `MERGEABLE` and `CLEAN`. No download retry in any job log.
 
 **Decisions**
 - **Owner (2026-11-08), the split of LB-006 part 2:** the static side lands now, which is what unblocks LB-008 part 2; the VM, ET and planner mappers wait for LB-105, LB-106 and LB-306, because the domain has no `Vehicle`, `Arrival` or `Plan` entity and inventing three ahead of their stories would put rules in the wrong place.
