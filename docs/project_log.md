@@ -50,7 +50,9 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Flagged, then decided by the owner:** `fixtures/recharge_points.json` publishes about 100 named private shopkeepers with their street addresses. The privacy review called it personal data; the owner chose to keep it (see Decisions), so the dataset is named in `security_privacy.md` instead.
 
 **CI**
-- Not run yet: the pull request is open and its watch runs.
+- **Run 1** (42473163535, `4e7386e9`): every Kotlin job died at about 20 s, and the iOS run too, on the Gradle wrapper's own download: `Downloading from https://services.gradle.org/distributions/gradle-9.7.1-bin.zip failed: timeout (10000ms)`. A fresh runner has an empty `GRADLE_USER_HOME` and thirty jobs asked at once; the wrapper allowed a 10 s read and no retry, and `scripts/ci/gradle-retry.sh` cannot help because `./gradlew` is what failed. A runner flake, so the failed jobs were to be rerun once, but the run was still in progress.
+- **Run 2** (42473359481, `bff6af81`): the same failure, 17 jobs at about 20 s. Recurring, so the pipeline was made resilient instead of rerun a second time: `gradle-wrapper.properties` now waits up to 120 s and retries four times, 2 s apart, with the distribution checksum still pinned, and `lb003_theWrapperRetriesItsOwnDownload` keeps both floors (red first: the test failed on `networkTimeout=10000` and `retries=0`). `ci_cd.md` §5 records it.
+- **Run 3** (42473618515, `a58fd8f2`): the first run past the wrapper. Every job but two passed; `Shared unit tests (:shared:core:presentation)` and `Android unit tests (:android:feature:planner)` burned their five retries on `502` and `504` from `services.gradle.org`, an upstream outage, not the branch. The failed jobs are rerun once per the rule, and the run is watched.
 
 **Decisions**
 - **Owner (2026-11-07, carried into this session):** LB-003 is the next task.
@@ -59,6 +61,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Owner (2026-11-08), `recharge_points.json`:** keep the capture rather than replace it with a shape-only `synthetic_` copy. It is API-11's public answer, the fixture is API-11's contract, and `testing_strategy.md` §4.2 forbids hand-editing a recorded capture. The dataset is recorded in `security_privacy.md` §2 and the decision here, so the privacy review's finding is answered rather than dropped.
 - **Agent:**
   - **The guard stays absolute.** No carve-out for Maven Central: the framework jars come from Gradle instead, which also turns a `~/.m2` download that CI never cached into a cached one.
+  - **The wrapper outlasts the distribution host,** not only the dependency repositories: a 10 s read timeout with no retry could not survive thirty fresh runners asking `services.gradle.org` at once, and it failed that way twice in one session.
   - **`sections.json` is recorded** although spec §10.2 omits it: it is API-12's fifth path and the same capture costs one request.
   - **The route fixtures use fixed instants and public places** from `api_spec.md` §4.7, so the rejection is reproducible; `route_rejected.json` keeps the `walk-too-far` rejection the source now sends, with no routes, and `route_ok.json` the five routes.
   - **`synthetic_` was not needed:** the live `vm_all_with_object_lineRef.json` carries `"[object Object]"` in 40 of 57 activities, at `result.activities[].lineRef` and `publishedLineName`.
