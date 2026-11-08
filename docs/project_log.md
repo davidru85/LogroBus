@@ -39,7 +39,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Two facts the captures corrected:** `et_line1_60min.json` holds 32 calls, not the 44 a live probe had returned (the fixture is a different capture, and the test asserts 32), and `route_ok.json` carries no `rejection` key at all, so `rejection == null` has to come from a default.
 
 **CI**
-- Not run yet: the pull request is open and its watch runs.
+- **One run, green:** Kotlin 47/47 jobs and iOS 9/9 on `9e58e8bf`, 63 checks, `MERGEABLE` and `CLEAN`. The wrapper hardening from LB-003 held: no download retry appeared in any log this time.
 
 **Decisions**
 - **Agent:**
