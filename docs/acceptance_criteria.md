@@ -158,7 +158,19 @@ Part 1 (2026-10-31), the rules that need no DTO shapes, done with this evidence 
 - The bounding box (`ServiceAreaTest`): `lb006_aPointMoreThanTwoKilometresBeyondTheStopsIsNot`. Dropping and counting items is part 2.
 - DD-15 was done in LB-005 (`SourceClientTest.dd15_anyTwoHundredStatusIsASuccessAndPostsAnswer201`).
 
-Part 2 is left: the mappers over LB-005's DTOs (lines, stops, VM, ET, planner) and the `StaticNormaliser` for LB-008; DD-03, DD-09, DD-10's synthetic stops 383 to 385, DD-16 to DD-18; the persisted `direction_code_cache` with codes 401 and 402; the `DataQualityReport`; all checked against LB-003's fixtures.
+Part 2 was split by owner decision on 2026-11-08. The static side is done (2026-11-08, `feat/LB-006-part2-normaliser`); the VM, ET and planner mappers move to LB-105, LB-106 and LB-306, because the domain has no `Vehicle`, `Arrival` or `Plan` entity yet.
+
+**Done in part 2, static side.** Evidence, on the Android host and the iOS simulator:
+- **`DefaultStaticNormaliser`** implements `StaticNormaliser` over API-01's and API-02's DTOs, and reuses every rule part 1 built rather than re-deriving it: `IdParser` (DD-01, DD-02, DD-06), `trimmedOrNull` (DD-07), `parseCssColor` and `onColorFor` (DD-08), `NameNormaliser` (DD-11), `LineNameParser` (spec §5.5) and `ServiceArea` (spec §5.4 step 7).
+- **The two fixtures normalise into a complete catalogue:** 13 lines and 254 stops, both patterns on every line, zero dropped (`lb006_theTwoFixturesNormaliseToACompleteCatalogue`).
+- **DD-10, with the real numbers:** the patterns carry 257 distinct stop ids and API-02 carries 254, so exactly **383, 384 and 385** are synthesised as provisional stops taking their name and position from the pattern entry, each linked to the line that serves it, and `report.provisionalStopsAdded` is 3 (`dd10_aPatternStopThatApi02LacksBecomesAProvisionalStop`). Their names arrive as the source writes them ("Provisional Templarios", "Provisional Cameros", with 385's trailing space trimmed).
+- **The shape is the concatenation of its segments,** at precision 6: 3438 outbound points and 3359 inbound ones across the catalogue, and line 3 outbound decodes to 482 points with `shapeIndex` running from 0 to 482, the last stop's empty segment included (`lb006_thePatternShapeIsTheConcatenationOfItsSegments`).
+- **`DataQualityReport`** counts each item once, under the first cause that applies in pipeline order: no id, no name, no position, outside the service area, a repeated id; plus the decode drops, the provisional stops added, the shape points left out, and the lines without a code or with an unreadable colour. It keeps no value of the source (NFR-PRIV-02).
+- **Damage is counted, never fatal:** `lb006_anItemOutsideTheServiceAreaIsDroppedAndCounted`, `lb006_aRepeatedIdIsKeptOnceAndCounted`, `lb006_anItemWithoutAnIdIsDroppedAndCounted`, `lb006_anItemWithoutAPositionIsDroppedAndCounted`. `AppError.Data` stays for an unusable envelope or collection only.
+- **The fingerprint covers the overrides:** a different `name_overrides` map is a different normaliser, and the same map in another order is the same one, so an unchanged payload is renormalised exactly when it must be (`lb006_theFingerprintChangesWithTheNameOverrides`).
+- **Coverage:** `:shared:transit:data`'s `koverVerify` holds its 80 % floor.
+
+**Moved, with the owner's approval:** the VM, ET and planner mappers to LB-105, LB-106 and LB-306, together with DD-03, DD-09, DD-16, DD-17 and DD-18 and the `direction_code_cache` that needs ET's calls; each lands with the domain entity its story owns, instead of inventing three entities ahead of them. `DD-04`'s inference algorithm and `DD-05`'s time correction are already done and tested in part 1.
 
 ### LB-007 `:shared:core:database`
 Refs: spec §8.8, `architecture.md` §4.3, FR-STOP-01, NFR-I18N-03, NFR-PERF-03

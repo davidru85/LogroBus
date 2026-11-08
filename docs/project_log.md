@@ -19,6 +19,42 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-08: LB-006 part 2, the static normaliser
+
+**Done**
+- **PR #55 (LB-005 part 2) merged** on 2026-11-08, and `main` was synced to `c5405e4c`.
+- **LB-006 part 2, its static side (`feat/LB-006-part2-normaliser`):** spec §5.3–5.6, DD-01 to DD-11, NFR-MNT-01, NFR-PRIV-02.
+  - **`DefaultStaticNormaliser`** implements the `StaticNormaliser` interface part 1 declared, over API-01's and API-02's DTOs. It reuses every rule part 1 built — `IdParser`, `trimmedOrNull`, `parseCssColor`, `onColorFor`, `NameNormaliser`, `LineNameParser`, `ServiceArea` — and adds what needs the DTO shapes: the colour with its contrast partner, the pattern per direction with its headsign, and the shape as the concatenation of its segments at precision 6.
+  - **DD-10:** the patterns carry 257 distinct stop ids and API-02 carries 254, so 383, 384 and 385 become provisional stops, named and positioned from the pattern entry and linked to the line that serves them.
+  - **`DataQualityReport`:** one count per cause, in pipeline order and never a value of the source: no id, no name, no position, outside the service area, a repeated id, the decode drops, the provisional stops added, the shape points left out, and the lines without a code or with an unreadable colour.
+  - **`normaliseWithReport`** returns the catalogue and the report together; `normalise` delegates to it, so the interface the sync already consumes did not change.
+  - **Tests:** 12 cases in `DefaultStaticNormaliserTest`, over the real fixtures and small hand-written bodies for the damage (`dd10_…`, `lb006_…`), green on the Android host and the iOS simulator.
+  - **Docs:** `acceptance_criteria.md` with the evidence and the split, `backlog.md`.
+
+**Review**
+- Self-review with the gate runs as evidence:
+  - **The numbers are the fixtures', not the spec's.** The outbound shapes hold 3438 points and the inbound 3359; line 3 outbound decodes to 482; each was measured with `jq` and then asserted, and asserted again independently after the test was written.
+  - **The provisional stops' names are the source's own** ("Provisional Templarios", "Provisional Cameros"), not something the normaliser invented; 385 arrives with a trailing space that DD-11 trims.
+  - **`AppError.Data` stayed reserved for an unusable envelope or collection.** Item damage is a count, so one bad row never fails a sync.
+  - **`koverVerify` holds** for `:shared:transit:data`.
+
+**CI**
+- Not run yet: the pull request is open and its watch runs.
+
+**Decisions**
+- **Owner (2026-11-08), the split of LB-006 part 2:** the static side lands now, which is what unblocks LB-008 part 2; the VM, ET and planner mappers wait for LB-105, LB-106 and LB-306, because the domain has no `Vehicle`, `Arrival` or `Plan` entity and inventing three ahead of their stories would put rules in the wrong place.
+- **Agent:**
+  - **The report rides beside the catalogue, not inside it:** `normaliseWithReport` returns both, and the `StaticNormaliser` the sync consumes is unchanged, so the sync did not have to learn about a type it does not use yet.
+  - **The normaliser is not bound in Koin yet,** for the same reason the API services are not: LB-008 part 2 is what wires the sync over the source, and binding an `internal` class now would export nothing useful.
+  - **A shape stays whole even when a stop inside it is dropped:** a pattern's polyline is the source's geometry, and dropping the point a missing stop owned would make the drawn route jump; the stop is counted instead.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-008 part 2, the real source behind the sync, which now has the services, the normaliser and the fixtures it was waiting for.
+- **Waiting for the owner:** unchanged — OQ-11, the device passes, the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider, OQ-10.
+
+---
+
 ## 2026-11-08: LB-005 part 2, the DTOs, the services and their contract tests
 
 **Done**
