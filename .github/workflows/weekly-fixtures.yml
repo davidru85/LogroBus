@@ -127,8 +127,10 @@ jobs:
           #     opened, and the body indents the excerpt four spaces below, which
           #     is what actually makes a fence impossible to close.
           excerpt_file="$RUNNER_TEMP/contract-drift-lines.txt"
+          # LC_ALL=C: length() then counts bytes on every awk, so the cap below
+          # is exactly 16 000 bytes and never more than 16 000 characters.
           sed -E $'s/\x1b\\[[0-9;?]*[ -/]*[@-~]//g' "$log_file" | tr -d '\r' |
-            awk -v max_lines=200 -v max_bytes=16000 '
+            LC_ALL=C awk -v max_lines=200 -v max_bytes=16000 '
               BEGIN { kept = 0; bytes = 0; dropped = 0 }
               {
                 gsub(/```+/, "'"'''"'")
