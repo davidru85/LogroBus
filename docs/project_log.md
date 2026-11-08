@@ -55,7 +55,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Run 3** (42473618515): the first run past the wrapper. Every job but two passed; `Shared unit tests (:shared:core:presentation)` and `Android unit tests (:android:feature:planner)` burned the wrapper's five retries on `502` and `504` from `services.gradle.org`, an upstream outage rather than the branch.
 - **Run 4** (42474654968, iOS 42474655004): the Kotlin workflow passed **every** job with the same hardened wrapper, during the same outage fading out. That is the evidence that the flake fix works: the retries survive a slow or briefly failing distribution host.
 - **Run 5, on the tree this pull request ends on:** every job passed but one. `Shared unit tests (:shared:core:preferences)` got `403 Forbidden` from `repo.maven.apache.org` for `kotlin-stdlib:2.4.0` and `kotlin-gradle-plugin:2.4.0`, a transient block; both answer 200 from this machine minutes later, and the same job passed in run 4. Rerun once, per the rule, and the run was watched to the end.
-- **The final tree** adds only log entries after run 4, and every push re-runs the whole pull request, so its own run repeats that check. The watch started at the end of the session reports it.
+- **The result:** both workflows green on the tree this pull request ends on (Kotlin 42475749182, iOS 42475749180), 63 checks passed, `MERGEABLE` and `CLEAN`. The commits after that run touch only this log, and each re-runs the pipeline; the watch reports it.
 
 **Decisions**
 - **Owner (2026-11-07, carried into this session):** LB-003 is the next task.
