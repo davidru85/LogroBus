@@ -4,7 +4,7 @@
 
 LogroBus is an unofficial native app for Logroño's urban bus network, on Android and iOS. It answers two questions quickly: *when is my bus coming?* and *how do I get there?*
 
-> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source and the typed services over it, checked against the real payloads (LB-005, done) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device is built, and waits for the source's data formats (LB-008, in progress), and so do the rules that clean up that data (LB-006, done for the lines and stops); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
+> **Status:** milestone M0 Foundations in progress. The Gradle build, the 19 shared Kotlin Multiplatform modules and the Android and iOS app skeletons exist (LB-001), and CI checks every pull request (LB-002); the shared core is in place (LB-004), with the engine that refreshes live data (LB-009), the client that talks to the source and the typed services over it, checked against the real payloads (LB-005, done) and the local database with stop search (LB-007), and both apps start them at launch, with the conventions every screen follows (LB-010); the sync that keeps lines and stops on the device now downloads them from the source (LB-008, done), and so do the rules that clean up that data (LB-006, done for the lines and stops); the design system is in place on both platforms (LB-011); both apps open on their three tabs (LB-012); and the telemetry contracts wait for a vendor, sending nothing without consent (LB-017). See [Project status](#project-status).
 
 ## Features (MVP)
 
@@ -104,6 +104,10 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-08:**
+  - LB-008, part 2: the app now downloads its own data.
+    - The Lines list is filled from the real source on first use: the two discovery endpoints go through the typed client, the normaliser turns them into the catalogue, and the whole download lands in one transaction, so a screen never sees half a dataset. Debug builds no longer show stand-in lines.
+    - The app refreshes the catalogue once at start, off the main thread, and says nothing when that fails. The error a user sees, with Retry, is the screen's own when the cache is empty and there is no network.
+    - The daily background refresh is not here yet: it needs `WorkManager` on Android and a background task on iOS, so it belongs with the nightly work (LB-412).
   - LB-006, part 2: the rules that turn the source's line and stop payloads into the catalogue the app stores.
     - `DefaultStaticNormaliser` reuses every rule part 1 built and adds what needs the payload's shapes: the colour and the readable ink on it, each direction's headsign, and the route geometry as the concatenation of its segments at precision 6.
     - The source lists 257 stops across its patterns but only serves 254, so the three it omits are synthesised as provisional stops, named and positioned from the pattern, so that no stop on a route is a hole.

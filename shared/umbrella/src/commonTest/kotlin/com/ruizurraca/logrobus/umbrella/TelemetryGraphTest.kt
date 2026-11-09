@@ -31,7 +31,11 @@ class TelemetryGraphTest {
 
     private fun startGraph(debug: Boolean) {
         val platform = module { single<Logger> { ConsoleLogger(output = { line -> printed += line }) } }
-        startGraph(sharedModules(platform, telemetryModule(debug), debug))
+        // With no initial sync: a real one would reach the network, which the test guard refuses (LB-003).
+        com.ruizurraca.logrobus.umbrella.startGraph(
+            sharedModules(platform, telemetryModule(debug)),
+            startInitialSync = false,
+        )
     }
 
     private fun consentToEverything() =

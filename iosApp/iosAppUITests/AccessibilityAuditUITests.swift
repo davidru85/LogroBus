@@ -218,6 +218,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.resetAuthorizationStatus(for: .location)
         app.launchArguments += ["-AppleLanguages", "(\"en\")", "-AppleLocale", "en_GB"]
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
+        // The scripted graph: the audit looks at labels and touch targets, and its screens must not depend on the live
+        // source or show an error state it is not auditing (LB-008 part 2).
+        app.launchArguments += ["-logrobus.preview-data"]
         app.launch()
         return app
     }

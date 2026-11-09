@@ -8,12 +8,15 @@ import com.ruizurraca.logrobus.core.common.error
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.network.ClientIdentity
 import com.ruizurraca.logrobus.core.preferences.ThemePreference
+import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
+import com.ruizurraca.logrobus.transit.domain.Line
+import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -30,6 +33,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -119,12 +124,21 @@ class AndroidGraphTest {
     }
 
     @Test
-    fun lb101_debugBuildsListTheSampleLines() =
+    fun lb008_theGraphBindsTheRealSyncEngine() =
         runTest {
-            // Until LB-008 part 2 downloads the real catalogue (owner decision, 2026-11-02).
-            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
+            // LB-008 part 2: every build type reads the real catalogue, so debug builds no longer list sample lines.
+            startTestGraph(debug = true)
+            val koin = KoinPlatform.getKoin()
 
-            assertEquals(AppResult.Success(SampleLines.all), KoinPlatform.getKoin().get<ObserveLines>()().first())
+            // The engine is the real one, and a sync over an empty cache with no reachable source fails as a value,
+            // never as a crash: the guarded resolver refuses the host (LB-003).
+            assertIs<StaticSyncEngine>(koin.get<StaticSyncEngine>())
+            assertIs<AppResult.Failure>(koin.get<StaticSyncEngine>().syncIfStale())
+
+            // And the screen reads a failure, not the sample lines the debug build used to inject. It is Network, not
+            // the stand-in's Data: every build type now has a real source (FR-ERR-05 shows it with Retry).
+            val lines: AppResult<List<Line>> = koin.get<ObserveLines>()().first()
+            assertEquals(AppResult.Failure(AppError.Network), lines)
         }
 
     @Test
@@ -151,19 +165,32 @@ class AndroidGraphTest {
             KoinPlatform.getKoin().get<SetFavouriteLine>()(lineId = 3, isFavourite = true)
             stopKoin()
 
-            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = true)
-            val restarted = KoinPlatform.getKoin().get<ObserveLinesWithFavourites>()().first()
+            startTestGraph(debug = true)
+            // The favourites themselves, not the lines they decorate: since LB-008 part 2 the lines need a reachable
+            // source, and what FR-FAV-03 promises is that the user's own choices survive a restart.
+            val restarted =
+                KoinPlatform
+                    .getKoin()
+                    .get<FavouriteLinesRepository>()
+                    .observeFavouriteLineIds()
+                    .first()
 
-            assertEquals(listOf(10, 3), (restarted as AppResult.Success<LinesWithFavourites>).value.favouriteIds)
+            assertEquals(listOf(10, 3), (restarted as AppResult.Success<List<Int>>).value)
         }
 
-    @Test
-    fun lb101_releaseBuildsReadTheCache_whichNothingCanFillYet() =
-        runTest {
-            // No sample data in a release build: the cache is empty, and there is no source to sync from until
-            // LB-008 part 2, so the list shows the error with Retry.
-            initKoin(RuntimeEnvironment.getApplication(), appVersion = "1.2.0", debug = false)
-
-            assertEquals(AppResult.Failure(AppError.Data), KoinPlatform.getKoin().get<ObserveLines>()().first())
-        }
+    /**
+     * A graph as a test wants it: the real one, with the app-start refresh off. A refresh would reach the network,
+     * which the test guard refuses (LB-003), in every test that starts Koin. `initKoin` always starts it, so a test
+     * builds the same modules itself and calls `startGraph` with the flag.
+     */
+    private fun startTestGraph(debug: Boolean) {
+        val context = RuntimeEnvironment.getApplication()
+        startGraph(
+            sharedModules(
+                androidModule(context, appVersion = "1.2.0", debug = debug),
+                telemetryModule(debug, PlatformTelemetry()),
+            ),
+            startInitialSync = false,
+        )
+    }
 }

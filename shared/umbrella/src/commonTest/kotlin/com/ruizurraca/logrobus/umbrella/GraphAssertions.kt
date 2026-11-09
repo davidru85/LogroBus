@@ -21,6 +21,7 @@ import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
 import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
+import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import org.koin.core.Koin
 import kotlin.test.assertSame
 
@@ -36,6 +37,8 @@ internal fun assertResolvesTheCore(koin: Koin) {
         LocationProvider::class,
         RemoteConfig::class,
         SourceClient::class,
+        // LB-008 part 2: the sync over the real source is what fills the catalogue every screen reads.
+        StaticSyncEngine::class,
         PollingEngine::class,
         LogroBusDatabase::class,
         AnalyticsTracker::class,
