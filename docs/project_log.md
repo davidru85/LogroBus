@@ -19,6 +19,36 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-09: LB-101 part 2, the list over the real catalogue
+
+**Done**
+- **PR #57 (LB-008 part 2) merged** on 2026-11-09, and `main` was synced to `63d24890`.
+- **LB-101 part 2 (`feat/LB-101-part2-real-lines`):** FR-LINE-01, FR-LINE-02, DD-08.
+  - **`LinesListEndToEndTest`** in `:shared:umbrella`, the one module that sees the whole chain: a `MockEngine` answers with `lines_2026-10-22.json` and `stops_2026-10-22.json`, the real sync runs over the real normaliser into an in-memory database, the real `LinesRepositoryImpl` reads it back, and `LinesUiMapper` builds the list's state. It asserts the criterion itself: Day 1, 2, 3, 4, 5, 6, 7, 9, 10, 11 and Night B1, B2, B3, 13 rows, no line 8.
+  - **The row's own values,** not the sample lines': the capture's `rgba(38,153,5,1)` for line 1 and `rgba(193,0,251,1)` for line 3, lines 4 and B1 sharing a colour, and B3's display name.
+  - **The sample lines are already gone from production:** LB-008 part 2 removed them, and `SampleLines` now serves only the previews and the scripted graph the screen and UI tests start.
+  - **Docs:** `acceptance_criteria.md` with the evidence, `backlog.md`.
+
+**Review**
+- **The gate that matters, run on purpose:** setting the normaliser's operational status to 2 made `lb101_everyRowKeepsTheCodeNameAndColourTheSourceSent` fail, so the test pins the chain and not only its own fixtures. The code was restored, and `./gradlew check` is green.
+- **A first version asserted the sample lines' colours** (`#0FDCFC`, `#C100FB`) against the real capture, which answers `rgba(38,153,5,1)` and `rgba(193,0,251,1)`. The test caught its own author: the fixture is the source of truth, and that is the whole point of part 2.
+- **The status chip's absence, not its presence:** every line of the capture has `status: 1`, so this fixture cannot show the chip; `LinesUiMapperTest` and both platforms' screenshots cover it with a stopped line, as part 1 did.
+
+**CI**
+- Not run yet: the pull request is open and its watch runs.
+
+**Decisions**
+- **Agent:**
+  - **The end-to-end test lives in `:shared:umbrella`,** because that is the only module allowed to depend on both the data layer and the feature's presentation; putting it in either would have meant widening an `internal` surface for a test alone.
+  - **The fixture drives the payloads, not the sample lines.** Part 1's mapper test still uses hand-built lines, which is right for a mapper's unit test; part 2 adds the one test where the real capture has to reach the screen.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-102 part 2 (stop names in the search, which LB-008 part 2's catalogue now makes possible), then LB-104.
+- **Waiting for the owner:** unchanged — OQ-11, the device passes, the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider, OQ-10.
+
+---
+
 ## 2026-11-09: LB-008 part 2, the real source behind the sync
 
 **Done**

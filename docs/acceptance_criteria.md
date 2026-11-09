@@ -418,7 +418,13 @@ Part 1 (2026-11-02), the list over a repository contract and sample lines, done 
 - The CI job: `iOS ViewModel and snapshot tests`, one per test target of `LogroBusUI`, behind the iOS gate (owner decision, 2026-11-02).
 - Scroll to top: `TabNavigationTest` on Android and `ShellUITests` on iOS, both through the shell on the debug build's sample lines (owner decision, 2026-11-02: debug builds list sample lines until LB-008 part 2).
 
-Part 2, also done when: the first criterion holds with `lines_2026-10-22.json` through LB-005's DTOs, LB-006's normaliser and LB-008's sync, and the sample lines are gone from debug builds.
+Part 2, done (2026-11-09, `feat/LB-101-part2-real-lines`).
+- **The first criterion, end to end:** `LinesListEndToEndTest.lb101_theFixtureReachesTheListAsTheDayAndNightGroupsInOrder` answers a `MockEngine` with `lines_2026-10-22.json` and `stops_2026-10-22.json`, runs the real sync over the real normaliser into an in-memory database, reads the result through the real `LinesRepositoryImpl`, and asserts the list state's groups: Day 1, 2, 3, 4, 5, 6, 7, 9, 10, 11 and Night B1, B2, B3, 13 rows in all, no line 8.
+  - It is the only place that can write this: the DTOs, the normaliser and the sync are `internal` to `:shared:transit:data`, and the list's state lives in `:shared:feature:lines`; only the umbrella sees both.
+  - It failed when the normaliser's operational status was broken on purpose (1 → 2), so it does pin the chain and not just its own fixtures.
+- **The rows keep what the source sent:** `lb101_everyRowKeepsTheCodeNameAndColourTheSourceSent` asserts the colours of the capture itself — `rgba(38,153,5,1)` for line 1 and `rgba(193,0,251,1)` for line 3, not the sample lines' `#0FDCFC` and `#C100FB` — that lines 4 and B1 share a colour, and B3's display name.
+- **The sample lines are gone from the app:** LB-008 part 2 removed `SampleSync`, `NoSourceSync` and `SampleLinesRepository` from production; `SampleLines` remains only for the previews and the scripted graph the screen tests and UI tests start.
+- **The status chip:** every line of the 2026-10-22 capture has `status: 1`, so this fixture proves the chip's **absence**; `LinesUiMapperTest.lb101_aRowHasTheBadgeColoursTheDisplayNameAndWhetherTheLineRuns` covers its presence with a stopped line, on both platforms' screenshots as before.
 
 ### LB-102 Lines search
 Refs: FR-LINE-03, FR-LINE-16, NFR-I18N-03

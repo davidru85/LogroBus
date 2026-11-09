@@ -54,9 +54,13 @@ kotlin {
             implementation(libs.turbine)
             // The source client over a mock engine: tests never call the source (AGENTS.md §9).
             implementation(libs.ktor.client.mock)
+            // The golden fixtures, read on both platforms (LB-101 part 2).
+            implementation(projects.shared.core.testing)
         }
         getByName("androidHostTest").dependencies {
             implementation(libs.robolectric)
+            // An in-memory database for the end-to-end list test, as the data modules' own tests have (ADR-0013).
+            implementation(libs.sqldelight.sqlite.driver)
         }
     }
 }
