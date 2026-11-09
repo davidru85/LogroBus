@@ -2,10 +2,12 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppDispatchers
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.ConsoleLogger
 import com.ruizurraca.logrobus.core.common.LogLevel
 import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
+import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.config.CompiledDefaultsRemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfigKey
@@ -37,13 +39,16 @@ import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
 import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
+import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
+import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -59,23 +64,22 @@ internal val APPLICATION_SCOPE = named("application")
  * The shared graph (ADR-0014): the core, with one instance of each service for the whole process, then one module per
  * data and feature module. [platform] provides what only a platform can create: the [Logger], the app lifecycle, the
  * location provider, the client identity for the `User-Agent`, the SQLite driver, the settings store and the
- * caches. [telemetry] binds the telemetry
- * contracts for the build (ADR-0009). [debug] builds list sample lines until LB-008 part 2 (owner decision,
- * 2026-11-02).
+ * caches. [telemetry] binds the telemetry contracts for the build (ADR-0009). [debug] no longer changes what a screen
+ * lists: since LB-008 part 2 every build type reads the real catalogue, and only previews keep the sample lines.
  */
 internal fun sharedModules(
     platform: Module,
     telemetry: Module,
-    debug: Boolean,
+    data: Module = transitDataModule,
 ): List<Module> =
     listOf(
         platform,
         telemetry,
         coreModule,
-        transitDataModule,
+        data,
         favouritesDataModule,
         settingsModule,
-        linesModule(debug),
+        linesModule,
         nearMeModule,
         plannerModule,
     )
@@ -84,10 +88,24 @@ internal fun sharedModules(
  * Starts the graph of [modules] for the process (ADR-0014). A second definition of a type fails here, instead of
  * quietly replacing the first: a replaced AppClock, say, would be one the source client never corrects.
  */
-internal fun startGraph(modules: List<Module>) {
-    startKoin {
-        allowOverride(false)
-        modules(modules)
+internal fun startGraph(
+    modules: List<Module>,
+    startInitialSync: Boolean = true,
+) {
+    val koin =
+        startKoin {
+            allowOverride(false)
+            modules(modules)
+        }
+    if (!startInitialSync) return
+    // The app-start trigger of architecture.md §4.4. Fire and forget, in the application scope, because no screen waits
+    // for it: the first screen runs its own sync on collection (FR-ERR-05), and this one only makes the cache warm for
+    // the next launch. A failure is logged and nothing else: a background refresh never shows a UI error (FR-ERR-04).
+    val scope = koin.koin.get<CoroutineScope>(APPLICATION_SCOPE)
+    val engine = koin.koin.get<StaticSyncEngine>()
+    val logger = koin.koin.get<Logger>()
+    scope.launch {
+        if (engine.syncIfStale() is AppResult.Failure) logger.warn("StaticSync", "The app-start refresh failed")
     }
 }
 
@@ -113,6 +131,8 @@ private val transitDataModule =
     module {
         single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get(), get()) }
         single<LinesRepository> { LinesRepositoryImpl(get(), get(), get()) }
+        // LB-008 part 2: the sync over the real source, one per process so its mutex runs one sync at a time.
+        single<StaticSyncEngine> { DefaultStaticSync(get(), get(), get(), get(), get(), get()).engine }
     }
 
 // Favourites are the user's own, so debug builds keep them in the real database too.
@@ -130,14 +150,10 @@ private val settingsModule =
         factory<ClearCache> { DefaultClearCache(get()) }
     }
 
-// LB-008 part 2 binds the static sync engine over the source, and the sample lines go.
-private fun linesModule(debug: Boolean) =
+// LB-008 part 2: every build type reads the real catalogue, so debug builds no longer list sample lines.
+private val linesModule =
     module {
-        factory<ObserveLines> {
-            val sync = if (debug) SampleSync else NoSourceSync
-            val repository = if (debug) SampleLinesRepository else get<LinesRepository>()
-            DefaultObserveLines(sync, repository)
-        }
+        factory<ObserveLines> { DefaultObserveLines(get(), get()) }
         factory<ObserveLinesWithFavourites> { DefaultObserveLinesWithFavourites(get(), get()) }
         factory<SetFavouriteLine> { DefaultSetFavouriteLine(get(), get()) }
         factory<ReorderFavouriteLines> { DefaultReorderFavouriteLines(get()) }

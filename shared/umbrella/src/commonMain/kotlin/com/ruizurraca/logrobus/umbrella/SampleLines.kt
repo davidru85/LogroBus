@@ -3,12 +3,16 @@ package com.ruizurraca.logrobus.umbrella
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
+import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.koin.core.module.Module
+import org.koin.dsl.module
 
 /**
  * Sample lines for previews, Swift tests and debug builds, until LB-008 part 2 downloads the real catalogue (owner
@@ -57,20 +61,26 @@ internal object SampleLines {
     )
 }
 
-/** Debug builds, until LB-008 part 2: the sample lines, as a sync would have stored them. */
-internal object SampleLinesRepository : LinesRepository {
+/** The sample lines as a repository, for a preview's or a screen test's scripted graph (LB-008 part 2). */
+private object SampleLinesRepository : LinesRepository {
     override fun observeLines(): Flow<AppResult<List<Line>>> = flowOf(AppResult.Success(SampleLines.all))
 }
 
-/** Debug builds, until LB-008 part 2: the sample lines are always fresh. */
-internal object SampleSync : StaticSyncEngine {
-    override suspend fun syncIfStale(): AppResult<Unit> = AppResult.Success(Unit)
-}
-
 /**
- * Release builds, until LB-008 part 2 binds `DefaultStaticSyncEngine` over the source: there is nothing to download
- * from yet, so a sync fails as data that cannot be had, and an empty cache shows the error with Retry (FR-ERR-05).
+ * The scripted static data of a preview or a screen test, beside `SharedDependencies.preview()` (ADR-0007): the sample
+ * lines, and a sync that succeeds without a source. A test starts its graph over this module instead of the transit
+ * data one, so a screen shows the lines it scripted rather than the empty cache an unreachable source leaves (LB-008
+ * part 2). No production graph builds it: `LogroBusApplication` and `LogroBusApp` call `initKoin`.
  */
-internal object NoSourceSync : StaticSyncEngine {
-    override suspend fun syncIfStale(): AppResult<Unit> = AppResult.Failure(AppError.Data)
-}
+fun previewDataModule(): Module =
+    module {
+        // The rest of what the real transit data module binds: a screen test reaches About data's last syncs too, and
+        // a missing binding fails at the first ViewModel that asks (LB-008 part 2).
+        single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get(), get()) }
+        single<StaticSyncEngine> {
+            object : StaticSyncEngine {
+                override suspend fun syncIfStale() = AppResult.Success(Unit)
+            }
+        }
+        single<LinesRepository> { SampleLinesRepository }
+    }

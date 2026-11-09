@@ -23,8 +23,8 @@ import org.koin.dsl.onClose
 /**
  * Starts the dependency graph of the Android app, once per process, from the Application (ADR-0014). The app passes
  * its [appVersion] for the User-Agent (spec §8.7), whether it is a [debug] build, which sets the log level
- * (security_privacy.md §4), the telemetry and, until LB-008 part 2, the sample lines, and the [uiModules] of its
- * feature modules, which hold their ViewModels.
+ * (security_privacy.md §4) and the telemetry, and the [uiModules] of its feature modules, which hold their ViewModels.
+ * Every build type reads the real catalogue since LB-008 part 2.
  *
  * [telemetry] is the injection point for the app's own telemetry, the vendor implementations of LB-409. It stays behind
  * the consent gates; without it, the build's no-op or logging telemetry is used (ADR-0009).
@@ -40,12 +40,35 @@ fun initKoin(
         sharedModules(
             androidModule(context.applicationContext, appVersion, debug),
             telemetryModule(debug, telemetry),
-            debug,
         ) + uiModules,
+        // The app-start refresh (architecture.md §4.4). A test graph would reach the network, which the guard refuses
+        // (LB-003), so a test starts the graph with `startGraph` and `startInitialSync = false` instead of this.
+        startInitialSync = true,
     )
 }
 
-private fun androidModule(
+/**
+ * Starts the graph a preview or a Robolectric screen test needs, beside `SharedDependencies.preview()` (ADR-0007): the
+ * real graph, with [data] in place of the transit data module, and with the app-start refresh off, since a refresh
+ * would reach the network the guard refuses (LB-003). It is public for the same reason previews are: a platform UI
+ * module cannot build the shared graph itself. No app calls it.
+ */
+fun startPreviewGraph(
+    context: Context,
+    data: Module,
+    uiModules: List<Module>,
+) {
+    startGraph(
+        sharedModules(
+            androidModule(context.applicationContext, appVersion = "1.2.0", debug = true),
+            telemetryModule(debug = true, PlatformTelemetry()),
+            data,
+        ) + uiModules,
+        startInitialSync = false,
+    )
+}
+
+internal fun androidModule(
     context: Context,
     appVersion: String,
     debug: Boolean,

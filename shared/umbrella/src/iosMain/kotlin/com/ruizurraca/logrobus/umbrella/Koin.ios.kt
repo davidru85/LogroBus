@@ -31,7 +31,12 @@ fun initKoin(
     debug: Boolean,
     telemetry: PlatformTelemetry,
 ) {
-    startGraph(sharedModules(iosModule(appVersion, debug), telemetryModule(debug, telemetry), debug))
+    startGraph(
+        sharedModules(iosModule(appVersion, debug), telemetryModule(debug, telemetry)),
+        // The app-start refresh (architecture.md §4.4). Previews and the Swift tests use
+        // `SharedDependencies.preview()`, which never starts this graph.
+        startInitialSync = true,
+    )
 }
 
 private fun iosModule(

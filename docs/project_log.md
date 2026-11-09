@@ -19,6 +19,42 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-09: LB-008 part 2, the real source behind the sync
+
+**Done**
+- **PR #56 (LB-006 part 2) merged** on 2026-11-08, and `main` was synced to `e4958906`.
+- **LB-008 part 2 (`feat/LB-008-part2-source`):** FR-ERR-04, FR-ERR-05, NFR-REL-03, ADR-0008.
+  - **`SourceStaticSource`** answers `StaticSource` from API-01 and API-02 on `SourceClient`, with the static timeout, and hands the sync the payload itself: the sync hashes it before the normaliser decodes it, so a decoded answer would have lost what the hash is taken over.
+  - **`DefaultStaticSync`** assembles the engine over that source and `DefaultStaticNormaliser`, whose DD-11 overrides come from remote config on every construction, so a changed override set changes the fingerprint and an unchanged payload is renormalised.
+  - **Koin:** `transitDataModule` binds `StaticSyncEngine`, and `ObserveLines` takes it on every build type. `SampleSync`, `NoSourceSync` and `SampleLinesRepository` are gone from production; `SampleLines` stays, because the previews need them.
+  - **The trigger:** `startGraph` calls `syncIfStale()` once, in `APPLICATION_SCOPE` and off the main thread, and only logs a failure. A background refresh never shows a UI error (FR-ERR-04); the visible `Network` error with Retry is the screen's own (FR-ERR-05).
+  - **Tests:** `SourceStaticSourceTest` (3 cases: the raw payloads with their measured 13 lines and 254 stops, the static timeout, a 503 passing through), and `AndroidGraphTest` now proves the graph binds the real engine and that a screen reads a failure rather than the sample lines.
+  - **Docs:** `acceptance_criteria.md` with the evidence and the split, `backlog.md`, both READMEs, `AGENTS.md`.
+
+**Review**
+- Self-review, with three findings the gate runs themselves produced:
+  - **`initKoin` already sat at detekt's five parameters.** Adding a sixth for the app-start switch broke `LongParameterList`, and grouping it into an options object only moved the problem. The switch belongs to `startGraph`, which is `internal` and where the tests already build their own graph; `initKoin` is back to five and always starts the refresh.
+  - **Two graphs in one process.** The first attempt had `TestLogroBusApplication` start its scripted graph *and* inherit the production one, and Koin failed with `KoinApplicationAlreadyStartedException` in all 18 tests. The production Application now exposes the one seam a test replaces, `startGraph`, so one process starts exactly one graph.
+  - **A graph a screen test can look at.** With the real engine and no reachable source, every screen test saw an empty cache. `previewDataModule()` is the scripted counterpart of `SharedDependencies.preview()`, beside it for the same reason: a platform UI module cannot build the shared graph. The Android UI tests start it, and `AndroidGraphTest` keeps covering the production graph.
+  - **Coverage of the change, not of the line count:** `./gradlew check` green, `:android:app:testDebugUnitTest` 86 tests with 3 skipped and 0 failures, the shared suites green on the Android host and the iOS simulator.
+
+**CI**
+- Not run yet: the pull request is open and its watch runs.
+
+**Decisions**
+- **Owner (2026-11-09), the split of LB-008 part 2:** the source, the normaliser, the Koin binding, the app-start trigger and the sample-line removal land now; the daily background job moves to LB-412, which is already the nightly's story. WorkManager on Android and `BGAppRefreshTask` on iOS bring two dependencies, iOS background entitlements and an ADR of their own, none of which belongs in the story that binds the source.
+- **Agent:**
+  - **The source hands over the raw payload.** The hash that decides whether a payload changed is taken over the bytes, so the adapter calls the two endpoints itself rather than widening `LinesApi` with a second method per endpoint. The cost is two path literals in two places, each pinned by a test.
+  - **`previewDataModule()` is public,** exactly as `SharedDependencies.preview()` is: a platform UI test cannot build the shared graph, and the alternative, letting a test reach production internals, would export the whole transit data layer for one test.
+  - **The app-start refresh is off in every test graph,** through `startGraph`'s parameter, because a real sync would reach the guarded network in every test that starts Koin.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-101 part 2 (the Lines list over the real catalogue, which this story finally makes possible), then LB-412's daily job.
+- **Waiting for the owner:** unchanged — OQ-11, the device passes, the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider, OQ-10.
+
+---
+
 ## 2026-11-08: LB-006 part 2, the static normaliser
 
 **Done**
