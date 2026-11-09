@@ -35,10 +35,12 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The status chip's absence, not its presence:** every line of the capture has `status: 1`, so this fixture cannot show the chip; `LinesUiMapperTest` and both platforms' screenshots cover it with a stopped line, as part 1 did.
 
 **CI**
-- Not run yet: the pull request is open and its watch runs.
+- **Run 1 (42616219792):** `iOS build and tests` failed on `AccessibilityAuditUITests.test_lb406_everyScreenPassesTheAccessibilityAudit()`, with one issue: "About data, dark: Potentially inaccessible text, no element". The branch touches no iOS code and builds no Kotlin the iOS target links, so the first move was the artefact: the audit's own screenshot shows a **system notification, "Ready for Apple Intelligence", drawn over About data**. It is a text the audit cannot attribute because it belongs to SpringBoard, not to the screen. A runner flake of a kind this log had not recorded, so the failed jobs were rerun once.
+- **Made harmless in the pipeline:** the audit now dismisses a system banner after every launch (`dismissSystemBanners`, swiping `NotificationShortLookView` up), documented in `testing_strategy.md` §4.7. The app decides nothing about the system's banners, so a test of our screens must not fail on one; the rerun alone would have left the next run exposed to the same banner.
 
 **Decisions**
 - **Agent:**
+  - **The audit's system banners are dismissed, not exempted.** An exemption would have to name an issue with no element, which would have hidden real unattributed text on every screen; dismissing the banner removes the cause instead.
   - **The end-to-end test lives in `:shared:umbrella`,** because that is the only module allowed to depend on both the data layer and the feature's presentation; putting it in either would have meant widening an `internal` surface for a test alone.
   - **The fixture drives the payloads, not the sample lines.** Part 1's mapper test still uses hand-built lines, which is right for a mapper's unit test; part 2 adds the one test where the real capture has to reach the screen.
 

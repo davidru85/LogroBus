@@ -171,6 +171,8 @@ Two more things the app's tests learned with Settings (LB-403):
     - the Dynamic Type of Settings' Data heading and footer, which scale with the others;
     - the system's alert, whose text iOS caps and whose parts the audit cannot name. Its button takes the accent, whose contrast is audited;
     - in the dark walk, the contrast of the system's search field and of the Clear cache alert's title, both white on dark.
+  - **System banners.** A fresh simulator draws its own notifications over the app, and the audit reads whatever covers the screen: on PR #58 CI, "Ready for Apple Intelligence" over About data produced "Potentially inaccessible text, no element", a text the audit cannot attribute because it belongs to SpringBoard. The test dismisses a banner after every launch (`dismissSystemBanners`, `NotificationShortLookView` swiped up), because the app decides nothing about the system's banners and a test of our screens must not fail on one.
+
   - It takes about 3.5 minutes locally and 6 to 7 on CI: the `iOS build and tests` job's limit is 35 minutes (owner decision, 2026-11-04, `ci_cd.md` §5).
 
 ### 4.8 Maestro flows
