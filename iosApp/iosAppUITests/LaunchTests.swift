@@ -17,6 +17,8 @@ final class LaunchTests: XCTestCase {
     private func assertLaunch(language: String, region: String, showing label: String) {
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", region]
+        // The scripted graph: a launch test must not depend on the live source (LB-008 part 2).
+        app.launchArguments += ["-logrobus.preview-data"]
         app.launch()
         let tab = app.tabBars.buttons[label]
         XCTAssertTrue(tab.waitForExistence(timeout: 10), "the \"\(label)\" tab is shown")

@@ -14,11 +14,22 @@ struct LogroBusApp: App {
         // version for the User-Agent (spec §8.7) and the build type for the log level (security_privacy.md §4).
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
         // LB-409 passes the vendor's analytics tracker and crash reporter in PlatformTelemetry (ADR-0009).
-        doInitKoin(
-            appVersion: version ?? "unknown",
-            debug: Self.isDebugBuild,
-            telemetry: PlatformTelemetry(analytics: nil, crashReporter: nil)
-        )
+        // A UI test asks for the scripted graph with this argument, so its assertions see the sample lines rather than
+        // whatever the live source answers (LB-008 part 2). The app never passes it.
+        let previewData = ProcessInfo.processInfo.arguments.contains("-logrobus.preview-data")
+        if previewData {
+            doInitPreviewKoin(
+                appVersion: version ?? "unknown",
+                debug: Self.isDebugBuild,
+                telemetry: PlatformTelemetry(analytics: nil, crashReporter: nil)
+            )
+        } else {
+            doInitKoin(
+                appVersion: version ?? "unknown",
+                debug: Self.isDebugBuild,
+                telemetry: PlatformTelemetry(analytics: nil, crashReporter: nil)
+            )
+        }
         // User defaults are read synchronously, so the saved theme is known before the first frame.
         let saved = savedPreferences(defaults: .standard)
         _appearance = State(initialValue: AppAppearance(initial: saved.theme))

@@ -39,6 +39,23 @@ fun initKoin(
     )
 }
 
+/**
+ * The graph a UI test needs, beside [initKoin] and `SharedDependencies.preview()` (ADR-0007): the same modules, with
+ * [previewDataModule] in place of the transit data one and with the app-start refresh off. A UI test starts it through
+ * its launch argument, so it sees the scripted lines rather than whatever the live source answers, which would make the
+ * test depend on which buses are running (LB-008 part 2).
+ */
+fun initPreviewKoin(
+    appVersion: String,
+    debug: Boolean,
+    telemetry: PlatformTelemetry,
+) {
+    startGraph(
+        sharedModules(iosModule(appVersion, debug), telemetryModule(debug, telemetry), previewDataModule()),
+        startInitialSync = false,
+    )
+}
+
 private fun iosModule(
     appVersion: String,
     debug: Boolean,

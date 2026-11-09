@@ -373,6 +373,9 @@ final class ShellUITests: XCTestCase {
         let list = "(" + languages.map { "\"\($0)\"" }.joined(separator: ", ") + ")"
         app.launchArguments += ["-AppleLanguages", list, "-AppleLocale", region]
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
+        // LB-008 part 2: these assertions are about the list and its labels, not about which buses run today, so the
+        // app starts the scripted graph instead of downloading from the live source.
+        app.launchArguments += ["-logrobus.preview-data"]
         app.launch()
         return app
     }
