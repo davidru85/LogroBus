@@ -105,7 +105,11 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 
 ### Cambios recientes
 
-- **08-11-2026:**
+- **09-11-2026:**
+  - LB-101, parte 2: la lista de líneas, de extremo a extremo sobre la captura real.
+    - Un test coge las 13 líneas y 254 paradas grabadas, las pasa por el cliente tipado, el normalizador y la sincronización hasta una base de datos, las vuelve a leer y construye la lista: diurnas 1, 2, 3, 4, 5, 6, 7, 9, 10, 11 y nocturnas B1, B2, B3, en ese orden, sin línea 8.
+    - Comprueba los colores de la propia captura, no los de relleno de las líneas de ejemplo, y que las líneas 4 y B1 comparten color mientras cada distintivo sigue mostrando su código.
+    - Con eso se cierra la historia de la lista: todas las build types leen el catálogo real, y solo las previsualizaciones conservan las líneas de ejemplo.
   - LB-008, parte 2: la app ya descarga sus propios datos.
     - La lista de líneas se llena desde la fuente real en el primer uso: los dos endpoints de descubrimiento pasan por el cliente tipado, el normalizador los convierte en el catálogo y toda la descarga aterriza en una sola transacción, así que ninguna pantalla ve medio conjunto. Las builds de depuración ya no muestran líneas de ejemplo.
     - La app refresca el catálogo una vez al arrancar, fuera del hilo principal, y no dice nada si falla. El error que ve el usuario, con Reintentar, es el de la propia pantalla cuando la caché está vacía y no hay red.

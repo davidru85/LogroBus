@@ -103,7 +103,11 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 ### Recent changes
 
-- **2026-11-08:**
+- **2026-11-09:**
+  - LB-101, part 2: the Lines list, end to end over the real capture.
+    - A test takes the recorded 13 lines and 254 stops, runs them through the typed client, the normaliser and the sync into a database, reads them back and builds the list: Day 1, 2, 3, 4, 5, 6, 7, 9, 10, 11 and Night B1, B2, B3, in that order, with no line 8.
+    - It asserts the capture's own colours, not the placeholder ones the stand-in lines used, and that lines 4 and B1 share a colour while each badge still shows its code.
+    - That closes the list's story: every build type reads the real catalogue, and only previews keep the sample lines.
   - LB-008, part 2: the app now downloads its own data.
     - The Lines list is filled from the real source on first use: the two discovery endpoints go through the typed client, the normaliser turns them into the catalogue, and the whole download lands in one transaction, so a screen never sees half a dataset. Debug builds no longer show stand-in lines.
     - The app refreshes the catalogue once at start, off the main thread, and says nothing when that fails. The error a user sees, with Retry, is the screen's own when the cache is empty and there is no network.

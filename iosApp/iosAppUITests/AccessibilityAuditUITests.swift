@@ -96,6 +96,7 @@ final class AccessibilityAuditUITests: XCTestCase {
     private func auditInDarkMode(in app: XCUIApplication, into issues: inout [String]) throws {
         app.launchArguments += ["-settings.theme", "DARK"]
         app.launch()
+        dismissSystemBanners()
         let audit = Audit(test: self, app: app, largestText: false, dark: true)
         XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 10))
         try search("varea", in: app)
@@ -211,6 +212,23 @@ final class AccessibilityAuditUITests: XCTestCase {
         XCTAssertTrue(element.isHittable, "\(element) is on screen")
     }
 
+    /// Clears a notification banner that the system draws over the app, such as the simulator's "Ready for Apple
+    /// Intelligence" notice on a fresh device. The audit reads whatever covers the app, and on CI that banner produced
+    /// "Potentially inaccessible text, no element" on About data: a text the audit cannot attribute because it belongs
+    /// to SpringBoard, not to the screen (PR #58). The app decides nothing about the system's banners, so the test
+    /// dismisses them before auditing, and swipes one away when it lingers.
+    @MainActor
+    private func dismissSystemBanners() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for _ in 0..<2 {
+            let banner = springboard.otherElements.matching(identifier: "NotificationShortLookView").firstMatch
+            guard banner.waitForExistence(timeout: 2) else { return }
+            // A swipe up dismisses a banner; a tap would open its app, which is not what this test wants.
+            banner.swipeUp(velocity: .fast)
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+    }
+
     @MainActor
     private func launch(textSize: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
@@ -222,6 +240,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         // source or show an error state it is not auditing (LB-008 part 2).
         app.launchArguments += ["-logrobus.preview-data"]
         app.launch()
+        dismissSystemBanners()
         return app
     }
 }
