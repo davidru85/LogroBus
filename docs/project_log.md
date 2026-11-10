@@ -47,6 +47,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 **Decisions**
 - **Agent:**
+  - **The audit's own host is handled once, in `SimulatorHost.swift`:** a system banner is dismissed and a tap XCTest could not deliver is retried, both in an `XCTestCase` extension. The file the audit lived in had reached SwiftLint's 400-line limit exactly, so the helpers were extracted rather than the limit raised.
   - **The stop names travel on `Line`, not as a second use case.** The screen needs them at the same moment as the lines and in the same emission; a separate call would let a row render before its searchable text existed, and the mapper would stop being pure.
   - **The fold happens once, in the repository.** `searchWords` runs when the row is built, so the query folds only its own input, and `LineQuery` never re-reads the database.
   - **No new screen state.** `SearchResults`, `NoMatches` and the carousel's hiding are unchanged; a line found by a stop is an ordinary result of the same search.
