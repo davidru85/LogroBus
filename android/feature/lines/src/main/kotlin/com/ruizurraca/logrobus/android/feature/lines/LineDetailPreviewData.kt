@@ -7,17 +7,32 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.core.common.color.onColorFor
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.feature.lines.presentation.DirectionOptionUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
+import com.ruizurraca.logrobus.feature.lines.presentation.StopRowUi
+import com.ruizurraca.logrobus.transit.domain.Direction
 
-/** One state per UX state of the line detail (LB-103), for previews and the screenshots. The line is a placeholder. */
+/** One state per UX state of the line detail (LB-103, LB-104), for previews and the screenshots. Placeholder data. */
 internal object LineDetailPreviewData {
     private const val COLOR = 0xFFAD1457
     private val line10 = LineDetailUi(10, "10", "El Arco - Hospital San Pedro", COLOR, onColorFor(COLOR), false)
 
+    /** LB-104: both directions, each towards its headsign, and the selected direction's stops. */
+    private val directions =
+        listOf(
+            DirectionOptionUi(Direction.OUTBOUND, "Hospital San Pedro", isSelected = true),
+            DirectionOptionUi(Direction.INBOUND, "El Arco", isSelected = false),
+        )
+    private val stops =
+        listOf("El Arco", "Ayuntamiento", "Gonzalo de Berceo", "Hospital San Pedro").mapIndexed { index, name ->
+            StopRowUi(stopId = 100 + index, order = index + 1, name = name, lat = 42.4650, lng = -2.4456)
+        }
+
     val loading: LineDetailUiState = LineDetailUiState.Loading
-    val content: LineDetailUiState = LineDetailUiState.Content(line10)
-    val favourite: LineDetailUiState = LineDetailUiState.Content(line10.copy(isFavourite = true))
+    val content: LineDetailUiState = LineDetailUiState.Content(line10, Direction.OUTBOUND, directions, stops)
+    val favourite: LineDetailUiState =
+        LineDetailUiState.Content(line10.copy(isFavourite = true), Direction.OUTBOUND, directions, stops)
     val error: LineDetailUiState = LineDetailUiState.Error(ErrorReason.NETWORK)
 }
 

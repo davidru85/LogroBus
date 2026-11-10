@@ -2,8 +2,9 @@ import DesignSystem
 import Shared
 import SwiftUI
 
-/// A line's detail (SC-04): the line and its favourite toggle (LB-103, FR-LINE-09), until LB-104 adds its map,
-/// direction toggle and stops. The title names the line, and the toolbar holds the toggle, labelled as the rows' are.
+/// A line's detail (SC-04): the line and its favourite toggle (LB-103, FR-LINE-09), the direction toggle and the
+/// selected direction's ordered stop list (LB-104, FR-LINE-04). The map of both shapes waits for LB-013. The title
+/// names the line, and the toolbar holds the toggle, labelled as the rows' are.
 public struct LineDetailView: View {
     @State private var viewModel: LineDetailViewModel
 
@@ -53,7 +54,7 @@ public struct LineDetailView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("line.loading", bundle: .module))
         case .content(let content):
-            header(content.line)
+            LineDetailBody(content: content) { event in viewModel.onEvent(event) }
         case .error(let error):
             ContentUnavailableView {
                 error.reason.message
@@ -89,6 +90,63 @@ public struct LineDetailView: View {
         id: 0, code: "10", displayName: "Lardero - Hospital San Pedro", color: 0xFF9E_9E9E, onColor: 0xFFFF_FFFF,
         isFavourite: false
     )
+}
+
+/// The line's header, the direction toggle and the ordered stop list (LB-104).
+private struct LineDetailBody: View {
+    let content: LineDetailUiStateContent
+    let onEvent: (any LineDetailEvent) -> Void
+
+    var body: some View {
+        List {
+            Section {
+                HStack(spacing: Tokens.Spacing.medium) {
+                    LineBadge(
+                        code: content.line.code, color: content.line.color, onColor: content.line.onColor, size: .large
+                    )
+                    // Names are shown as delivered, never translated (AGENTS.md §7).
+                    Text(verbatim: content.line.displayName)
+                        .font(.title3.weight(.semibold))
+                }
+                .accessibilityElement(children: .combine)
+            }
+
+            if !content.directions.isEmpty {
+                Section {
+                    // FR-LINE-04 and DD-16: each option read as "Towards <headsign>". A segmented picker is a
+                    // selection control, so VoiceOver announces the options and which one is selected.
+                    Picker(selection: selection) {
+                        ForEach(content.directions, id: \.direction) { option in
+                            Text("lines.towards \(option.headsign)", bundle: .module)
+                                .tag(option.direction)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .accessibilityLabel(Text("line.direction", bundle: .module))
+                }
+            }
+
+            Section {
+                ForEach(Array(content.stops.enumerated()), id: \.element.stopId) { index, stop in
+                    // "Stop 3, Varea": the position is what a rider counts, and the key's one argument is it.
+                    LabeledContent {
+                        Text(verbatim: stop.name)
+                    } label: {
+                        Text("line.stop.position \(index + 1)", bundle: .module)
+                    }
+                }
+            }
+        }
+    }
+
+    /// The picker writes through an event, so the state comes back from the ViewModel and the list always matches it.
+    private var selection: Binding<Direction> {
+        Binding(
+            get: { content.direction },
+            set: { onEvent(LineDetailEventSelectDirection(direction: $0)) }
+        )
+    }
 }
 
 #Preview("Line") {

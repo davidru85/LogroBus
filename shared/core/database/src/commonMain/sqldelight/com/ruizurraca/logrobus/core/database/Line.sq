@@ -68,3 +68,11 @@ SELECT DISTINCT ps.line_id, s.normalized_name
 FROM pattern_stop ps
 JOIN stop s ON s.id = ps.stop_id
 ORDER BY ps.line_id, s.normalized_name;
+
+-- LB-104: a line's patterns with their stops in sequence order, for the ordered stop list of its detail. The join
+-- brings each stop's name and position; `seq` orders them, and `shape_index` places each on the shape (LB-013).
+selectPatternStops:
+SELECT ps.line_id, ps.direction, ps.seq, ps.stop_id, ps.shape_index, s.name, s.lat, s.lng
+FROM pattern_stop ps
+JOIN stop s ON s.id = ps.stop_id
+ORDER BY ps.line_id, ps.direction, ps.seq;

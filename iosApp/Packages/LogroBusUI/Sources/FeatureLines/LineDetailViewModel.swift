@@ -4,8 +4,8 @@ import Observation
 // imported as pre-concurrency here.
 @preconcurrency import Shared
 
-/// The detail of one line (LB-103; LB-104 adds its map, directions and stops). It orchestrates only: the shared use
-/// cases and mapper build the state (ADR-0007).
+/// The detail of one line (LB-103, LB-104). It orchestrates only: the shared use cases and mapper build the state
+/// (ADR-0007). The map of both shapes waits for LB-013.
 @MainActor
 @Observable
 public final class LineDetailViewModel {
@@ -21,6 +21,12 @@ public final class LineDetailViewModel {
     // The last toggle's write. Each waits for the one before: SKIE may start two Kotlin calls in either order, so two
     // quick taps could otherwise land the wrong way round.
     private var favouriteWrite: Task<Void, Never>?
+
+    /// The last value the use case emitted, so a direction picked after it maps again without a second collection.
+    private var lastResult: AppResult<LinesWithFavourites>?
+
+    /// FR-LINE-04: the direction the toggle has selected; `nil` until one is picked, so the line's first shows.
+    private var selectedDirection: Direction?
 
     /// Takes the use cases from the graph, or from `SharedDependencies.shared.preview()` in previews and tests.
     public init(lineId: Int32, useCases: any UseCases = SharedDependencies.shared) {
@@ -45,13 +51,20 @@ public final class LineDetailViewModel {
             }
         case .favouriteLimitShown:
             favouriteLimit = nil
+        case .selectDirection(let selected):
+            // The patterns are cached: a new direction maps the same result again, and no use case runs.
+            selectedDirection = selected.direction
+            if let last = lastResult {
+                state = LineDetailUiMapper.shared.state(result: last, lineId: lineId, direction: selectedDirection)
+            }
         }
     }
 
     /// Runs while the screen shows: the view calls it from `.task {}`, which cancels it when the screen leaves.
     public func observe() async {
         for await result in useCases.observeLinesWithFavourites().invoke() {
-            state = LineDetailUiMapper.shared.state(result: result, lineId: lineId)
+            lastResult = result
+            state = LineDetailUiMapper.shared.state(result: result, lineId: lineId, direction: selectedDirection)
         }
     }
 }

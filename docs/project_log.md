@@ -19,6 +19,38 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-10: LB-104, the line detail's directions and ordered stops
+
+**Done**
+- **PR #59 (LB-102 part 2) merged** on 2026-11-10, and `main` was synced to `d59c5e23`.
+- **LB-104 (`feat/LB-104-line-detail`), split with the owner:** FR-LINE-04, DD-16.
+  - **`Line.patterns`:** `Direction` to `LinePattern(headsign, stops)`, read by `LinesRepositoryImpl` in the same `combine` as the lines, through `Line.sq`'s new `selectPatternStops`, which joins `pattern_stop` to `stop` and orders by `seq`.
+  - **Shared presentation:** `LineDetailUiState.Content` gains `direction`, `directions` and `stops`, and `LineDetailEvent.SelectDirection`; `LineDetailUiMapper.state(result, lineId, direction)` picks the asked direction, falls back to one the line runs, and numbers the stops from 1.
+  - **Android:** a lazy column with the header, one selectable row per direction ("Hacia <headsign>") and the numbered stops; `LineDetailViewModel` keeps the selection. iOS: a segmented `Picker` and `LabeledContent` rows, re-mapping the last result so a toggle starts no collection.
+  - **Docs:** `acceptance_criteria.md` with the evidence and the split, `backlog.md`, both READMEs.
+
+**Review**
+- **Three findings from the gates, each fixed rather than worked around:**
+  - **"Hacia El Arco" was cut short at 200 %:** `assertAccessible` caught the filter chip the toggle first used, because a chip keeps its text on one line. Selectable rows wrap.
+  - **`:shared:transit:domain` coverage fell to 66 %:** the two new value types had no test; one now covers their shape, and the 80 % floor stands unchanged.
+  - **The localisation test rejected the stop key twice:** it wants one key per `Text`, with the argument in the catalogue's key. The entry is `line.stop.position %@` and the row is a `LabeledContent`, whose label and value are separate texts.
+
+**CI**
+- Not run yet: the pull request is open and its watch runs.
+
+**Decisions**
+- **Owner (2026-11-10), two splits, both because the dependency holds no code:** the map of both shapes moves to LB-013 (its module is empty; its tile provider and licensing are OQ-10), and the tap to stop detail to LB-205 (its module is empty too). What lands here is the toggle and the ordered list.
+- **Agent:**
+  - **Two queries over the same tables, not one:** `selectLineStopNames` folds names for the search, `selectPatternStops` returns ordered stops with their positions. One query would make the search read coordinates it never uses.
+  - **Selectable rows, not chips,** on Android: a chip is the Material idiom for a filter but cannot wrap, and this label is a headsign.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** the map needs LB-013 and the tap needs LB-205, so the honest next P0 the catalogue supports is **LB-205**'s stop detail, or LB-104's map once LB-013 exists.
+- **Waiting for the owner:** unchanged — OQ-11, the device passes (now including LB-104's toggle), the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider, OQ-10.
+
+---
+
 ## 2026-11-10: LB-102 part 2, a line found by a stop it serves
 
 **Done**

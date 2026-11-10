@@ -47,4 +47,7 @@
     <!-- The detail's title while it loads or fails, before the line's code is known. -->
     <string name="line_detail_title_generic">Line</string>
     <string name="line_detail_loading">Loading line</string>
+    <!-- LB-104: the line detail's direction toggle and its ordered stop list. -->
+    <string name="line_detail_direction">Direction</string>
+    <string name="line_detail_stop_position">Stop %1$d, %2$s</string>
 </resources>

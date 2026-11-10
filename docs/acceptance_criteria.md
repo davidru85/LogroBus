@@ -473,6 +473,17 @@ Refs: FR-LINE-04, FR-NAV-07, DD-16
 - **Given** a stop row, **when** it is tapped, **then** stop detail is pushed onto the Lines back stack.
 - **Given** a screen reader, **when** focus reaches the toggle, **then** both options and the selected one are announced. `[manual: TalkBack, VoiceOver]`
 
+Part split by owner decision on 2026-11-10: the direction toggle, the ordered stop list and both platforms' ViewModels are done; **the map** waits for LB-013 (its `:android:core:map` holds no source, and its tile provider and licensing are OQ-10, still open) and **the tap to stop detail** for LB-205 (its `:android:feature:stops` holds no source either).
+
+Done in LB-104, with this evidence:
+- **The direction toggle, labelled with headsigns** — `LineDetailDirectionsTest.lb104_theToggleOffersBothDirections_eachTowardsItsHeadsign` (each option carries its direction's last stop, and exactly one is selected) on both platforms' shared mapper. Android renders it as selectable rows, iOS as a segmented `Picker`; both read "Hacia/Hacia" or "Towards" through `lines_towards`, which already existed.
+- **INBOUND shows the INBOUND pattern's stops in sequence order** — `lb104_theListShowsTheSelectedDirectionsStopsInSequenceOrder` (the two directions yield each other's order over the same stops) and `lb104_aStopCarriesItsIdAndPosition_forTheMapAndTheStopDetail`.
+- **The stops come from the catalogue** — `Line.sq`'s `selectPatternStops` joins `pattern_stop` to `stop` and orders by `seq`; `LinesRepositoryImpl` reads it in the same `combine` as the lines, so a row never renders without its stops. The domain test covers `Line.patterns`, `LinePattern` and `LineStop` (`CatalogueTypesTest.lb104_aLineCarriesItsPatternsAndEachPatternItsStops`).
+- **A stale selection falls back** to a direction the line runs, and a line with no patterns shows neither a toggle nor a list (`lb104_aDirectionTheLineDoesNotRunFallsBackToTheOneItDoes`, `lb104_aLineWithNoPatternsShowsNoToggleAndNoStops`).
+- **Accessibility:** the first attempt drew filter chips, and `assertAccessible` failed at 200 % with "Hacia El Arco is cut short": a chip keeps its text on one line. Selectable rows replaced them, and the screenshots' accessibility checks pass at both sizes.
+- **Not verifiable by code, left for the device pass:** "both options and the selected one are announced" `[manual: TalkBack, VoiceOver]`, as the criterion itself says.
+- **The map:** not built. Its criterion stays open until LB-013, which the owner approved.
+
 ### LB-105 Next arrival per stop in line detail
 Refs: FR-LINE-05, spec §5.7, DD-09
 

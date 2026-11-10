@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import kotlin.test.Test
@@ -21,16 +22,21 @@ class LineDetailUiMapperTest {
     fun lb103_theDetailShowsTheLinesBadgeAndName_andWhetherItIsAFavourite() {
         val result = AppResult.Success(LinesWithFavourites(listOf(line3, line10), favouriteIds = listOf(10)))
 
+        // LB-104 gave the state its direction toggle and stop list; a line with no patterns has neither.
         assertEquals(
             LineDetailUiState.Content(
-                LineDetailUi(
-                    id = 3,
-                    code = "3",
-                    displayName = "Campillo - El Cubo",
-                    color = 0xFF0FDCFC,
-                    onColor = 0xFF000000,
-                    isFavourite = false,
-                ),
+                line =
+                    LineDetailUi(
+                        id = 3,
+                        code = "3",
+                        displayName = "Campillo - El Cubo",
+                        color = 0xFF0FDCFC,
+                        onColor = 0xFF000000,
+                        isFavourite = false,
+                    ),
+                direction = Direction.OUTBOUND,
+                directions = emptyList(),
+                stops = emptyList(),
             ),
             LineDetailUiMapper.state(result, lineId = 3),
         )

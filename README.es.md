@@ -106,6 +106,10 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **10-11-2026:**
+  - LB-104: el detalle de una línea muestra sus dos sentidos y las paradas del seleccionado.
+    - Bajo el nombre de la línea, un selector dice "Hacia El Cubo" y "Hacia Campillo", cada uno el último destino de ese sentido, y la lista de debajo sigue al seleccionado en el orden en que el autobús pasa por ellas, numeradas.
+    - Cada parada de un recorrido viene del catálogo en caché, en la misma emisión que la línea, así que la lista nunca muestra media ruta.
+    - El mapa con las dos formas no está: espera a LB-013, cuyo módulo aún no tiene código y cuyo proveedor de teselas y licencia siguen abiertos (OQ-10). El toque para abrir el detalle de una parada espera a LB-205 por el mismo motivo.
   - LB-102, parte 2: encontrar una línea por una parada que recorre.
     - Escribir el nombre de una parada lista ya todas las líneas cuya ruta pasa por ella, ignorando mayúsculas, acentos y la `ñ` igual que la búsqueda de paradas: "Iglesia de Lardero" encuentra las líneas 1 y B3.
     - Los nombres se leen del catálogo en caché en la misma emisión que las líneas, así que ninguna línea aparece sin ellos, y la búsqueda sigue siendo un filtro puro: una tecla nunca lanza una descarga.
