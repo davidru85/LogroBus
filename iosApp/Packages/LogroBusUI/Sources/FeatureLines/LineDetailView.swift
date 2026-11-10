@@ -120,10 +120,11 @@ private struct LineDetailBody: View {
                             Text("lines.towards \(option.headsign)", bundle: .module)
                                 .tag(option.direction)
                         }
+                    } label: {
+                        Text("line.direction", bundle: .module)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .accessibilityLabel(Text("line.direction", bundle: .module))
                 }
             }
 
