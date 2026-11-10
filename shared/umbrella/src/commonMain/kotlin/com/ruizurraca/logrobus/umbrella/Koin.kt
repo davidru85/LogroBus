@@ -146,7 +146,9 @@ private val transitDataModule =
                 client = get(),
                 polling = get(),
                 interval = config.pollInterval(RemoteConfigKey.PollArrivalsMs),
-                previewMinutes = config.get(RemoteConfigKey.EtaPreviewMinutes),
+                // Spec §5.7: API-05 asks for the calls within 30 min. `eta_preview_minutes` (60) is FR-STOP-03's,
+                // for API-06, so the line's window is its own constant rather than another feature's setting.
+                previewMinutes = LINE_PREVIEW_MINUTES,
                 logger = get(),
             )
         }
@@ -200,3 +202,6 @@ internal fun appLogger(
 ): Logger = ConsoleLogger(minLevel(debug), output)
 
 private fun minLevel(debug: Boolean): LogLevel = if (debug) LogLevel.Debug else LogLevel.Error
+
+/** LB-105, spec §5.7 and §8.7: the calls API-05 returns are those within 30 min of now. */
+private const val LINE_PREVIEW_MINUTES = 30
