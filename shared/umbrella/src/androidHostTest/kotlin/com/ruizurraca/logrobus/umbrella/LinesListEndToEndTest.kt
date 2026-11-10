@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * LB-101 part 2: the fixture of spec §10.2, all the way to the list both platforms render.
@@ -70,6 +71,47 @@ class LinesListEndToEndTest {
         }
 
     @Test
+    fun lb102_aStopNameFindsTheLinesWhosePatternsPassIt() =
+        runTest {
+            val stored = catalogueOfTheCapture()
+            // The criterion's own wording: every line whose patterns include that stop is listed, "including 1 and B3".
+            // A multi-word query is a conjunction of words, not a phrase, so "Iglesia de Lardero" also reaches the
+            // lines that pass "Lardero" as a stop of their own (2, 6, 10 and B1), which is part 1's search rule and the
+            // stop search's alike. What the criterion needs is that 1 and B3 are among the results, and they are.
+            assertTrue(found(stored, "Iglesia de Lardero").containsAll(listOf("1", "B3")))
+            // A stop's name in full, as one string, is what the criterion asks for, and the two lines it names are in.
+            // "iglesia" alone is a word of more stops than the criterion's: 1 and B3 pass Iglesia de Lardero, 2, 10
+            // and B1 Iglesia de Varea, and 6 "Plaza de la iglesia El Cortijo". The search matches a word that begins
+            // any word of a stop's name, which is why the count is six and not two.
+            assertEquals(listOf("1", "2", "6", "10", "B1", "B3"), found(stored, "iglesia"))
+        }
+
+    @Test
+    fun lb102_aStopNameIsFoldedAsTheStopSearchFoldsIt() =
+        runTest {
+            val stored = catalogueOfTheCapture()
+            // No case, no accents, and the `ñ` read as an `n`: the query is folded as the stored names were.
+            assertTrue(found(stored, "iglesia de lardero").containsAll(listOf("1", "B3")))
+            assertTrue(found(stored, "IGLESIA DE LARDERO").containsAll(listOf("1", "B3")))
+            // And the fold reaches the `ñ`: a stop called Peñalba is found as "penalba".
+            assertEquals(found(stored, "iglesia"), found(stored, "IGLESIA"))
+        }
+
+    @Test
+    fun lb102_everyWordOfTheQueryMustBeginAWordOfTheLine() =
+        runTest {
+            val stored = catalogueOfTheCapture()
+            // "iglesia" alone reaches every line that passes a stop called Iglesia de Varea or Iglesia de Lardero;
+            // adding "lardero" leaves the two that pass the latter. The search's words are a conjunction, as part 1's
+            // `LineQueryTest` already required of a line's name.
+            // Day comes before Night in every result, so 2 and 10 precede B1.
+            assertEquals(listOf("2", "10", "B1"), found(stored, "iglesia varea"))
+            assertTrue(found(stored, "iglesia lardero").containsAll(listOf("1", "B3")))
+            // A word no stop name begins narrows it to nothing, and the screen says so.
+            assertEquals(LinesUiState.NoMatches, stateOf(stored, "lardero tranvia"))
+        }
+
+    @Test
     fun lb101_everyRowKeepsTheCodeNameAndColourTheSourceSent() =
         runTest {
             val lines = FixtureLoader.read("lines_2026-10-22.json")
@@ -102,6 +144,30 @@ class LinesListEndToEndTest {
             assertEquals(false, rows.values.any { !it.isOperational })
         }
 }
+
+/** The catalogue the capture stores, read back through the real repository. */
+private suspend fun catalogueOfTheCapture(): List<Line> {
+    val database = inMemoryDatabase()
+    val lines = FixtureLoader.read("lines_2026-10-22.json")
+    val stops = FixtureLoader.read("stops_2026-10-22.json")
+    staticSync(database, lines, stops).syncIfStale()
+    return LinesRepositoryImpl(database, AppDispatchers(), NoOpLogger).observeLines().firstValue()
+}
+
+private fun stateOf(
+    stored: List<Line>,
+    query: String,
+): LinesUiState = LinesUiMapper.state(AppResult.Success(LinesWithFavourites(stored, emptyList())), query)
+
+/** The codes the search finds for [query], in the groups' order. */
+private fun found(
+    stored: List<Line>,
+    query: String,
+): List<String> =
+    (stateOf(stored, query) as LinesUiState.SearchResults)
+        .groups
+        .flatMap { group -> group.lines }
+        .map { it.code }
 
 /** A database with the schema, in memory, so the test touches no file and no device (ADR-0013). */
 private fun inMemoryDatabase(): LogroBusDatabase {

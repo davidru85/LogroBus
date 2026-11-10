@@ -76,7 +76,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         detail.buttons["Lines"].tap()
 
         try auditMoreAndSettings(audit, types, largestText: largestText, in: app, into: &issues)
-        app.tabBars.buttons["Near me"].tap()
+        tap(app.tabBars.buttons["Near me"])
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me", types, into: &issues)
         try auditDirections(audit, types, in: app, into: &issues)
@@ -210,23 +210,6 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.swipeDown()
         app.swipeDown()
         XCTAssertTrue(element.isHittable, "\(element) is on screen")
-    }
-
-    /// Clears a notification banner that the system draws over the app, such as the simulator's "Ready for Apple
-    /// Intelligence" notice on a fresh device. The audit reads whatever covers the app, and on CI that banner produced
-    /// "Potentially inaccessible text, no element" on About data: a text the audit cannot attribute because it belongs
-    /// to SpringBoard, not to the screen (PR #58). The app decides nothing about the system's banners, so the test
-    /// dismisses them before auditing, and swipes one away when it lingers.
-    @MainActor
-    private func dismissSystemBanners() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        for _ in 0..<2 {
-            let banner = springboard.otherElements.matching(identifier: "NotificationShortLookView").firstMatch
-            guard banner.waitForExistence(timeout: 2) else { return }
-            // A swipe up dismisses a banner; a tap would open its app, which is not what this test wants.
-            banner.swipeUp(velocity: .fast)
-            Thread.sleep(forTimeInterval: 0.5)
-        }
     }
 
     @MainActor

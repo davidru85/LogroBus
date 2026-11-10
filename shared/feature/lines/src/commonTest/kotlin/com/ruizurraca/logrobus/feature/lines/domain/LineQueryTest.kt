@@ -8,8 +8,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * LB-102 (FR-LINE-03, NFR-I18N-03): which lines a search finds by their code, their name or their headsigns, ignoring
- * case and accents. Stop names come with the stops (LB-008 part 2). The names are placeholders, as the sample lines'.
+ * LB-102 (FR-LINE-03, NFR-I18N-03): which lines a search finds by their code, their name, their headsigns or the name
+ * of a stop their patterns pass, ignoring case and accents. The stop names arrive folded from the repository, so this
+ * test hands them folded too, as `Line.stopNames` holds them.
  */
 class LineQueryTest {
     private val lines =
@@ -88,11 +89,45 @@ class LineQueryTest {
         assertTrue(LineQuery(" b1 ").isActive)
     }
 
+    @Test
+    fun lb102_aStopNameFindsALineWhosePatternsPassIt() {
+        val withStops =
+            listOf(
+                line(1, "1", "Lardero - Hospital San Pedro", stopNames = listOf("iglesia de lardero")),
+                line(2, "2", "Yagüe - Varea", stopNames = listOf("iglesia de varea")),
+                line(101, "B1", "Varea - La Cava", stopNames = listOf("iglesia de varea", "lardero")),
+            )
+
+        // Each word of the query must begin a word of a stop the line passes: 1 passes "Iglesia de Lardero", and B1
+        // passes a stop called "Lardero", which is a different stop with the same word.
+        assertEquals(
+            listOf(1, 101),
+            withStops.filter(LineQuery("lardero")::matches).map { it.id },
+        )
+        assertEquals(
+            listOf(2, 101),
+            withStops.filter(LineQuery("iglesia varea")::matches).map { it.id },
+        )
+    }
+
+    @Test
+    fun lb102_aStopNameIsNotAFreeTextSearch_everyWordMustBeginOne() {
+        val line = line(1, "1", "Lardero - Hospital San Pedro", stopNames = listOf("iglesia de lardero"))
+
+        // A query's word must begin a word of the stop's name, never merely sit inside it: "iglesia" matches, and
+        // "iglesias" does not, because the stored word is shorter than the query's. A word no stop name has fails too.
+        assertTrue(LineQuery("iglesia").matches(line))
+        assertTrue(LineQuery("igles").matches(line))
+        assertFalse(LineQuery("iglesias").matches(line))
+        assertFalse(LineQuery("tranvia").matches(line))
+    }
+
     private fun line(
         id: Int,
         code: String,
         displayName: String,
         headsigns: List<String> = emptyList(),
+        stopNames: List<String> = emptyList(),
     ) = Line(
         id = id,
         code = code,
@@ -102,5 +137,6 @@ class LineQueryTest {
         kind = if (code.startsWith("B")) LineKind.NIGHT else LineKind.DAY,
         isOperational = true,
         headsigns = headsigns,
+        stopNames = stopNames,
     )
 }

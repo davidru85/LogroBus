@@ -59,3 +59,12 @@ selectLines:
 SELECT line.id, code, display_name, color, on_color, kind, operational, pattern.direction, pattern.headsign
 FROM line LEFT JOIN pattern ON pattern.line_id = line.id
 ORDER BY line.id;
+
+-- LB-102 part 2: the names of the stops a line's patterns pass, folded as the stop search folds them, for the search
+-- to match a line by a stop it serves (FR-LINE-03). One row per line and name, so a name two directions share counts
+-- once. The join runs on pattern_stop's index by stop, and the name comes from the stop catalogue.
+selectLineStopNames:
+SELECT DISTINCT ps.line_id, s.normalized_name
+FROM pattern_stop ps
+JOIN stop s ON s.id = ps.stop_id
+ORDER BY ps.line_id, s.normalized_name;

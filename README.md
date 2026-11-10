@@ -103,7 +103,11 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 ### Recent changes
 
-- **2026-11-09:**
+- **2026-11-10:**
+  - LB-102, part 2: find a line by a stop it serves.
+    - Typing a stop's name now lists every line whose route passes it, ignoring case, accents and the `ñ` as the stop search does: "Iglesia de Lardero" finds lines 1 and B3.
+    - The names are read from the cached catalogue in the same emission as the lines, so a line never appears without them, and the search stays a pure filter: a key never starts a download.
+    - A query is still a conjunction of words, so "iglesia lardero" narrows the results to the stops whose name carries that word.
   - LB-101, part 2: the Lines list, end to end over the real capture.
     - A test takes the recorded 13 lines and 254 stops, runs them through the typed client, the normaliser and the sync into a database, reads them back and builds the list: Day 1, 2, 3, 4, 5, 6, 7, 9, 10, 11 and Night B1, B2, B3, in that order, with no line 8.
     - It asserts the capture's own colours, not the placeholder ones the stand-in lines used, and that lines 4 and B1 share a colour while each badge still shows its code.

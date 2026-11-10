@@ -105,7 +105,11 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 
 ### Cambios recientes
 
-- **09-11-2026:**
+- **10-11-2026:**
+  - LB-102, parte 2: encontrar una línea por una parada que recorre.
+    - Escribir el nombre de una parada lista ya todas las líneas cuya ruta pasa por ella, ignorando mayúsculas, acentos y la `ñ` igual que la búsqueda de paradas: "Iglesia de Lardero" encuentra las líneas 1 y B3.
+    - Los nombres se leen del catálogo en caché en la misma emisión que las líneas, así que ninguna línea aparece sin ellos, y la búsqueda sigue siendo un filtro puro: una tecla nunca lanza una descarga.
+    - La consulta sigue siendo una conjunción de palabras, así que "iglesia lardero" reduce los resultados a las paradas cuyo nombre lleva esa palabra.
   - LB-101, parte 2: la lista de líneas, de extremo a extremo sobre la captura real.
     - Un test coge las 13 líneas y 254 paradas grabadas, las pasa por el cliente tipado, el normalizador y la sincronización hasta una base de datos, las vuelve a leer y construye la lista: diurnas 1, 2, 3, 4, 5, 6, 7, 9, 10, 11 y nocturnas B1, B2, B3, en ese orden, sin línea 8.
     - Comprueba los colores de la propia captura, no los de relleno de las líneas de ejemplo, y que las líneas 4 y B1 comparten color mientras cada distintivo sigue mostrando su código.

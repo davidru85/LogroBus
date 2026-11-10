@@ -325,6 +325,28 @@ class LinesScreenTest {
     }
 
     @Test
+    fun lb102_aLineFoundByAStopItServesIsListed() {
+        // LB-102 part 2: the search reaches a line through the name of a stop its patterns pass. The mapper does the
+        // matching; this proves the screen draws what it returns.
+        val withStops =
+            listOf(
+                line(1, "1", "Lardero - Hospital San Pedro", 0xFF269905)
+                    .copy(stopNames = listOf("iglesia de lardero")),
+                line(2, "2", "Yagüe - Varea", 0xFF2E7D32).copy(stopNames = listOf("iglesia de varea")),
+            )
+        val state =
+            LinesUiMapper.state(
+                AppResult.Success(LinesWithFavourites(withStops, favouriteIds = emptyList())),
+                "Iglesia de Lardero",
+            )
+
+        compose.setContent { LinesScreen(state, {}, {}, {}) }
+
+        compose.onNode(hasText("Lardero - Hospital San Pedro") and hasClickAction()).assertExists()
+        compose.onAllNodesWithText("Yagüe - Varea").assertCountEquals(0)
+    }
+
+    @Test
     fun lb102_aSearchThatFindsNothingSaysSo_andClearSearchEmptiesTheField() {
         // Spec §7.3: one sentence and one action.
         val events = mutableListOf<LinesEvent>()
