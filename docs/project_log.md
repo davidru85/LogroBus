@@ -19,6 +19,43 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-10: LB-102 part 2, a line found by a stop it serves
+
+**Done**
+- **PR #58 (LB-101 part 2) merged** on 2026-11-09, and `main` was synced to `b53b72f1`.
+- **LB-102 part 2 (`feat/LB-102-part2-stop-search`):** FR-LINE-03, FR-LINE-16, NFR-I18N-03, `architecture.md` §4.3.
+  - **`Line.stopNames`** carries the names of the stops a line's patterns pass, already folded with `searchWords`, beside the `headsigns` it already had. The entity stays a value the repository reads; the search stays a pure function of it.
+  - **`Line.sq`'s `selectLineStopNames`** joins `pattern_stop` to `stop`, so only the stops a line actually calls at count, a name both directions share appears once, and a stop no pattern reaches belongs to nobody.
+  - **`LinesRepositoryImpl`** reads the names with the lines through `combine`, so a line never shows without them and a key press still starts no query.
+  - **`LineQuery.matches`** adds the stop words to the line's own; every word of the query must still begin a word, as part 1 required.
+  - **Tests:** `LineStopNamesTest` (4 cases on the SQL), `LineQueryTest` (2 new, 11 in all), `LinesListEndToEndTest` (3 new over the real capture, 5 in all), `LinesScreenTest.lb102_aLineFoundByAStopItServesIsListed`.
+  - **Docs:** `acceptance_criteria.md` with the evidence, `backlog.md`, both READMEs.
+
+**Review**
+- **A deliberate break proved the chain:** removing the stop words from `LineQuery.matches` made two of the end-to-end cases fail, and restoring them brought the suite back. The tests pin the join, the fold and the match, not only their own data.
+- **Three of my own assertions were wrong before the code was, and the fixtures settled each:**
+  - The criterion says a stop name lists every line whose patterns include it "**including** 1 and B3", not "only 1 and B3": "iglesia" reaches six lines, because line 6 passes "Plaza de la iglesia El Cortijo" and 2, 10 and B1 pass "Iglesia de Varea". The test now asserts the criterion's wording and the measured six.
+  - Results keep Day before Night, so "iglesia varea" is 2, 10, B1 — not 2, B1, 10.
+  - A query's word must **begin** a word of the stored name, so "iglesias" does not match "iglesia"; I had asserted the opposite.
+- **One detekt finding,** a comment over the line limit in `LinesRepositoryImpl`, wrapped rather than suppressed.
+- **A red herring worth recording:** `AndroidGraphTest.lb010_stoppingTheGraphReleasesItsScopeAndDatabase` failed once inside a full `check` and passed three times in isolation and once in the full suite afterwards. Two Gradle builds had been running at once, which this repository's notes already forbid; it was not the change.
+
+**CI**
+- Not run yet: the pull request is open and its watch runs.
+
+**Decisions**
+- **Agent:**
+  - **The stop names travel on `Line`, not as a second use case.** The screen needs them at the same moment as the lines and in the same emission; a separate call would let a row render before its searchable text existed, and the mapper would stop being pure.
+  - **The fold happens once, in the repository.** `searchWords` runs when the row is built, so the query folds only its own input, and `LineQuery` never re-reads the database.
+  - **No new screen state.** `SearchResults`, `NoMatches` and the carousel's hiding are unchanged; a line found by a stop is an ordinary result of the same search.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-104 (line detail: both shapes, the direction toggle and the ordered stop list), which the cached patterns now make possible.
+- **Waiting for the owner:** unchanged — OQ-11, the device passes, the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider, OQ-10.
+
+---
+
 ## 2026-11-09: LB-101 part 2, the list over the real catalogue
 
 **Done**

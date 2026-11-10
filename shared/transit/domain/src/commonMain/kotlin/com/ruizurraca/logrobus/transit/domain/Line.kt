@@ -19,4 +19,10 @@ data class Line(
     val isOperational: Boolean,
     /** FR-LINE-13: the headsign of each direction the line runs, outbound first; none for a line with no patterns. */
     val headsigns: List<String> = emptyList(),
+    /**
+     * FR-LINE-03, LB-102 part 2: the names of the stops the line's patterns pass, one per name and already folded as
+     * the stop search folds them ([com.ruizurraca.logrobus.core.common.text.searchWords]), so a query matches a line by
+     * a stop it serves ("Iglesia de Lardero" finds 1 and B3). Empty for a line with no patterns.
+     */
+    val stopNames: List<String> = emptyList(),
 )
