@@ -17,6 +17,7 @@ import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
+import com.ruizurraca.logrobus.transit.domain.Direction
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -40,7 +41,10 @@ class LineDetailScreenTest {
 
     @Test
     fun lb103_theDetailIsTitledByItsLine_andShowsItsBadgeAndName() {
-        compose.setContent { LineDetailScreen(LineDetailUiState.Content(line3), onEvent = {}, onBack = {}) }
+        compose.setContent {
+            LineDetailScreen(LineDetailUiState.Content(line3, Direction.OUTBOUND, emptyList(), emptyList()), onEvent = {
+            }, onBack = {})
+        }
 
         compose.onNode(isHeading() and hasText(context.getString(R.string.line_detail_title, "3"))).assertExists()
         compose.onNode(hasContentDescription(context.getString(DS.string.line_badge, "3"))).assertExists()
@@ -51,7 +55,10 @@ class LineDetailScreenTest {
     fun lb103_theToolbarsToggleIsLabelledByTheLine_andSendsItsNewValue() {
         val events = mutableListOf<LineDetailEvent>()
         compose.setContent {
-            LineDetailScreen(LineDetailUiState.Content(line3), onEvent = { events += it }, onBack = {})
+            LineDetailScreen(LineDetailUiState.Content(line3, Direction.OUTBOUND, emptyList(), emptyList()), onEvent = {
+                events +=
+                    it
+            }, onBack = {})
         }
 
         compose.onNodeWithContentDescription(context.getString(R.string.lines_favourite_add, "3")).performClick()
@@ -62,7 +69,13 @@ class LineDetailScreenTest {
     @Test
     fun lb103_aFavouriteLinesToggleRemovesIt() {
         val events = mutableListOf<LineDetailEvent>()
-        val favourite = LineDetailUiState.Content(line3.copy(isFavourite = true))
+        val favourite =
+            LineDetailUiState.Content(
+                line3.copy(isFavourite = true),
+                Direction.OUTBOUND,
+                emptyList(),
+                emptyList(),
+            )
         compose.setContent { LineDetailScreen(favourite, onEvent = { events += it }, onBack = {}) }
 
         compose.onNodeWithContentDescription(context.getString(R.string.lines_favourite_remove, "3")).performClick()
@@ -73,7 +86,10 @@ class LineDetailScreenTest {
     @Test
     fun lb103_upGoesBack() {
         var back = 0
-        compose.setContent { LineDetailScreen(LineDetailUiState.Content(line3), onEvent = {}, onBack = { back++ }) }
+        compose.setContent {
+            LineDetailScreen(LineDetailUiState.Content(line3, Direction.OUTBOUND, emptyList(), emptyList()), onEvent = {
+            }, onBack = { back++ })
+        }
 
         compose.onNodeWithContentDescription(context.getString(DS.string.action_navigate_up)).performClick()
 

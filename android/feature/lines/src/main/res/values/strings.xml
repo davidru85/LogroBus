@@ -48,4 +48,7 @@
     <!-- The detail's title while it loads or fails, before the line's code is known. -->
     <string name="line_detail_title_generic">Línea</string>
     <string name="line_detail_loading">Cargando línea</string>
+    <!-- LB-104: the line detail's direction toggle and its ordered stop list. -->
+    <string name="line_detail_direction">Sentido</string>
+    <string name="line_detail_stop_position">Parada %1$d, %2$s</string>
 </resources>

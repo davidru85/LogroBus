@@ -25,4 +25,25 @@ data class Line(
      * a stop it serves ("Iglesia de Lardero" finds 1 and B3). Empty for a line with no patterns.
      */
     val stopNames: List<String> = emptyList(),
+    /**
+     * FR-LINE-04, LB-104: each direction the line runs with its stops in sequence order, for the detail's direction
+     * toggle and ordered list. Keyed by the directions present; a line with no patterns has none.
+     */
+    val patterns: Map<Direction, LinePattern> = emptyMap(),
+)
+
+/** One direction of a line as the detail shows it (FR-LINE-04, LB-104). */
+data class LinePattern(
+    /** The last stop's name, which the toggle reads as "Towards <headsign>" (spec §5.1). */
+    val headsign: String,
+    /** In sequence order: a stop's position in the list is its order on the route. */
+    val stops: List<LineStop>,
+)
+
+/** A stop of a pattern: who it is and where it is (FR-LINE-04). */
+data class LineStop(
+    val stopId: Int,
+    val name: String,
+    val lat: Double,
+    val lng: Double,
 )

@@ -9,9 +9,12 @@ import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.SelectLines
+import com.ruizurraca.logrobus.core.database.SelectPatternStops
 import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
+import com.ruizurraca.logrobus.transit.domain.LinePattern
+import com.ruizurraca.logrobus.transit.domain.LineStop
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -36,10 +39,16 @@ class LinesRepositoryImpl(
                 .selectLineStopNames()
                 .asFlow()
                 .mapToList(dispatchers.io),
-        ) { rows, stopNames ->
+            // LB-104: each pattern's stops in sequence, for the detail's toggle and its ordered list.
+            database.lineQueries
+                .selectPatternStops()
+                .asFlow()
+                .mapToList(dispatchers.io),
+        ) { rows, stopNames, patternStops ->
             val namesByLine = stopNames.groupBy({ it.line_id }) { it.normalized_name }
+            val patternsByLine = patternStops.groupBy { it.line_id }
             // One row per pattern: a line's rows are next to each other, in id order.
-            rows.groupBy { it.id }.values.mapNotNull { line -> lineOf(line, namesByLine) }
+            rows.groupBy { it.id }.values.mapNotNull { line -> lineOf(line, namesByLine, patternsByLine) }
         }.map<_, AppResult<List<Line>>> { AppResult.Success(it) }
             // The database boundary (code_style.md §2.2): a failure ends the flow as a value, never as a crash.
             .catch { failure ->
@@ -50,6 +59,7 @@ class LinesRepositoryImpl(
     private fun lineOf(
         rows: List<SelectLines>,
         stopNames: Map<Long, List<String>>,
+        patternStops: Map<Long, List<SelectPatternStops>>,
     ): Line? {
         val row = rows.first()
         val kind = LineKind.entries.firstOrNull { it.key == row.kind }
@@ -71,10 +81,32 @@ class LinesRepositoryImpl(
             isOperational = row.operational,
             headsigns = headsignsOf(rows),
             stopNames = stopNames[id.toLong()].orEmpty(),
+            patterns = patternsOf(rows, patternStops[id.toLong()].orEmpty()),
         )
     }
 
     // FR-LINE-13: outbound first. A pattern of a direction this version does not know is left out.
+
+    /**
+     * FR-LINE-04 (LB-104): each direction's stops in `seq` order. The rows arrive already ordered by the query, and a
+     * direction with no rows is left out rather than shown empty.
+     */
+    private fun patternsOf(
+        rows: List<SelectLines>,
+        stops: List<SelectPatternStops>,
+    ): Map<Direction, LinePattern> =
+        stops
+            .groupBy { row -> Direction.entries.firstOrNull { it.key == row.direction } }
+            .mapNotNull { (direction, directionStops) ->
+                if (direction == null) return@mapNotNull null
+                val headsign = rows.firstOrNull { it.direction == direction.key }?.headsign ?: return@mapNotNull null
+                direction to
+                    LinePattern(
+                        headsign = headsign,
+                        stops = directionStops.map { LineStop(it.stop_id.toInt(), it.name, it.lat, it.lng) },
+                    )
+            }.toMap()
+
     private fun headsignsOf(rows: List<SelectLines>): List<String> =
         rows
             .mapNotNull { row -> Direction.entries.firstOrNull { it.key == row.direction }?.to(row.headsign) }

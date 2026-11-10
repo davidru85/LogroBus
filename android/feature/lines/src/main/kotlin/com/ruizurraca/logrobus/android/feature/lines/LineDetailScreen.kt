@@ -1,15 +1,21 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -21,9 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruizurraca.logrobus.android.core.designsystem.FavouriteToggle
 import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
@@ -32,9 +40,12 @@ import com.ruizurraca.logrobus.android.core.designsystem.RetryMessage
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
+import com.ruizurraca.logrobus.feature.lines.presentation.DirectionOptionUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
+import com.ruizurraca.logrobus.feature.lines.presentation.StopRowUi
+import com.ruizurraca.logrobus.transit.domain.Direction
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -52,8 +63,9 @@ fun LineDetailRoute(
 }
 
 /**
- * A line's detail: the line and its favourite toggle (LB-103, FR-LINE-09), until LB-104 adds its map, direction toggle
- * and stops. The toolbar names the line and holds the toggle, labelled as the rows' are.
+ * A line's detail: the line and its favourite toggle (LB-103, FR-LINE-09), the direction toggle and the selected
+ * direction's ordered stop list (LB-104, FR-LINE-04). The map of both shapes waits for LB-013. The toolbar names the
+ * line and holds the toggle, labelled as the rows' are.
  */
 @Composable
 fun LineDetailScreen(
@@ -88,7 +100,7 @@ fun LineDetailScreen(
             }
 
             is LineDetailUiState.Content -> {
-                LineHeader(state.line, padding)
+                LineDetailBody(state, padding, onEvent)
             }
 
             is LineDetailUiState.Error -> {
@@ -113,18 +125,10 @@ private fun FavouriteAction(
 
 /** The line's badge and its whole display name, which wraps. TalkBack reads them as one (NFR-A11Y-02). */
 @Composable
-private fun LineHeader(
-    line: LineDetailUi,
-    contentPadding: PaddingValues,
-) {
+private fun LineHeader(line: LineDetailUi) {
     ListItem(
         headlineContent = { Text(line.displayName, style = MaterialTheme.typography.titleMedium) },
-        modifier =
-            Modifier
-                .consumeWindowInsets(contentPadding)
-                .padding(contentPadding)
-                .verticalScroll(rememberScrollState())
-                .semantics(mergeDescendants = true) {},
+        modifier = Modifier.semantics(mergeDescendants = true) {},
         leadingContent = { LineBadge(line.code, line.color, line.onColor, size = LineBadgeSize.Large) },
     )
 }
@@ -153,3 +157,79 @@ private fun LoadingLine(contentPadding: PaddingValues) {
         leadingContent = { Placeholder(Modifier.size(badge.minWidth, badge.minHeight)) },
     )
 }
+
+/**
+ * The line's header, the direction toggle and the ordered stop list (LB-104, FR-LINE-04). A lazy column, so a long
+ * pattern composes only the rows it shows.
+ */
+@Composable
+private fun LineDetailBody(
+    state: LineDetailUiState.Content,
+    contentPadding: PaddingValues,
+    onEvent: (LineDetailEvent) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.consumeWindowInsets(contentPadding),
+        contentPadding = contentPadding,
+    ) {
+        item { LineHeader(state.line) }
+        if (state.directions.isNotEmpty()) {
+            item {
+                DirectionToggle(
+                    options = state.directions,
+                    onSelect = { onEvent(LineDetailEvent.SelectDirection(it)) },
+                )
+            }
+        }
+        items(state.stops) { stop -> StopRow(stop) }
+    }
+}
+
+/**
+ * FR-LINE-04 and DD-16: one option per direction, each read as "Towards <headsign>". A column of full-width selectable
+ * rows rather than chips: a chip keeps its text on one line, and "Hacia Hospital San Pedro" is cut short at 200 %
+ * (LB-406). A row wraps, and `Modifier.selectable` tells the screen reader which one is selected.
+ */
+@Composable
+private fun DirectionToggle(
+    options: List<DirectionOptionUi>,
+    onSelect: (Direction) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .padding(horizontal = DETAIL_CONTENT_PADDING.dp)
+                .selectableGroup(),
+    ) {
+        options.forEach { option ->
+            val label = stringResource(R.string.lines_towards, option.headsign)
+            ListItem(
+                headlineContent = { Text(label, style = MaterialTheme.typography.bodyLarge) },
+                leadingContent = {
+                    RadioButton(selected = option.isSelected, onClick = null)
+                },
+                modifier =
+                    Modifier
+                        .selectable(
+                            selected = option.isSelected,
+                            role = Role.RadioButton,
+                            onClick = { onSelect(option.direction) },
+                        ),
+            )
+        }
+    }
+}
+
+/** One stop of the pattern, numbered as the screen reader reads it: "Stop 3, Varea" (LB-104). */
+@Composable
+private fun StopRow(stop: StopRowUi) {
+    val spoken = stringResource(R.string.line_detail_stop_position, stop.order, stop.name)
+    ListItem(
+        headlineContent = { Text(stop.name, style = MaterialTheme.typography.bodyLarge) },
+        supportingContent = { Text(stop.order.toString(), style = MaterialTheme.typography.labelLarge) },
+        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+    )
+}
+
+/** The detail's own inset, matching the list rows' (design_guidelines.md §4). */
+private const val DETAIL_CONTENT_PADDING = 16

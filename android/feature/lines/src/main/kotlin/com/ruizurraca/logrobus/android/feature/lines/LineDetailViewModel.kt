@@ -9,11 +9,13 @@ import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
+import com.ruizurraca.logrobus.transit.domain.Direction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -42,6 +44,9 @@ class LineDetailViewModel(
     // Each Retry bumps it, which starts a new load.
     private val loads = MutableStateFlow(0)
 
+    // LB-104: the direction the toggle has selected; null until one is picked, so the line's first shows.
+    private val selectedDirection = MutableStateFlow<Direction?>(null)
+
     // The load whose result the state shows. Coming back to the screen restarts the same load, which keeps the line
     // rather than flash Loading (spec §7.3); only a new load, after Retry, starts at Loading, as in LinesViewModel.
     private var shownLoad = 0
@@ -49,7 +54,10 @@ class LineDetailViewModel(
     val state: StateFlow<LineDetailUiState> =
         loads
             .flatMapLatest { load ->
-                val states = observeLines().map { LineDetailUiMapper.state(it, lineId) }
+                val states =
+                    combine(observeLines(), selectedDirection) { result, direction ->
+                        LineDetailUiMapper.state(result, lineId, direction)
+                    }
                 if (load == shownLoad) {
                     states
                 } else {
@@ -77,6 +85,11 @@ class LineDetailViewModel(
 
             LineDetailEvent.FavouriteLimitShown -> {
                 limit.value = null
+            }
+
+            // FR-LINE-04: the toggle picks a direction, and the list follows it. No reload: the patterns are cached.
+            is LineDetailEvent.SelectDirection -> {
+                selectedDirection.value = event.direction
             }
         }
     }

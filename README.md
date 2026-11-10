@@ -104,6 +104,10 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-10:**
+  - LB-104: a line's detail shows both directions and the stops of the one selected.
+    - Under the line's name, a toggle reads "Towards El Cubo" and "Towards Campillo", each the last stop of that direction, and the list below follows the selected one in the order the bus calls at them, numbered.
+    - Every stop of a pattern comes from the cached catalogue, in the same emission as the line, so the list never shows half a route.
+    - The map with both shapes is not here: it waits for LB-013, whose module holds no source yet and whose tile provider and licensing are still open (OQ-10). The tap to a stop's detail waits for LB-205 for the same reason.
   - LB-102, part 2: find a line by a stop it serves.
     - Typing a stop's name now lists every line whose route passes it, ignoring case, accents and the `ñ` as the stop search does: "Iglesia de Lardero" finds lines 1 and B3.
     - The names are read from the cached catalogue in the same emission as the lines, so a line never appears without them, and the search stays a pure filter: a key never starts a download.

@@ -35,6 +35,7 @@ import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import org.junit.Assert.assertEquals
@@ -321,7 +322,10 @@ class FavouriteLinesEditTest {
         val detail = mutableListOf<LineDetailEvent>()
         val line = LineDetailUi(4, "4", "Casa Blanca - Yagüe", 0xFFE30613, 0xFFFFFFFF, isFavourite = false)
         compose.setContent {
-            LineDetailScreen(LineDetailUiState.Content(line), { detail += it }, onBack = {}, favouriteLimit = 20)
+            LineDetailScreen(LineDetailUiState.Content(line, Direction.OUTBOUND, emptyList(), emptyList()), {
+                detail +=
+                    it
+            }, onBack = {}, favouriteLimit = 20)
         }
 
         compose.onNodeWithText(limitMessage(20)).assertExists()
