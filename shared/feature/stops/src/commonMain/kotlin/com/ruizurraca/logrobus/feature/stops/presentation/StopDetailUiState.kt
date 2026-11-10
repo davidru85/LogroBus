@@ -18,7 +18,7 @@ sealed interface StopDetailUiState {
         /** The stop with its [Stop.servedLines], as the cached catalogue has it (FR-STOP-03, DD-16). */
         val stop: Stop,
         /** Spec §5.7: chronological by default, with arrivals more than a minute past already dropped (FR-STOP-04). */
-        val arrivals: List<StopArrivalUi>,
+        val arrivals: List<ServedArrivalUi>,
         /** FR-ERR-06: how old the list is, or `null` until the first answer of this collection arrives. */
         val updated: StopUpdatedUi?,
     ) : StopDetailUiState
@@ -37,7 +37,7 @@ sealed interface StopDetailUiState {
  * [eta] is always filled by [StopDetailUiMapper.rows]; it is nullable so a platform can carry a row with no ETA of its
  * own. Each platform words the [EtaDisplay]; shared code never spells one out (AGENTS.md §5, rule 4).
  */
-data class StopArrivalUi(
+data class ServedArrivalUi(
     val lineCode: String,
     val color: Long,
     val onColor: Long,

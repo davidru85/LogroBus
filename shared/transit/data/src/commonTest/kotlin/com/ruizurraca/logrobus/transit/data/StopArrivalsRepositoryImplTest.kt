@@ -46,7 +46,7 @@ class StopArrivalsRepositoryImplTest {
             ) = Unit
         }
 
-    private val START = Instant.parse("2026-11-08T10:00:00Z")
+    private val start = Instant.parse("2026-11-08T10:00:00Z")
 
     private fun fakePolling() =
         object : PollingEngine {
@@ -57,8 +57,8 @@ class StopArrivalsRepositoryImplTest {
             ): Flow<Timed<T>> =
                 flow {
                     when (val result = fetch()) {
-                        is AppResult.Success -> emit(Timed(value = result.value, fetchedAt = START, lastError = null))
-                        is AppResult.Failure -> emit(Timed(value = null, fetchedAt = START, lastError = result.error))
+                        is AppResult.Success -> emit(Timed(value = result.value, fetchedAt = start, lastError = null))
+                        is AppResult.Failure -> emit(Timed(value = null, fetchedAt = start, lastError = result.error))
                     }
                 }
         }
@@ -113,7 +113,7 @@ class StopArrivalsRepositoryImplTest {
                 assertEquals(2, answer.arrivals.size)
                 assertTrue(answer.arrivals.all { it.lineId == 1 && it.stopId == 38 })
                 assertTrue(answer.arrivals.all { it.isLowConfidence }, "DD-09: the capture flags both")
-                assertEquals(START, answer.fetchedAt, "FR-ERR-06: the age is measured from the answer")
+                assertEquals(start, answer.fetchedAt, "FR-ERR-06: the age is measured from the answer")
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -130,7 +130,7 @@ class StopArrivalsRepositoryImplTest {
                     ): Flow<Timed<T>> =
                         flow {
                             val call = fetch()
-                            emit(Timed((call as? AppResult.Success)?.value, START, lastError = AppError.Network))
+                            emit(Timed((call as? AppResult.Success)?.value, start, lastError = AppError.Network))
                         }
                 }
             val reader =

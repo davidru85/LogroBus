@@ -1,6 +1,5 @@
 package com.ruizurraca.logrobus.transit.data
 
-import com.ruizurraca.logrobus.core.common.AppDispatchers
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
@@ -28,7 +27,6 @@ private const val TAG = "Stops"
  */
 class StopRepositoryImpl(
     private val database: LogroBusDatabase,
-    private val dispatchers: AppDispatchers,
     private val logger: Logger,
 ) : StopRepository {
     override fun observeStop(stopId: Int): Flow<AppResult<Stop>> =
@@ -51,18 +49,23 @@ class StopRepositoryImpl(
         // A stop with no serving line still comes back as one row of nulls, because the query is a LEFT JOIN.
         val name = first?.name ?: return AppResult.Failure(AppError.Data)
         val lines =
-            rows.mapNotNull { row ->
-                val lineId = row.line_id ?: return@mapNotNull null
-                val code = row.code ?: return@mapNotNull null
-                ServedLine(
-                    lineId = lineId.takeIf { it in Int.MIN_VALUE..Int.MAX_VALUE }?.toInt() ?: return@mapNotNull null,
-                    code = code,
-                    headsign = row.headsign,
-                    color = row.color ?: 0,
-                    onColor = row.on_color ?: 0,
-                    direction = Direction.entries.firstOrNull { it.key == row.direction },
-                )
-            }.distinctBy { it.lineId to it.headsign }
+            rows
+                .mapNotNull { row ->
+                    val lineId = row.line_id ?: return@mapNotNull null
+                    val code = row.code ?: return@mapNotNull null
+                    ServedLine(
+                        lineId =
+                            lineId
+                                .takeIf {
+                                    it in Int.MIN_VALUE..Int.MAX_VALUE
+                                }?.toInt() ?: return@mapNotNull null,
+                        code = code,
+                        headsign = row.headsign,
+                        color = row.color ?: 0,
+                        onColor = row.on_color ?: 0,
+                        direction = Direction.entries.firstOrNull { it.key == row.direction },
+                    )
+                }.distinctBy { it.lineId to it.headsign }
         return AppResult.Success(
             Stop(
                 id = stopId,

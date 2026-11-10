@@ -76,12 +76,12 @@ object StopDetailUiMapper {
         arrivals: List<StopArrivalRow>,
         now: Instant,
         format: EtaFormat,
-    ): List<StopArrivalUi> =
+    ): List<ServedArrivalUi> =
         arrivals
             .filter { it.expectedAt >= now - DROP_AFTER }
             .sortedBy { it.expectedAt }
             .map { row ->
-                StopArrivalUi(
+                ServedArrivalUi(
                     lineCode = row.lineCode,
                     color = row.color,
                     onColor = row.onColor,

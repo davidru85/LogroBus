@@ -38,7 +38,7 @@ internal class StopArrivalsRepositoryImpl(
     private val logger: Logger,
     /** DD-04: where each line's patterns stop, so a call's opaque `directionRef` can be placed. */
     private val patternsOf: (lineId: Int) -> Map<Direction, List<Int>> = { emptyMap() },
-): StopArrivalsReader {
+) : StopArrivalsReader {
     override fun observeStopArrivals(
         stopId: Int,
         lineIds: List<Int>,
@@ -63,7 +63,10 @@ internal class StopArrivalsRepositoryImpl(
                             val inferred = directionsOf(calls)
                             val arrivals = calls.mapNotNull { call -> arrivalOf(call, inferred) }
                             AppResult.Success(
-                                StopCallsAnswer(arrivals = arrivals.sortedBy { it.expectedAt }, fetchedAt = timed.fetchedAt),
+                                StopCallsAnswer(
+                                    arrivals = arrivals.sortedBy { it.expectedAt },
+                                    fetchedAt = timed.fetchedAt,
+                                ),
                             )
                         }
                     }

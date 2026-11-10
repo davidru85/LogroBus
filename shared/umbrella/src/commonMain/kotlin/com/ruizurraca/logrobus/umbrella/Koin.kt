@@ -43,30 +43,30 @@ import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
 import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
-import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
-import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
-import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
-import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
-import com.ruizurraca.logrobus.transit.data.stopArrivalsReader
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
-import kotlinx.coroutines.flow.map
+import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
+import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
+import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
+import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
 import com.ruizurraca.logrobus.transit.data.StopRepositoryImpl
-import com.ruizurraca.logrobus.transit.domain.StopRepository
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.arrivalsRepository
 import com.ruizurraca.logrobus.transit.data.patternsOfLine
+import com.ruizurraca.logrobus.transit.data.stopArrivalsReader
 import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
 import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import com.ruizurraca.logrobus.transit.domain.StopRepository
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -151,15 +151,22 @@ private val transitDataModule =
         single<SyncStatusRepository> { SyncStatusRepositoryImpl(get(), get(), get()) }
         single<LinesRepository> { LinesRepositoryImpl(get(), get(), get()) }
         // LB-205: one stop with the lines that serve it, read from the cached catalogue so its header shows at once.
-        single<StopRepository> { StopRepositoryImpl(get(), get(), get()) }
+        single<StopRepository> { StopRepositoryImpl(get(), get()) }
         // LB-205: the stop detail's two use cases, which the screens ask the graph for.
         factory<ObserveStopDetail> { DefaultObserveStopDetail(get()) }
         factory<ObserveStopArrivals> {
             DefaultObserveStopArrivals(stops = get()) { stopId, lineIds ->
                 get<StopArrivalsReader>().observeStopArrivals(stopId, lineIds).map { answer ->
                     when (answer) {
-                        is AppResult.Success -> AppResult.Success(FetchedArrivals(answer.value.arrivals, answer.value.fetchedAt))
-                        is AppResult.Failure -> answer
+                        is AppResult.Success -> {
+                            AppResult.Success(
+                                FetchedArrivals(answer.value.arrivals, answer.value.fetchedAt),
+                            )
+                        }
+
+                        is AppResult.Failure -> {
+                            answer
+                        }
                     }
                 }
             }

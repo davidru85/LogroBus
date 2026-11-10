@@ -3,9 +3,9 @@ package com.ruizurraca.logrobus.transit.domain
 /**
  * One stop of the network (spec §8.8), with the lines whose patterns call at it (FR-STOP-03).
  *
- * [servedLines] is read from the cached catalogue, so a stop detail shows its header before the live source answers. A
- * stop no line reaches keeps none, which the screen says rather than hides. [isProvisional] is DD-10's synthesised stop,
- * whose name the source only gave through a pattern.
+ * [servedLines] is read from the cached catalogue, so a stop detail shows its header before the live source
+ * answers. A stop no line reaches keeps none, which the screen says rather than hides. [isProvisional] is DD-10's
+ * synthesised stop, whose name the source only gave through a pattern.
  */
 data class Stop(
     val id: Int,

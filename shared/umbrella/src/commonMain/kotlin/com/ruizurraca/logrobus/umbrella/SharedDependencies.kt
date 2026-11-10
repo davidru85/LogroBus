@@ -2,12 +2,6 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
-import kotlinx.coroutines.flow.map
-import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
-import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
-import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
-import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
-import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
@@ -19,6 +13,12 @@ import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
 import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
+import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
+import kotlinx.coroutines.flow.map
 import org.koin.mp.KoinPlatform
 
 /** Settings' own use cases for Swift (LB-403): the user's preferences and Clear cache. */
@@ -111,12 +111,15 @@ object SharedDependencies :
                 .observeStopArrivals(stopId, lineIds)
                 .map { answer ->
                     when (answer) {
-                        is com.ruizurraca.logrobus.core.common.AppResult.Success ->
+                        is com.ruizurraca.logrobus.core.common.AppResult.Success -> {
                             com.ruizurraca.logrobus.core.common.AppResult.Success(
                                 FetchedArrivals(answer.value.arrivals, answer.value.fetchedAt),
                             )
+                        }
 
-                        is com.ruizurraca.logrobus.core.common.AppResult.Failure -> answer
+                        is com.ruizurraca.logrobus.core.common.AppResult.Failure -> {
+                            answer
+                        }
                     }
                 }
         }

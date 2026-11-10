@@ -15,10 +15,10 @@ import kotlinx.coroutines.flow.map
  * FR-STOP-03, FR-STOP-04, FR-STOP-05: the stop's detail, its served lines from the catalogue and its calls from
  * API-06, as one answer for the screen.
  *
- * The stop is read first, because the calls are asked for the lines that serve it (`lines=1,33`, spec §5.7); a stop the
- * catalogue does not hold is the failure the screen shows, and nothing is asked of the source for it. Each arrival takes
- * the badge and headsign of its own line and direction from the served lines, so a row carries what it draws and the
- * screen never joins the two itself.
+ * The stop is read first, because the calls are asked for the lines that serve it (`lines=1,33`, spec §5.7); a stop
+ * the catalogue does not hold is the failure the screen shows, and nothing is asked of the source for it. Each
+ * arrival takes the badge and headsign of its own line and direction from the served lines, so a row carries what it
+ * draws and the screen never joins the two itself.
  */
 class DefaultObserveStopArrivals(
     private val stops: StopRepository,
@@ -31,12 +31,18 @@ class DefaultObserveStopArrivals(
     ): Flow<AppResult<StopArrivals>> =
         stops.observeStop(stopId).distinctUntilChanged().flatMapLatest { stopResult ->
             when (stopResult) {
-                is AppResult.Failure -> flowOf(stopResult)
+                is AppResult.Failure -> {
+                    flowOf(stopResult)
+                }
+
                 is AppResult.Success -> {
                     val stop = stopResult.value
                     calls(stopId, lineIds).map { callsResult ->
                         when (callsResult) {
-                            is AppResult.Failure -> callsResult
+                            is AppResult.Failure -> {
+                                callsResult
+                            }
+
                             is AppResult.Success -> {
                                 AppResult.Success(
                                     StopArrivals(
@@ -63,7 +69,13 @@ class DefaultObserveStopArrivals(
         stop: Stop,
     ): StopArrivalRow {
         val served = stop.servedLines.firstOrNull { it.lineId == arrival.lineId }
-        val sameDirection = served?.let { line -> stop.servedLines.firstOrNull { it.lineId == line.lineId && it.direction == arrival.direction } }
+        val sameDirection =
+            served?.let { line ->
+                stop.servedLines.firstOrNull {
+                    it.lineId == line.lineId &&
+                        it.direction == arrival.direction
+                }
+            }
         val line = sameDirection ?: served
         return StopArrivalRow(
             lineCode = line?.code ?: arrival.lineId.toString(),

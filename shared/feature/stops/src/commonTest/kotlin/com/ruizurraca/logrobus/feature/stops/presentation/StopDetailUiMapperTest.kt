@@ -82,13 +82,12 @@ class StopDetailUiMapperTest {
     private fun content(
         answers: StopArrivals,
         format: EtaFormat = EtaFormat.MINUTES,
-    ) =
-        StopDetailUiMapper.state(
-            AppResult.Success(answers),
-            stopId = 38,
-            now = now,
-            format = format,
-        ) as StopDetailUiState.Content
+    ) = StopDetailUiMapper.state(
+        AppResult.Success(answers),
+        stopId = 38,
+        now = now,
+        format = format,
+    ) as StopDetailUiState.Content
 
     @Test
     fun lb205_thirtySecondsFourMinutesAndSeventyFiveMinutesShowNowFourMinutesAndAClockTime() {
@@ -157,7 +156,7 @@ class StopDetailUiMapperTest {
         // Struck through, never hidden (design_guidelines.md §6.3): it keeps its row, its badge and its ETA.
         assertEquals(
             listOf(
-                StopArrivalUi(
+                ServedArrivalUi(
                     lineCode = "1",
                     color = 0xFF0FDCFC,
                     onColor = 0xFF000000,
