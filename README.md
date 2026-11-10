@@ -104,6 +104,13 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-10:**
+  - LB-105: every stop of a line's detail shows its next bus.
+    - Under the direction toggle, each stop's row carries its next predicted call, "4 min", or "–" when the source has none within 30 min. A call the source marks as a rough prediction shows a "~", and a cancelled one is struck through with its time kept, so the row still says when the bus was due.
+    - The detail asks the ET source for the line every 20 s while it is on screen and stops when it is left; two screens watching one line share a single request. The 30 min window is the one the spec fixes for API-05.
+    - The user's ETA format applies here too: choosing clock times re-words the calls already received instead of asking the source again.
+    - The direction code the source sends is opaque, so a call is never placed on a pattern by guessing it: until the line's stops identify the direction, a call shows under both.
+    - A row reads as one utterance to a screen reader, "Stop 1, El Arco, 4 min", and the dash says "no calls" rather than staying silent.
+- **2026-11-10:**
   - LB-104: a line's detail shows both directions and the stops of the one selected.
     - Under the line's name, a toggle reads "Towards El Cubo" and "Towards Campillo", each the last stop of that direction, and the list below follows the selected one in the order the bus calls at them, numbered.
     - Every stop of a pattern comes from the cached catalogue, in the same emission as the line, so the list never shows half a route.

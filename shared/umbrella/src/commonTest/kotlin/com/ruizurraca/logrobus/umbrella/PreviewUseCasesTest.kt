@@ -12,6 +12,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
 import com.ruizurraca.logrobus.feature.planner.domain.PlanPlace
 import com.ruizurraca.logrobus.feature.settings.domain.DatasetSync
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
 import kotlinx.coroutines.flow.Flow
@@ -408,6 +409,31 @@ class PreviewUseCasesTest {
 
         assertEquals(Instant.parse("2026-10-29T09:30:00Z"), clock.now())
     }
+
+    @Test
+    fun lb105_thePreviewScriptsTheCallsOfALineAndCountsEachCollection() =
+        runTest {
+            val preview = SharedDependencies.preview().withArrivals()
+            assertEquals(0, preview.arrivalCollections)
+
+            preview.observeLineArrivals()(10, null).test {
+                val calls = (awaitItem() as AppResult.Success).value
+                assertEquals(2, calls.size, "withArrivals scripts two of line 10's outbound stops")
+                assertEquals(1, preview.arrivalCollections, "a collection started")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun lb105_thePreviewKeepsEachDirectionToItsOwnCalls() =
+        runTest {
+            // The script is outbound: a collector asking for the inbound pattern must not see it, or a bus would land
+            // on the wrong stop (DD-04).
+            val preview = SharedDependencies.preview().withArrivals()
+            val inbound = preview.observeLineArrivals()(10, Direction.INBOUND).first() as AppResult.Success
+
+            assertEquals(emptyList(), inbound.value)
+        }
 
     /** The lines alone, as the Lines tab reads them. */
     private fun PreviewUseCases.lines(): Flow<AppResult<List<Line>>> =

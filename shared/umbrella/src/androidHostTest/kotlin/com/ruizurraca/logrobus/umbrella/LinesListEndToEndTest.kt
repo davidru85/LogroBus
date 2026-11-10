@@ -14,8 +14,13 @@ import com.ruizurraca.logrobus.core.testing.FixtureLoader
 import com.ruizurraca.logrobus.feature.lines.domain.LinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiMapper
 import com.ruizurraca.logrobus.feature.lines.presentation.LinesUiState
+import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
 import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
+import com.ruizurraca.logrobus.transit.data.arrivalsRepository
+import com.ruizurraca.logrobus.transit.data.patternsOfLine
+import com.ruizurraca.logrobus.transit.domain.Arrival
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
 import io.ktor.client.engine.mock.MockEngine
@@ -143,6 +148,38 @@ class LinesListEndToEndTest {
             // `LinesUiMapperTest` covers the chip with a stopped line.
             assertEquals(false, rows.values.any { !it.isOperational })
         }
+
+    @Test
+    fun lb105_theCaptureWithItsOwnPatternsYieldsADirectionsCalls() =
+        runTest {
+            // The whole chain at once: the real catalogue from `lines_2026-10-22.json`, the real pattern stops the
+            // inference reads, and the recorded API-05 payload whose `directionRef` is the opaque "401"/"402". Asking
+            // for a direction must return calls, not empty rows: this is the case that a filter on the source's own
+            // code got wrong.
+            val database = inMemoryDatabase()
+            staticSync(
+                database,
+                FixtureLoader.read("lines_2026-10-22.json"),
+                FixtureLoader.read("stops_2026-10-22.json"),
+            ).syncIfStale()
+
+            val outbound = arrivalsOf(database, Direction.OUTBOUND)
+            val inbound = arrivalsOf(database, Direction.INBOUND)
+
+            assertTrue(outbound.isNotEmpty(), "DD-04: a direction must not empty the list")
+            assertTrue(inbound.isNotEmpty(), "DD-04: and neither may the other")
+            assertTrue(outbound.all { it.direction == Direction.OUTBOUND })
+            assertTrue(inbound.all { it.direction == Direction.INBOUND })
+            // DD-04: a call is on one pattern only, so no instant appears in both lists at the same stop.
+            assertTrue(
+                outbound
+                    .map { it.stopId to it.expectedAt }
+                    .intersect(
+                        inbound.map { it.stopId to it.expectedAt }.toSet(),
+                    ).isEmpty(),
+                "a call belongs to exactly one direction",
+            )
+        }
 }
 
 /** The catalogue the capture stores, read back through the real repository. */
@@ -168,6 +205,57 @@ private fun found(
         .groups
         .flatMap { group -> group.lines }
         .map { it.code }
+
+/** A poller that fetches once and ends, so the test reads the first answer without a clock. */
+private fun singleFetch() =
+    object : com.ruizurraca.logrobus.core.polling.PollingEngine {
+        override fun <T> poll(
+            key: com.ruizurraca.logrobus.core.polling.PollKey,
+            interval: kotlin.time.Duration,
+            fetch: suspend () -> AppResult<T>,
+        ): Flow<com.ruizurraca.logrobus.core.polling.Timed<T>> =
+            kotlinx.coroutines.flow.flow {
+                val result = fetch()
+                emit(
+                    com.ruizurraca.logrobus.core.polling.Timed(
+                        value = (result as? AppResult.Success)?.value,
+                        fetchedAt = kotlin.time.Instant.parse("2026-11-08T10:00:00Z"),
+                        lastError = (result as? AppResult.Failure)?.error,
+                    ),
+                )
+            }
+    }
+
+/** The calls of one direction, over the captured catalogue and the recorded API-05 payload (LB-105). */
+private suspend fun arrivalsOf(
+    database: LogroBusDatabase,
+    direction: Direction,
+): List<Arrival> {
+    val engine =
+        MockEngine {
+            respond(
+                FixtureLoader.read("et_line1_60min.json"),
+                HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+    val repository =
+        arrivalsRepository(
+            client =
+                SourceClient(
+                    engine = engine,
+                    identity = ClientIdentity(appVersion = "1.0.0", platform = "Android", osVersion = "16"),
+                    clock = stoppedClock(),
+                    baseUrl = { BASE_URL },
+                    logger = NoOpLogger,
+                ),
+            polling = singleFetch(),
+            window = ArrivalsWindow(interval = kotlin.time.Duration.parse("20s"), previewMinutes = 30),
+            logger = NoOpLogger,
+            patternsOf = { lineId -> patternsOfLine(database, lineId) },
+        )
+    return (repository.observeLineArrivals(lineId = 1, direction = direction).first() as AppResult.Success).value
+}
 
 /** A database with the schema, in memory, so the test touches no file and no device (ADR-0013). */
 private fun inMemoryDatabase(): LogroBusDatabase {

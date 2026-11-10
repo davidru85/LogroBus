@@ -31,6 +31,42 @@
         }
       }
     },
+    "line.eta.none": {
+      "comment": "LB-105: the ETA of a stop of the line detail with no call in the preview window; the criterion's dash.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "–"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "–"
+          }
+        }
+      }
+    },
+    "line.eta.none_spoken": {
+      "comment": "LB-105: how VoiceOver reads line detail's dash for a stop with no upcoming arrival, since it never speaks the glyph.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no calls"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sin avisos"
+          }
+        }
+      }
+    },
     "line.loading": {
       "comment": "What VoiceOver says while the line detail's first load runs (spec §7.3, design_guidelines.md §8).",
       "extractionState": "manual",
@@ -49,20 +85,20 @@
         }
       }
     },
-    "line.stop.position %@": {
+    "line.stop.position %lld": {
       "comment": "How VoiceOver reads a stop of the line's ordered list; the argument is its position (LB-104).",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Stop %@"
+            "value": "Stop %lld"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Parada %@"
+            "value": "Parada %lld"
           }
         }
       }

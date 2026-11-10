@@ -10,14 +10,18 @@ import Testing
 struct LineDetailSnapshotTests {
     @Test(arguments: Appearance.allCases)
     func lb103_theLine(appearance: Appearance) async throws {
-        let screen = try await screen(SharedDependencies.shared.preview(), settlesOn: LineDetailUiStateContent.self)
+        let screen = try await screen(
+            SharedDependencies.shared.preview().withArrivals(),
+            settlesOn: LineDetailUiStateContent.self,
+            withArrivals: true
+        )
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
     @Test(arguments: Appearance.allCases)
     func lb103_aFavouriteLine(appearance: Appearance) async throws {
-        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 10)
-        let screen = try await screen(useCases, settlesOn: LineDetailUiStateContent.self)
+        let useCases = SharedDependencies.shared.preview().withArrivals().favouriteLine(id: 10)
+        let screen = try await screen(useCases, settlesOn: LineDetailUiStateContent.self, withArrivals: true)
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
@@ -35,12 +39,21 @@ struct LineDetailSnapshotTests {
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
-    /// Line 10's detail in its navigation stack, once its view model shows a `State`.
-    private func screen<State>(_ useCases: PreviewUseCases, settlesOn _: State.Type) async throws -> some View {
+    /// Line 10's detail in its navigation stack, once its view model shows a `State`. With [withArrivals], it also
+    /// waits for the calls, which a second collection delivers: a snapshot taken before them draws every row's dash,
+    /// and whether it does is a race, not a property of the screen.
+    private func screen<State>(
+        _ useCases: PreviewUseCases,
+        settlesOn _: State.Type,
+        withArrivals: Bool = false
+    ) async throws -> some View {
         let viewModel = LineDetailViewModel(lineId: 10, useCases: useCases)
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
         try await waitUntil { viewModel.state is State }
+        if withArrivals {
+            try await waitUntil { !viewModel.stopArrivals.isEmpty }
+        }
         return NavigationStack { LineDetailView(viewModel: viewModel) }
     }
 }

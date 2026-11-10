@@ -19,6 +19,52 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-10: LB-105, each stop's next bus in the line detail
+
+**Done**
+- **LB-105 (`feat/LB-105-stop-arrivals`):** FR-LINE-05, spec §5.7, DD-04, DD-09, FR-SET-01.
+  - **Shared:** `Arrival` and `ArrivalsRepository` in the domain; `ArrivalsRepositoryImpl` polls API-05 through `PollingEngine`, so two screens watching one line share a request and nothing polls when nothing is collected. `arrivalsByStop` and `StopArrivalUi` map each stop's next live call; `ObserveLineArrivals` is the door Swift uses.
+  - **Android:** the detail's ViewModel keeps the shown direction's calls and maps them with the user's ETA format and the app clock; `StopRow` draws the design system's `EtaText` and reads as one utterance. **iOS:** the ViewModel collects the calls beside the line and the settings flows, and the row does the same over `EtaText`.
+  - **Docs:** `acceptance_criteria.md` with the evidence, `backlog.md`, both READMEs, `AGENTS.md` §2.
+
+**Review**
+- **Seven findings from the reviewer agents, each fixed rather than worked around:**
+  - **A direction filtered on the source's own code emptied every row.** ET's `directionRef` is opaque (`"401"`), so `DirectionMapper` gave `null` and asking for a direction dropped all its calls; both platforms always ask for one. The repository now infers each code with `EtDirectionInferrer` over the line's patterns, read from the cached catalogue (`patternsOfLine`), and the end-to-end test proves it over the real capture and the real catalogue (`LinesListEndToEndTest.lb105_theCaptureWithItsOwnPatternsYieldsADirectionsCalls`).
+  - **A failure after a success was returned as the stale list.** The polling engine keeps the last good value beside the error, so a screen would keep re-wording expired ETAs as "Now". A `lastError` is now the failure, and the rows drop to the dash with Retry (`lb105_aFailureAfterASuccess_isAFailure_notTheStaleCalls`).
+  - **`""` in a time dropped the whole call,** although DD-07 says the source writes it for "no value". The expected time falls back to the aimed one through `trimmedOrNull` (`lb105_anEmptyExpectedTimeFallsBackToTheAimedOne_ratherThanDroppingTheCall`).
+  - **Android kept the old direction's times on the new rows** while the new collection had not answered, and both patterns share stop ids. The switch now emits an empty map first, and a test breaks the reset to prove it (`lb105_changingTheDirectionDropsTheOldOnesCalls_beforeTheNewOnesArrive`).
+  - **The iOS dash test was vacuous:** it looked up a stop id the pattern does not have. It now scripts one call and checks the pattern's real second stop (`lb105_eachStopShowsItsNextCall_andAStopWithoutOneKeepsTheDash`), and `withOneArrival()` exists for it.
+  - **A cancelled iOS collection could still write its direction** before its first `Task.isCancelled` check, hiding the live collection's calls. The check is now the first statement.
+  - **The two platforms said the dash differently,** "no calls" / "sin avisos" against "No upcoming arrival" / "Sin próxima llegada", and the iOS row never reflowed at accessibility sizes. Both are now as `design_guidelines.md` §3.1 says, and both large-text references show it.
+- **Four findings from the first pass, also fixed:**
+  - **`previewMinutes=60` for API-05.** The graph passed `eta_preview_minutes`, which is FR-STOP-03's 60 min for API-06; the spec fixes API-05's window at 30 (§5.7, §8.7) and the criterion asks for it. The line's window is now its own constant.
+  - **A raw `line.stop.position %@` in the iOS detail.** The key declared `%@` for an integer, so the row drew the key rather than "Parada 1" and pushed the stop's name onto a second line. The key is `%lld`, as the design system's own integer keys are; the reference now shows the row the design asks for.
+  - **The iOS screen crashed on the shared map.** A Kotlin `Map` reaches Swift as an `NSDictionary`, and iterating it force-casts each key, which aborts; every test that touched the detail crashed with `swift_dynamicCastFailure`. The ViewModel reads one stop at a time through `KotlinInt`.
+  - **The preview's graph had no arrivals repository,** so every Robolectric screen that opened a line detail failed with `InstanceCreationException`. `previewDataModule` now binds one over the sample lines' own calls.
+  - **`PreviewUseCases` reached 14 functions,** over detekt's 11. The arrivals script moved to `PreviewArrivals`, as the settings' and the location's already are, and the state scripts became extensions, which is also how Swift chains them.
+
+**Docs and evidence**
+- **Every criterion has a named test:** the mapper's eight cases, the repository's seven over the 2026-11-08 capture, the Android ViewModel's three and iOS's three. The screenshots are proof for the row: `LineDetail_content_light.png` shows "4 min", "~18:42" and the dash, and both iOS references show the corrected row at 100 % and at large text.
+
+**Decisions**
+- **Agent:**
+  - **The direction is not guessed.** ET's `directionRef` is opaque (401, 402) and decoding it is `EtDirectionInferrer`'s job, which needs the line's stops; a call keeps a null direction rather than putting a bus on the wrong pattern, and asking for one leaves it out.
+  - **A cancelled call stands in only when the stop has no live one,** since the criterion strikes the row through rather than hiding it.
+  - **The dash is spoken.** TalkBack and VoiceOver read "sin avisos" / "no calls", because the glyph alone is silence.
+
+**CI**
+- **Run 1 (42809728549):** Android was green in every job. iOS failed in three, and the first two causes were this branch's:
+  - **`FeatureLinesTests`** compared against a reference drawn with "–" on every row. The snapshot helper waited for the line's state but not for its calls, which arrive in a second collection: the reference had recorded a race. It now waits for `stopArrivals` when the screen scripts calls.
+  - **`AccessibilityAuditUITests`** reported "Line 3: contrast nearly passed, no element" twice. Hiding the dash changed nothing, and hiding the ETA changed nothing, so it was the row: `LabeledContent` draws its content in the system's secondary colour, and this story put a second colour in the same row, which the audit reads as one node. The name is now the design system's primary text, the dash matches, and the combined accessibility element is gone, so the name and the call are two elements, as before this story. Android's dash colour matches.
+  - **The same job's other audit failure was Near me's,** from LB-201: Dynamic Type is partly unsupported on "Near you" and "Turn on location to see nearby stops". It is not this branch's and it fails on `main` too; it is reported to the owner rather than fixed here.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-106 (live vehicles on the line map) needs the map module, which holds no source and waits for OQ-10; the honest next P1 the catalogue supports is **LB-205**'s stop detail, or LB-107's vehicle animation once LB-106's data exists.
+- **Waiting for the owner:** unchanged — OQ-10, OQ-11, the device passes with TalkBack and VoiceOver (now including this row's one utterance and its spoken dash), the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider.
+
+---
+
 ## 2026-11-10: LB-104, the line detail's directions and ordered stops
 
 **Done**

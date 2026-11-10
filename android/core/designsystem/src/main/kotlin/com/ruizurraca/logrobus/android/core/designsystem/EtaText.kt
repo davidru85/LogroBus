@@ -119,9 +119,10 @@ internal fun Resources.etaLines(eta: EtaUi): EtaLines {
 
 /**
  * What TalkBack says for an ETA, without the line. It says what the screen shows: the time, then the secondary line's
- * qualifier, with the same precedence as [etaLines].
+ * qualifier, with the same precedence as [etaLines]. A row that says more than the ETA, such as the line detail's stop
+ * row ("Stop 3, Varea, in 4 minutes"), builds its one label from this, so the wording never has a second copy (LB-105).
  */
-internal fun Resources.etaSpoken(eta: EtaUi): String {
+fun Resources.etaSpoken(eta: EtaUi): String {
     if (eta.cancelled) return getString(R.string.eta_cancelled_spoken)
     val display = eta.display
     val time =

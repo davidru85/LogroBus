@@ -17,6 +17,8 @@ kotlin {
             implementation(projects.shared.core.network)
             implementation(projects.shared.core.database)
             implementation(projects.shared.core.config)
+            // LB-105: the arrivals repository polls through the one live-data engine (AGENTS.md §5.7).
+            implementation(projects.shared.core.polling)
             implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {

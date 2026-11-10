@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -11,12 +12,17 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailEvent
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
+import com.ruizurraca.logrobus.feature.lines.presentation.StopArrivalUi
+import com.ruizurraca.logrobus.feature.lines.presentation.StopRowUi
 import com.ruizurraca.logrobus.transit.domain.Direction
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -126,4 +132,66 @@ class LineDetailScreenTest {
 
         assertEquals(listOf(LineDetailEvent.Retry), events)
     }
+
+    @Test
+    fun lb105_eachStopRowShowsItsNextCall_orTheDash_andStrikesACancelledOne() {
+        // FR-LINE-05 and design_guidelines.md §6.3: the design system draws the ETA, so the row is checked for what it
+        // hands it, and for the dash of a stop whose call is null.
+        val stops =
+            listOf(
+                StopRowUi(stopId = 38, order = 1, name = "Campillo", lat = 42.45, lng = -2.44),
+                StopRowUi(stopId = 39, order = 2, name = "Varea", lat = 42.46, lng = -2.43),
+                StopRowUi(stopId = 40, order = 3, name = "El Cubo", lat = 42.47, lng = -2.42),
+            )
+        val arrivals =
+            mapOf(
+                38 to StopArrivalUi(EtaDisplay.Minutes(4), isLowConfidence = false, isCancelled = false),
+                39 to StopArrivalUi(EtaDisplay.Minutes(2), isLowConfidence = false, isCancelled = true),
+                40 to StopArrivalUi(null, isLowConfidence = false, isCancelled = false),
+            )
+        compose.setContent {
+            LineDetailScreen(
+                LineDetailUiState.Content(line3, Direction.OUTBOUND, directions = emptyList(), stops = stops),
+                onEvent = {},
+                onBack = {},
+                arrivals = arrivals,
+            )
+        }
+
+        // Each row is one utterance: the stop and its call, never the ETA worded again.
+        val fourMinutes = context.resources.getQuantityString(DS.plurals.eta_minutes_spoken, 4, 4)
+        val cancelled = context.getString(DS.string.eta_cancelled_spoken)
+        val noCalls = context.getString(R.string.line_detail_eta_none_spoken)
+        compose.onNodeWithContentDescription(row("Campillo", 1, fourMinutes)).assertExists()
+        compose.onNodeWithContentDescription(row("Varea", 2, cancelled)).assertExists()
+        compose.onNodeWithContentDescription(row("El Cubo", 3, noCalls)).assertExists()
+
+        // design_guidelines.md §6.3: the cancelled call is struck through and keeps its time. The decoration is read
+        // from the layout, not trusted to the label.
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose
+            // The row merges its children into one utterance, so the ETA is read from the unmerged tree.
+            .onNode(hasText("2 min", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layouts)
+        assertEquals(
+            TextDecoration.LineThrough,
+            layouts
+                .single()
+                .layoutInput.style.textDecoration,
+        )
+    }
+
+    /** The row's one spoken label, as the screen builds it. */
+    private fun row(
+        name: String,
+        order: Int,
+        call: String,
+    ) = context.getString(
+        R.string.line_detail_stop_eta,
+        context.getString(R.string.line_detail_stop_position, order, name),
+        call,
+    )
 }
