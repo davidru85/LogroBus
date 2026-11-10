@@ -69,3 +69,18 @@ INSERT INTO stop (id, name, lat, lng, operational, provisional, normalized_name)
 
 insertStopLine:
 INSERT INTO stop_line (stop_id, line_id) VALUES (?, ?);
+
+-- LB-205 (FR-STOP-03, FR-STOP-04): one stop with the lines that serve it, each with its badge colours and the headsigns
+-- of the patterns that pass it. The headsign answers "towards where" for a stop, which DD-16 numbers per direction; a
+-- stop whose pattern has no headsign keeps none. Ordered by code, then headsign, so the screen and its tests share one
+-- order.
+selectStopWithServedLines:
+SELECT s.id, s.name, s.lat, s.lng, s.operational, s.provisional,
+       l.id AS line_id, l.code, l.display_name, l.color, l.on_color, l.kind, l.operational AS line_operational,
+       p.direction, p.headsign
+FROM stop s
+LEFT JOIN stop_line sl ON sl.stop_id = s.id
+LEFT JOIN line l ON l.id = sl.line_id
+LEFT JOIN pattern p ON p.line_id = l.id
+WHERE s.id = :stopId
+ORDER BY l.code, p.headsign;

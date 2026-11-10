@@ -13,6 +13,13 @@ import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.transit.domain.ServedLine
+import com.ruizurraca.logrobus.transit.domain.Stop
+import kotlinx.coroutines.flow.flowOf
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
@@ -155,6 +162,50 @@ class PreviewUseCases internal constructor(
         DefaultObserveLinesWithFavourites(lines, favourites)
 
     override fun observeLineArrivals(): ObserveLineArrivals = DefaultObserveLineArrivals(arrivals)
+
+    /** LB-205: the preview's stop, scripted with [scriptStop], so a preview shows a detail without a catalogue. */
+    override fun observeStopDetail(): ObserveStopDetail =
+        ObserveStopDetail { stopId -> flowOf(AppResult.Success(scriptedStop ?: sampleStop(stopId))) }
+
+    /**
+     * LB-205: a stop of the sample lines, so a preview or a snapshot has a detail to draw without a catalogue. It is
+     * the first stop of the sample's first line, renamed with [stopId], with that line's two headsigns (DD-16).
+     */
+    private fun sampleStop(stopId: Int): Stop {
+        val line = SampleLines.all.first()
+        val outbound = line.patterns.values.firstOrNull()
+        val first = outbound?.stops?.firstOrNull()
+        return Stop(
+            id = stopId,
+            name = first?.name ?: line.displayName,
+            lat = first?.lat ?: 42.4650,
+            lng = first?.lng ?: -2.4456,
+            isOperational = true,
+            isProvisional = false,
+            servedLines =
+                line.patterns.map { (direction, pattern) ->
+                    ServedLine(
+                        lineId = line.id,
+                        code = line.code,
+                        headsign = pattern.headsign,
+                        direction = direction,
+                        color = line.color,
+                        onColor = line.onColor,
+                    )
+                },
+        )
+    }
+
+    override fun observeStopArrivals(): ObserveStopArrivals =
+        DefaultObserveStopArrivals(stops = { stopId -> observeStopDetail()(stopId) }) { _, _ ->
+            flowOf(AppResult.Success(FetchedArrivals(arrivals = scriptedStopArrivals, fetchedAt = SAMPLE_SYNC)))
+        }
+
+    /** LB-205: the stop a preview shows, or the sample its lines give. */
+    internal var scriptedStop: Stop? = null
+
+    /** LB-205: the calls a preview's stop detail shows. */
+    internal var scriptedStopArrivals: List<Arrival> = emptyList()
 
     override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
 

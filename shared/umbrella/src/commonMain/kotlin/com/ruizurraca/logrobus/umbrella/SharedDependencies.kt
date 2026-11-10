@@ -2,6 +2,12 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
+import kotlinx.coroutines.flow.map
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
@@ -59,6 +65,12 @@ interface UseCases :
 
     /** FR-LINE-05 (LB-105): the calls of one line and direction, polled while a screen shows them. */
     fun observeLineArrivals(): ObserveLineArrivals
+
+    /** FR-STOP-03 (LB-205): one stop of the catalogue, with the lines that serve it, for its detail's header. */
+    fun observeStopDetail(): ObserveStopDetail
+
+    /** FR-STOP-03 to 05 (LB-205): the calls at a stop, polled while its detail shows them. */
+    fun observeStopArrivals(): ObserveStopArrivals
 }
 
 /**
@@ -88,6 +100,26 @@ object SharedDependencies :
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
 
     override fun observeLineArrivals(): ObserveLineArrivals = graph().get()
+
+    override fun observeStopDetail(): ObserveStopDetail = DefaultObserveStopDetail(graph().get())
+
+    override fun observeStopArrivals(): ObserveStopArrivals =
+        DefaultObserveStopArrivals(stops = graph().get()) { stopId, lineIds ->
+            // The data module answers with its own type; the feature's domain is what the use case and the screens see.
+            graph()
+                .get<com.ruizurraca.logrobus.transit.data.StopArrivalsReader>()
+                .observeStopArrivals(stopId, lineIds)
+                .map { answer ->
+                    when (answer) {
+                        is com.ruizurraca.logrobus.core.common.AppResult.Success ->
+                            com.ruizurraca.logrobus.core.common.AppResult.Success(
+                                FetchedArrivals(answer.value.arrivals, answer.value.fetchedAt),
+                            )
+
+                        is com.ruizurraca.logrobus.core.common.AppResult.Failure -> answer
+                    }
+                }
+        }
 
     /** A new set of scripted use cases, for SwiftUI previews and Swift ViewModel tests. They need no graph. */
     fun preview(): PreviewUseCases = PreviewUseCases()
