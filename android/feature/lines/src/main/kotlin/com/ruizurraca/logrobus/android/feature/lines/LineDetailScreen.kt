@@ -259,7 +259,9 @@ private fun StopRow(
             if (eta == null) {
                 Text(
                     stringResource(R.string.line_detail_eta_none),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // The dash is the row's content, as on iOS: the primary colour, not the muted one a cancelled or
+                    // scheduled ETA takes (NFR-A11Y-01).
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium,
                 )
             } else {

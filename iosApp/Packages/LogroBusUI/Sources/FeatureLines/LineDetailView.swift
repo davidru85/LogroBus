@@ -169,9 +169,11 @@ private struct LineDetailBody: View {
                 )
             )
         } else {
+            // NFR-A11Y-01: the dash is the row's content, so it takes the primary text colour. The secondary one is
+            // for a muted ETA, and the audit's contrast pass reads a lone glyph in it as nearly short of 4.5:1.
             Text("line.eta.none", bundle: .module)
                 .font(Tokens.Typography.etaValue)
-                .foregroundStyle(Tokens.Colors.secondaryText)
+                .foregroundStyle(Tokens.Colors.onSurface)
                 .accessibilityLabel(Text("line.eta.none_spoken", bundle: .module))
         }
     }
