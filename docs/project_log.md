@@ -41,7 +41,8 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **A red herring worth recording:** `AndroidGraphTest.lb010_stoppingTheGraphReleasesItsScopeAndDatabase` failed once inside a full `check` and passed three times in isolation and once in the full suite afterwards. Two Gradle builds had been running at once, which this repository's notes already forbid; it was not the change.
 
 **CI**
-- Not run yet: the pull request is open and its watch runs.
+- **Run 1 (42727533289):** four Kotlin jobs — `Android build` and three `Android unit tests` — were **cancelled at their 10-minute limit**, not failed: `assembleDebug` printed Gradle's welcome banner and then nothing for ten minutes. The same run's `Android lint`, every `Android screenshots` job, `Coverage` and the three shared suite jobs of the modules this branch touches (`:shared:core:database`, `:shared:transit:data`, `:shared:feature:lines`) all passed, so the tree is not the cause: a runner stalled. The failed jobs were rerun once.
+- **Not the branch:** the same silence appears in `docs/ci_cd.md` §5's record of runner trouble, but a stall *after* Gradle starts is new; if it recurs, the job's log tail is what to read first.
 
 **Decisions**
 - **Agent:**
