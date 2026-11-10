@@ -1,11 +1,17 @@
 package com.ruizurraca.logrobus.umbrella
 
+import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
+import com.ruizurraca.logrobus.transit.domain.Arrival
+import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LineKind
+import com.ruizurraca.logrobus.transit.domain.LinePattern
+import com.ruizurraca.logrobus.transit.domain.LineStop
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
@@ -13,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Sample lines for previews, Swift tests and debug builds, until LB-008 part 2 downloads the real catalogue (owner
@@ -24,6 +31,13 @@ import org.koin.dsl.module
 internal object SampleLines {
     private const val RED = 0xFFE30613
     private const val BLUE = 0xFF1565C0
+
+    /**
+     * LB-105: the stop ids of a sample line, derived from its own: each direction gets a block of [STOPS_PER_DIRECTION],
+     * the outbound one first, so a call scripted for one direction can never land on the other's stop.
+     */
+    const val STOPS_PER_DIRECTION = 100
+    const val INBOUND_OFFSET = 50
 
     val all: List<Line> =
         listOf(
@@ -58,12 +72,69 @@ internal object SampleLines {
         isOperational = isOperational,
         // "Lardero - Hospital San Pedro" runs towards Hospital San Pedro, then back towards Lardero.
         headsigns = displayName.split(" - ").reversed(),
+        // LB-104, LB-105: both directions with their ends as stops, in the order a rider counts them, so the detail's
+        // toggle, its ordered list and a preview's scripted arrivals all have something to show. The ids are the
+        // preview's own (OQ-11), derived from the line's, and each direction's stop ids are its own too.
+        patterns =
+            mapOf(
+                Direction.OUTBOUND to
+                    LinePattern(
+                        headsign = displayName.split(" - ").last(),
+                        stops = stops(id * STOPS_PER_DIRECTION, displayName.split(" - ")),
+                    ),
+                Direction.INBOUND to
+                    LinePattern(
+                        headsign = displayName.split(" - ").first(),
+                        stops = stops(id * STOPS_PER_DIRECTION + INBOUND_OFFSET, displayName.split(" - ").reversed()),
+                    ),
+            ),
     )
+
+    /** [names] as the pattern's stops, numbered from [base]: a placeholder in Logroño, which no preview reads. */
+    private fun stops(
+        base: Int,
+        names: List<String>,
+    ) = names.mapIndexed { index, name ->
+        LineStop(stopId = base + index, name = name, lat = 42.4650, lng = -2.4456)
+    }
 }
 
 /** The sample lines as a repository, for a preview's or a screen test's scripted graph (LB-008 part 2). */
 private object SampleLinesRepository : LinesRepository {
     override fun observeLines(): Flow<AppResult<List<Line>>> = flowOf(AppResult.Success(SampleLines.all))
+}
+
+/**
+ * The sample lines' calls, for a preview's or a screen test's scripted graph (LB-105). Each line's outbound first stop
+ * has one in four minutes, and its second in nine and low-confidence, so a detail has an ETA and DD-09's "~" to show
+ * without a source. The instants are read from the clock when the call is collected, so a row reads "in 4 min" rather
+ * than a time that has passed. It filters by line and direction as the real repository does.
+ */
+private class SampleArrivalsRepository(
+    private val clock: AppClock,
+) : ArrivalsRepository {
+    override fun observeLineArrivals(
+        lineId: Int,
+        direction: Direction?,
+    ): Flow<AppResult<List<Arrival>>> =
+        flowOf(
+            AppResult.Success(
+                SampleLines.all
+                    .filter { it.id == lineId }
+                    .flatMap { line -> line.patterns.entries.filter { direction == null || it.key == direction } }
+                    .flatMapIndexed { index, (patternDirection, pattern) ->
+                        pattern.stops.take(2).mapIndexed { stopIndex, stop ->
+                            Arrival(
+                                lineId = lineId,
+                                stopId = stop.stopId,
+                                direction = patternDirection,
+                                expectedAt = clock.now() + (4 + 5 * stopIndex + index).minutes,
+                                isLowConfidence = stopIndex == 1,
+                            )
+                        }
+                    },
+            ),
+        )
 }
 
 /**
@@ -83,4 +154,5 @@ fun previewDataModule(): Module =
             }
         }
         single<LinesRepository> { SampleLinesRepository }
+        single<ArrivalsRepository> { SampleArrivalsRepository(get()) }
     }

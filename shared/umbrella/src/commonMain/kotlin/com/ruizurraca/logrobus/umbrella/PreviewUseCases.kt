@@ -8,16 +8,21 @@ import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.settings.domain.DefaultObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
+import com.ruizurraca.logrobus.transit.domain.Arrival
+import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.Line
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticDataset
@@ -34,6 +39,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlin.concurrent.Volatile
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 /**
@@ -49,6 +55,7 @@ class PreviewUseCases internal constructor(
     private val collections: MutableStateFlow<Int> = MutableStateFlow(0),
     internal val locationPreview: PreviewLocation = PreviewLocation(collections),
     internal val plannerPreview: PreviewPlanner = PreviewPlanner(locationPreview, now = SAMPLE_SYNC),
+    internal val arrivalsPreview: PreviewArrivals = PreviewArrivals(),
 ) : UseCases,
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
@@ -71,19 +78,15 @@ class PreviewUseCases internal constructor(
     val activeCollections: Int
         get() = collections.value
 
-    /** Scripts a first load that never ends: the use cases emit nothing. */
-    fun loading(): PreviewUseCases = script(lastSuccesses = null, lines = emptyList(), sync = null)
+    /**
+     * LB-105: how many times the detail has collected a direction's calls, so a test sees that a new direction starts
+     * a collection of its own and that a format change does not. Counted apart from [activeCollections], which is
+     * about the screens' flows ending.
+     */
+    val arrivalCollections: Int
+        get() = arrivalsPreview.collections
 
-    /** Scripts an app that has never synced, and a sync that stored no lines. */
-    fun neverSynced(): PreviewUseCases = script(lastSuccesses = emptyMap(), lines = emptyList())
-
-    /** Scripts a first launch with no network: nothing has synced, and syncing fails with a network error. */
-    fun offline(): PreviewUseCases =
-        script(lastSuccesses = emptyMap(), lines = emptyList(), sync = AppResult.Failure(AppError.Network))
-
-    /** Scripts the default again: every dataset synced, with the sample lines. Retry then loads them. */
-    fun synced(): PreviewUseCases =
-        script(lastSuccesses = StaticDataset.entries.associateWith { SAMPLE_SYNC }, lines = SampleLines.all)
+    private val arrivals = arrivalsPreview.repository(failing = { failing })
 
     /**
      * Adds line [id] to the scripted favourite lines, last, as the user's toggle would. One line per call, so Swift
@@ -103,7 +106,7 @@ class PreviewUseCases internal constructor(
             settingsPreview.failing = true
         }
 
-    private fun script(
+    internal fun script(
         lastSuccesses: Map<StaticDataset, Instant>?,
         lines: List<Line>,
         sync: AppResult<Unit>? = AppResult.Success(Unit),
@@ -151,6 +154,8 @@ class PreviewUseCases internal constructor(
     override fun observeLinesWithFavourites(): ObserveLinesWithFavourites =
         DefaultObserveLinesWithFavourites(lines, favourites)
 
+    override fun observeLineArrivals(): ObserveLineArrivals = DefaultObserveLineArrivals(arrivals)
+
     override fun setFavouriteLine(): SetFavouriteLine = DefaultSetFavouriteLine(favourites, NoOpAnalyticsTracker)
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = DefaultReorderFavouriteLines(favourites)
@@ -194,6 +199,36 @@ class PreviewUseCases internal constructor(
         val SAMPLE_SYNC = Instant.parse("2026-10-28T09:30:00Z")
     }
 }
+
+// The scripts that set a whole state live outside the class, as the arrivals' do: the class carries the use cases, and
+// the scripts are the extensions Swift chains. Each one replaces the last.
+
+/** Scripts a first load that never ends: the use cases emit nothing. */
+fun PreviewUseCases.loading(): PreviewUseCases = script(lastSuccesses = null, lines = emptyList(), sync = null)
+
+/** Scripts an app that has never synced, and a sync that stored no lines. */
+fun PreviewUseCases.neverSynced(): PreviewUseCases = script(lastSuccesses = emptyMap(), lines = emptyList())
+
+/** Scripts a first launch with no network: nothing has synced, and syncing fails with a network error. */
+fun PreviewUseCases.offline(): PreviewUseCases =
+    script(lastSuccesses = emptyMap(), lines = emptyList(), sync = AppResult.Failure(AppError.Network))
+
+/** Scripts the default again: every dataset synced, with the sample lines. Retry then loads them. */
+fun PreviewUseCases.synced(): PreviewUseCases =
+    script(lastSuccesses = StaticDataset.entries.associateWith { PreviewArrivals.SAMPLE_SYNC }, lines = SampleLines.all)
+
+/**
+ * LB-105: scripts two calls of line 10, one in 4 min and one low-confidence, so a preview or a snapshot of the line
+ * detail has an ETA to show. An extension, as the other scripts are, so Swift chains it: `preview().withArrivals()`.
+ */
+fun PreviewUseCases.withArrivals(): PreviewUseCases =
+    calls(PreviewArrivals.A_RIDE_AWAY, PreviewArrivals.A_ROUGHER_PREDICTION)
+
+/** LB-105: scripts the calls a preview's arrivals use case emits, replacing the last script. */
+fun PreviewUseCases.calls(vararg calls: Arrival): PreviewUseCases =
+    apply {
+        arrivalsPreview.script(calls.toList())
+    }
 
 /**
  * Scripts the user's settings (LB-403), as if they had chosen them before. An extension, so Swift chains it like the

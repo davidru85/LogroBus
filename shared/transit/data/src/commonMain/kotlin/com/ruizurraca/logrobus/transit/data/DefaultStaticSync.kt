@@ -7,7 +7,10 @@ import com.ruizurraca.logrobus.core.config.RemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfigKey
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
+import com.ruizurraca.logrobus.core.polling.PollingEngine
+import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import kotlin.time.Duration
 
 /**
  * The static sync over the real source, assembled for the composition root (LB-008 part 2, architecture.md §4.4).
@@ -39,3 +42,22 @@ class DefaultStaticSync(
             logger = logger,
         )
 }
+
+/**
+ * LB-105: the arrivals repository over the one source client and the one polling engine, assembled for the composition
+ * root. The endpoint class stays `internal`: the graph needs a repository, not the API behind it.
+ */
+fun arrivalsRepository(
+    client: SourceClient,
+    polling: PollingEngine,
+    interval: Duration,
+    previewMinutes: Int,
+    logger: Logger,
+): ArrivalsRepository =
+    ArrivalsRepositoryImpl(
+        api = RealtimeApi(client, logger),
+        polling = polling,
+        interval = interval,
+        previewMinutes = previewMinutes,
+        logger = logger,
+    )

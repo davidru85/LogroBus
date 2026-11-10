@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
@@ -55,6 +56,9 @@ interface UseCases :
     fun setFavouriteLine(): SetFavouriteLine
 
     fun reorderFavouriteLines(): ReorderFavouriteLines
+
+    /** FR-LINE-05 (LB-105): the calls of one line and direction, polled while a screen shows them. */
+    fun observeLineArrivals(): ObserveLineArrivals
 }
 
 /**
@@ -82,6 +86,8 @@ object SharedDependencies :
     override fun setFavouriteLine(): SetFavouriteLine = graph().get()
 
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
+
+    override fun observeLineArrivals(): ObserveLineArrivals = graph().get()
 
     /** A new set of scripted use cases, for SwiftUI previews and Swift ViewModel tests. They need no graph. */
     fun preview(): PreviewUseCases = PreviewUseCases()

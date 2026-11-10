@@ -11,16 +11,19 @@ import com.ruizurraca.logrobus.core.common.warn
 import com.ruizurraca.logrobus.core.config.CompiledDefaultsRemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfigKey
+import com.ruizurraca.logrobus.core.config.pollInterval
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
 import com.ruizurraca.logrobus.favourites.data.FavouriteLinesRepositoryImpl
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
+import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultSetFavouriteLine
+import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
@@ -42,6 +45,8 @@ import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
+import com.ruizurraca.logrobus.transit.data.arrivalsRepository
+import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
@@ -133,6 +138,18 @@ private val transitDataModule =
         single<LinesRepository> { LinesRepositoryImpl(get(), get(), get()) }
         // LB-008 part 2: the sync over the real source, one per process so its mutex runs one sync at a time.
         single<StaticSyncEngine> { DefaultStaticSync(get(), get(), get(), get(), get(), get()).engine }
+        // LB-105: the calls of a line, polled while its detail shows them. The cadence and the preview window come from
+        // remote config here, where the composition root reads it, so the repository itself holds no policy.
+        single<ArrivalsRepository> {
+            val config = get<RemoteConfig>()
+            arrivalsRepository(
+                client = get(),
+                polling = get(),
+                interval = config.pollInterval(RemoteConfigKey.PollArrivalsMs),
+                previewMinutes = config.get(RemoteConfigKey.EtaPreviewMinutes),
+                logger = get(),
+            )
+        }
     }
 
 // Favourites are the user's own, so debug builds keep them in the real database too.
@@ -155,6 +172,8 @@ private val linesModule =
     module {
         factory<ObserveLines> { DefaultObserveLines(get(), get()) }
         factory<ObserveLinesWithFavourites> { DefaultObserveLinesWithFavourites(get(), get()) }
+        // LB-105 (FR-LINE-05): the calls of a line, which the detail's stops show as their next arrival.
+        factory<ObserveLineArrivals> { DefaultObserveLineArrivals(get()) }
         factory<SetFavouriteLine> { DefaultSetFavouriteLine(get(), get()) }
         factory<ReorderFavouriteLines> { DefaultReorderFavouriteLines(get()) }
     }
