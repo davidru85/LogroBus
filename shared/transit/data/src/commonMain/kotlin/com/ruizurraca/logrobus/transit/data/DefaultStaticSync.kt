@@ -9,6 +9,7 @@ import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.PollingEngine
 import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import kotlin.time.Duration
 
@@ -50,14 +51,38 @@ class DefaultStaticSync(
 fun arrivalsRepository(
     client: SourceClient,
     polling: PollingEngine,
-    interval: Duration,
-    previewMinutes: Int,
+    window: ArrivalsWindow,
     logger: Logger,
+    patternsOf: (lineId: Int) -> Map<Direction, List<Int>> = { emptyMap() },
 ): ArrivalsRepository =
     ArrivalsRepositoryImpl(
         api = RealtimeApi(client, logger),
         polling = polling,
-        interval = interval,
-        previewMinutes = previewMinutes,
+        interval = window.interval,
+        previewMinutes = window.previewMinutes,
         logger = logger,
+        patternsOf = patternsOf,
     )
+
+/** How often a line's calls are polled, and how far ahead the source is asked for them (spec §5.7, §8.9). */
+data class ArrivalsWindow(
+    val interval: Duration,
+    val previewMinutes: Int,
+)
+
+/**
+ * LB-105 (DD-04): the stop ids of each of [lineId]'s patterns in sequence order, keyed by direction, which is what
+ * places its calls. The catalogue stores each direction under its [key] (`outbound`, `inbound`), not under a word the
+ * source sends, so the grouping reads the key; a row this version does not know is left out rather than guessed.
+ */
+fun patternsOfLine(
+    database: LogroBusDatabase,
+    lineId: Int,
+): Map<Direction, List<Int>> =
+    database.lineQueries
+        .selectLinePatternStopIds(lineId.toLong())
+        .executeAsList()
+        .mapNotNull { row ->
+            val direction = Direction.entries.firstOrNull { it.key == row.direction } ?: return@mapNotNull null
+            direction to row.stop_id.toInt()
+        }.groupBy({ (direction, _) -> direction }, { (_, stopId) -> stopId })

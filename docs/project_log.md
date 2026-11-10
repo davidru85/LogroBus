@@ -28,7 +28,15 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **Docs:** `acceptance_criteria.md` with the evidence, `backlog.md`, both READMEs, `AGENTS.md` §2.
 
 **Review**
-- **Five findings, each fixed rather than worked around:**
+- **Seven findings from the reviewer agents, each fixed rather than worked around:**
+  - **A direction filtered on the source's own code emptied every row.** ET's `directionRef` is opaque (`"401"`), so `DirectionMapper` gave `null` and asking for a direction dropped all its calls; both platforms always ask for one. The repository now infers each code with `EtDirectionInferrer` over the line's patterns, read from the cached catalogue (`patternsOfLine`), and the end-to-end test proves it over the real capture and the real catalogue (`LinesListEndToEndTest.lb105_theCaptureWithItsOwnPatternsYieldsADirectionsCalls`).
+  - **A failure after a success was returned as the stale list.** The polling engine keeps the last good value beside the error, so a screen would keep re-wording expired ETAs as "Now". A `lastError` is now the failure, and the rows drop to the dash with Retry (`lb105_aFailureAfterASuccess_isAFailure_notTheStaleCalls`).
+  - **`""` in a time dropped the whole call,** although DD-07 says the source writes it for "no value". The expected time falls back to the aimed one through `trimmedOrNull` (`lb105_anEmptyExpectedTimeFallsBackToTheAimedOne_ratherThanDroppingTheCall`).
+  - **Android kept the old direction's times on the new rows** while the new collection had not answered, and both patterns share stop ids. The switch now emits an empty map first, and a test breaks the reset to prove it (`lb105_changingTheDirectionDropsTheOldOnesCalls_beforeTheNewOnesArrive`).
+  - **The iOS dash test was vacuous:** it looked up a stop id the pattern does not have. It now scripts one call and checks the pattern's real second stop (`lb105_eachStopShowsItsNextCall_andAStopWithoutOneKeepsTheDash`), and `withOneArrival()` exists for it.
+  - **A cancelled iOS collection could still write its direction** before its first `Task.isCancelled` check, hiding the live collection's calls. The check is now the first statement.
+  - **The two platforms said the dash differently,** "no calls" / "sin avisos" against "No upcoming arrival" / "Sin próxima llegada", and the iOS row never reflowed at accessibility sizes. Both are now as `design_guidelines.md` §3.1 says, and both large-text references show it.
+- **Four findings from the first pass, also fixed:**
   - **`previewMinutes=60` for API-05.** The graph passed `eta_preview_minutes`, which is FR-STOP-03's 60 min for API-06; the spec fixes API-05's window at 30 (§5.7, §8.7) and the criterion asks for it. The line's window is now its own constant.
   - **A raw `line.stop.position %@` in the iOS detail.** The key declared `%@` for an integer, so the row drew the key rather than "Parada 1" and pushed the stop's name onto a second line. The key is `%lld`, as the design system's own integer keys are; the reference now shows the row the design asks for.
   - **The iOS screen crashed on the shared map.** A Kotlin `Map` reaches Swift as an `NSDictionary`, and iterating it force-casts each key, which aborts; every test that touched the detail crashed with `swift_dynamicCastFailure`. The ViewModel reads one stop at a time through `KotlinInt`.

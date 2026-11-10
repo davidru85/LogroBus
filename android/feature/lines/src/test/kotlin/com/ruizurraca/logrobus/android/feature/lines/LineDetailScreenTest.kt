@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -11,6 +12,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
@@ -162,6 +165,23 @@ class LineDetailScreenTest {
         compose.onNodeWithContentDescription(row("Campillo", 1, fourMinutes)).assertExists()
         compose.onNodeWithContentDescription(row("Varea", 2, cancelled)).assertExists()
         compose.onNodeWithContentDescription(row("El Cubo", 3, noCalls)).assertExists()
+
+        // design_guidelines.md §6.3: the cancelled call is struck through and keeps its time. The decoration is read
+        // from the layout, not trusted to the label.
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose
+            // The row merges its children into one utterance, so the ETA is read from the unmerged tree.
+            .onNode(hasText("2 min", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layouts)
+        assertEquals(
+            TextDecoration.LineThrough,
+            layouts
+                .single()
+                .layoutInput.style.textDecoration,
+        )
     }
 
     /** The row's one spoken label, as the screen builds it. */

@@ -296,16 +296,54 @@ class LineDetailViewModelTest {
                 )
 
             backgroundScope.launch { viewModel.state.collect {} }
-            viewModel.arrivals.test {
-                assertEquals(EtaDisplay.Minutes(4), awaitItem().getValue(38).eta)
-                saved.value = UserPreferences(etaFormat = EtaFormat.CLOCK_TIME)
-                assertTrue(
-                    "FR-SET-01: the clock form is the same instant, worded as a time",
-                    awaitItem().getValue(38).eta is EtaDisplay.ClockTime,
+            backgroundScope.launch { viewModel.arrivals.collect {} }
+            advanceUntilIdle()
+            assertEquals(EtaDisplay.Minutes(4), viewModel.arrivals.value[38]?.eta)
+
+            saved.value = UserPreferences(etaFormat = EtaFormat.CLOCK_TIME)
+            advanceUntilIdle()
+            assertTrue(
+                "FR-SET-01: the clock form is the same instant, worded as a time",
+                viewModel.arrivals.value[38]?.eta is EtaDisplay.ClockTime,
+            )
+            assertEquals("FR-SET-01: a format change re-words the calls it already has", 1, asks)
+        }
+
+    @Test
+    fun lb105_changingTheDirectionDropsTheOldOnesCalls_beforeTheNewOnesArrive() =
+        runTest {
+            // Both patterns number their stops separately, but the poller emits nothing until its first fetch
+            // returns; the rows must not paint the direction just left behind in the meantime.
+            val now = Instant.parse("2026-11-08T11:00:00Z")
+            val viewModel =
+                viewModel(
+                    {
+                        flowOf(
+                            AppResult.Success(LinesWithFavourites(listOf(lineWithStops), favouriteIds = emptyList())),
+                        )
+                    },
+                    observeArrivals = { _, direction ->
+                        if (direction == Direction.OUTBOUND) {
+                            flowOf(AppResult.Success(listOf(arrival(stopId = 38, expectedAt = now + 4.minutes))))
+                        } else {
+                            flowOf() // A collection that has not answered yet.
+                        }
+                    },
+                    setFavourite = { _, _ -> AppResult.Success(FavouriteToggle.Done) },
                 )
-                assertEquals("FR-SET-01: a format change re-words the calls it already has", 1, asks)
-                cancelAndIgnoreRemainingEvents()
-            }
+
+            backgroundScope.launch { viewModel.state.collect {} }
+            backgroundScope.launch { viewModel.arrivals.collect {} }
+            advanceUntilIdle()
+            assertEquals(EtaDisplay.Minutes(4), viewModel.arrivals.value[38]?.eta)
+
+            viewModel.onEvent(LineDetailEvent.SelectDirection(Direction.INBOUND))
+            advanceUntilIdle()
+            assertTrue(
+                "the inbound rows show no call, never the outbound times",
+                viewModel.arrivals.value.values
+                    .all { it.eta == null },
+            )
         }
 
     private suspend fun app.cash.turbine.ReceiveTurbine<LineDetailUiState>.awaitSettled(): LineDetailUiState {

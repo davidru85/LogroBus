@@ -32,6 +32,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * LB-105 (FR-LINE-05, spec §5.7, DD-04, DD-09): the calls of one line, polled through the one engine and read from the
@@ -74,14 +75,17 @@ class ArrivalsRepositoryTest {
                 }
         }
 
-    private fun repository(body: String = FixtureLoader.read("et_line1_60min.json")) =
-        ArrivalsRepositoryImpl(
-            api = RealtimeApi(client = client(body), logger = logger),
-            polling = fakePolling(),
-            interval = INTERVAL,
-            previewMinutes = PREVIEW_MINUTES,
-            logger = logger,
-        )
+    private fun repository(
+        body: String = FixtureLoader.read("et_line1_60min.json"),
+        patterns: Map<Direction, List<Int>> = emptyMap(),
+    ) = ArrivalsRepositoryImpl(
+        api = RealtimeApi(client = client(body), logger = logger),
+        polling = fakePolling(),
+        interval = INTERVAL,
+        previewMinutes = PREVIEW_MINUTES,
+        logger = logger,
+        patternsOf = { patterns },
+    )
 
     private fun client(body: String) =
         SourceClient(
@@ -227,11 +231,123 @@ class ArrivalsRepositoryTest {
             }
         }
 
+    @Test
+    fun lb105_anOpaqueDirectionCodeIsInferredFromWhereItsCallsAre() =
+        runTest {
+            // DD-04: "401" says nothing on its own; its calls do. Four calls at orders 1 to 4 at the outbound
+            // pattern's own first four stops fit it and nothing of the inbound one, so they decide it.
+            val body =
+                envelope(
+                    call(stop = 1, order = 1, direction = "401"),
+                    call(stop = 2, order = 2, direction = "401"),
+                    call(stop = 3, order = 3, direction = "401"),
+                    call(stop = 4, order = 4, direction = "401"),
+                    call(stop = 5, order = 1, direction = "402"),
+                    call(stop = 6, order = 2, direction = "402"),
+                    call(stop = 7, order = 3, direction = "402"),
+                    call(stop = 8, order = 4, direction = "402"),
+                )
+            val patterns =
+                mapOf(
+                    Direction.OUTBOUND to listOf(1, 2, 3, 4),
+                    Direction.INBOUND to listOf(5, 6, 7, 8),
+                )
+
+            repository(
+                body = body,
+                patterns = patterns,
+            ).observeLineArrivals(lineId = 1, direction = Direction.OUTBOUND).test {
+                val first = awaitItem()
+                assertIs<AppResult.Success<List<Arrival>>>(first)
+                assertEquals(
+                    listOf(1, 2, 3, 4),
+                    first.value.map { it.stopId }.sorted(),
+                    "the 401 calls, placed on the outbound pattern, and not the 402 ones",
+                )
+                assertTrue(first.value.all { it.direction == Direction.OUTBOUND })
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun lb105_withoutThePatternsNoCallIsAttributedToADirection() =
+        runTest {
+            // The honest fallback: an empty pattern map decides nothing, so asking for a direction finds nothing
+            // rather than putting a bus on the wrong one.
+            repository().observeLineArrivals(lineId = 1, direction = Direction.OUTBOUND).test {
+                assertEquals(AppResult.Success(emptyList<Arrival>()), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun lb105_anEmptyExpectedTimeFallsBackToTheAimedOne_ratherThanDroppingTheCall() =
+        runTest {
+            // DD-07: the source writes "" for a time it does not have.
+            val body =
+                envelope(
+                    """
+                    {"lineRef":"1","directionRef":"401","stopPointRef":"38","order":25,
+                     "expectedArrivalTime":"","aimedArrivalTime":"2026-11-08T11:04:47+01:00"}
+                    """.trimIndent(),
+                )
+
+            repository(body = body).observeLineArrivals(lineId = 1, direction = null).test {
+                val first = awaitItem()
+                assertIs<AppResult.Success<List<Arrival>>>(first)
+                assertEquals(1, first.value.size, "the aimed time is a valid fallback")
+                assertEquals(Instant.parse("2026-11-08T11:04:47+01:00"), first.value.single().expectedAt)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun lb105_aFailureAfterASuccess_isAFailure_notTheStaleCalls() =
+        runTest {
+            // The engine keeps the last good value beside the error. A list of ETAs from the last poll re-worded as
+            // "Now" is worse than none, so the screen drops them and shows Retry (FR-ERR-05).
+            val stale =
+                object : PollingEngine {
+                    override fun <T> poll(
+                        key: PollKey,
+                        interval: Duration,
+                        fetch: suspend () -> AppResult<T>,
+                    ): Flow<Timed<T>> =
+                        flow {
+                            // The engine's own rule: it keeps the last good value and sets the error beside it.
+                            val call = fetch()
+                            val value = (call as? AppResult.Success)?.value
+                            emit(Timed(value, START, lastError = AppError.Network))
+                        }
+                }
+            val repository =
+                ArrivalsRepositoryImpl(
+                    api = RealtimeApi(client(FixtureLoader.read("et_line1_60min.json")), logger),
+                    polling = stale,
+                    interval = INTERVAL,
+                    previewMinutes = PREVIEW_MINUTES,
+                    logger = logger,
+                )
+
+            repository.observeLineArrivals(lineId = 1, direction = null).test {
+                assertEquals(AppResult.Failure(AppError.Network), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     private fun call(
         expected: String = "2026-11-08T11:04:47+01:00",
         cancellation: Boolean = false,
+    ) = call(stop = 38, order = 25, direction = "401", expected = expected, cancellation = cancellation)
+
+    private fun call(
+        stop: Int,
+        order: Int,
+        direction: String,
+        expected: String = "2026-11-08T11:04:47+01:00",
+        cancellation: Boolean = false,
     ) = """
-        {"lineRef":"1","directionRef":"401","stopPointRef":"38","order":25,
+        {"lineRef":"1","directionRef":"$direction","stopPointRef":"$stop","order":$order,
          "expectedArrivalTime":"$expected","cancellation":$cancellation,"predictionInaccurate":true}
         """.trimIndent()
 
@@ -241,6 +357,9 @@ class ArrivalsRepositoryTest {
     private companion object {
         const val BASE_URL = "https://transporteurbano.logrono.es"
         const val PREVIEW_MINUTES = 60
+
+        // Line 1 outbound's 25th stop is 38 (spec §4.6's example), which places the 401 calls.
+        const val ORDER_OF_38 = 25
         val INTERVAL = 20.seconds
     }
 }

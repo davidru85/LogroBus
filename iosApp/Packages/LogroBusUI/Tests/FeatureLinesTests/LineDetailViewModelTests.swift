@@ -72,20 +72,32 @@ struct LineDetailViewModelTests {
 
     @Test
     func lb105_eachStopShowsItsNextCall_andAStopWithoutOneKeepsTheDash() async throws {
-        // FR-LINE-05: the sample line 10's outbound first two stops have a call each, in the preview's own script, and
-        // its later stops have none, which the row draws as the criterion's dash.
-        let viewModel = LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().withArrivals())
+        // FR-LINE-05: line 10's outbound pattern has two stops. One call is scripted, at the first, so the second is a
+        // row with no call: the criterion's dash. Asking for a stop that does not exist would prove nothing.
+        let useCases = SharedDependencies.shared.preview().withOneArrival()
+        let viewModel = LineDetailViewModel(lineId: 10, useCases: useCases)
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
-        try await waitUntil { !viewModel.stopArrivals.isEmpty }
+        try await waitUntil { viewModel.stopArrivals[1000]?.eta != nil }
 
         let first = try #require(viewModel.stopArrivals[1000]?.eta as? EtaDisplayMinutes)
         #expect(first.minutes == 4)
         #expect(viewModel.stopArrivals[1000]?.isLowConfidence == false)
+        #expect(viewModel.stopArrivals.count == 2, "the outbound pattern's two stops")
+        #expect(viewModel.stopArrivals[1001]?.eta == nil, "a stop with no call keeps the criterion's dash")
+    }
+
+    @Test
+    func lb105_anInaccuratePredictionIsMarkedLowConfidence() async throws {
+        // DD-09: the source's `predictionInaccurate`, which the preview's second scripted call carries.
+        let viewModel = LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().withArrivals())
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.stopArrivals[1001]?.eta != nil }
+
         let second = try #require(viewModel.stopArrivals[1001]?.eta as? EtaDisplayMinutes)
         #expect(second.minutes == 7)
         #expect(viewModel.stopArrivals[1001]?.isLowConfidence == true, "DD-09: the second call is the rougher one")
-        #expect(viewModel.stopArrivals[1002]?.eta == nil, "a stop with no call keeps the criterion's dash")
     }
 
     @Test
@@ -118,6 +130,27 @@ struct LineDetailViewModelTests {
         useCases.settings(theme: .system, etaFormat: .clockTime)
         try await waitUntil { viewModel.stopArrivals[1000]?.eta is EtaDisplayClockTime }
         #expect(useCases.arrivalCollections == collections, "FR-SET-01: re-worded, not asked again")
+    }
+
+    @Test
+    func lb105_aRestartedObservationKeepsAskingForTheNewDirection() async throws {
+        // SwiftUI restarts `.task(id:)` on Retry. The new observation must still collect the line and answer a
+        // direction change; the ViewModel's own guard against a cancelled loop clearing its successor's stream is
+        // defensive, and awaiting the first task here serialises the two, so this test cannot prove that guard.
+        let useCases = SharedDependencies.shared.preview().withArrivals()
+        let viewModel = LineDetailViewModel(lineId: 10, useCases: useCases)
+        let first = Task { await viewModel.observe() }
+        try await waitUntil { viewModel.stopArrivals[1000]?.eta != nil }
+        first.cancel()
+        await first.value
+
+        let second = Task { await viewModel.observe() }
+        defer { second.cancel() }
+        try await waitUntil { viewModel.stopArrivals[1000]?.eta != nil }
+        let before = useCases.arrivalCollections
+
+        viewModel.onEvent(LineDetailEventSelectDirection(direction: .inbound))
+        try await waitUntil { useCases.arrivalCollections == before + 1 }
     }
 
     private func isFavourite(_ viewModel: LineDetailViewModel) -> Bool? {

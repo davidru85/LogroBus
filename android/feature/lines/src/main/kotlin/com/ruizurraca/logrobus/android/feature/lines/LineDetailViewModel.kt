@@ -116,9 +116,14 @@ class LineDetailViewModel(
                     }
 
                     else -> {
-                        observeArrivals(lineId, shown.direction).map { result ->
-                            StopCalls(shown.stops, shown.direction, (result as? AppResult.Success)?.value.orEmpty())
-                        }
+                        observeArrivals(lineId, shown.direction)
+                            .map { result ->
+                                StopCalls(shown.stops, shown.direction, (result as? AppResult.Success)?.value.orEmpty())
+                            }
+                            // The poller emits nothing until its first fetch returns, and a new direction's stops
+                            // share their ids with the old pattern's: without this the rows would keep painting the
+                            // direction just left behind.
+                            .onStart { emit(StopCalls(shown.stops, shown.direction, emptyList())) }
                     }
                 }
             }

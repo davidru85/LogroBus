@@ -12,6 +12,7 @@ import com.ruizurraca.logrobus.core.config.CompiledDefaultsRemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfig
 import com.ruizurraca.logrobus.core.config.RemoteConfigKey
 import com.ruizurraca.logrobus.core.config.pollInterval
+import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
@@ -42,11 +43,14 @@ import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
 import com.ruizurraca.logrobus.feature.settings.domain.ObservePreferences
 import com.ruizurraca.logrobus.feature.settings.domain.SetEtaFormat
 import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
+import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
 import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.arrivalsRepository
+import com.ruizurraca.logrobus.transit.data.patternsOfLine
 import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
+import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
@@ -145,11 +149,17 @@ private val transitDataModule =
             arrivalsRepository(
                 client = get(),
                 polling = get(),
-                interval = config.pollInterval(RemoteConfigKey.PollArrivalsMs),
-                // Spec §5.7: API-05 asks for the calls within 30 min. `eta_preview_minutes` (60) is FR-STOP-03's,
-                // for API-06, so the line's window is its own constant rather than another feature's setting.
-                previewMinutes = LINE_PREVIEW_MINUTES,
+                window =
+                    ArrivalsWindow(
+                        interval = config.pollInterval(RemoteConfigKey.PollArrivalsMs),
+                        // Spec §5.7: API-05 asks within 30 min. `eta_preview_minutes` (60) is FR-STOP-03's, for API-06,
+                        // so the line's window is its own constant rather than another feature's setting.
+                        previewMinutes = LINE_PREVIEW_MINUTES,
+                    ),
                 logger = get(),
+                // DD-04: ET's direction code is opaque, so a call's direction is inferred from where it sits in the
+                // journey. The patterns come from the cached catalogue, read once per request that needs them.
+                patternsOf = { lineId -> patternsOfLine(get<LogroBusDatabase>(), lineId) },
             )
         }
     }

@@ -56,13 +56,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No upcoming arrival"
+            "value": "no calls"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sin próxima llegada"
+            "value": "sin avisos"
           }
         }
       }

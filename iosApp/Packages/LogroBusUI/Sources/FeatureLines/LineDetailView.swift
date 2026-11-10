@@ -136,11 +136,7 @@ private struct LineDetailBody: View {
                 ForEach(Array(content.stops.enumerated()), id: \.element.stopId) { index, stop in
                     // "Stop 3, Varea": the position is what a rider counts, and the key's one argument is it.
                     LabeledContent {
-                        HStack(spacing: Tokens.Spacing.medium) {
-                            Text(verbatim: stop.name)
-                            // FR-LINE-05: the stop's next arrival, at the row's trailing edge.
-                            arrival(arrivals[stop.stopId])
-                        }
+                        StopNameAndCall(name: stop.name, call: arrivals[stop.stopId])
                     } label: {
                         Text("line.stop.position \(index + 1)", bundle: .module)
                     }
@@ -161,7 +157,7 @@ private struct LineDetailBody: View {
     /// an `EtaDisplay` and its qualifiers as design_guidelines.md §6.3 says: the "~" of DD-09, the row struck through
     /// with "Cancelado" when the call is cancelled, and the spoken "aproximadamente"/"approximately". A stop with no
     /// call in the preview window shows the criterion's "–", which says so when read.
-    @ViewBuilder private func arrival(_ stopArrival: StopArrivalUi?) -> some View {
+    @ViewBuilder static func arrival(_ stopArrival: StopArrivalUi?) -> some View {
         if let eta = stopArrival?.eta {
             EtaText(
                 eta: EtaUi(
@@ -240,5 +236,32 @@ private struct LineDetailBody: View {
             viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().offline())
         )
         .preferredColorScheme(.dark)
+    }
+}
+
+/// FR-LINE-05 and design_guidelines.md §3.1: a stop's name and its next call. Beside each other while the text fits,
+/// and one above the other at accessibility sizes, where a fixed row would squeeze the name to a word a line. The call
+/// keeps the trailing edge in both.
+private struct StopNameAndCall: View {
+    let name: String
+    let call: StopArrivalUi?
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .trailing, spacing: Tokens.Spacing.xSmall) {
+                    Text(verbatim: name)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    LineDetailBody.arrival(call)
+                }
+            } else {
+                HStack(spacing: Tokens.Spacing.medium) {
+                    Text(verbatim: name)
+                    LineDetailBody.arrival(call)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }

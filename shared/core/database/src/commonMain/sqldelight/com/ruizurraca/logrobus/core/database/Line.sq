@@ -76,3 +76,11 @@ SELECT ps.line_id, ps.direction, ps.seq, ps.stop_id, ps.shape_index, s.name, s.l
 FROM pattern_stop ps
 JOIN stop s ON s.id = ps.stop_id
 ORDER BY ps.line_id, ps.direction, ps.seq;
+
+-- LB-105 (DD-04): the stop ids of one line's patterns in sequence order, which is what places its calls. ET's
+-- `directionRef` is an opaque code, so a call's direction is inferred from where it is in the journey.
+selectLinePatternStopIds:
+SELECT direction, stop_id
+FROM pattern_stop
+WHERE line_id = ?
+ORDER BY direction, seq;

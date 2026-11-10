@@ -50,6 +50,11 @@ public final class LineDetailViewModel {
     /// direction once started. Never displayed, so it takes no part in observation.
     @ObservationIgnored private var directionChange: AsyncStream<Direction>.Continuation?
 
+    /// Which `observe()` owns [directionChange]. SwiftUI cancels the old task when `.task(id:)` restarts and does not
+    /// wait for it, so an old loop's cleanup can run after the new loop has installed its own stream; it must not
+    /// clear the new one, or no direction change would ever be delivered again.
+    @ObservationIgnored private var arrivalsGeneration = 0
+
     /// Takes the use cases from the graph, or from `SharedDependencies.shared.preview()` in previews and tests.
     public init(lineId: Int32, useCases: any UseCases = SharedDependencies.shared) {
         self.lineId = lineId
@@ -119,9 +124,13 @@ public final class LineDetailViewModel {
     private func observeArrivals() async {
         let (changes, change) = AsyncStream<Direction>.makeStream()
         directionChange = change
+        arrivalsGeneration += 1
+        let generation = arrivalsGeneration
         defer {
-            directionChange = nil
             change.finish()
+            // Only the loop that still owns the stream clears it: a cancelled predecessor must leave its successor's
+            // stream alone.
+            if arrivalsGeneration == generation { directionChange = nil }
         }
         // A new loop starts a new collection: whatever the last one was asking for ended with it, so the direction
         // that comes back is this loop's first.
@@ -144,6 +153,9 @@ public final class LineDetailViewModel {
     /// FR-LINE-05: one collection of the direction's calls. A failure keeps the line and its stops on screen and drops
     /// the ETAs to "–": the repository has logged it, and the detail's own Retry is the action that asks again.
     private func collectArrivals(_ direction: Direction) async {
+        // Swift runs a cancelled task's body anyway, so the check comes before any write: a superseded collection
+        // must not leave its direction on `arrivalsDirection`, which would filter the live collection's calls out.
+        guard !Task.isCancelled else { return }
         // The calls of the direction shown before belong to it, never to this one.
         lastArrivals = []
         arrivalsDirection = direction

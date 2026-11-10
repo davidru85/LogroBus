@@ -27,9 +27,10 @@ internal object LineDetailPreviewData {
             DirectionOptionUi(Direction.INBOUND, "El Arco", isSelected = false),
         )
     private val stops =
-        listOf("El Arco", "Ayuntamiento", "Gonzalo de Berceo", "Hospital San Pedro").mapIndexed { index, name ->
-            StopRowUi(stopId = 100 + index, order = index + 1, name = name, lat = 42.4650, lng = -2.4456)
-        }
+        listOf("El Arco", "Ayuntamiento", "Gonzalo de Berceo", "Hospital San Pedro", "Varea")
+            .mapIndexed { index, name ->
+                StopRowUi(stopId = 100 + index, order = index + 1, name = name, lat = 42.4650, lng = -2.4456)
+            }
 
     val loading: LineDetailUiState = LineDetailUiState.Loading
     val content: LineDetailUiState = LineDetailUiState.Content(line10, Direction.OUTBOUND, directions, stops)
@@ -45,8 +46,9 @@ internal object LineDetailPreviewData {
         mapOf(
             stops[0].stopId to StopArrivalUi(EtaDisplay.Minutes(4), isLowConfidence = false, isCancelled = false),
             stops[1].stopId to StopArrivalUi(EtaDisplay.ClockTime(18, 42), isLowConfidence = true, isCancelled = false),
-            stops[2].stopId to StopArrivalUi(null, isLowConfidence = false, isCancelled = false),
-            stops[3].stopId to StopArrivalUi(EtaDisplay.Minutes(2), isLowConfidence = false, isCancelled = true),
+            stops[2].stopId to StopArrivalUi(EtaDisplay.Now, isLowConfidence = false, isCancelled = false),
+            stops[3].stopId to StopArrivalUi(null, isLowConfidence = false, isCancelled = false),
+            stops[4].stopId to StopArrivalUi(EtaDisplay.Minutes(2), isLowConfidence = false, isCancelled = true),
         )
 }
 
