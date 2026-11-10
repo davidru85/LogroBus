@@ -10,13 +10,15 @@ import Testing
 struct LineDetailSnapshotTests {
     @Test(arguments: Appearance.allCases)
     func lb103_theLine(appearance: Appearance) async throws {
-        let screen = try await screen(SharedDependencies.shared.preview(), settlesOn: LineDetailUiStateContent.self)
+        let screen = try await screen(
+            SharedDependencies.shared.preview().withArrivals(), settlesOn: LineDetailUiStateContent.self
+        )
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
     @Test(arguments: Appearance.allCases)
     func lb103_aFavouriteLine(appearance: Appearance) async throws {
-        let useCases = SharedDependencies.shared.preview().favouriteLine(id: 10)
+        let useCases = SharedDependencies.shared.preview().withArrivals().favouriteLine(id: 10)
         let screen = try await screen(useCases, settlesOn: LineDetailUiStateContent.self)
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }

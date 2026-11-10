@@ -54,7 +54,9 @@ public struct LineDetailView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("line.loading", bundle: .module))
         case .content(let content):
-            LineDetailBody(content: content) { event in viewModel.onEvent(event) }
+            LineDetailBody(content: content, arrivals: viewModel.stopArrivals) { event in
+                viewModel.onEvent(event)
+            }
         case .error(let error):
             ContentUnavailableView {
                 error.reason.message
@@ -95,6 +97,8 @@ public struct LineDetailView: View {
 /// The line's header, the direction toggle and the ordered stop list (LB-104).
 private struct LineDetailBody: View {
     let content: LineDetailUiStateContent
+    /// FR-LINE-05: each stop's next arrival, keyed by the stop's id; a stop with none keeps no entry.
+    let arrivals: [Int32: StopArrivalUi]
     let onEvent: (any LineDetailEvent) -> Void
 
     var body: some View {
@@ -132,7 +136,11 @@ private struct LineDetailBody: View {
                 ForEach(Array(content.stops.enumerated()), id: \.element.stopId) { index, stop in
                     // "Stop 3, Varea": the position is what a rider counts, and the key's one argument is it.
                     LabeledContent {
-                        Text(verbatim: stop.name)
+                        HStack(spacing: Tokens.Spacing.medium) {
+                            Text(verbatim: stop.name)
+                            // FR-LINE-05: the stop's next arrival, at the row's trailing edge.
+                            arrival(arrivals[stop.stopId])
+                        }
                     } label: {
                         Text("line.stop.position \(index + 1)", bundle: .module)
                     }
@@ -148,11 +156,36 @@ private struct LineDetailBody: View {
             set: { onEvent(LineDetailEventSelectDirection(direction: $0)) }
         )
     }
+
+    /// FR-LINE-05 (LB-105): a stop's next call, drawn and spoken by the design system's `EtaText`, which already words
+    /// an `EtaDisplay` and its qualifiers as design_guidelines.md §6.3 says: the "~" of DD-09, the row struck through
+    /// with "Cancelado" when the call is cancelled, and the spoken "aproximadamente"/"approximately". A stop with no
+    /// call in the preview window shows the criterion's "–", which says so when read.
+    @ViewBuilder private func arrival(_ stopArrival: StopArrivalUi?) -> some View {
+        if let eta = stopArrival?.eta {
+            EtaText(
+                eta: EtaUi(
+                    display: eta,
+                    lowConfidence: stopArrival?.isLowConfidence ?? false,
+                    scheduled: false,
+                    delay: nil,
+                    cancelled: stopArrival?.isCancelled ?? false
+                )
+            )
+        } else {
+            Text("line.eta.none", bundle: .module)
+                .font(Tokens.Typography.etaValue)
+                .foregroundStyle(Tokens.Colors.secondaryText)
+                .accessibilityLabel(Text("line.eta.none_spoken", bundle: .module))
+        }
+    }
 }
 
 #Preview("Line") {
     NavigationStack {
-        LineDetailView(viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview()))
+        LineDetailView(
+            viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().withArrivals())
+        )
     }
 }
 
@@ -160,7 +193,7 @@ private struct LineDetailBody: View {
     NavigationStack {
         LineDetailView(
             viewModel: LineDetailViewModel(
-                lineId: 10, useCases: SharedDependencies.shared.preview().favouriteLine(id: 10)
+                lineId: 10, useCases: SharedDependencies.shared.preview().withArrivals().favouriteLine(id: 10)
             )
         )
         .preferredColorScheme(.dark)
@@ -169,7 +202,9 @@ private struct LineDetailBody: View {
 
 #Preview("Line, large text") {
     NavigationStack {
-        LineDetailView(viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview()))
+        LineDetailView(
+            viewModel: LineDetailViewModel(lineId: 10, useCases: SharedDependencies.shared.preview().withArrivals())
+        )
             .dynamicTypeSize(.accessibility3)
     }
 }
