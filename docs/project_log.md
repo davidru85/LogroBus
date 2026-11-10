@@ -52,6 +52,12 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **A cancelled call stands in only when the stop has no live one,** since the criterion strikes the row through rather than hiding it.
   - **The dash is spoken.** TalkBack and VoiceOver read "sin avisos" / "no calls", because the glyph alone is silence.
 
+**CI**
+- **Run 1 (42809728549):** Android was green in every job. iOS failed in three, and the first two causes were this branch's:
+  - **`FeatureLinesTests`** compared against a reference drawn with "–" on every row. The snapshot helper waited for the line's state but not for its calls, which arrive in a second collection: the reference had recorded a race. It now waits for `stopArrivals` when the screen scripts calls.
+  - **`AccessibilityAuditUITests`** reported "Line 3: contrast nearly passed, no element" twice. Hiding the dash changed nothing, and hiding the ETA changed nothing, so it was the row: `LabeledContent` draws its content in the system's secondary colour, and this story put a second colour in the same row, which the audit reads as one node. The name is now the design system's primary text, the dash matches, and the combined accessibility element is gone, so the name and the call are two elements, as before this story. Android's dash colour matches.
+  - **The same job's other audit failure was Near me's,** from LB-201: Dynamic Type is partly unsupported on "Near you" and "Turn on location to see nearby stops". It is not this branch's and it fails on `main` too; it is reported to the owner rather than fixed here.
+
 **Open / next**
 - **This entry's pull request** is open, and its watch runs.
 - **Next, once it is merged:** LB-106 (live vehicles on the line map) needs the map module, which holds no source and waits for OQ-10; the honest next P1 the catalogue supports is **LB-205**'s stop detail, or LB-107's vehicle animation once LB-106's data exists.
