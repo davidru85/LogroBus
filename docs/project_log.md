@@ -36,7 +36,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - **The localisation test rejected the stop key twice:** it wants one key per `Text`, with the argument in the catalogue's key. The entry is `line.stop.position %@` and the row is a `LabeledContent`, whose label and value are separate texts.
 
 **CI**
-- Not run yet: the pull request is open and its watch runs.
+- **Run 1 (42788868108):** `Android screenshots (:android:feature:lines)` failed on the six `content`/`favourite` captures, which **is** this branch's change: the previews now carry the toggle and the stops. Re-recorded and looked at — the radios mark the selection, "Hacia Hospital San Pedro" wraps at 200 % — and `verifyRoborazziDebug` passes. The same run's `Shared unit tests (:shared:favourites:data)` failed outside the change: `kotlinx-coroutines-android:1.11.0` could not be resolved and `org.gradle.kotlin.kotlin-dsl:6.7.3` was not found in any repository, both at configuration time. The failed jobs are rerun once.
 
 **Decisions**
 - **Owner (2026-11-10), two splits, both because the dependency holds no code:** the map of both shapes moves to LB-013 (its module is empty; its tile provider and licensing are OQ-10), and the tap to stop detail to LB-205 (its module is empty too). What lands here is the toggle and the ordered list.
