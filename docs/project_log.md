@@ -19,6 +19,38 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-10: LB-105, each stop's next bus in the line detail
+
+**Done**
+- **LB-105 (`feat/LB-105-stop-arrivals`):** FR-LINE-05, spec §5.7, DD-04, DD-09, FR-SET-01.
+  - **Shared:** `Arrival` and `ArrivalsRepository` in the domain; `ArrivalsRepositoryImpl` polls API-05 through `PollingEngine`, so two screens watching one line share a request and nothing polls when nothing is collected. `arrivalsByStop` and `StopArrivalUi` map each stop's next live call; `ObserveLineArrivals` is the door Swift uses.
+  - **Android:** the detail's ViewModel keeps the shown direction's calls and maps them with the user's ETA format and the app clock; `StopRow` draws the design system's `EtaText` and reads as one utterance. **iOS:** the ViewModel collects the calls beside the line and the settings flows, and the row does the same over `EtaText`.
+  - **Docs:** `acceptance_criteria.md` with the evidence, `backlog.md`, both READMEs, `AGENTS.md` §2.
+
+**Review**
+- **Five findings, each fixed rather than worked around:**
+  - **`previewMinutes=60` for API-05.** The graph passed `eta_preview_minutes`, which is FR-STOP-03's 60 min for API-06; the spec fixes API-05's window at 30 (§5.7, §8.7) and the criterion asks for it. The line's window is now its own constant.
+  - **A raw `line.stop.position %@` in the iOS detail.** The key declared `%@` for an integer, so the row drew the key rather than "Parada 1" and pushed the stop's name onto a second line. The key is `%lld`, as the design system's own integer keys are; the reference now shows the row the design asks for.
+  - **The iOS screen crashed on the shared map.** A Kotlin `Map` reaches Swift as an `NSDictionary`, and iterating it force-casts each key, which aborts; every test that touched the detail crashed with `swift_dynamicCastFailure`. The ViewModel reads one stop at a time through `KotlinInt`.
+  - **The preview's graph had no arrivals repository,** so every Robolectric screen that opened a line detail failed with `InstanceCreationException`. `previewDataModule` now binds one over the sample lines' own calls.
+  - **`PreviewUseCases` reached 14 functions,** over detekt's 11. The arrivals script moved to `PreviewArrivals`, as the settings' and the location's already are, and the state scripts became extensions, which is also how Swift chains them.
+
+**Docs and evidence**
+- **Every criterion has a named test:** the mapper's eight cases, the repository's seven over the 2026-11-08 capture, the Android ViewModel's three and iOS's three. The screenshots are proof for the row: `LineDetail_content_light.png` shows "4 min", "~18:42" and the dash, and both iOS references show the corrected row at 100 % and at large text.
+
+**Decisions**
+- **Agent:**
+  - **The direction is not guessed.** ET's `directionRef` is opaque (401, 402) and decoding it is `EtDirectionInferrer`'s job, which needs the line's stops; a call keeps a null direction rather than putting a bus on the wrong pattern, and asking for one leaves it out.
+  - **A cancelled call stands in only when the stop has no live one,** since the criterion strikes the row through rather than hiding it.
+  - **The dash is spoken.** TalkBack and VoiceOver read "sin avisos" / "no calls", because the glyph alone is silence.
+
+**Open / next**
+- **This entry's pull request** is open, and its watch runs.
+- **Next, once it is merged:** LB-106 (live vehicles on the line map) needs the map module, which holds no source and waits for OQ-10; the honest next P1 the catalogue supports is **LB-205**'s stop detail, or LB-107's vehicle animation once LB-106's data exists.
+- **Waiting for the owner:** unchanged — OQ-10, OQ-11, the device passes with TalkBack and VoiceOver (now including this row's one utterance and its spoken dash), the iOS job limit, Android's backups, DD-10's names, alert 6, the Gradle cache provider.
+
+---
+
 ## 2026-11-10: LB-104, the line detail's directions and ordered stops
 
 **Done**

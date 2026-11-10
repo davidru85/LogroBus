@@ -106,6 +106,13 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **10-11-2026:**
+  - LB-105: cada parada del detalle de una línea muestra su próximo autobús.
+    - Bajo el selector de sentido, la fila de cada parada lleva su próxima llegada prevista, "4 min", o "–" cuando la fuente no da ninguna en 30 min. Una llegada que la fuente marca como predicción imprecisa muestra una "~", y una cancelada aparece tachada conservando su hora, así que la fila sigue diciendo cuándo tocaba el autobús.
+    - El detalle pregunta a la fuente de ET por la línea cada 20 s mientras está en pantalla y deja de hacerlo al salir; dos pantallas mirando la misma línea comparten una sola petición. La ventana de 30 min es la que fija la especificación para API-05.
+    - El formato de hora que elige el usuario se aplica también aquí: elegir horas de reloj reescribe las llegadas ya recibidas en vez de volver a preguntar a la fuente.
+    - El código de sentido que envía la fuente es opaco, así que una llegada nunca se coloca en un recorrido adivinándolo: hasta que las paradas de la línea identifiquen el sentido, una llegada se muestra en los dos.
+    - Una fila se lee como una sola frase para el lector de pantalla, "Parada 1, El Arco, 4 min", y el guion dice "sin avisos" en vez de callarse.
+- **10-11-2026:**
   - LB-104: el detalle de una línea muestra sus dos sentidos y las paradas del seleccionado.
     - Bajo el nombre de la línea, un selector dice "Hacia El Cubo" y "Hacia Campillo", cada uno el último destino de ese sentido, y la lista de debajo sigue al seleccionado en el orden en que el autobús pasa por ellas, numeradas.
     - Cada parada de un recorrido viene del catálogo en caché, en la misma emisión que la línea, así que la lista nunca muestra media ruta.

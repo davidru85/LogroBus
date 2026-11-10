@@ -159,6 +159,8 @@ Three sections, in the order of the owner's sketch (owner decision, 2026-11-03),
 - Vehicles whose direction is unknown show a neutral marker in both direction views.
 - **Until LB-104 (LB-103, owner decision, 2026-11-02):** the detail shows the line's badge and whole name under the title "Línea 10" (`line.title`), with the favourite toggle in the toolbar (FR-LINE-09), the same toggle and labels as the rows'. The title is "Línea" (`line.title.generic`) until the line's code is known, so the screen is never untitled. Its first load draws the header's shape and is announced as "Cargando línea" (`line.loading`), and an error shows its reason and Retry.
   - A deliberate exception to §6.2: the bar names the line in words, and the badge is in the body. LB-104 designs the bar of the sketch above, with the badge in it.
+- **Stop rows (LB-105, FR-LINE-05):** each row is the stop's position and name, and its next predicted call at the trailing edge. The call is the design system's ETA (`EtaText` on Android, `EtaText` on iOS), so the "~" of DD-09, the "Now" pulse, and the cancelled row's strike-through and label come from there and are never re-worded by the row. A stop the source has no call for shows the criterion's "–", and the row reads as one utterance to a screen reader, "Stop 1, El Arco, 4 min", with the dash spoken as "no calls" / "sin avisos": a glyph alone is silence.
+  - At large text sizes the call moves below the stop's name rather than squeezing it, and the name wraps: the row reflows, and neither the ETA nor the name is truncated (§8).
 
 ### 3.2 Near Me
 
