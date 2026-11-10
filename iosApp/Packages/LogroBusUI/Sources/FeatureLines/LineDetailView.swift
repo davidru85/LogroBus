@@ -250,20 +250,26 @@ private struct StopNameAndCall: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // Not one combined element: the audit read a combined row as a node whose contrast "nearly passed",
+        // because it spans the name and the ETA's secondary text. The name is its own text, and the ETA carries its
+        // own spoken label (EtaText clears and sets it), so a reader hears both, in order.
         Group {
             if typeSize.isAccessibilitySize {
                 VStack(alignment: .trailing, spacing: Tokens.Spacing.xSmall) {
                     Text(verbatim: name)
+                        .foregroundStyle(Tokens.Colors.onSurface)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     LineDetailBody.arrival(call)
                 }
             } else {
                 HStack(spacing: Tokens.Spacing.medium) {
+                    // NFR-A11Y-01: the row's words are primary text. `LabeledContent` draws its content in the
+                    // system's secondary colour, and the audit read the merged row's contrast as nearly short.
                     Text(verbatim: name)
+                        .foregroundStyle(Tokens.Colors.onSurface)
                     LineDetailBody.arrival(call)
                 }
             }
         }
-        .accessibilityElement(children: .combine)
     }
 }
