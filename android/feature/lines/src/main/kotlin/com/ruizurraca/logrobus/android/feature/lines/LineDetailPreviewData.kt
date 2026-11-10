@@ -7,9 +7,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.core.common.color.onColorFor
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
+import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.feature.lines.presentation.DirectionOptionUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUi
 import com.ruizurraca.logrobus.feature.lines.presentation.LineDetailUiState
+import com.ruizurraca.logrobus.feature.lines.presentation.StopArrivalUi
 import com.ruizurraca.logrobus.feature.lines.presentation.StopRowUi
 import com.ruizurraca.logrobus.transit.domain.Direction
 
@@ -34,13 +36,34 @@ internal object LineDetailPreviewData {
     val favourite: LineDetailUiState =
         LineDetailUiState.Content(line10.copy(isFavourite = true), Direction.OUTBOUND, directions, stops)
     val error: LineDetailUiState = LineDetailUiState.Error(ErrorReason.NETWORK)
+
+    /**
+     * LB-105: every shape of a stop's next call, one per row, so a preview and its screenshots show them all: minutes,
+     * the low-confidence "~", "Now", the dash of a stop with no call, and a cancelled one struck through.
+     */
+    val arrivals: Map<Int, StopArrivalUi> =
+        mapOf(
+            stops[0].stopId to StopArrivalUi(EtaDisplay.Minutes(4), isLowConfidence = false, isCancelled = false),
+            stops[1].stopId to StopArrivalUi(EtaDisplay.ClockTime(18, 42), isLowConfidence = true, isCancelled = false),
+            stops[2].stopId to StopArrivalUi(null, isLowConfidence = false, isCancelled = false),
+            stops[3].stopId to StopArrivalUi(EtaDisplay.Minutes(2), isLowConfidence = false, isCancelled = true),
+        )
 }
 
 @PreviewLightDark
 @PreviewFontScale
 @Composable
 private fun LineDetailContentPreview() {
-    LogroBusTheme { Surface { LineDetailScreen(LineDetailPreviewData.content, onEvent = {}, onBack = {}) } }
+    LogroBusTheme {
+        Surface {
+            LineDetailScreen(
+                LineDetailPreviewData.content,
+                onEvent = {},
+                onBack = {},
+                arrivals = LineDetailPreviewData.arrivals,
+            )
+        }
+    }
 }
 
 @PreviewLightDark
@@ -52,7 +75,16 @@ private fun LineDetailLoadingPreview() {
 @PreviewLightDark
 @Composable
 private fun LineDetailFavouritePreview() {
-    LogroBusTheme { Surface { LineDetailScreen(LineDetailPreviewData.favourite, onEvent = {}, onBack = {}) } }
+    LogroBusTheme {
+        Surface {
+            LineDetailScreen(
+                LineDetailPreviewData.favourite,
+                onEvent = {},
+                onBack = {},
+                arrivals = LineDetailPreviewData.arrivals,
+            )
+        }
+    }
 }
 
 @PreviewLightDark

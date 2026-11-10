@@ -51,4 +51,9 @@
     <!-- LB-104: the line detail's direction toggle and its ordered stop list. -->
     <string name="line_detail_direction">Sentido</string>
     <string name="line_detail_stop_position">Parada %1$d, %2$s</string>
+    <!-- LB-105 (FR-LINE-05): a stop's next call, read after its position ("Parada 3, Varea, en 4 minutos"), and the
+         dash of a stop with no call. The ETA itself is the design system's (keys eta.*). -->
+    <string name="line_detail_stop_eta">%1$s, %2$s</string>
+    <string name="line_detail_eta_none">–</string>
+    <string name="line_detail_eta_none_spoken">sin avisos</string>
 </resources>

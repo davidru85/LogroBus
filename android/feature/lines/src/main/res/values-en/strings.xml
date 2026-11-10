@@ -50,4 +50,9 @@
     <!-- LB-104: the line detail's direction toggle and its ordered stop list. -->
     <string name="line_detail_direction">Direction</string>
     <string name="line_detail_stop_position">Stop %1$d, %2$s</string>
+    <!-- LB-105 (FR-LINE-05): a stop's next call, read after its position ("Stop 3, Varea, in 4 minutes"), and the dash
+         of a stop with no call. The ETA itself is the design system's (keys eta.*). -->
+    <string name="line_detail_stop_eta">%1$s, %2$s</string>
+    <string name="line_detail_eta_none">–</string>
+    <string name="line_detail_eta_none_spoken">no calls</string>
 </resources>

@@ -56,7 +56,14 @@ class LineDetailScreenshotTest(
             val fontScale = if (variant == FONT_SCALE_2) 2f else density.fontScale
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 LogroBusTheme(darkTheme = variant == DARK) {
-                    Surface { LineDetailScreen(uiState, onEvent = {}, onBack = {}) }
+                    Surface {
+                        LineDetailScreen(
+                            uiState,
+                            onEvent = {},
+                            onBack = {},
+                            arrivals = LineDetailPreviewData.arrivals,
+                        )
+                    }
                 }
             }
         }

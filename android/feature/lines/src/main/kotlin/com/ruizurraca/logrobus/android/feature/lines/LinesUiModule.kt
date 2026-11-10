@@ -10,5 +10,5 @@ val linesUiModule: Module =
     module {
         viewModelOf(::LinesViewModel)
         // The line comes from the navigation key, as a parameter of koinViewModel().
-        viewModel { (lineId: Int) -> LineDetailViewModel(lineId, get(), get()) }
+        viewModel { (lineId: Int) -> LineDetailViewModel(lineId, get(), get(), get(), get(), get()) }
     }
