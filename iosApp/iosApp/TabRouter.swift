@@ -6,6 +6,8 @@ import Shared
 enum Route: Hashable {
     /// A line's detail (SC-04), opened from the Lines list or a favourite card (LB-103).
     case line(Int32)
+    /// A stop's detail (SC-05), pushed from line detail (LB-205 part 2, FR-NAV-07).
+    case stop(Int32)
     case more
     case settings
     case aboutData
@@ -20,6 +22,16 @@ final class TabRouter {
     var paths: [TopLevelDestination: [Route]] = [:]
     /// How many times each tab has been re-selected at its root. A scrolling root scrolls to its top on every change.
     private(set) var scrollToTopRequests: [TopLevelDestination: Int] = [:]
+
+    /// Pushes `route` onto `destination`'s stack.
+    func open(
+        _ route: Route,
+        on destination: TopLevelDestination
+    ) {
+        var stack = paths[destination, default: []]
+        stack.append(route)
+        paths[destination] = stack
+    }
 
     /// Selects `destination`. Re-selecting the selected tab pops it to its root, or, at its root, asks the root to
     /// scroll to its top.

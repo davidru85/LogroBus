@@ -3,6 +3,7 @@ import FeatureLines
 import FeatureNearMe
 import FeaturePlanner
 import FeatureSettings
+import FeatureStops
 import Shared
 import SwiftUI
 
@@ -44,7 +45,11 @@ private struct TabStack: View {
                 }
                 .navigationDestination(for: Route.self) { route in
                     switch route {
-                    case .line(let lineId): LineDetailView(lineId: lineId)
+                    case .line(let lineId):
+                        LineDetailView(lineId: lineId) { stopId in
+                            router.open(.stop(stopId), on: destination)
+                        }
+                    case .stop(let stopId): StopDetailView(stopId: stopId)
                     case .more: MoreView()
                     case .settings: SettingsView()
                     case .aboutData: AboutDataView()

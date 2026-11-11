@@ -7,14 +7,18 @@ import SwiftUI
 /// names the line, and the toolbar holds the toggle, labelled as the rows' are.
 public struct LineDetailView: View {
     @State private var viewModel: LineDetailViewModel
+    /// FR-NAV-07 (LB-205): a stop's row opens its detail, which the app shell pushes. The screen names the stop and
+    /// nothing else, so the same view serves the sheet to come (LB-203).
+    private let onOpenStop: (Int32) -> Void
 
-    public init(viewModel: LineDetailViewModel) {
+    public init(viewModel: LineDetailViewModel, onOpenStop: @escaping (Int32) -> Void = { _ in }) {
         _viewModel = State(initialValue: viewModel)
+        self.onOpenStop = onOpenStop
     }
 
     /// The detail of line `lineId`, with the use cases from the graph.
-    public init(lineId: Int32) {
-        self.init(viewModel: LineDetailViewModel(lineId: lineId))
+    public init(lineId: Int32, onOpenStop: @escaping (Int32) -> Void = { _ in }) {
+        self.init(viewModel: LineDetailViewModel(lineId: lineId), onOpenStop: onOpenStop)
     }
 
     public var body: some View {
@@ -54,7 +58,7 @@ public struct LineDetailView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Text("line.loading", bundle: .module))
         case .content(let content):
-            LineDetailBody(content: content, arrivals: viewModel.stopArrivals) { event in
+            LineDetailBody(content: content, arrivals: viewModel.stopArrivals, onOpenStop: onOpenStop) { event in
                 viewModel.onEvent(event)
             }
         case .error(let error):
@@ -99,6 +103,8 @@ private struct LineDetailBody: View {
     let content: LineDetailUiStateContent
     /// FR-LINE-05: each stop's next arrival, keyed by the stop's id; a stop with none keeps no entry.
     let arrivals: [Int32: StopArrivalUi]
+    /// FR-NAV-07: the stop a row opens.
+    let onOpenStop: (Int32) -> Void
     let onEvent: (any LineDetailEvent) -> Void
 
     var body: some View {
@@ -134,12 +140,23 @@ private struct LineDetailBody: View {
 
             Section {
                 ForEach(Array(content.stops.enumerated()), id: \.element.stopId) { index, stop in
-                    // "Stop 3, Varea": the position is what a rider counts, and the key's one argument is it.
-                    LabeledContent {
-                        StopNameAndCall(name: stop.name, call: arrivals[stop.stopId])
+                    // "Stop 3, Varea": the position is what a rider counts, and the key's one argument is it. The row
+                    // is a button with the name as its action, so VoiceOver reads the stop, its call and "open stop".
+                    Button {
+                        onOpenStop(stop.stopId)
                     } label: {
-                        Text("line.stop.position \(index + 1)", bundle: .module)
+                        LabeledContent {
+                            StopNameAndCall(name: stop.name, call: arrivals[stop.stopId])
+                        } label: {
+                            Text("line.stop.position \(index + 1)", bundle: .module)
+                        }
+                        // The label's own glyphs leave the middle of the row untappable; the whole row is the target,
+                        // as a line's row is (LinesView.LineRow).
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(Text("line.stop.open", bundle: .module))
                 }
             }
         }

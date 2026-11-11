@@ -85,6 +85,24 @@
         }
       }
     },
+    "line.stop.open": {
+      "comment": "LB-205 (FR-NAV-07): what a tap on a stop of the line's ordered list does.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir parada"
+          }
+        }
+      }
+    },
     "line.stop.position %lld": {
       "comment": "How VoiceOver reads a stop of the line's ordered list; the argument is its position (LB-104).",
       "extractionState": "manual",

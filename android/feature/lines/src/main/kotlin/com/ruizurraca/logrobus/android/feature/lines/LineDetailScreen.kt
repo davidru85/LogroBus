@@ -61,12 +61,13 @@ fun LineDetailRoute(
     lineId: Int,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenStop: (stopId: Int) -> Unit = {},
     viewModel: LineDetailViewModel = koinViewModel { parametersOf(lineId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val favouriteLimit by viewModel.favouriteLimit.collectAsStateWithLifecycle()
     val arrivals by viewModel.arrivals.collectAsStateWithLifecycle()
-    LineDetailScreen(state, viewModel::onEvent, onBack, modifier, favouriteLimit, arrivals)
+    LineDetailScreen(state, viewModel::onEvent, onBack, modifier, favouriteLimit, arrivals, onOpenStop)
 }
 
 /**

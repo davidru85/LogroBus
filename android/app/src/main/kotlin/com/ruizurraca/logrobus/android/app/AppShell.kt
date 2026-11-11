@@ -37,12 +37,14 @@ import com.ruizurraca.logrobus.android.core.navigation.MoreKey
 import com.ruizurraca.logrobus.android.core.navigation.NearMeKey
 import com.ruizurraca.logrobus.android.core.navigation.PlannerKey
 import com.ruizurraca.logrobus.android.core.navigation.SettingsKey
+import com.ruizurraca.logrobus.android.core.navigation.StopDetailKey
 import com.ruizurraca.logrobus.android.feature.lines.LineDetailRoute
 import com.ruizurraca.logrobus.android.feature.lines.LinesRoute
 import com.ruizurraca.logrobus.android.feature.nearme.NearMeRoute
 import com.ruizurraca.logrobus.android.feature.planner.PlannerRoute
 import com.ruizurraca.logrobus.android.feature.settings.AboutDataRoute
 import com.ruizurraca.logrobus.android.feature.settings.SettingsRoute
+import com.ruizurraca.logrobus.android.feature.stops.StopDetailRoute
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
 
 /**
@@ -156,7 +158,11 @@ internal fun screens(
             val openLine = { lineId: Int -> navigator.open(LineDetailKey(lineId), from = LinesKey) }
             root { LinesRoute(onOpenMore = openMore, onOpenLine = openLine) }
         }
-        entry<LineDetailKey>(onTab) { key -> LineDetailRoute(key.lineId, onBack = navigator::goBack) }
+        entry<LineDetailKey>(onTab) { key ->
+            val openStop = { stopId: Int -> navigator.open(StopDetailKey(stopId), from = key) }
+            LineDetailRoute(key.lineId, onBack = navigator::goBack, onOpenStop = openStop)
+        }
+        entry<StopDetailKey>(onTab) { key -> StopDetailRoute(key.stopId, onBack = navigator::goBack) }
         entry<NearMeKey>(onTab) { root { NearMeRoute(onOpenMore = openMore) } }
         entry<PlannerKey>(onTab) { root { PlannerRoute(onOpenMore = openMore) } }
         entry<MoreKey>(onTab) {
