@@ -6,7 +6,11 @@ import Shared
 @MainActor
 @Observable
 public final class NearMeViewModel {
-    public private(set) var state = NearMeUiState(nearYou: NearYouUiUnknown.shared)
+    public private(set) var state = NearMeUiState(
+        nearYou: NearYouUiUnknown.shared,
+        // LB-208: "My stops" comes with the next slice, so the section starts empty here.
+        myStops: MyStopsUi(rows: [], limitReached: false)
+    )
     /// Bumped when location access must be read again. The view keys its `.task` on it, so a new value starts a new
     /// `observe()`.
     public private(set) var checks = 0
