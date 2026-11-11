@@ -39,6 +39,9 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Agent:** the saved stops live under `FavouriteTypes.STOP` in the existing `favourite` table, which already carries `label` and `position`; no schema migration is needed.
 - **Agent:** the alias is cut by code points, so a name in a script whose glyphs need two UTF-16 units is never cut mid-character.
 
+**CI (PR #65)**
+- **Run 1:** `Android screenshots (:android:app)` failed on `lb012_shellScreen_screenshot[shell_dark]`. The artefact CI uploaded showed the Lines screen's loading placeholder, every row a grey block, rather than a colour difference: the shell capture took `AppShell()` straight after composition, while the catalogue read that fills the list runs on the I/O threads, and this branch's two extra graph bindings were enough to lose that race. The capture now waits for the list's scroll action first, the reference is unchanged, and three consecutive local runs are green. `docs/ci_cd.md` §5 records it.
+
 **Open / next**
 - **Part 2:** the Save field on stop detail (FR-STOP-08), the Edit sheet with reorder, rename and delete (FR-FAV-02), and the "My stops" rows on both platforms.
 - **This part's pull request** is to be opened once the split is confirmed.
