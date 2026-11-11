@@ -4,11 +4,12 @@ import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
 import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
-import kotlin.time.Clock
 import com.ruizurraca.logrobus.core.network.ClientIdentity
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.network.decodeAs
 import com.ruizurraca.logrobus.core.testing.FixtureLoader
+import com.ruizurraca.logrobus.transit.domain.WalkDestination
+import com.ruizurraca.logrobus.transit.domain.WalkDistancesRequest
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
@@ -22,6 +23,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
 
 /**
  * LB-203: API-08 as `:shared:transit:data` serves it. Moved out of the planner's module because Near Me needs it too,
@@ -37,15 +39,14 @@ class WalkDistancesApiTest {
         runTest {
             val api = WalkDistancesApi(client(FixtureLoader.read("walk_distances.json")), logger)
 
-            val decoded = api.walkDistances(request()).succeeded()
+            val distances = api.walkDistances(request()).succeeded()
 
-            assertEquals(2, decoded.items.size)
-            assertEquals(0, decoded.dropped)
+            assertEquals(2, distances.size)
             assertEquals("$BASE_URL/api/transit/walk-distances", requests.single().url.toString())
             assertEquals(HttpMethod.Post, requests.single().method)
             // api_spec.md §4.8: the ids come back as sent, which is what pairs a distance with its stop.
-            assertEquals(listOf(38, 61), decoded.items.mapNotNull { it.id })
-            assertEquals(listOf(4906, 395), decoded.items.mapNotNull { it.distanceM })
+            assertEquals(listOf(38, 61), distances.map { it.stopId })
+            assertEquals(listOf(4906, 395), distances.map { it.distanceMeters })
         }
 
     @Test
@@ -60,7 +61,12 @@ class WalkDistancesApiTest {
             assertEquals(setOf("origin", "destinations"), body.keys)
             val origin = body.getValue("origin") as JsonObject
             assertEquals(setOf("lat", "lng"), origin.keys)
-            val destination = (body.getValue("destinations") as kotlinx.serialization.json.JsonArray).first() as JsonObject
+            val destination =
+                (
+                    body.getValue(
+                        "destinations",
+                    ) as kotlinx.serialization.json.JsonArray
+                ).first() as JsonObject
             assertEquals(setOf("id", "lat", "lng"), destination.keys)
         }
 
@@ -82,9 +88,10 @@ class WalkDistancesApiTest {
 
     /** api_spec.md §4.8: the origin, and one stop the client asks the walking distance to. */
     private fun request() =
-        WalkDistancesRequestDto(
-            origin = WalkLatLngDto(lat = 42.4650, lng = -2.4450),
-            destinations = listOf(WalkDestinationDto(id = 38, lat = 42.426317, lng = -2.461335)),
+        WalkDistancesRequest(
+            originLat = 42.4650,
+            originLng = -2.4450,
+            destinations = listOf(WalkDestination(id = 38, lat = 42.426317, lng = -2.461335)),
         )
 
     private fun client(body: String) =

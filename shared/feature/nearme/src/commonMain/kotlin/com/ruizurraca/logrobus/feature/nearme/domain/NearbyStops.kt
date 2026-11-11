@@ -16,8 +16,7 @@ data class NearbyStop(
     val name: String,
     val distanceMeters: Int,
     val walkingDuration: kotlin.time.Duration? = null,
-) {
-}
+)
 
 /**
  * FR-HOME-03 and FR-STOP-11: the stops a rider can walk to from where they are, nearest first. Collected with a

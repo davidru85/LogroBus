@@ -106,6 +106,13 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **11-11-2026:**
+  - LB-203, parte 1: Cerca de mí lista las paradas que hay cerca.
+    - "Cerca de ti" muestra hasta cinco paradas a menos de 800 m, la más cercana primero: la distancia en línea recta en cuanto responde el catálogo, y la distancia a pie cuando responde el servicio de distancias.
+    - Cada fila dice la parada y lo lejos que está, se lee como una sola locución y abre la pantalla de la parada. Así la lista es el equivalente del mapa, y nada de esto necesita el mapa.
+    - Al servicio se le piden solo las 40 candidatas más cercanas, y solo se le vuelve a preguntar cuando el usuario se ha movido más de 50 m.
+    - La hoja con sus posiciones y el comportamiento del mapa en peek y medium esperan a LB-202.
+
+- **11-11-2026:**
   - LB-205, parte 2: el detalle de la parada se abre desde el detalle de línea.
     - Cada parada de la lista ordenada de una línea es ahora una puerta: al tocarla se empuja la pantalla propia de la parada, con el mismo contenido y las mismas acciones que mostrará la hoja, y atrás vuelve a la línea.
     - TalkBack lee la fila igual que antes, la parada y su próxima llegada, y añade lo que hace un doble toque: "abrir parada", y "Open stop" en iOS.

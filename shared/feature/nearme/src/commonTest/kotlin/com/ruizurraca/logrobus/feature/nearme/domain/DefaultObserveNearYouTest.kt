@@ -1,13 +1,13 @@
 package com.ruizurraca.logrobus.feature.nearme.domain
 
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.geo.BoundingBox
 import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import com.ruizurraca.logrobus.core.location.LocationFix
 import com.ruizurraca.logrobus.core.location.LocationPermission
 import com.ruizurraca.logrobus.core.location.LocationProvider
 import com.ruizurraca.logrobus.transit.domain.NearbyStopRow
 import com.ruizurraca.logrobus.transit.domain.NearbyStopsSource
-import com.ruizurraca.logrobus.core.common.AppResult
-import com.ruizurraca.logrobus.core.common.geo.BoundingBox
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
@@ -63,9 +63,10 @@ class DefaultObserveNearYouTest {
     fun lb203_whenLocationGoesForGood_theSectionSaysSo() =
         runTest {
             // The provider's flow completes and the permission is gone: revoked, not a platform failure.
-            val provider = FakeProvider(LocationPermission.Precise, fixes = listOf(GeoPoint(42.4650, -2.4450))) {
-                it.permission = LocationPermission.NotGranted
-            }
+            val provider =
+                FakeProvider(LocationPermission.Precise, fixes = listOf(GeoPoint(42.4650, -2.4450))) {
+                    it.permission = LocationPermission.NotGranted
+                }
 
             val states = observe(provider).toList()
 
@@ -85,9 +86,10 @@ class DefaultObserveNearYouTest {
 
     private fun observe(provider: FakeProvider): Flow<NearYouState> {
         val source =
-            object : NearbyStopsSource {
-                override fun stopsIn(box: BoundingBox): AppResult<List<NearbyStopRow>> =
-                    AppResult.Success(listOf(NearbyStopRow(stopId = 38, name = "Gonzalo de Berceo", lat = 42.4652, lng = -2.4450)))
+            NearbyStopsSource {
+                AppResult.Success(
+                    listOf(NearbyStopRow(stopId = 38, name = "Gonzalo de Berceo", lat = 42.4652, lng = -2.4450)),
+                )
             }
         return DefaultObserveNearYou(provider, DefaultGetNearbyStops(source, walkDistances = null))()
     }

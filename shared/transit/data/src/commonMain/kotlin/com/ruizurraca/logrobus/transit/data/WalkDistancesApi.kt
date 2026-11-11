@@ -96,8 +96,11 @@ class WalkDistancesApi(
         when (
             val decoded =
                 client
-                    .post(PATH_WALK_DISTANCES, RequestJson.encodeToJsonElement(WalkDistancesRequestDto.serializer(), request.toDto()), RequestKind.Live)
-                    .decodeBareCollection(
+                    .post(
+                        PATH_WALK_DISTANCES,
+                        RequestJson.encodeToJsonElement(WalkDistancesRequestDto.serializer(), request.toDto()),
+                        RequestKind.Live,
+                    ).decodeBareCollection(
                         WalkDistancesResponseDto.serializer(),
                         WalkDistancesResponseDto::items,
                         WalkDistanceDto.serializer(),
@@ -118,10 +121,15 @@ class WalkDistancesApi(
             destinations = destinations.map { WalkDestinationDto(id = it.id, lat = it.lat, lng = it.lng) },
         )
 
+    /** The domain value, or `null` for an item the source left without an id or a distance (api_spec.md §3). */
     private fun WalkDistanceDto.toDomain(): WalkDistance? {
-        val id = id ?: return null
-        val meters = distanceM ?: return null
-        return WalkDistance(stopId = id, distanceMeters = meters, durationSeconds = durationSec ?: 0)
+        val stopId = id
+        val metres = distanceM
+        return if (stopId == null || metres == null) {
+            null
+        } else {
+            WalkDistance(stopId = stopId, distanceMeters = metres, durationSeconds = durationSec ?: 0)
+        }
     }
 
     /**

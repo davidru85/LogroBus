@@ -88,7 +88,12 @@ class NearMeScreenTest {
             NearYouUi.LocationOn(
                 stops =
                     listOf(
-                        NearbyStopRowUi(stopId = 38, name = "Gonzalo de Berceo", distanceMeters = 120, walkingMinutes = 2),
+                        NearbyStopRowUi(
+                            stopId = 38,
+                            name = "Gonzalo de Berceo",
+                            distanceMeters = 120,
+                            walkingMinutes = 2,
+                        ),
                         NearbyStopRowUi(stopId = 61, name = "Varea", distanceMeters = 400),
                     ),
                 isRefined = true,
@@ -99,11 +104,13 @@ class NearMeScreenTest {
 
         // The row clears its children to be one utterance, so its words are read from the unmerged tree.
         compose.onNodeWithText("Gonzalo de Berceo", useUnmergedTree = true).assertExists()
-        compose.onNodeWithText(context.getString(R.string.nearme_nearby_walk_minutes, 2), useUnmergedTree = true)
+        compose
+            .onNodeWithText(context.getString(R.string.nearme_nearby_walk_minutes, 2), useUnmergedTree = true)
             .assertExists()
         compose.onNodeWithText("Varea", useUnmergedTree = true).assertExists()
         // A stop the walk has not reached yet says its straight-line distance rather than a walk it does not know.
-        compose.onNodeWithText(context.getString(R.string.nearme_nearby_distance_meters, 400), useUnmergedTree = true)
+        compose
+            .onNodeWithText(context.getString(R.string.nearme_nearby_distance_meters, 400), useUnmergedTree = true)
             .assertExists()
 
         compose.onNodeWithText("Varea", useUnmergedTree = true).performClick()

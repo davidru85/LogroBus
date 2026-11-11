@@ -15,7 +15,12 @@ internal object NearMePreviewData {
             NearYouUi.LocationOn(
                 stops =
                     listOf(
-                        NearbyStopRowUi(stopId = 38, name = "Gonzalo de Berceo", distanceMeters = 120, walkingMinutes = 2),
+                        NearbyStopRowUi(
+                            stopId = 38,
+                            name = "Gonzalo de Berceo",
+                            distanceMeters = 120,
+                            walkingMinutes = 2,
+                        ),
                         NearbyStopRowUi(stopId = 61, name = "Varea", distanceMeters = 400, walkingMinutes = 5),
                         NearbyStopRowUi(stopId = 92, name = "El Cubo", distanceMeters = 620),
                     ),

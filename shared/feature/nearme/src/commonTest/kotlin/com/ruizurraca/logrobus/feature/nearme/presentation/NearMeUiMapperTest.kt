@@ -31,7 +31,12 @@ class NearMeUiMapperTest {
             NearbyStops(
                 stops =
                     listOf(
-                        NearbyStop(stopId = 38, name = "Gonzalo de Berceo", distanceMeters = 120, walkingDuration = 90.seconds),
+                        NearbyStop(
+                            stopId = 38,
+                            name = "Gonzalo de Berceo",
+                            distanceMeters = 120,
+                            walkingDuration = 90.seconds,
+                        ),
                         NearbyStop(stopId = 61, name = "Varea", distanceMeters = 400),
                     ),
                 isRefined = true,
@@ -47,7 +52,10 @@ class NearMeUiMapperTest {
 
     @Test
     fun lb203_aWalkUnderAMinuteStillReadsAsOne() {
-        val nearby = NearbyStops(listOf(NearbyStop(stopId = 1, name = "Casa", distanceMeters = 20, walkingDuration = 40.seconds)))
+        val nearby =
+            NearbyStops(
+                listOf(NearbyStop(stopId = 1, name = "Casa", distanceMeters = 20, walkingDuration = 40.seconds)),
+            )
 
         val section = NearMeUiMapper.state(LocationAccess.On, nearby).nearYou as NearYouUi.LocationOn
 

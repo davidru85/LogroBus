@@ -66,16 +66,23 @@ class DefaultGetNearbyStopsTest {
         runTest {
             // The nearest in a straight line is the furthest on foot, which is what API-08 is for.
             val stops = listOf(stop(1, 42.4652), stop(2, 42.4658), stop(3, 42.4700))
-            val api = RecordingWalkDistances(
-                distances = mapOf(1 to (700 to 540), 2 to (150 to 120), 3 to (300 to 240)),
-            )
+            val api =
+                RecordingWalkDistances(
+                    distances = mapOf(1 to (700 to 540), 2 to (150 to 120), 3 to (300 to 240)),
+                )
 
             val listed = stopsFor(stops, api)
 
             assertTrue(listed.isRefined, "the list says its distances are walking ones")
             assertEquals(listOf(2, 3, 1), listed.stops.map { it.stopId })
             assertEquals(listOf(150, 300, 700), listed.stops.map { it.distanceMeters })
-            assertEquals(120_000L, listed.stops.single { it.stopId == 2 }.walkingDuration?.inWholeMilliseconds)
+            assertEquals(
+                120_000L,
+                listed.stops
+                    .single { it.stopId == 2 }
+                    .walkingDuration
+                    ?.inWholeMilliseconds,
+            )
         }
 
     @Test
@@ -132,18 +139,12 @@ class DefaultGetNearbyStopsTest {
         stops: List<NearbyStopRow>,
         api: WalkDistances? = RecordingWalkDistances(),
     ): NearbyStops {
-        val source =
-            object : NearbyStopsSource {
-                override fun stopsIn(box: BoundingBox) = AppResult.Success(stops)
-            }
+        val source = NearbyStopsSource { AppResult.Success(stops) }
         return DefaultGetNearbyStops(source, api)(flowOf(here)).last()
     }
 
     /** The catalogue as the test controls it: the stops it holds, whatever box is asked for. */
-    private fun sourceOf(stops: List<NearbyStopRow>) =
-        object : NearbyStopsSource {
-            override fun stopsIn(box: BoundingBox) = AppResult.Success(stops)
-        }
+    private fun sourceOf(stops: List<NearbyStopRow>) = NearbyStopsSource { AppResult.Success(stops) }
 
     /** API-08 as the test controls it: the distances it answers, and the requests it was asked. */
     private class RecordingWalkDistances(

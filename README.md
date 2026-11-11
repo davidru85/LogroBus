@@ -104,6 +104,13 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-11:**
+  - LB-203, part 1: Near Me lists the stops within reach.
+    - "Near you" now shows up to five stops within 800 m of the rider, nearest first: the straight line the moment the catalogue answers, and the walking distance once the walking-distance service does.
+    - Each row says the stop and how far it is, read as one utterance, and opens the stop's own screen. That makes the list the map's equivalent, so nothing here needs the map.
+    - The service is asked for the 40 nearest candidates only, and again only once the rider has moved more than 50 m.
+    - The sheet with its detents and the map's behaviour at peek and medium wait for LB-202.
+
+- **2026-11-11:**
   - LB-205, part 2: the stop's detail opens from line detail.
     - Each stop of a line's ordered list is now a door: tapping it pushes the stop's own screen, with the same content and actions the sheet will show, and back returns to the line.
     - TalkBack reads the row as before, the stop and its next call, and adds what a double tap does: "abrir parada", "Open stop" on iOS.

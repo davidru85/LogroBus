@@ -598,6 +598,15 @@ Refs: FR-NEAR-02, FR-NEAR-03, FR-HOME-03, FR-STOP-11, NFR-A11Y-04
 - **Given** the user moves less than 50 m, **then** API-08 is not called again. **Given** they move more than 50 m, **then** it is.
 - **Given** a screen reader, **when** the user explores the sheet, **then** every nearby stop can be reached and opened without touching the map. `[manual: TalkBack, VoiceOver]`
 
+**Part 1 done (2026-11-11): the data layer and the list.** The sheet with its detents, the map's interaction and the pins wait for LB-202 (`todo`); FR-NEAR-02 cannot hold without the map it names.
+- **The radius and the count:** `DefaultGetNearbyStopsTest.lb203_onlyStopsWithinEightHundredMetres_areListed` (a stop 890 m away is out, one 89 m away is in) and `…atMostFiveStops_areShown`.
+- **The order:** `…theListIsTheStraightLineUntilTheWalkAnswers`, and `…walkingDistancesReSortTheList_andFillTheWalk` proves the re-sort API-08 causes.
+- **The 40 candidates:** `…theRequestCarriesOnlyTheFortyNearestCandidates`.
+- **The 50 m threshold:** `…aRiderWhoBarelyMoved_doesNotAskApi08Again` and `…aRiderWhoMovedEnough_asksApi08Again`.
+- **One collection for the whole section (FR-LOC-03):** `DefaultObserveNearYouTest.lb203_theDeviceIsAskedForFixesOnce_notOncePerSection`.
+- **The list as the map's equivalent (NFR-A11Y-04):** the rows open their stop without the map on both platforms; `NearMeScreenTest.lb203_eachNearbyStopShowsItsNameAndHowFarItIs_andOpensTheStop` and `…eachNearbyStopIsOneUtterance` on Android, the `NearMe` snapshots on iOS.
+- **Not yet met, and why:** the sheet's detents and the map staying pannable at peek and medium need LB-202. The screen-reader pass with TalkBack and VoiceOver is with the owner.
+
 ### LB-204 "My stops" with live arrivals
 Refs: FR-NEAR-03, FR-HOME-02, FR-HOME-07, NFR-PERF-02
 

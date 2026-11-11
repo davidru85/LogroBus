@@ -55,7 +55,10 @@ class NearMeViewModelTest {
     @Test
     fun lb201_afterThePermissionMayHaveChanged_accessIsReadAgain() =
         runTest {
-            val viewModel = NearMeViewModel(Scripted(flowOf(NearYouState(LocationAccess.Off)), flowOf(NearYouState(LocationAccess.On))))
+            val viewModel =
+                NearMeViewModel(
+                    Scripted(flowOf(NearYouState(LocationAccess.Off)), flowOf(NearYouState(LocationAccess.On))),
+                )
 
             viewModel.state.test {
                 assertEquals(NearMeUiState(NearYouUi.TurnOnLocation), awaitSettled())

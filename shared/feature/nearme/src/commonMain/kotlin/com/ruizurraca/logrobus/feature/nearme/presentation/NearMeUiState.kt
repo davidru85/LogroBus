@@ -56,6 +56,9 @@ sealed interface NearMeEvent {
     data object PermissionMayHaveChanged : NearMeEvent
 }
 
+/** Seconds in a minute, so the walk's rounding names what it divides by. */
+private const val SECONDS_PER_MINUTE = 60.0
+
 object NearMeUiMapper {
     fun state(
         access: LocationAccess,
@@ -81,7 +84,8 @@ object NearMeUiMapper {
                         distanceMeters = stop.distanceMeters,
                         // Rounded up, so a walk of 90 s reads 2 min and a walk under a minute reads 1: a 40 s walk
                         // that said "0 min" would read as no walk at all.
-                        walkingMinutes = stop.walkingDuration?.let { ceil(it.inWholeSeconds / 60.0).toInt() },
+                        walkingMinutes =
+                            stop.walkingDuration?.let { ceil(it.inWholeSeconds / SECONDS_PER_MINUTE).toInt() },
                     )
                 },
             isRefined = this?.isRefined ?: false,

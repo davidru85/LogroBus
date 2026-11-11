@@ -53,8 +53,8 @@ class DefaultGetNearbyStops(
                     var refined = false
                     positions.collect { here ->
                         val candidates = candidatesFrom(here)
-                        val askedEnough =
-                            lastAsked != null && lastAsked!!.distanceMetersTo(here) <= moveThresholdMeters
+                        val asked = lastAsked
+                        val askedEnough = asked != null && asked.distanceMetersTo(here) <= moveThresholdMeters
                         if (refined && askedEnough) {
                             // The rider has barely moved: the walking distances already in hand still apply.
                             emit(NearbyStops(stops = lastAnswer, isRefined = true))
@@ -84,7 +84,8 @@ class DefaultGetNearbyStops(
                                 val refinedStops =
                                     candidates
                                         .mapNotNull { candidate ->
-                                            val walk = byStop[candidate.stopId] ?: return@mapNotNull candidate.toRefined(here)
+                                            val walk =
+                                                byStop[candidate.stopId] ?: return@mapNotNull candidate.toRefined(here)
                                             NearbyStop(
                                                 stopId = candidate.stopId,
                                                 name = candidate.name,
@@ -100,8 +101,7 @@ class DefaultGetNearbyStops(
                         }
                     }
                 }
-            }
-            .let { it }
+            }.let { it }
 
     /** The stops within the radius, nearest by straight line, cut to the candidates the request may carry. */
     private fun candidatesFrom(here: GeoPoint): List<NearbyStopRow> {

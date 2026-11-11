@@ -22,6 +22,11 @@ class NearbyStopsSourceImpl(
     private val database: LogroBusDatabase,
     private val logger: Logger,
 ) : NearbyStopsSource {
+    /**
+     * The database boundary turns a failure into a value, never a crash (code_style.md §2.2). The driver's own
+     * failures reach here as whatever it throws, so the catch is deliberately broad, and the cause is logged.
+     */
+    @Suppress("TooGenericExceptionCaught") // On purpose: see above.
     override fun stopsIn(box: BoundingBox): AppResult<List<NearbyStopRow>> =
         try {
             AppResult.Success(
@@ -42,7 +47,7 @@ class NearbyStopsSourceImpl(
                     },
             )
         } catch (failure: RuntimeException) {
-            logger.warn(TAG, "Reading the stops near a position failed")
+            logger.warn(TAG, "Reading the stops near a position failed", failure)
             AppResult.Failure(AppError.Data)
         }
 }

@@ -33,8 +33,8 @@ import com.ruizurraca.logrobus.feature.nearme.domain.DefaultGetNearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.domain.GetNearbyStops
-import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.planner.domain.DefaultReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
@@ -55,22 +55,22 @@ import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
 import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
-import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
 import com.ruizurraca.logrobus.transit.data.NearbyStopsSourceImpl
+import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
 import com.ruizurraca.logrobus.transit.data.StopRepositoryImpl
-import com.ruizurraca.logrobus.transit.data.WalkDistancesApi
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
+import com.ruizurraca.logrobus.transit.data.WalkDistancesApi
 import com.ruizurraca.logrobus.transit.data.arrivalsRepository
 import com.ruizurraca.logrobus.transit.data.patternsOfLine
 import com.ruizurraca.logrobus.transit.data.stopArrivalsReader
 import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
 import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
-import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.NearbyStopsSource
+import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.StopRepository
-import com.ruizurraca.logrobus.transit.domain.WalkDistances
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
+import com.ruizurraca.logrobus.transit.domain.WalkDistances
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -194,6 +194,10 @@ private val transitDataModule =
                 patternsOf = { lineId -> patternsOfLine(get<LogroBusDatabase>(), lineId) },
             )
         }
+        // LB-203: the stops near a position, and API-08's walking distances. They live with the rest of the data layer
+        // so that a preview or a test replaces them the way it replaces the other source calls.
+        single<NearbyStopsSource> { NearbyStopsSourceImpl(get(), get()) }
+        single<WalkDistances> { WalkDistancesApi(get(), get()) }
         // LB-008 part 2: the sync over the real source, one per process so its mutex runs one sync at a time.
         single<StaticSyncEngine> { DefaultStaticSync(get(), get(), get(), get(), get(), get()).engine }
         // LB-105: the calls of a line, polled while its detail shows them. The cadence and the preview window come from
@@ -248,9 +252,8 @@ private val linesModule =
 private val nearMeModule =
     module {
         factory<ObserveLocationAccess> { DefaultObserveLocationAccess(get()) }
-        // LB-203: "Near you" from one collection, so the device is asked for fixes once (FR-LOC-03).
-        factory<NearbyStopsSource> { NearbyStopsSourceImpl(get(), get()) }
-        factory<WalkDistances> { WalkDistancesApi(get(), get()) }
+        // LB-203: "Near you" from one collection, so the device is asked for fixes once (FR-LOC-03). The source and
+        // API-08 live with the rest of the data layer (transitDataModule), so a preview can replace them.
         factory<GetNearbyStops> { DefaultGetNearbyStops(get(), get()) }
         factory<ObserveNearYou> { DefaultObserveNearYou(get(), get()) }
     }

@@ -48,8 +48,10 @@ public final class NearMeViewModel {
     /// Runs while the screen shows and the app is active: the view calls it from `.task {}`, which cancels it when
     /// either ends, and the location updates stop with it.
     public func observe() async {
-        for await access in useCases.observeLocationAccess().invoke() {
-            state = NearMeUiMapper.shared.state(access: access)
+        // LB-203: one collection feeds the permission row and the list, because the provider starts the platform's
+        // updates with each collection (FR-LOC-03).
+        for await section in useCases.observeNearYou().invoke() {
+            state = NearMeUiMapper.shared.state(access: section.access, nearby: section.nearby)
         }
     }
 
