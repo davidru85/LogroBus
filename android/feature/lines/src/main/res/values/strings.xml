@@ -56,4 +56,6 @@
     <string name="line_detail_stop_eta">%1$s, %2$s</string>
     <string name="line_detail_eta_none">–</string>
     <string name="line_detail_eta_none_spoken">sin avisos</string>
+    <!-- LB-205, FR-NAV-07: what a double tap on a stop row does, as TalkBack says it. -->
+    <string name="line_detail_open_stop">abrir parada</string>
 </resources>

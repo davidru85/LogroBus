@@ -16,6 +16,12 @@ data class LineDetailKey(
     val lineId: Int,
 ) : NavKey
 
+/** A stop's detail (SC-05), pushed from line detail (LB-205 part 2, FR-NAV-07). */
+@Serializable
+data class StopDetailKey(
+    val stopId: Int,
+) : NavKey
+
 /** The root of the Near Me tab. */
 @Serializable
 data object NearMeKey : NavKey

@@ -232,6 +232,28 @@ class TabNavigationTest {
         awaitCarousel(listOf("Line 3"))
     }
 
+    @Test
+    fun lb205_aStopRowOpensItsStopDetail_andBackReturnsToTheLine() {
+        // FR-NAV-07 end to end through the shell and the preview's scripted graph: line 3's first outbound stop.
+        compose.onNode(isLinesList).performScrollToNode(hasText("Campillo - El Cubo"))
+        compose.onNode(hasText("Campillo - El Cubo") and hasClickAction()).performClick()
+        awaitNode(hasText("Line 3") and isHeading()).assertIsDisplayed()
+
+        val stop = awaitNode(hasContentDescription("Stop 1, Campillo", substring = true) and hasClickAction())
+        stop.performClick()
+
+        // The pushed screen, not a dialog: its own title is a heading, and the line's is gone.
+        awaitNode(hasText("Campillo", substring = true) and isHeading())
+        assertTrue(
+            "the line's detail is under it",
+            compose.onAllNodes(hasText("Line 3") and isHeading()).fetchSemanticsNodes().isEmpty(),
+        )
+
+        compose.onNodeWithContentDescription("Back").performClick()
+
+        awaitNode(hasText("Line 3") and isHeading()).assertIsDisplayed()
+    }
+
     /**
      * A row's toggle, scrolled into view: a lazy list composes only the rows it shows. The list scrolls down from its
      * top, so the row ends up above the tab bar, never under the top app bar, which the list runs behind.

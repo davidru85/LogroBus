@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -110,7 +111,7 @@ fun LineDetailScreen(
             }
 
             is LineDetailUiState.Content -> {
-                LineDetailBody(state, padding, arrivals, onEvent)
+                LineDetailBody(state, padding, arrivals, onEvent, onOpenStop)
             }
 
             is LineDetailUiState.Error -> {
@@ -178,6 +179,7 @@ private fun LineDetailBody(
     contentPadding: PaddingValues,
     arrivals: Map<Int, StopArrivalUi>,
     onEvent: (LineDetailEvent) -> Unit,
+    onOpenStop: (stopId: Int) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.consumeWindowInsets(contentPadding),
@@ -192,7 +194,7 @@ private fun LineDetailBody(
                 )
             }
         }
-        items(state.stops) { stop -> StopRow(stop, arrivals[stop.stopId]) }
+        items(state.stops) { stop -> StopRow(stop, arrivals[stop.stopId], onOpen = { onOpenStop(stop.stopId) }) }
     }
 }
 
@@ -241,6 +243,7 @@ private fun DirectionToggle(
 private fun StopRow(
     stop: StopRowUi,
     arrival: StopArrivalUi?,
+    onOpen: () -> Unit,
 ) {
     val position = stringResource(R.string.line_detail_stop_position, stop.order, stop.name)
     val eta =
@@ -269,7 +272,10 @@ private fun StopRow(
                 EtaText(eta)
             }
         },
-        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+        modifier =
+            Modifier
+                .clickable(onClickLabel = stringResource(R.string.line_detail_open_stop), role = Role.Button) { onOpen() }
+                .clearAndSetSemantics { contentDescription = spoken },
     )
 }
 
