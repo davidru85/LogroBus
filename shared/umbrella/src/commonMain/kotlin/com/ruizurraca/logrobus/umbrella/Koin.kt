@@ -18,7 +18,9 @@ import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
 import com.ruizurraca.logrobus.favourites.data.FavouriteLinesRepositoryImpl
+import com.ruizurraca.logrobus.favourites.data.SavedStopRepositoryImpl
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
+import com.ruizurraca.logrobus.favourites.domain.SavedStopRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
@@ -226,6 +228,8 @@ private val transitDataModule =
 private val favouritesDataModule =
     module {
         single<FavouriteLinesRepository> { FavouriteLinesRepositoryImpl(get(), get(), get<AppClock>(), get()) }
+        // LB-208 (FR-STOP-08): the stops the user saved, with their aliases and their order.
+        single<SavedStopRepository> { SavedStopRepositoryImpl(get(), get(), get<AppClock>(), get()) }
     }
 
 private val settingsModule =

@@ -8,6 +8,9 @@ import com.ruizurraca.logrobus.core.telemetry.NoOpAnalyticsTracker
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
+import com.ruizurraca.logrobus.favourites.domain.SavedStop
+import com.ruizurraca.logrobus.favourites.domain.SavedStopAlias
+import com.ruizurraca.logrobus.favourites.domain.SavedStopRepository
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.DefaultObserveLinesWithFavourites
@@ -64,6 +67,7 @@ class PreviewUseCases internal constructor(
     internal val plannerPreview: PreviewPlanner = PreviewPlanner(locationPreview, now = SAMPLE_SYNC),
     internal val arrivalsPreview: PreviewArrivals = PreviewArrivals(),
 ) : UseCases,
+    SavedStopsUseCases by SavedStopScript(),
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
     PlannerUseCases by plannerPreview {

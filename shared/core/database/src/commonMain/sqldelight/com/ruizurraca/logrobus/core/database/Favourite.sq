@@ -59,6 +59,27 @@ VALUES (
 deleteFavourite:
 DELETE FROM favourite WHERE type = :type AND ref_id = :refId;
 
+-- LB-208 (FR-STOP-08): a stop saved under the alias its user gave it, last in their order. One that is already saved
+-- keeps its alias and its place, through UNIQUE (type, ref_id).
+insertSavedStop:
+INSERT OR IGNORE INTO favourite (id, type, ref_id, label, position, created_at)
+VALUES (
+  :id,
+  :type,
+  :refId,
+  :label,
+  (SELECT coalesce(max(position), -1) + 1 FROM favourite WHERE type = :type),
+  :createdAt
+);
+
+-- LB-208 (FR-STOP-08): a saved stop's new alias, keeping its place. A stop that is not saved changes nothing.
+updateFavouriteLabel:
+UPDATE favourite SET label = :label WHERE type = :type AND ref_id = :refId;
+
+-- LB-208 (FR-FAV-02): the saved stops, in the user's order, with their aliases.
+selectSavedStops:
+SELECT ref_id, label, position FROM favourite WHERE type = :type ORDER BY position, created_at;
+
 -- LB-110 (FR-FAV-02): a favourite's place in the user's order.
 updateFavouritePosition:
 UPDATE favourite SET position = :position WHERE type = :type AND ref_id = :refId;

@@ -106,6 +106,14 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **11-11-2026:**
+  - LB-208, parte 1: las paradas que guardas, con su alias.
+    - Una parada guardada con alias lo conserva, recortado a 30 caracteres, y el alias es lo que muestra "Mis paradas"; sin alias se muestra el nombre de la parada.
+    - Hasta 20 paradas, igual que las líneas favoritas; la vigésimo primera se rechaza con un mensaje y no se anade nada.
+    - Renombrar conserva el sitio, reordenar sigue tu orden, y quitar deja el resto en orden; todo se mantiene entre reinicios.
+    - Una parada que el catalogo ya no tiene conserva su fila, para que puedas quitarla en vez de perderla en silencio.
+    - El campo para guardar en el detalle de la parada y la hoja de edicion llegan despues.
+
+- **11-11-2026:**
   - LB-203, parte 1: Cerca de mí lista las paradas que hay cerca.
     - "Cerca de ti" muestra hasta cinco paradas a menos de 800 m, la más cercana primero: la distancia en línea recta en cuanto responde el catálogo, y la distancia a pie cuando responde el servicio de distancias.
     - Cada fila dice la parada y lo lejos que está, se lee como una sola locución y abre la pantalla de la parada. Así la lista es el equivalente del mapa, y nada de esto necesita el mapa.

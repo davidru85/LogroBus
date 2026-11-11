@@ -164,6 +164,13 @@ Because `main` is protected, path-filtered workflows need a small always-running
     `logrobus.db` the graph binds and outlives the test, so it raced the next test's schema creation. The tests now
     start the same modules through `initGraphForTest`, the app's graph without the refresh; `initKoin` keeps the
     refresh for the app. Three consecutive local runs of the target are green, and this is the first occurrence.
+  - **A shell screenshot captured before the list arrived** (PR #65, 2026-11-11): `Android screenshots
+    (:android:app)` failed on `lb012_shellScreen_screenshot[shell_dark]`, and the artefact CI uploaded showed the Lines
+    screen's loading placeholder, every row a grey block, rather than a colour difference. The capture took `AppShell()`
+    straight after composition, while the catalogue read that fills the list runs on the I/O threads, so a slower read
+    wins the race; this branch added two graph bindings, which was enough. The shell capture now waits for the list's
+    scroll action before it captures, and the reference is unchanged because the screen it records is the same. Three
+    consecutive local runs of the task are green.
   - **macOS runners that are slow or never come** (PR #37 and PR #38, 2026-11-02): with five macOS jobs at once, one matrix job built the framework and the app in 18 minutes with cold caches and reached its 20-minute limit; twice, GitHub never assigned a job a runner ("not acquired … capacity constraints" on macOS arm64). The matrix jobs' limit is 30 minutes since PR #38 (owner decision). A job that gets no runner cannot be prevented from the pipeline: rerun it.
 - **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
   - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.

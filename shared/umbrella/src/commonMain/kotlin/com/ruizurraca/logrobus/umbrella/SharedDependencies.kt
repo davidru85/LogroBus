@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.umbrella
 
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.presentation.TopLevelDestination
+import com.ruizurraca.logrobus.favourites.domain.SavedStopRepository
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLineArrivals
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
@@ -33,6 +34,14 @@ interface SettingsUseCases {
     fun clearCache(): ClearCache
 }
 
+/**
+ * The saved stops' own use cases for Swift (LB-208): the stops the user saved, with their aliases and their order. A
+ * group of its own, so `UseCases` stays within detekt's function limit as the features grow.
+ */
+interface SavedStopsUseCases {
+    fun savedStops(): SavedStopRepository
+}
+
 /** Near Me's own use cases for Swift (LB-201): location access. */
 interface NearMeUseCases {
     fun observeLocationAccess(): ObserveLocationAccess
@@ -56,6 +65,7 @@ interface PlannerUseCases {
  * [SharedDependencies] resolves them from the graph; [SharedDependencies.preview] scripts them for previews and tests.
  */
 interface UseCases :
+    SavedStopsUseCases,
     SettingsUseCases,
     NearMeUseCases,
     PlannerUseCases {
@@ -104,6 +114,8 @@ object SharedDependencies :
     override fun reorderFavouriteLines(): ReorderFavouriteLines = graph().get()
 
     override fun observeLineArrivals(): ObserveLineArrivals = graph().get()
+
+    override fun savedStops(): SavedStopRepository = graph().get()
 
     override fun observeStopDetail(): ObserveStopDetail = DefaultObserveStopDetail(graph().get())
 
