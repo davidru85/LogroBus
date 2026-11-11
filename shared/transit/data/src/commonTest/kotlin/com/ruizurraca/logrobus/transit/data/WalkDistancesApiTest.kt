@@ -3,7 +3,7 @@ package com.ruizurraca.logrobus.transit.data
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.Logger
-import com.ruizurraca.logrobus.core.common.AppClock
+import com.ruizurraca.logrobus.core.common.ServerCorrectedClock
 import kotlin.time.Clock
 import com.ruizurraca.logrobus.core.network.ClientIdentity
 import com.ruizurraca.logrobus.core.network.SourceClient
@@ -99,7 +99,7 @@ class WalkDistancesApiTest {
                     )
                 },
             identity = ClientIdentity(appVersion = "1.0.0", platform = "Android", osVersion = "16"),
-            clock = AppClock { Clock.System.now() },
+            clock = ServerCorrectedClock(Clock.System),
             baseUrl = { BASE_URL },
             logger = logger,
         )
@@ -108,13 +108,13 @@ class WalkDistancesApiTest {
         SourceClient(
             engine = MockEngine { respond("", status) },
             identity = ClientIdentity(appVersion = "1.0.0", platform = "Android", osVersion = "16"),
-            clock = AppClock { Clock.System.now() },
+            clock = ServerCorrectedClock(Clock.System),
             baseUrl = { BASE_URL },
             logger = logger,
         )
 
     private fun HttpRequestData.jsonBody(): JsonObject =
-        Json.parseToJsonElement((body as io.ktor.http.content.TextContent).text).decodeAs(JsonObject.serializer())
+        Json.parseToJsonElement((body as io.ktor.http.content.TextContent).text) as JsonObject
 
     private fun <T> AppResult<T>.succeeded(): T =
         when (this) {
