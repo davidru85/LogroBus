@@ -658,6 +658,13 @@ Refs: FR-STOP-08, FR-FAV-01, FR-FAV-02, FR-FAV-05
 - **Given** Edit in "My stops", **when** the user reorders, renames or deletes, **then** the changes persist across restarts.
 - **Given** 20 saved stops, **when** the user saves a 21st, **then** a limit message is shown and nothing is added.
 
+**Part 1 done (2026-11-11): the data layer and "My stops".** The Save sheet on stop detail, the Edit sheet with reorder, rename and delete, and the two platforms' screens wait for part 2; the shared rules they need are here and tested.
+- **The alias, cut at 30 characters:** `SavedStopRepositoryTest.lb208_anAliasLongerThanThirtyCharactersIsCutToThirty`, `SavedStopAliasTest.lb208_theCutCountsCodePoints_neverSplittingAGlyph` (a mutation back to `take(30)` makes it fail), `…aGlyphAtTheBoundaryIsDroppedWhole`, and `…aBlankAliasIsNone_soTheStopKeepsItsOwnName`.
+- **The limit of 20, nothing added:** `lb208_aTwentyFirstSavedStopIsRefused_andNothingIsAdded`.
+- **Reorder, rename and delete persist:** `lb208_reorderingPutsTheStopsInTheUsersOrder`, `lb208_renamingASavedStopKeepsItsPlace` and `lb208_removingASavedStopLeavesTheRestInOrder`, over the real database; `lb208_aSavedStopIsStoredUnderTheStopsOwnType` proves a saved stop never counts as a favourite line.
+- **What "My stops" shows:** `MyStopsUiMapperTest` (an alias wins over the catalogue's name, a stop the catalogue lost keeps a row), and `DefaultObserveMyStopsTest` for the join.
+- **Not yet met, and why:** the sheet's Save field, its Edit actions and the "My stops" rows on screen are part 2. The device pass with TalkBack and VoiceOver is with the owner.
+
 ### LB-209 Stop search
 Refs: FR-NEAR-05, FR-STOP-01, FR-STOP-02, DD-16, NFR-PERF-03
 

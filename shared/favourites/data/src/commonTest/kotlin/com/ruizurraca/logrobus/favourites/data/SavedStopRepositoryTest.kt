@@ -188,7 +188,10 @@ class SavedStopRepositoryTest {
 
         val alias = SavedStopAlias.of(emoji)!!
 
-        assertEquals(30, alias.codePointCount(0, alias.length), "the field's thirty characters")
+        // Thirty characters: the "C" plus twenty-nine whole glyphs. A cut by UTF-16 units would take thirty units,
+        // which is the "C" plus fourteen and a half glyphs.
+        val characters = alias.count { !it.isLowSurrogate() }
+        assertEquals(30, characters, "the field's thirty characters")
         val endsMidGlyph = alias.last().code in 0xD800..0xDBFF
         assertEquals(false, endsMidGlyph, "the cut never splits a glyph")
     }

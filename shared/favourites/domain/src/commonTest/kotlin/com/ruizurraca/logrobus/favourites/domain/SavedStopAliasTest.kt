@@ -43,7 +43,9 @@ class SavedStopAliasTest {
 
         val alias = SavedStopAlias.of(emoji)!!
 
-        assertEquals(30, alias.codePointCount(0, alias.length))
+        // A code point that is not a low surrogate starts one, so counting those counts the characters.
+        val characters = alias.count { it.code !in 0xDC00..0xDFFF }
+        assertEquals(30, characters)
         assertEquals(false, alias.last().code in 0xD800..0xDBFF, "no lone high surrogate at the cut")
     }
 

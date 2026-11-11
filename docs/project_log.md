@@ -19,6 +19,33 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-11: LB-208 part 1, the stops the user saves
+
+**Done**
+- **LB-208 (`feat/LB-208-saved-stops`), split by me and to be confirmed:** part 1 is the saved stops' data layer and "My stops"' shared state; the Save field on stop detail, the Edit sheet and both platforms' screens are part 2.
+  - **`SavedStop` and `SavedStopRepository`** in `:shared:favourites:domain`, stored under the `stop` type the schema already reserved, so a saved stop never counts as a favourite line.
+  - **The alias** is trimmed, cut at 30 characters by code points rather than UTF-16 units, and a blank one is no alias, so the row falls back to the stop's own name.
+  - **Three queries** in `Favourite.sq`: a labelled insert that keeps an existing alias and place, a rename that keeps the place, and the ordered read. One write at a time, the limit counted inside the transaction.
+  - **`MyStopsUi` and `DefaultObserveMyStops`** join the saved stops with the catalogue's names: an alias wins, and a stop the catalogue lost keeps its row so it can be removed.
+  - **The graph and the preview** bind it, and `SavedStopsUseCases` is Swift's door, a group of its own so `UseCases` stays within detekt's 11-function limit.
+  - **Docs:** both READMEs, the criteria's evidence for part 1, `backlog.md`, and this entry.
+
+**Review**
+- **The code-point cut was wrong at first and the test proved it:** `next in '\uDC00'..'\uDFFF'` compared a nullable `Char?` and silently never matched, so every glyph counted one unit. Widening to `Char.code` fixed it, and a mutation back to `take(30)` makes the test fail on a glyph split in half.
+- **A test assumption was mine, not the code's:** a stop the catalogue lost with an alias still shows that alias, which is right; only an unaliased one reads as no longer served.
+- **`PreviewUseCases` hit detekt's function limit,** so the scripting moved to `SavedStopScript` and became a delegate, as the file's other groups already are.
+
+**Decisions**
+- **Agent:** the saved stops live under `FavouriteTypes.STOP` in the existing `favourite` table, which already carries `label` and `position`; no schema migration is needed.
+- **Agent:** the alias is cut by code points, so a name in a script whose glyphs need two UTF-16 units is never cut mid-character.
+
+**Open / next**
+- **Part 2:** the Save field on stop detail (FR-STOP-08), the Edit sheet with reorder, rename and delete (FR-FAV-02), and the "My stops" rows on both platforms.
+- **This part's pull request** is to be opened once the split is confirmed.
+- **The device pass** with TalkBack and VoiceOver is with the owner.
+
+---
+
 ## 2026-11-11: LB-203 part 1, "Near you" lists the stops within reach
 
 **Done**

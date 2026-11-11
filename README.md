@@ -104,6 +104,14 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-11:**
+  - LB-208, part 1: the stops you save, with their aliases.
+    - A stop saved with an alias keeps it, cut at 30 characters, and the alias is what "My stops" shows; without one the stop's own name shows.
+    - Up to 20 stops, as the favourite lines; the 21st is refused with a message and nothing is added.
+    - Renaming keeps a stop's place, reordering follows your order, and removing leaves the rest in order, all kept across restarts.
+    - A stop the catalogue no longer holds keeps its row, so you can remove it rather than lose it silently.
+    - The Save field on stop detail and the Edit sheet come next.
+
+- **2026-11-11:**
   - LB-203, part 1: Near Me lists the stops within reach.
     - "Near you" now shows up to five stops within 800 m of the rider, nearest first: the straight line the moment the catalogue answers, and the walking distance once the walking-distance service does.
     - Each row says the stop and how far it is, read as one utterance, and opens the stop's own screen. That makes the list the map's equivalent, so nothing here needs the map.
