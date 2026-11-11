@@ -3,6 +3,7 @@ package com.ruizurraca.logrobus.android.app
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -35,6 +36,13 @@ class ShellScreenshotTest(
     @Test
     fun lb012_shellScreen_screenshot() {
         compose.show(variant) { Screen() }
+        // The shell opens on Lines (FR-NAV-02), and that list arrives from the catalogue on the I/O threads: a capture
+        // taken before it does shows the loading placeholder, which is a different screen and has raced CI once.
+        if (screen == "shell") {
+            compose.waitUntil(AWAIT_MILLIS) {
+                compose.onAllNodes(hasScrollToIndexAction()).fetchSemanticsNodes().isNotEmpty()
+            }
+        }
 
         compose.onRoot().captureRoboImage("src/test/screenshots/${screen}_$variant.png")
     }
@@ -115,3 +123,6 @@ private fun ComposeContentTestRule.show(
         }
     }
 }
+
+/** Far longer than a catalogue read takes, even on a busy runner. */
+private const val AWAIT_MILLIS = 5_000L
