@@ -56,9 +56,11 @@ fun StopDetailRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: StopDetailViewModel = koinViewModel { parametersOf(stopId) },
+    savedViewModel: SavedStopViewModel = koinViewModel { parametersOf(stopId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    StopDetailScreen(state, viewModel::retry, onBack, modifier)
+    val save by savedViewModel.state.collectAsStateWithLifecycle()
+    StopDetailScreen(state, viewModel::retry, onBack, modifier, save, savedViewModel::save)
 }
 
 /**
@@ -75,6 +77,8 @@ fun StopDetailScreen(
     onRetry: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    save: SavedStopUi? = null,
+    onSave: (alias: String?) -> Unit = {},
 ) {
     val stop = (state as? StopDetailUiState.Content)?.stop
     Scaffold(
@@ -84,6 +88,8 @@ fun StopDetailScreen(
                 // "Stop" until the name is known, so the screen is never untitled.
                 title = { ScreenTitle(stop?.name ?: stringResource(R.string.stop_detail_title_generic)) },
                 navigationIcon = { UpButton(onClick = onBack) },
+                // FR-STOP-08: a saved stop offers its alias; an unsaved one offers Save, which asks for it.
+                actions = { save?.let { SaveAction(it, onSave) } },
             )
         },
     ) { padding ->
