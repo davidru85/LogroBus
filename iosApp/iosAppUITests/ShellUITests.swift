@@ -251,6 +251,29 @@ final class ShellUITests: XCTestCase {
     }
 
     @MainActor
+    func test_lb205_aStopRowOpensItsStopDetail_andBackReturnsToTheLine() {
+        // FR-NAV-07's pushed door from line detail, through the debug build's scripted graph: line 3's stops are its
+        // name's two ends, so its first outbound stop is "Campillo".
+        let app = launch()
+        XCTAssertTrue(line("3", in: app).waitForExistence(timeout: 10))
+        line("3", in: app).tap()
+        XCTAssertTrue(app.navigationBars["Line 3"].waitForExistence(timeout: 5))
+
+        let stop = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@", "Stop 1, Campillo")
+        ).firstMatch
+        XCTAssertTrue(stop.waitForExistence(timeout: 10), "the stop's row is on the line's detail")
+        stop.tap()
+
+        XCTAssertTrue(app.navigationBars["Campillo"].waitForExistence(timeout: 5), "the stop's detail was pushed")
+        XCTAssertFalse(app.navigationBars["Line 3"].exists, "the line's detail is under it, not shown")
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        XCTAssertTrue(app.navigationBars["Line 3"].waitForExistence(timeout: 5), "back returns to the line")
+    }
+
+    @MainActor
     func test_lb110_editListsTheFavourites_andALineRemovedThereLeavesTheCarousel_andItsStarGoesOff() {
         // FR-FAV-02, through the debug build's graph and the device's database: line 3 is added from its row, then
         // removed in the edit sheet. The test starts and ends with line 3 out of the favourites.
