@@ -103,9 +103,19 @@ struct LinesSnapshotTests {
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
         try await waitUntil { viewModel.state is State }
+        // A non-empty query makes UIKit draw the field's ✕ clear button, and that control reaches the layer a run loop
+        // after the text does, so a capture taken at once sometimes misses it. It has flaked on CI twice
+        // (docs/ci_cd.md §5), so the capture waits for it rather than hoping.
+        if !query.isEmpty {
+            try await Task.sleep(for: .milliseconds(CLEAR_BUTTON_SETTLE_MILLIS))
+        }
         return NavigationStack { LinesView(viewModel: viewModel) }
     }
 }
+
+/// How long a search's capture waits for the field's clear button, which UIKit adds a run loop after the text
+/// (`docs/ci_cd.md` §5). Far longer than one run loop needs, and short enough to cost a test nothing.
+private let CLEAR_BUTTON_SETTLE_MILLIS = 100
 
 /// Light, dark, and 200 % text or more (`accessibility3`), on a whole iPhone screen, as the app's ShellSnapshotTests.
 enum Appearance: CaseIterable, Sendable {
