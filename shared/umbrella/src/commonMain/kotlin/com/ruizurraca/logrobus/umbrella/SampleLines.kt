@@ -4,6 +4,9 @@ import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
+import com.ruizurraca.logrobus.core.common.geo.BoundingBox
+import com.ruizurraca.logrobus.core.common.geo.GeoPoint
+import com.ruizurraca.logrobus.core.common.geo.distanceMetersTo
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
@@ -20,11 +23,15 @@ import com.ruizurraca.logrobus.transit.domain.LineKind
 import com.ruizurraca.logrobus.transit.domain.LinePattern
 import com.ruizurraca.logrobus.transit.domain.LineStop
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
+import com.ruizurraca.logrobus.transit.domain.NearbyStopRow
+import com.ruizurraca.logrobus.transit.domain.NearbyStopsSource
 import com.ruizurraca.logrobus.transit.domain.ServedLine
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.Stop
 import com.ruizurraca.logrobus.transit.domain.StopRepository
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
+import com.ruizurraca.logrobus.transit.domain.WalkDistance
+import com.ruizurraca.logrobus.transit.domain.WalkDistances
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -106,7 +113,16 @@ internal object SampleLines {
         base: Int,
         names: List<String>,
     ) = names.mapIndexed { index, name ->
-        LineStop(stopId = base + index, name = name, lat = 42.4650, lng = -2.4456)
+        // LB-203: stops are spread out, so a "Near you" preview shows a real order and real distances rather than
+        // every stop sitting on one point. The step comes from the stop's own id, which is unique, so no two stops
+        // share a point and no two distances tie. One id is about 0.7 m, which puts the five nearest sample stops
+        // between 70 m and 330 m, well inside FR-STOP-11's 800 m.
+        LineStop(
+            stopId = base + index,
+            name = name,
+            lat = 42.4650 + (base + index) * 0.000006,
+            lng = -2.4456,
+        )
     }
 }
 
@@ -236,7 +252,44 @@ fun previewDataModule(): Module =
             }
         }
         single<StopArrivalsReader> { SampleStopArrivalsReader(get()) }
+        // LB-203: "Near you" over the sample lines' own stops, so a screen test's section has rows without a source.
+        single<NearbyStopsSource> {
+            NearbyStopsSource {
+                AppResult.Success(
+                    SampleLines.all
+                        .flatMap { line -> line.patterns.values.flatMap { pattern -> pattern.stops } }
+                        .distinctBy { stop -> stop.stopId }
+                        .map { stop ->
+                            NearbyStopRow(stopId = stop.stopId, name = stop.name, lat = stop.lat, lng = stop.lng)
+                        },
+                )
+            }
+        }
+        // LB-203: API-08 scripted, so a preview's section shows walking distances without a source. Each walk is the
+        // straight line times a detour factor, so the list's order is real and its minutes are plausible.
+        single<WalkDistances> {
+            WalkDistances { request ->
+                val here = GeoPoint(request.originLat, request.originLng)
+                AppResult.Success(
+                    request.destinations.map { destination ->
+                        val straight = GeoPoint(destination.lat, destination.lng).distanceMetersTo(here)
+                        val walk = straight * PREVIEW_WALK_DETOUR
+                        WalkDistance(
+                            stopId = destination.id,
+                            distanceMeters = walk.toInt(),
+                            durationSeconds = (walk / PREVIEW_WALKING_METERS_PER_SECOND).toInt(),
+                        )
+                    },
+                )
+            }
+        }
     }
+
+/** The walking speed a preview assumes, in metres per second: about 4.3 km/h, a plain walking pace. */
+private const val PREVIEW_WALKING_METERS_PER_SECOND = 1.2
+
+/** How much longer a walk is than the straight line, as street grids usually make it. */
+private const val PREVIEW_WALK_DETOUR = 1.3
 
 /**
  * The sample stop's calls, scripted so a screen test's detail has rows without a source (LB-205): the same shape

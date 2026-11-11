@@ -5,4 +5,12 @@
     <string name="nearme_nearby_title">Cerca de ti</string>
     <!-- FR-NEAR-06: without location, the one row of "Near you", which opens the permission flow (FR-LOC-01). -->
     <string name="nearme_nearby_turn_on_location">Activa la ubicación para ver paradas cercanas</string>
+    <!-- LB-203 (FR-HOME-03, FR-STOP-11): "Near you" with location. A row says the stop and how far it is: the walk's own
+         minutes once API-08 has answered, and the straight-line distance until then. -->
+    <string name="nearme_nearby_walk_minutes">%1$d min a pie</string>
+    <string name="nearme_nearby_distance_meters">a %1$d m</string>
+    <!-- How TalkBack reads the row: the stop, then how far it is, as one utterance (NFR-A11Y-02). -->
+    <string name="nearme_nearby_stop_spoken">%1$s, %2$s</string>
+    <!-- What a double tap on a row does. -->
+    <string name="nearme_nearby_open_stop">abrir parada</string>
 </resources>

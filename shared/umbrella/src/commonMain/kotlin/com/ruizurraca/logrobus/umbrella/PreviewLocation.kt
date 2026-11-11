@@ -1,12 +1,20 @@
 package com.ruizurraca.logrobus.umbrella
 
+import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.core.common.geo.BoundingBox
+import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import com.ruizurraca.logrobus.core.location.LocationFix
 import com.ruizurraca.logrobus.core.location.LocationPermission
 import com.ruizurraca.logrobus.core.location.LocationProvider
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultGetNearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.planner.domain.DefaultReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
+import com.ruizurraca.logrobus.transit.domain.NearbyStopRow
+import com.ruizurraca.logrobus.transit.domain.NearbyStopsSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -42,6 +50,9 @@ internal class PreviewLocation(
             override fun locations(): Flow<LocationFix> =
                 flow<LocationFix> {
                     if (permission() == LocationPermission.NotGranted) return@flow
+                    // LB-203: a preview's section needs a position to list the sample stops; it is the sample lines'
+                    // own, so every one of them falls inside the radius.
+                    emit(LocationFix(GeoPoint(PREVIEW_LAT, PREVIEW_LNG), accuracyMeters = 10.0))
                     val started = revocations.value
                     revocations.first { it > started }
                 }.countedIn(collections)
@@ -49,5 +60,29 @@ internal class PreviewLocation(
 
     override fun observeLocationAccess(): ObserveLocationAccess = DefaultObserveLocationAccess(provider)
 
+    /** LB-203: the scripted section, over the sample stops and the preview's own position. */
+    override fun observeNearYou(): ObserveNearYou =
+        DefaultObserveNearYou(provider) { positions ->
+            DefaultGetNearbyStops(sampleNearbyStops(), walkDistances = null)(positions)
+        }
+
     fun readInitialOrigin(): ReadInitialOrigin = DefaultReadInitialOrigin(provider)
 }
+
+/**
+ * LB-203: the stops a preview's "Near you" lists, over the sample lines' own stops, so a preview or a Swift test shows
+ * a section without a catalogue or a source. The walk is left out: API-08 is the source's, and a preview scripts none.
+ */
+private fun sampleNearbyStops(): NearbyStopsSource =
+    NearbyStopsSource {
+        AppResult.Success(
+            SampleLines.all
+                .flatMap { line -> line.patterns.values.flatMap { pattern -> pattern.stops } }
+                .distinctBy { stop -> stop.stopId }
+                .map { stop -> NearbyStopRow(stopId = stop.stopId, name = stop.name, lat = stop.lat, lng = stop.lng) },
+        )
+    }
+
+/** The position a preview stands at: the sample lines' own, so every sample stop is within the radius (LB-203). */
+private const val PREVIEW_LAT = 42.4650
+private const val PREVIEW_LNG = -2.4456

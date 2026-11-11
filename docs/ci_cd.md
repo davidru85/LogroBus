@@ -157,6 +157,13 @@ Because `main` is protected, path-filtered workflows need a small always-running
     on CI and absent from the committed reference. UIKit adds that button a run loop after the text reaches the field,
     so a capture taken the instant the view model settles can miss it. The test now waits 100 ms after a non-empty
     query before capturing; the reference and the assertion are untouched.
+  - **A database locked under `IosGraphTest`** (PR #64, 2026-11-11): `Shared iOS tests` failed on
+    `IosGraphTest.lb010_theAppShellSetsTheVersion` with `SQLiteExceptionErrorCode: Sqlite operation failure database is
+    locked`, and the run then reported "Test running process exited unexpectedly". The test started the graph through
+    `initKoin`, which also starts the app-start refresh: that coroutine writes the catalogue into the single
+    `logrobus.db` the graph binds and outlives the test, so it raced the next test's schema creation. The tests now
+    start the same modules through `initGraphForTest`, the app's graph without the refresh; `initKoin` keeps the
+    refresh for the app. Three consecutive local runs of the target are green, and this is the first occurrence.
   - **macOS runners that are slow or never come** (PR #37 and PR #38, 2026-11-02): with five macOS jobs at once, one matrix job built the framework and the app in 18 minutes with cold caches and reached its 20-minute limit; twice, GitHub never assigned a job a runner ("not acquired … capacity constraints" on macOS arm64). The matrix jobs' limit is 30 minutes since PR #38 (owner decision). A job that gets no runner cannot be prevented from the pipeline: rerun it.
 - **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
   - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.

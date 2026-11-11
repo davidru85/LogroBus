@@ -16,6 +16,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
+import com.ruizurraca.logrobus.feature.nearme.presentation.NearbyStopRowUi
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -58,7 +59,7 @@ class NearMeScreenTest {
         // The row shows first, so that its absence below is the state's doing.
         compose.onNodeWithText(row).assertExists()
 
-        for (nearYou in listOf(NearYouUi.LocationOn, NearYouUi.Unknown)) {
+        for (nearYou in listOf(NearYouUi.LocationOn(), NearYouUi.Unknown)) {
             state = NearMeUiState(nearYou)
 
             compose.onNodeWithText(row).assertDoesNotExist()
@@ -77,5 +78,68 @@ class NearMeScreenTest {
         compose.onNodeWithContentDescription(context.getString(DS.string.action_more)).performClick()
 
         assertEquals(1, opened)
+    }
+
+    @Test
+    fun lb203_eachNearbyStopShowsItsNameAndHowFarItIs_andOpensTheStop() {
+        // FR-HOME-03 and NFR-A11Y-04: the list is the map's equivalent, and opening a stop from it never needs the map.
+        val opened = mutableListOf<Int>()
+        val section =
+            NearYouUi.LocationOn(
+                stops =
+                    listOf(
+                        NearbyStopRowUi(
+                            stopId = 38,
+                            name = "Gonzalo de Berceo",
+                            distanceMeters = 120,
+                            walkingMinutes = 2,
+                        ),
+                        NearbyStopRowUi(stopId = 61, name = "Varea", distanceMeters = 400),
+                    ),
+                isRefined = true,
+            )
+        compose.setContent {
+            NearMeScreen(NearMeUiState(section), onTurnOnLocation = {}, onOpenMore = {}, onOpenStop = { opened += it })
+        }
+
+        // The row clears its children to be one utterance, so its words are read from the unmerged tree.
+        compose.onNodeWithText("Gonzalo de Berceo", useUnmergedTree = true).assertExists()
+        compose
+            .onNodeWithText(context.getString(R.string.nearme_nearby_walk_minutes, 2), useUnmergedTree = true)
+            .assertExists()
+        compose.onNodeWithText("Varea", useUnmergedTree = true).assertExists()
+        // A stop the walk has not reached yet says its straight-line distance rather than a walk it does not know.
+        compose
+            .onNodeWithText(context.getString(R.string.nearme_nearby_distance_meters, 400), useUnmergedTree = true)
+            .assertExists()
+
+        compose.onNodeWithText("Varea", useUnmergedTree = true).performClick()
+
+        assertEquals(listOf(61), opened)
+    }
+
+    @Test
+    fun lb203_eachNearbyStopIsOneUtterance() {
+        // NFR-A11Y-02: TalkBack reads the stop and how far it is as one row, then what a double tap does.
+        compose.setContent {
+            NearMeScreen(
+                NearMeUiState(
+                    NearYouUi.LocationOn(
+                        stops = listOf(NearbyStopRowUi(38, "Gonzalo de Berceo", 120, walkingMinutes = 2)),
+                        isRefined = true,
+                    ),
+                ),
+                onTurnOnLocation = {},
+                onOpenMore = {},
+            )
+        }
+
+        val spoken =
+            context.getString(
+                R.string.nearme_nearby_stop_spoken,
+                "Gonzalo de Berceo",
+                context.getString(R.string.nearme_nearby_walk_minutes, 2),
+            )
+        compose.onNodeWithContentDescription(spoken).assertExists()
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewFontScale
@@ -28,6 +31,7 @@ import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
+import com.ruizurraca.logrobus.feature.nearme.presentation.NearbyStopRowUi
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -60,6 +64,7 @@ fun NearMeScreen(
     onTurnOnLocation: () -> Unit,
     onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenStop: (stopId: Int) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -77,6 +82,16 @@ fun NearMeScreen(
             if (state.nearYou == NearYouUi.TurnOnLocation) {
                 item { NearYouHeading() }
                 item { TurnOnLocationRow(onTurnOnLocation) }
+            }
+            // FR-HOME-03 and NFR-A11Y-04: the list is the map's equivalent, so every stop is reachable and openable
+            // here without touching the map. Until the first position arrives there is nothing to list, and the
+            // section shows no empty heading either.
+            val section = state.nearYou as? NearYouUi.LocationOn
+            if (section != null && section.stops.isNotEmpty()) {
+                item { NearYouHeading() }
+                items(section.stops, key = { it.stopId }) { stop ->
+                    NearbyStopRow(stop, section.isRefined, onOpenStop)
+                }
             }
         }
     }
@@ -104,6 +119,36 @@ private fun TurnOnLocationRow(onClick: () -> Unit) {
         modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
         // The text says it all; the icon is decoration.
         leadingContent = { Icon(painterResource(R.drawable.ic_location), contentDescription = null) },
+    )
+}
+
+/**
+ * FR-HOME-03: one stop of "Near you", read as one utterance, "Gonzalo de Berceo, 2 min a pie", and opened with a
+ * double tap (NFR-A11Y-02). A walked distance shows the minutes API-08 gave; a straight line says the metres, because a
+ * walk it does not know must not be invented.
+ */
+@Composable
+private fun NearbyStopRow(
+    stop: NearbyStopRowUi,
+    isRefined: Boolean,
+    onOpenStop: (Int) -> Unit,
+) {
+    val walk = stop.walkingMinutes
+    val distance =
+        if (isRefined && walk != null) {
+            stringResource(R.string.nearme_nearby_walk_minutes, walk)
+        } else {
+            stringResource(R.string.nearme_nearby_distance_meters, stop.distanceMeters)
+        }
+    val spoken = stringResource(R.string.nearme_nearby_stop_spoken, stop.name, distance)
+    ListItem(
+        headlineContent = { Text(stop.name, style = MaterialTheme.typography.bodyLarge) },
+        supportingContent = { Text(distance, style = MaterialTheme.typography.bodyMedium) },
+        modifier =
+            Modifier
+                .clickable(onClickLabel = stringResource(R.string.nearme_nearby_open_stop), role = Role.Button) {
+                    onOpenStop(stop.stopId)
+                }.clearAndSetSemantics { contentDescription = spoken },
     )
 }
 

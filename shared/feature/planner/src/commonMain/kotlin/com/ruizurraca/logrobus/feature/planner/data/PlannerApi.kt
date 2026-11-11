@@ -10,19 +10,16 @@ import com.ruizurraca.logrobus.core.network.decodeEach
 import com.ruizurraca.logrobus.feature.planner.data.dto.RouteDto
 import com.ruizurraca.logrobus.feature.planner.data.dto.RouteRequestDto
 import com.ruizurraca.logrobus.feature.planner.data.dto.RouteResponseDto
-import com.ruizurraca.logrobus.feature.planner.data.dto.WalkDistanceDto
-import com.ruizurraca.logrobus.feature.planner.data.dto.WalkDistancesRequestDto
-import com.ruizurraca.logrobus.feature.planner.data.dto.WalkDistancesResponseDto
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 
 /**
- * The writer of both POST bodies (api_spec.md §4.7–4.8), the write-side counterpart of `SourceJson`: a request is only
+ * The writer of the POST body (api_spec.md §4.7), the write-side counterpart of `SourceJson`: a request is only
  * ever written, so none of the reader's flags (`ignoreUnknownKeys`, `coerceInputValues`, `isLenient`) applies. The two
  * that do make each body exactly the fields the caller filled:
- * - `encodeDefaults = false`, so an empty `destinations` keeps its default and the key stays out of the body;
+ * - `encodeDefaults = false`, so a default field keeps its default and the key stays out of the body;
  * - `explicitNulls = false`, so a property the caller left null is absent rather than `null`. A request must never send
  *   `"maxResults": null` or `"lat": null`: the source reads a null as a value, and the request would be refused.
  */
@@ -33,12 +30,13 @@ private val RequestJson =
     }
 
 /**
- * API-07 and API-08 as DTOs (architecture.md §3, §4.2): the planner's itinerary and walking-distance services. Both are
- * `POST`s with a JSON body, and both take the live timeout of spec §8.7, since they run while a screen waits.
+ * API-07 as DTOs (architecture.md §3, §4.2): the planner's itinerary service. It is a `POST` with a JSON body and
+ * takes the live timeout of spec §8.7, since it runs while a screen waits. API-08, the walking distances, lives in
+ * `:shared:transit:data` because Near Me needs it too (LB-203).
  *
- * Neither reply is a BFF envelope: it is a bare object whose one collection is decoded item by item (api_spec.md §3,
- * NFR-REL-02). For API-07 that granularity is the route, so a route holding a leg that does not decode is dropped whole
- * — an itinerary missing a leg is misleading — and the routes around it still reach the screen.
+ * The reply is not a BFF envelope: it is a bare object whose one collection is decoded item by item (api_spec.md §3,
+ * NFR-REL-02). That granularity is the route, so a route holding a leg that does not decode is dropped whole — an
+ * itinerary missing a leg is misleading — and the routes around it still reach the screen.
  */
 internal class PlannerApi(
     private val client: SourceClient,
@@ -57,19 +55,6 @@ internal class PlannerApi(
         client
             .post(PATH_ROUTE, RequestJson.encodeToJsonElement(RouteRequestDto.serializer(), request), RequestKind.Live)
             .decodeBareCollection(RouteResponseDto.serializer(), RouteResponseDto::routes, RouteDto.serializer())
-
-    /** API-08: the walking distance and duration to each destination, whose [WalkDistanceDto.id] comes back as sent. */
-    suspend fun walkDistances(request: WalkDistancesRequestDto): AppResult<Decoded<WalkDistanceDto>> =
-        client
-            .post(
-                PATH_WALK_DISTANCES,
-                RequestJson.encodeToJsonElement(WalkDistancesRequestDto.serializer(), request),
-                RequestKind.Live,
-            ).decodeBareCollection(
-                WalkDistancesResponseDto.serializer(),
-                WalkDistancesResponseDto::items,
-                WalkDistanceDto.serializer(),
-            )
 
     /**
      * The bare-object reply read as [R], then its collection — [collection] of the reply — decoded item by item. A
@@ -102,6 +87,5 @@ internal class PlannerApi(
 
     private companion object {
         const val PATH_ROUTE = "/api/transit/route"
-        const val PATH_WALK_DISTANCES = "/api/transit/walk-distances"
     }
 }

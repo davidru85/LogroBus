@@ -1,6 +1,42 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "nearme.nearby.distance_meters %lld": {
+      "comment": "LB-203 (FR-HOME-03): how far a stop is in a straight line, until API-08 gives the walking distance.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld m away"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a %lld m"
+          }
+        }
+      }
+    },
+    "nearme.nearby.walk_minutes %lld": {
+      "comment": "LB-203 (FR-HOME-03): the walking time to a stop, once API-08 has answered.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min walk"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min a pie"
+          }
+        }
+      }
+    },
     "nearme.nearby.title": {
       "comment": "Near Me: the heading of the nearby stops section (design_guidelines.md §3.2).",
       "extractionState": "manual",

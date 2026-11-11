@@ -19,6 +19,42 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-11: LB-203 part 1, "Near you" lists the stops within reach
+
+**Done**
+- **PR #63 merged** on 2026-11-11, `main` synced to `4ba9f69f`; CI was 64 of 64.
+- **LB-203 (`feat/LB-203-nearby-stops`), split by the owner's decision of 2026-11-11:** part 1 is the data layer and the list; the sheet with its detents, the map's interaction and the pins wait for LB-202.
+  - **API-08 moved to `:shared:transit:data`** as `WalkDistances`, with its DTOs and a domain-facing contract. It lived `internal` in the planner's module, and ModuleRules forbids a shared feature depending on another (`:shared:feature:nearme -> :shared:transit:data` was refused, and so was the feature-to-feature route). The planner keeps API-07.
+  - **`NearbyStopsSource` + `NearbyStopsSourceImpl`** read the stops inside a `BoundingBox` in one query (`selectStopsInBox`), so sqlite does the cheap filter and the caller the exact Haversine.
+  - **`DefaultGetNearbyStops`** applies FR-STOP-11: 800 m, five shown, straight line then walking distance, 40 candidates, and API-08 asked again only past 50 m.
+  - **`ObserveNearYou`** feeds the permission row and the list from one collection, because `LocationProvider.locations()` starts the platform's updates per collection (FR-LOC-03).
+  - **Both screens** draw the list: one utterance per row, the walk's minutes or the straight-line metres, and a tap opening the stop's own screen (NFR-A11Y-04).
+  - **Docs:** both READMEs, the criteria's evidence, `backlog.md`, `AGENTS.md` §2, and this entry.
+
+**Review**
+- **Four defects the tests and the screenshots caught:**
+  - **A stop API-08 left out vanished from the list.** A partial answer now keeps it with its straight-line distance, so a stop the rider can see from the corner does not disappear.
+  - **A walk under a minute read "0 min".** The mapper truncated; it now rounds up, so 90 s reads 2 min and 40 s reads 1.
+  - **The iOS row printed its own string key.** A `LocalizedStringKey` resolves in the app's bundle, which holds no such key; the row resolves it from the feature's own table, and its `Int32` had to become a Swift `Int` to match the `%lld` the keys carry.
+  - **The preview's sample stops all shared one point,** so every distance read `a 0 m`. Each stop's point now comes from its id, which puts the five nearest between 70 m and 330 m.
+- **The empty section showed its heading,** caught by the existing LB-201 test; the heading now appears only with rows.
+- **`detekt` found four real style defects:** a `!!`, a magic number, three object literals that a fun interface accepts as lambdas, and a swallowed exception that now logs its cause.
+
+**CI (PR #64)**
+- **Run 1:** `Shared iOS tests` failed on `IosGraphTest.lb010_theAppShellSetsTheVersion` with `database is locked`. The test started the graph through `initKoin`, whose app-start refresh writes the catalogue in a coroutine that outlives the test and races the next test's schema creation on the one database file. The test now starts the same modules through `initGraphForTest`, which skips the refresh; `initKoin` keeps it for the app, and three consecutive local runs are green. `docs/ci_cd.md` §5 records it.
+
+**Decisions**
+- **Owner (2026-11-11):** split LB-203, data and list now, the sheet with LB-202; and move API-08's client to `:shared:transit:data`.
+- **Agent:** one collection for the whole section rather than two collectors of `locations()`, because a second collection starts the platform's updates a second time.
+- **Agent:** a straight-line distance is shown as metres, never as invented minutes: only API-08 knows how long the walk is.
+
+**Open / next**
+- **This part's pull request** is open, and its watch runs.
+- **The sheet** with its three detents, the map staying pannable at peek and medium, and the stop pins need LB-202, which is `todo`.
+- **The device pass** with TalkBack and VoiceOver on the new rows is still with the owner.
+
+---
+
 ## 2026-11-11: LB-205 part 2, the pushed stop detail; PR #62 merged
 
 **Done**

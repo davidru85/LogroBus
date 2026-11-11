@@ -14,7 +14,7 @@ class IosGraphTest {
 
     @Test
     fun lb010_theIosGraphResolvesEveryCoreDependency() {
-        initKoin(appVersion = "1.2.0", debug = true, telemetry = PlatformTelemetry())
+        initGraphForTest(appVersion = "1.2.0", debug = true, telemetry = PlatformTelemetry())
 
         assertResolvesTheCore(KoinPlatform.getKoin())
         // The path a Swift ViewModel takes by default. Kotlin/Native has no reflection, so each use case is listed;
@@ -33,10 +33,12 @@ class IosGraphTest {
 
     @Test
     fun lb017_initKoinTakesTheAppsOwnTelemetry() {
-        // The injection point for the Swift vendor implementations of LB-409 (ADR-0009).
+        // The injection point for the Swift vendor implementations of LB-409 (ADR-0009). The graph is started by
+        // `initGraphForTest`, the same modules as `initKoin` without the app-start refresh, which would race this
+        // test's own teardown on the database file (lb008_database).
         val native = RecordingTelemetry()
 
-        initKoin(
+        initGraphForTest(
             appVersion = "1.2.0",
             debug = false,
             telemetry = PlatformTelemetry(analytics = native, crashReporter = native),
@@ -47,7 +49,7 @@ class IosGraphTest {
 
     @Test
     fun lb010_theAppShellSetsTheVersion() {
-        initKoin(appVersion = "1.2.0", debug = false, telemetry = PlatformTelemetry())
+        initGraphForTest(appVersion = "1.2.0", debug = false, telemetry = PlatformTelemetry())
 
         // Spec §8.7: the version the operator sees in the User-Agent.
         assertEquals(

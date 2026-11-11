@@ -33,4 +33,16 @@ class PlannerUiMapperTest {
 
         assertEquals(PlannerUiState(origin = PlaceFieldUi.Empty, destination = PlaceFieldUi.MyLocation), state)
     }
+
+    @Test
+    fun lb303_aPickedTimeIsReadOnTheMadridClock() {
+        // FR-PLAN-03: the pickers' fields are Madrid wall-clock values, so the instant is theirs in that zone, not
+        // UTC. The event is the screen's own door to that conversion.
+        val departure =
+            PlannerEvent
+                .DepartAt(year = 2026, month = 12, day = 15, hour = 18, minute = 30)
+                .departure(now = Instant.parse("2026-12-01T09:00:00Z"))
+
+        assertEquals(Instant.parse("2026-12-15T17:30:00Z"), departure.instant, "CET is one hour ahead in December")
+    }
 }

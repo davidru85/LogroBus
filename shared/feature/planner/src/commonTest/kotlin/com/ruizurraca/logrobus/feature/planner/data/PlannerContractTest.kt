@@ -13,8 +13,6 @@ import com.ruizurraca.logrobus.feature.planner.data.dto.LatLngDto
 import com.ruizurraca.logrobus.feature.planner.data.dto.LegDto
 import com.ruizurraca.logrobus.feature.planner.data.dto.RouteRequestDto
 import com.ruizurraca.logrobus.feature.planner.data.dto.RouteResponseDto
-import com.ruizurraca.logrobus.feature.planner.data.dto.WalkDestinationDto
-import com.ruizurraca.logrobus.feature.planner.data.dto.WalkDistancesRequestDto
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
@@ -185,29 +183,11 @@ class PlannerContractTest {
         }
 
     @Test
-    fun lb005_theWalkDistancesFixtureDecodesEveryItem() =
-        runTest {
-            val fixture = FixtureLoader.read("walk_distances.json")
-            val api = PlannerApi(client(fixture), logger)
-
-            val decoded = api.walkDistances(walkDistancesRequest()).succeeded()
-
-            assertEquals(2, decoded.items.size)
-            assertEquals(0, decoded.dropped)
-            assertEquals("$BASE_URL/api/transit/walk-distances", requests.single().url.toString())
-            assertEquals(HttpMethod.Post, requests.single().method)
-            // The ids come back as sent, which is what pairs a distance with its stop (api_spec.md §4.8).
-            assertEquals(listOf(38, 61), decoded.items.mapNotNull { it.id })
-            assertEquals(listOf(4906, 395), decoded.items.mapNotNull { it.distanceM })
-        }
-
-    @Test
     fun lb005_aReplyThatIsNotJsonFailsAsData() =
         runTest {
             val api = PlannerApi(client("<html>maintenance</html>"), logger)
 
             assertEquals(AppError.Data, api.route(routeRequest()).failed())
-            assertEquals(AppError.Data, api.walkDistances(walkDistancesRequest()).failed())
         }
 
     @Test
@@ -236,7 +216,6 @@ class PlannerContractTest {
             val api = PlannerApi(clientWithStatus(HttpStatusCode.ServiceUnavailable), logger)
 
             assertEquals(AppError.Server(503), api.route(routeRequest()).failed())
-            assertEquals(AppError.Server(503), api.walkDistances(walkDistancesRequest()).failed())
         }
 
     @Test
@@ -266,12 +245,6 @@ class PlannerContractTest {
             destination = LatLngDto(lat = 42.456, lng = -2.43),
             departureAt = "2026-10-22T06:19:00.000Z",
             maxResults = 5,
-        )
-
-    private fun walkDistancesRequest() =
-        WalkDistancesRequestDto(
-            origin = LatLngDto(lat = 42.465, lng = -2.445),
-            destinations = listOf(WalkDestinationDto(id = 38, lat = 42.426317, lng = -2.461335)),
         )
 
     private companion object {
