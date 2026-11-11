@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
+import com.ruizurraca.logrobus.core.common.geo.BoundingBox
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
@@ -20,6 +21,8 @@ import com.ruizurraca.logrobus.transit.domain.LineKind
 import com.ruizurraca.logrobus.transit.domain.LinePattern
 import com.ruizurraca.logrobus.transit.domain.LineStop
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
+import com.ruizurraca.logrobus.transit.domain.NearbyStopRow
+import com.ruizurraca.logrobus.transit.domain.NearbyStopsSource
 import com.ruizurraca.logrobus.transit.domain.ServedLine
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.Stop
@@ -236,6 +239,20 @@ fun previewDataModule(): Module =
             }
         }
         single<StopArrivalsReader> { SampleStopArrivalsReader(get()) }
+        // LB-203: "Near you" over the sample lines' own stops, so a screen test's section has rows without a source.
+        single<NearbyStopsSource> {
+            object : NearbyStopsSource {
+                override fun stopsIn(box: BoundingBox) =
+                    AppResult.Success(
+                        SampleLines.all
+                            .flatMap { line -> line.patterns.values.flatMap { it.stops } }
+                            .distinctBy { it.stopId }
+                            .map { stop ->
+                                NearbyStopRow(stopId = stop.stopId, name = stop.name, lat = stop.lat, lng = stop.lng)
+                            },
+                    )
+            }
+        }
     }
 
 /**

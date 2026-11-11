@@ -2,7 +2,7 @@ package com.ruizurraca.logrobus.android.feature.nearme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiMapper
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
@@ -22,15 +22,16 @@ import kotlinx.coroutines.flow.update
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NearMeViewModel(
-    observeLocationAccess: ObserveLocationAccess,
+    observeNearYou: ObserveNearYou,
 ) : ViewModel() {
     // Each check bumps it, which reads location access again.
     private val checks = MutableStateFlow(0)
 
     val state: StateFlow<NearMeUiState> =
         checks
-            .flatMapLatest { observeLocationAccess().map(NearMeUiMapper::state) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), NearMeUiState())
+            .flatMapLatest {
+                observeNearYou().map { section -> NearMeUiMapper.state(section.access, section.nearby) }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), NearMeUiState())
 
     fun onEvent(event: NearMeEvent) {
         when (event) {

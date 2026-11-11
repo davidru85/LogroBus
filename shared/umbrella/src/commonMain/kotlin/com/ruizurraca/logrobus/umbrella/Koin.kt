@@ -29,7 +29,11 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLines
 import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultGetNearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveNearYou
+import com.ruizurraca.logrobus.feature.nearme.domain.GetNearbyStops
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.planner.domain.DefaultReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
@@ -52,7 +56,9 @@ import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
 import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
+import com.ruizurraca.logrobus.transit.data.NearbyStopsSourceImpl
 import com.ruizurraca.logrobus.transit.data.StopRepositoryImpl
+import com.ruizurraca.logrobus.transit.data.WalkDistancesApi
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.data.arrivalsRepository
 import com.ruizurraca.logrobus.transit.data.patternsOfLine
@@ -61,7 +67,9 @@ import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
 import com.ruizurraca.logrobus.transit.domain.Direction
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import com.ruizurraca.logrobus.transit.domain.NearbyStopsSource
 import com.ruizurraca.logrobus.transit.domain.StopRepository
+import com.ruizurraca.logrobus.transit.domain.WalkDistances
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -240,6 +248,11 @@ private val linesModule =
 private val nearMeModule =
     module {
         factory<ObserveLocationAccess> { DefaultObserveLocationAccess(get()) }
+        // LB-203: "Near you" from one collection, so the device is asked for fixes once (FR-LOC-03).
+        factory<NearbyStopsSource> { NearbyStopsSourceImpl(get(), get()) }
+        factory<WalkDistances> { WalkDistancesApi(get(), get()) }
+        factory<GetNearbyStops> { DefaultGetNearbyStops(get(), get()) }
+        factory<ObserveNearYou> { DefaultObserveNearYou(get(), get()) }
     }
 
 // How to Get There (LB-301): the initial origin, from the platform's location permission.

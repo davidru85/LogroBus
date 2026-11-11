@@ -7,6 +7,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -35,6 +36,9 @@ interface SettingsUseCases {
 /** Near Me's own use cases for Swift (LB-201): location access. */
 interface NearMeUseCases {
     fun observeLocationAccess(): ObserveLocationAccess
+
+    /** LB-203 (FR-HOME-03): "Near you" from one collection, with the stops the rider can walk to. */
+    fun observeNearYou(): ObserveNearYou
 }
 
 /**
@@ -142,6 +146,8 @@ private object GraphSettingsUseCases : SettingsUseCases {
 /** Near Me's own use cases, from the graph (LB-201). */
 private object GraphNearMeUseCases : NearMeUseCases {
     override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
+
+    override fun observeNearYou(): ObserveNearYou = graph().get()
 }
 
 /** How to Get There's own use cases, from the graph (LB-301, LB-303). */

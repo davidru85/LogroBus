@@ -22,9 +22,13 @@ import androidx.compose.ui.test.performClick
 import androidx.core.app.ActivityOptionsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.NearYouState
+import com.ruizurraca.logrobus.feature.nearme.domain.NearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -175,7 +179,15 @@ class NearMeRouteTest {
         observe: ObserveLocationAccess,
         restoration: StateRestorationTester? = null,
     ) {
-        startKoin { modules(module { factory { observe } }, nearMeUiModule) }
+        // LB-203: the screen now reads its section from `ObserveNearYou`, so the scripted access is wrapped in the
+        // section the screen shows: the same access, and the stops only once it is on.
+        val section =
+            ObserveNearYou {
+                observe().map { access ->
+                    NearYouState(access, nearby = if (access == LocationAccess.On) NearbyStops(emptyList()) else null)
+                }
+            }
+        startKoin { modules(module { factory { section } }, nearMeUiModule) }
         val owner =
             object : ActivityResultRegistryOwner {
                 override val activityResultRegistry: ActivityResultRegistry = prompts
