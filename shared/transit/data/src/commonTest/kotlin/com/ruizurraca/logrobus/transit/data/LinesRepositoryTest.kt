@@ -16,6 +16,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.time.Duration.Companion.seconds
 
 /** LB-101 (FR-LINE-01, FR-LINE-02): the lines that the static sync stored, for the Lines list. */
 class LinesRepositoryTest {
@@ -139,7 +140,10 @@ class LinesRepositoryTest {
         runTest {
             driver.execute(null, "DROP TABLE line", 0)
 
-            repository().observeLines().test {
+            // The flow reads three database queries on the IO dispatcher before it fails, and CI's iOS runner has
+            // three cores shared with every other job: Turbine's 5 s default expired once with no other failure
+            // (PR #62). The assertion is unchanged; only the wait it is given has room.
+            repository().observeLines().test(timeout = 30.seconds) {
                 assertEquals(AppResult.Failure(AppError.Data), awaitItem())
                 awaitComplete()
             }
