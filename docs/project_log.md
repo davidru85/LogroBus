@@ -40,6 +40,9 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The empty section showed its heading,** caught by the existing LB-201 test; the heading now appears only with rows.
 - **`detekt` found four real style defects:** a `!!`, a magic number, three object literals that a fun interface accepts as lambdas, and a swallowed exception that now logs its cause.
 
+**CI (PR #64)**
+- **Run 1:** `Shared iOS tests` failed on `IosGraphTest.lb010_theAppShellSetsTheVersion` with `database is locked`. The test started the graph through `initKoin`, whose app-start refresh writes the catalogue in a coroutine that outlives the test and races the next test's schema creation on the one database file. The test now starts the same modules through `initGraphForTest`, which skips the refresh; `initKoin` keeps it for the app, and three consecutive local runs are green. `docs/ci_cd.md` §5 records it.
+
 **Decisions**
 - **Owner (2026-11-11):** split LB-203, data and list now, the sheet with LB-202; and move API-08's client to `:shared:transit:data`.
 - **Agent:** one collection for the whole section rather than two collectors of `locations()`, because a second collection starts the platform's updates a second time.
