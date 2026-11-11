@@ -83,6 +83,7 @@ fun LineDetailScreen(
     modifier: Modifier = Modifier,
     favouriteLimit: Int? = null,
     arrivals: Map<Int, StopArrivalUi> = emptyMap(),
+    onOpenStop: (stopId: Int) -> Unit = {},
 ) {
     val line = (state as? LineDetailUiState.Content)?.line
     val snackbars = remember { SnackbarHostState() }
