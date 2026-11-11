@@ -13,4 +13,7 @@
     <string name="nearme_nearby_stop_spoken">%1$s, %2$s</string>
     <!-- What a double tap on a row does. -->
     <string name="nearme_nearby_open_stop">abrir parada</string>
+    <!-- LB-208 and LB-204 (FR-HOME-02, FR-NEAR-03): "My stops", above "Near you". -->
+    <string name="nearme_my_stops_title">Mis paradas</string>
+    <string name="nearme_my_stops_empty">Guarda una parada para ver sus próximos autobuses aquí</string>
 </resources>

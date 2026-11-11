@@ -32,6 +32,7 @@ import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearbyStopRowUi
+import com.ruizurraca.logrobus.feature.nearme.presentation.SavedStopRowUi
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -79,6 +80,14 @@ fun NearMeScreen(
             modifier = Modifier.fillMaxSize().consumeWindowInsets(padding),
             contentPadding = padding,
         ) {
+            // FR-HOME-02 and FR-NEAR-03: "My stops" sits above "Near you". An empty section says how to fill it,
+            // with the action that will focus the search (LB-209).
+            item { MyStopsHeading() }
+            if (state.myStops.isEmpty) {
+                item { MyStopsEmptyHint() }
+            } else {
+                items(state.myStops.rows, key = { it.stopId }) { row -> MyStopRow(row, onOpenStop) }
+            }
             if (state.nearYou == NearYouUi.TurnOnLocation) {
                 item { NearYouHeading() }
                 item { TurnOnLocationRow(onTurnOnLocation) }
@@ -95,6 +104,53 @@ fun NearMeScreen(
             }
         }
     }
+}
+
+/** FR-HOME-02: the section title. */
+@Composable
+private fun MyStopsHeading() {
+    SectionHeading(stringResource(R.string.nearme_my_stops_title))
+}
+
+/** FR-HOME-02: what the section says when nothing is saved. */
+@Composable
+private fun MyStopsEmptyHint() {
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.nearme_my_stops_empty)) },
+    )
+}
+
+/**
+ * FR-FAV-02 and NFR-A11Y-02: one saved stop, under its alias, read as one utterance and opened with a double tap.
+ */
+@Composable
+private fun MyStopRow(
+    row: SavedStopRowUi,
+    onOpenStop: (Int) -> Unit,
+) {
+    ListItem(
+        headlineContent = { Text(row.label, style = MaterialTheme.typography.bodyLarge) },
+        modifier =
+            Modifier
+                .clickable(onClickLabel = stringResource(R.string.nearme_nearby_open_stop), role = Role.Button) {
+                    onOpenStop(row.stopId)
+                }.clearAndSetSemantics { contentDescription = row.label },
+    )
+}
+
+/** A section's title, in the primary colour and as a heading, so TalkBack can navigate by it. */
+@Composable
+private fun SectionHeading(text: String) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text,
+                modifier = Modifier.semantics { heading() },
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleSmall,
+            )
+        },
+    )
 }
 
 @Composable

@@ -21,10 +21,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.core.app.ActivityOptionsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.MyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.NearYouState
 import com.ruizurraca.logrobus.feature.nearme.domain.NearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -187,7 +190,18 @@ class NearMeRouteTest {
                     NearYouState(access, nearby = if (access == LocationAccess.On) NearbyStops(emptyList()) else null)
                 }
             }
-        startKoin { modules(module { factory { section } }, nearMeUiModule) }
+        startKoin {
+            modules(
+                module {
+                    factory { section }
+                    // LB-208: the screen reads "My stops" too, which these tests are not about.
+                    factory<ObserveMyStops> {
+                        ObserveMyStops { flowOf(AppResult.Success(MyStops(emptyList(), emptyMap()))) }
+                    }
+                },
+                nearMeUiModule,
+            )
+        }
         val owner =
             object : ActivityResultRegistryOwner {
                 override val activityResultRegistry: ActivityResultRegistry = prompts

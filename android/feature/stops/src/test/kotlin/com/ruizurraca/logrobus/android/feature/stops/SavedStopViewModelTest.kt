@@ -9,8 +9,8 @@ import com.ruizurraca.logrobus.favourites.domain.SavedStop
 import com.ruizurraca.logrobus.favourites.domain.SavedStopRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -129,6 +129,7 @@ class SavedStopViewModelTest {
     /** The saved stops in memory, as the graph's would be, with what each write was asked for. */
     private class FakeSavedStops : SavedStopRepository {
         val saved = MutableStateFlow<List<SavedStop>>(emptyList())
+
         /** The stop id and alias of each save, in order. */
         val added = mutableListOf<Pair<Int, String?>>()
         val renamed = mutableListOf<Pair<Int, String?>>()

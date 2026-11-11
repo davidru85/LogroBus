@@ -71,6 +71,7 @@ fun StopDetailRoute(
  * with its label, so a row never words an ETA itself (design_guidelines.md §6.3). Each row is one utterance, built
  * from [etaSpoken], so the wording has no second copy.
  */
+@Suppress("LongParameterList") // The state, its retry, the way back, the modifier and the save action.
 @Composable
 fun StopDetailScreen(
     state: StopDetailUiState,

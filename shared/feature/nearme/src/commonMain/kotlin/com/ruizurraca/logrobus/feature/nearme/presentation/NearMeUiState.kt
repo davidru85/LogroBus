@@ -10,6 +10,8 @@ import kotlin.math.ceil
  */
 data class NearMeUiState(
     val nearYou: NearYouUi = NearYouUi.Unknown,
+    /** FR-HOME-02: the stops the user saved, above "Near you" (FR-NEAR-03). */
+    val myStops: MyStopsUi = MyStopsUi(),
 )
 
 /** The "Near you" section of Near Me's sheet. */

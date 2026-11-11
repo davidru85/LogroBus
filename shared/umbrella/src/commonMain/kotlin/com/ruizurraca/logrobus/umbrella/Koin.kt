@@ -33,9 +33,11 @@ import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultGetNearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.DefaultObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.domain.GetNearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.planner.domain.DefaultReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
@@ -260,6 +262,8 @@ private val nearMeModule =
         // API-08 live with the rest of the data layer (transitDataModule), so a preview can replace them.
         factory<GetNearbyStops> { DefaultGetNearbyStops(get(), get()) }
         factory<ObserveNearYou> { DefaultObserveNearYou(get(), get()) }
+        // LB-208 (FR-HOME-02): "My stops", the saved stops and the catalogue's names for them.
+        factory<ObserveMyStops> { DefaultObserveMyStops(get(), get()) }
     }
 
 // How to Get There (LB-301): the initial origin, from the platform's location permission.
