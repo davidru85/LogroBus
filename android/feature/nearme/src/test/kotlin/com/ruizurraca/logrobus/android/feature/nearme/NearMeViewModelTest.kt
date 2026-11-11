@@ -61,7 +61,7 @@ class NearMeViewModelTest {
 
                 viewModel.onEvent(NearMeEvent.PermissionMayHaveChanged)
 
-                assertEquals(NearMeUiState(NearYouUi.LocationOn), awaitItem())
+                assertEquals(NearMeUiState(NearYouUi.LocationOn()), awaitItem())
             }
         }
 
@@ -75,7 +75,7 @@ class NearMeViewModelTest {
             viewModel.state.test {
                 awaitItem()
                 access.emit(LocationAccess.On)
-                assertEquals(NearMeUiState(NearYouUi.LocationOn), awaitItem())
+                assertEquals(NearMeUiState(NearYouUi.LocationOn()), awaitItem())
 
                 // The user is back from the system's settings, say. A revoked permission ends the flow by itself.
                 viewModel.onEvent(NearMeEvent.PermissionMayHaveChanged)
