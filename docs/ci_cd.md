@@ -151,6 +151,12 @@ Because `main` is protected, path-filtered workflows need a small always-running
     dispatcher before its failure reaches the collector. Turbine's 5 s default was the only bound, and the iOS runner
     had three cores shared with every other job of the run; the same test passes locally and in earlier runs. The
     collector now gets 30 s, and the assertions are untouched.
+  - **A search field's clear button drawn by one run** (PR #63, 2026-11-11; and once before, run 2 of
+    42625377624): `LinesSnapshotTests.lb102_aSearch(appearance:)` at the largest text failed against a reference that
+    has not changed since 2026-11-04, the artefact's image differing by one control: the field's ✕ clear button, drawn
+    on CI and absent from the committed reference. UIKit adds that button a run loop after the text reaches the field,
+    so a capture taken the instant the view model settles can miss it. The test now waits 100 ms after a non-empty
+    query before capturing; the reference and the assertion are untouched.
   - **macOS runners that are slow or never come** (PR #37 and PR #38, 2026-11-02): with five macOS jobs at once, one matrix job built the framework and the app in 18 minutes with cold caches and reached its 20-minute limit; twice, GitHub never assigned a job a runner ("not acquired … capacity constraints" on macOS arm64). The matrix jobs' limit is 30 minutes since PR #38 (owner decision). A job that gets no runner cannot be prevented from the pipeline: rerun it.
 - **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
   - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.

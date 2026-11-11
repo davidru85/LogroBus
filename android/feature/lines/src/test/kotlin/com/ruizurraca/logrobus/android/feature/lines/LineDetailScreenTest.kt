@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
@@ -182,6 +183,31 @@ class LineDetailScreenTest {
                 .single()
                 .layoutInput.style.textDecoration,
         )
+    }
+
+    @Test
+    fun lb205_aStopRowOpensItsStopDetail() {
+        // FR-NAV-07: the pushed stop detail from line detail. The row keeps its one utterance and gains the action,
+        // so TalkBack reads the stop, its call, and "open stop" as what a double tap does.
+        val stops =
+            listOf(
+                StopRowUi(stopId = 38, order = 1, name = "Campillo", lat = 42.45, lng = -2.44),
+                StopRowUi(stopId = 39, order = 2, name = "Varea", lat = 42.46, lng = -2.43),
+            )
+        val opened = mutableListOf<Int>()
+        compose.setContent {
+            LineDetailScreen(
+                LineDetailUiState.Content(line3, Direction.OUTBOUND, directions = emptyList(), stops = stops),
+                onEvent = {},
+                onBack = {},
+                onOpenStop = { opened += it },
+            )
+        }
+
+        val noCalls = context.getString(R.string.line_detail_eta_none_spoken)
+        compose.onNode(hasClickAction() and hasContentDescription(row("Varea", 2, noCalls))).performClick()
+
+        assertEquals(listOf(39), opened)
     }
 
     /** The row's one spoken label, as the screen builds it. */

@@ -4,6 +4,13 @@ import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
+import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
+import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
+import com.ruizurraca.logrobus.transit.data.StopCallsAnswer
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
 import com.ruizurraca.logrobus.transit.domain.Arrival
 import com.ruizurraca.logrobus.transit.domain.ArrivalsRepository
@@ -13,10 +20,14 @@ import com.ruizurraca.logrobus.transit.domain.LineKind
 import com.ruizurraca.logrobus.transit.domain.LinePattern
 import com.ruizurraca.logrobus.transit.domain.LineStop
 import com.ruizurraca.logrobus.transit.domain.LinesRepository
+import com.ruizurraca.logrobus.transit.domain.ServedLine
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
+import com.ruizurraca.logrobus.transit.domain.Stop
+import com.ruizurraca.logrobus.transit.domain.StopRepository
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.time.Duration.Companion.minutes
@@ -138,6 +149,52 @@ private class SampleArrivalsRepository(
 }
 
 /**
+ * The sample lines' stops, for a preview's or a screen test's scripted graph (LB-205). A stop the sample lines serve
+ * comes back with the lines that reach it and the headsign of each pattern, as the real repository's join gives; a
+ * stop no sample line serves is the data failure the screen shows.
+ */
+private object SampleStopsRepository : StopRepository {
+    override fun observeStop(stopId: Int): Flow<AppResult<Stop>> {
+        val calls =
+            SampleLines.all.flatMap { line ->
+                line.patterns.mapNotNull { (direction, pattern) ->
+                    pattern.stops
+                        .firstOrNull { it.stopId == stopId }
+                        ?.let { stop -> stop to servedLineOf(line, pattern.headsign, direction) }
+                }
+            }
+        if (calls.isEmpty()) return flowOf(AppResult.Failure(AppError.Data))
+        val (stop, _) = calls.first()
+        return flowOf(
+            AppResult.Success(
+                Stop(
+                    id = stop.stopId,
+                    name = stop.name,
+                    lat = stop.lat,
+                    lng = stop.lng,
+                    isOperational = true,
+                    isProvisional = false,
+                    servedLines = calls.map { (_, served) -> served },
+                ),
+            ),
+        )
+    }
+
+    private fun servedLineOf(
+        line: Line,
+        headsign: String,
+        direction: Direction,
+    ) = ServedLine(
+        lineId = line.id,
+        code = line.code,
+        headsign = headsign,
+        direction = direction,
+        color = line.color,
+        onColor = line.onColor,
+    )
+}
+
+/**
  * The scripted static data of a preview or a screen test, beside `SharedDependencies.preview()` (ADR-0007): the sample
  * lines, and a sync that succeeds without a source. A test starts its graph over this module instead of the transit
  * data one, so a screen shows the lines it scripted rather than the empty cache an unreachable source leaves (LB-008
@@ -155,4 +212,68 @@ fun previewDataModule(): Module =
         }
         single<LinesRepository> { SampleLinesRepository }
         single<ArrivalsRepository> { SampleArrivalsRepository(get()) }
+        // LB-205: stop detail's header and its use cases, over the sample lines' own stops. The real module binds the
+        // calls through API-06; a scripted graph draws its sample calls instead, so no test waits on a source.
+        single<StopRepository> { SampleStopsRepository }
+        factory<ObserveStopDetail> { DefaultObserveStopDetail(get()) }
+        factory<ObserveStopArrivals> {
+            // The calls are scripted on the same path the real module takes: the reader that polls API-06 is replaced
+            // by a scripted one, so a screen test's detail has rows and its polling ends with the screen (LB-205).
+            DefaultObserveStopArrivals(stops = get()) { stopId, lineIds ->
+                get<StopArrivalsReader>().observeStopArrivals(stopId, lineIds).map { answer ->
+                    // The reader answers with the calls and the instant they arrived; the use case takes them as its
+                    // own type, as the real module converts them.
+                    when (answer) {
+                        is AppResult.Success -> {
+                            AppResult.Success(FetchedArrivals(answer.value.arrivals, answer.value.fetchedAt))
+                        }
+
+                        is AppResult.Failure -> {
+                            answer
+                        }
+                    }
+                }
+            }
+        }
+        single<StopArrivalsReader> { SampleStopArrivalsReader(get()) }
     }
+
+/**
+ * The sample stop's calls, scripted so a screen test's detail has rows without a source (LB-205): the same shape
+ * `SampleArrivalsRepository` gives a line, filtered by the stop. The instant is read when the calls are collected, so
+ * the rows read "in N min" rather than a time that has passed.
+ */
+private class SampleStopArrivalsReader(
+    private val clock: AppClock,
+) : StopArrivalsReader {
+    override fun observeStopArrivals(
+        stopId: Int,
+        lineIds: List<Int>,
+    ): Flow<AppResult<StopCallsAnswer>> =
+        flowOf(
+            AppResult.Success(
+                StopCallsAnswer(
+                    arrivals =
+                        SampleLines.all
+                            .filter { line -> lineIds.isEmpty() || line.id in lineIds }
+                            .flatMap { line ->
+                                line.patterns.mapNotNull { (direction, pattern) ->
+                                    val index = pattern.stops.indexOfFirst { it.stopId == stopId }
+                                    if (index < 0) {
+                                        null
+                                    } else {
+                                        Arrival(
+                                            lineId = line.id,
+                                            stopId = stopId,
+                                            direction = direction,
+                                            expectedAt = clock.now() + (4 + 5 * index).minutes,
+                                            isLowConfidence = index == 1,
+                                        )
+                                    }
+                                }
+                            },
+                    fetchedAt = clock.now(),
+                ),
+            ),
+        )
+}

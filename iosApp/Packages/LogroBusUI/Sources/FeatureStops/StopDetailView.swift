@@ -47,11 +47,11 @@ public struct StopDetailView: View {
                 }
                 Section {
                     Text("stop.served_lines", bundle: .module)
-                        .foregroundStyle(Tokens.Colors.onSurface)
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                 }
                 Section {
                     Text("stop.arrivals", bundle: .module)
-                        .foregroundStyle(Tokens.Colors.onSurface)
+                        .foregroundStyle(Tokens.Colors.secondaryText)
                 }
             }
             .redacted(reason: .placeholder)
@@ -95,7 +95,10 @@ private struct StopDetailBody: View {
                     }
                 }
             } header: {
+                // design_guidelines.md §3.1: a section heading is the tokens' secondary text, never the system's grey,
+                // which the accessibility audit reads as nearly short of 4.5:1.
                 Text("stop.served_lines", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             }
 
             Section {
@@ -104,6 +107,7 @@ private struct StopDetailBody: View {
                 }
             } header: {
                 Text("stop.arrivals", bundle: .module)
+                    .foregroundStyle(Tokens.Colors.secondaryText)
             } footer: {
                 FreshnessFooter(updated: content.updated) { onEvent(.retry) }
             }

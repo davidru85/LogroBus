@@ -1,5 +1,6 @@
 package com.ruizurraca.logrobus.android.feature.lines
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -60,12 +61,13 @@ fun LineDetailRoute(
     lineId: Int,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenStop: (stopId: Int) -> Unit = {},
     viewModel: LineDetailViewModel = koinViewModel { parametersOf(lineId) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val favouriteLimit by viewModel.favouriteLimit.collectAsStateWithLifecycle()
     val arrivals by viewModel.arrivals.collectAsStateWithLifecycle()
-    LineDetailScreen(state, viewModel::onEvent, onBack, modifier, favouriteLimit, arrivals)
+    LineDetailScreen(state, viewModel::onEvent, onBack, modifier, favouriteLimit, arrivals, onOpenStop)
 }
 
 /**
@@ -83,6 +85,7 @@ fun LineDetailScreen(
     modifier: Modifier = Modifier,
     favouriteLimit: Int? = null,
     arrivals: Map<Int, StopArrivalUi> = emptyMap(),
+    onOpenStop: (stopId: Int) -> Unit = {},
 ) {
     val line = (state as? LineDetailUiState.Content)?.line
     val snackbars = remember { SnackbarHostState() }
@@ -109,7 +112,7 @@ fun LineDetailScreen(
             }
 
             is LineDetailUiState.Content -> {
-                LineDetailBody(state, padding, arrivals, onEvent)
+                LineDetailBody(state, padding, arrivals, onEvent, onOpenStop)
             }
 
             is LineDetailUiState.Error -> {
@@ -177,6 +180,7 @@ private fun LineDetailBody(
     contentPadding: PaddingValues,
     arrivals: Map<Int, StopArrivalUi>,
     onEvent: (LineDetailEvent) -> Unit,
+    onOpenStop: (stopId: Int) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.consumeWindowInsets(contentPadding),
@@ -191,7 +195,7 @@ private fun LineDetailBody(
                 )
             }
         }
-        items(state.stops) { stop -> StopRow(stop, arrivals[stop.stopId]) }
+        items(state.stops) { stop -> StopRow(stop, arrivals[stop.stopId], onOpen = { onOpenStop(stop.stopId) }) }
     }
 }
 
@@ -240,6 +244,7 @@ private fun DirectionToggle(
 private fun StopRow(
     stop: StopRowUi,
     arrival: StopArrivalUi?,
+    onOpen: () -> Unit,
 ) {
     val position = stringResource(R.string.line_detail_stop_position, stop.order, stop.name)
     val eta =
@@ -268,7 +273,13 @@ private fun StopRow(
                 EtaText(eta)
             }
         },
-        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+        modifier =
+            Modifier
+                .clickable(
+                    onClickLabel = stringResource(R.string.line_detail_open_stop),
+                    role = Role.Button,
+                    onClick = onOpen,
+                ).clearAndSetSemantics { contentDescription = spoken },
     )
 }
 

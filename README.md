@@ -103,13 +103,19 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 ### Recent changes
 
+- **2026-11-11:**
+  - LB-205, part 2: the stop's detail opens from line detail.
+    - Each stop of a line's ordered list is now a door: tapping it pushes the stop's own screen, with the same content and actions the sheet will show, and back returns to the line.
+    - TalkBack reads the row as before, the stop and its next call, and adds what a double tap does: "abrir parada", "Open stop" on iOS.
+    - The stop pin in Near Me still waits for LB-202 and LB-203.
+
 - **2026-11-10:**
   - LB-205, part 1: a stop's detail, from the catalogue and the live source.
     - One stop with the lines that serve it, each with its badge and the headsigns of the patterns that reach it, read from the cached catalogue so the header shows at once.
     - The stop's predicted calls from API-06, asked for exactly the lines it serves within the 60 minutes the specification fixes, polled every 20 s while the detail is shown.
     - Each arrival reads "Now", "4 min" or a clock time; the "~" of a rough prediction, the strike-through of a cancelled one, and a call more than a minute past dropped. Every row takes the badge and headsign of its own line and direction.
     - "Updated 50 s ago" shows in the warning colour, and past two minutes the times switch to clock times with "Tap to refresh", as the specification asks.
-    - The Near Me sheet that opens this from a stop pin waits for LB-203, and the pushed screen from line detail for the next part.
+    - The Near Me sheet that opens this from a stop pin waits for LB-203; the pushed screen from line detail landed in part 2.
 - **2026-11-10:**
   - LB-105: every stop of a line's detail shows its next bus.
     - Under the direction toggle, each stop's row carries its next predicted call, "4 min", or "–" when the source has none within 30 min. A call the source marks as a rough prediction shows a "~", and a cancelled one is struck through with its time kept, so the row still says when the bus was due.
