@@ -19,6 +19,36 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-11: LB-205 part 2, the pushed stop detail; PR #62 merged
+
+**Done**
+- **PR #62 merged** on 2026-11-11, `main` synced to `0e038a60`; CI ended at 64 of 64 after the three fixes below.
+- **LB-205 part 2 (`feat/LB-205-part2-pushed-stop-detail`):** a stop's row in line detail opens the stop's own screen, FR-NAV-07's second door.
+  - **Android:** `StopDetailKey(stopId)` in `:android:core:navigation`, an `entry` in `AppShell` that resolves it to `StopDetailRoute`, and `onOpenStop` threaded through `LineDetailRoute` and `LineDetailScreen`. The row keeps `clearAndSetSemantics` for its one utterance and gains `clickable(onClickLabel = "abrir parada", role = Button)`.
+  - **iOS:** `Route.stop(Int32)`, `TabRouter.open(_:on:)`, the `TabRouter` case in `AppShell` and the `StopDetailView` behind it. The row is a `Button` with `.frame(maxWidth: .infinity)` and `.contentShape(Rectangle())`, so the whole row is the target, and an `accessibilityHint` of `line.stop.open`.
+  - **Scripted graph:** `previewDataModule` now binds `StopRepository` (the sample lines' own stops), the two stop use cases and a `StopArrivalsReader` over the sample calls. Before them the pushed screen crashed a screen test with `NoDefinitionFoundException: StopArrivalsReader`.
+  - **Docs:** both READMEs, the criteria's evidence, `backlog.md`, `AGENTS.md` §2, and this entry.
+
+**Review**
+- **A synthesised tap never fired the row.** The first iOS run failed with the navigation bar still on "Line 3": `LabeledContent`'s own glyphs left the middle of the row without a hit shape, so XCUITest's centre tap landed on nothing. `.contentShape(Rectangle())` alone did not fix it; the `.frame(maxWidth: .infinity)` beside it did, and the diagnostic `@State` that proved which half was wrong is gone.
+- **The scripted graph was incomplete in two steps,** found by running the door rather than by reading: first the `StopRepository`, then `StopArrivalsReader` (the crash), both of which the real transit module binds and the preview's replacement module did not.
+
+**CI (PR #62)**
+- **Run 1 (42865239275):** the accessibility audit's `resetAuthorizationStatus(for: .location)` timed out on the simulator's permission database; it is removed, since `-logrobus.preview-data` already scripts the permission as never granted. The same run's next failure was a synthesised Lines tab tap never delivered after the About data pop; the audit now re-taps up to three times before its unchanged assertion.
+- **Run 2 (42941649481):** `LinesRepositoryTest.lb101_aDatabaseThatCannotBeReadGivesAFailure_notACrash` hit Turbine's 5 s default on a three-core runner; the collector now gets 30 s, assertions untouched. A `FeatureLinesTests` snapshot waited for a row rather than for the call, and was fixed the same way.
+- **Run 3 (42946052948/2962/3062): 64 of 64 passed.** All three flakes are in `docs/ci_cd.md` §5.
+
+**Decisions**
+- **Agent:** the pushed screen takes the whole `StopDetailView`/`StopDetailRoute` that part 1 built, with no second definition; FR-NAV-07 says one screen definition, and the sheet (LB-203) will mount the same type.
+- **Agent:** the row stays one utterance with the action on it, rather than a row with a trailing chevron button, so TalkBack hears the stop and its call as before and only gains the label of what a double tap does.
+
+**Open / next**
+- **This part's pull request** is open, and its watch runs.
+- **Still waiting for the owner:** the device pass with TalkBack and VoiceOver on the new rows, and the split confirmation of part 1.
+- **The stop pin's door** needs LB-202 and LB-203, both `todo`.
+
+---
+
 ## 2026-11-10: LB-205 part 1, a stop's detail and its calls
 
 **Done**

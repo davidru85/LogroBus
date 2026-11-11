@@ -4,6 +4,11 @@ import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppError
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.common.color.onColorFor
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
+import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.transit.data.StopArrivalsReader
 import com.ruizurraca.logrobus.transit.data.StopCallsAnswer
 import com.ruizurraca.logrobus.transit.data.SyncStatusRepositoryImpl
@@ -19,11 +24,6 @@ import com.ruizurraca.logrobus.transit.domain.ServedLine
 import com.ruizurraca.logrobus.transit.domain.StaticSyncEngine
 import com.ruizurraca.logrobus.transit.domain.Stop
 import com.ruizurraca.logrobus.transit.domain.StopRepository
-import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
-import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
-import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
-import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
-import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.transit.domain.SyncStatusRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf

@@ -275,8 +275,11 @@ private fun StopRow(
         },
         modifier =
             Modifier
-                .clickable(onClickLabel = stringResource(R.string.line_detail_open_stop), role = Role.Button) { onOpen() }
-                .clearAndSetSemantics { contentDescription = spoken },
+                .clickable(
+                    onClickLabel = stringResource(R.string.line_detail_open_stop),
+                    role = Role.Button,
+                    onClick = onOpen,
+                ).clearAndSetSemantics { contentDescription = spoken },
     )
 }
 
