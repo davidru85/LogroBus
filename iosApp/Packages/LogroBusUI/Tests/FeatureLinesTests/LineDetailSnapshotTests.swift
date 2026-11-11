@@ -40,8 +40,9 @@ struct LineDetailSnapshotTests {
     }
 
     /// Line 10's detail in its navigation stack, once its view model shows a `State`. With [withArrivals], it also
-    /// waits for the calls, which a second collection delivers: a snapshot taken before them draws every row's dash,
-    /// and whether it does is a race, not a property of the screen.
+    /// waits for a row that carries a call, which a second collection delivers: a snapshot taken before them draws
+    /// every row's dash, and whether it does is a race, not a property of the screen. Waiting for the map to be merely
+    /// non-empty is not enough, because it holds one row per stop from the first frame, each with no ETA (PR #62).
     private func screen<State>(
         _ useCases: PreviewUseCases,
         settlesOn _: State.Type,
@@ -52,7 +53,7 @@ struct LineDetailSnapshotTests {
         defer { observation.cancel() }
         try await waitUntil { viewModel.state is State }
         if withArrivals {
-            try await waitUntil { !viewModel.stopArrivals.isEmpty }
+            try await waitUntil { viewModel.stopArrivals.values.contains { $0.eta != nil } }
         }
         return NavigationStack { LineDetailView(viewModel: viewModel) }
     }
