@@ -298,4 +298,10 @@ A story is done when all of these hold (spec §10.6, plus the docs):
   - A PR without both updates is not ready to merge, even if it only touches docs.
 - **Nobody pushes to `main`.** Every change goes through a branch and a pull request that uses a template (`docs/engineering_workflow.md` §3.1), and is merged by the owner with a **merge commit**. There is no squash and no rebase, so the TDD commits are preserved (`docs/engineering_workflow.md` §5).
 - **CI runs on every pull request** now that the repository is public (`docs/ci_cd.md` §1), and its required checks must pass before merging. CI would not run on a private repository (owner rule). The local gates still run first: the git hooks plus `scripts/checks/run-all.sh`, whose summary must be pasted into the PR, because it covers the checks CI does not run yet.
+- **Green CI is the agent's job, before asking for review (owner rule, 2026-11-11).** A pull request is not ready for the owner while any of its checks is red: the owner reviews green pull requests only.
+  - **Watch every check to completion** after each push. Never hand over a pull request whose checks are running, queued or failing.
+  - **Read the real failure before touching anything:** `gh run view <run> --log-failed`, and for iOS the `.xcresult` in the run's artifacts (`docs/ci_cd.md` §5). A red check is either the branch's fault or an environment's, and the two are fixed differently.
+  - **A failure in the branch is fixed in the branch**, with a test that would have caught it, then the local gates again, then a push.
+  - **A failure outside the branch** — a runner flake, a simulator that cannot reset a permission, a stalled runner — is recorded in the PR body's "CI" section and in the project log, and the job is rerun. If the same flake recurs, harden the check itself rather than rerun it a third time; an assertion, a threshold or a skip is never loosened to get green (§0).
+  - **The watch continues after the merge**, so the next story starts without a red pipeline behind it.
 - Agents commit or push only when asked.

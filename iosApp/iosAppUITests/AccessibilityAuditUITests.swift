@@ -215,8 +215,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     @MainActor
     private func launch(textSize: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
-        // Location never asked, as on a fresh install, so Near Me shows its "Turn on location" row (LB-201).
-        app.resetAuthorizationStatus(for: .location)
+        // Location is scripted as never granted in the preview graph (`-logrobus.preview-data` gives
+        // `LocationPermission.NotGranted`), so Near Me shows its "Turn on location" row (LB-201) without touching the
+        // simulator's permission database. `resetAuthorizationStatus(for: .location)` was removed: on CI's simulator it
+        // timed out ("Error resetting authorization status"), failing the audit before it ran a single check, and the
+        // app never reads the real permission under the preview graph anyway.
         app.launchArguments += ["-AppleLanguages", "(\"en\")", "-AppleLocale", "en_GB"]
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
         // The scripted graph: the audit looks at labels and touch targets, and its screens must not depend on the live
