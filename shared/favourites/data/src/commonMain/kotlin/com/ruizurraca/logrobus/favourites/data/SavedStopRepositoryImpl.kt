@@ -28,8 +28,8 @@ import kotlinx.coroutines.withContext
 private const val TAG = "SavedStops"
 
 /**
- * The saved stops in the `favourite` table (spec §8.8), by stop id in decimal under [FavouriteTypes.STOP], each with the
- * alias its user gave it and its place in their order.
+ * The saved stops in the `favourite` table (spec §8.8), by stop id in decimal under [FavouriteTypes.STOP], each with
+ * the alias its user gave it and its place in their order.
  *
  * One write at a time, in the order they were asked for: two quick taps on Save could otherwise land in the wrong order
  * on the I/O threads, and the limit of [FAVOURITES_PER_TYPE] is counted inside each write's transaction.

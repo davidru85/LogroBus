@@ -74,7 +74,14 @@ class SavedStopRepositoryTest {
             repository.add(stopId = 38, alias = alias)
 
             repository.observeSavedStops().test {
-                assertEquals(30, (awaitItem() as AppResult.Success).value.single().alias?.length)
+                assertEquals(
+                    30,
+                    (awaitItem() as AppResult.Success)
+                        .value
+                        .single()
+                        .alias
+                        ?.length,
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }

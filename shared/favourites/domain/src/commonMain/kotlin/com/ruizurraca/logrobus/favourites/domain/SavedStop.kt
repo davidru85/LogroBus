@@ -32,7 +32,10 @@ object SavedStopAlias {
      * [text] cut to [limit] characters. The cut counts code points, never UTF-16 units, so a glyph that needs two units
      * (an emoji, a letter of some scripts) is never split into a lone surrogate.
      */
-    private fun truncated(text: String, limit: Int): String {
+    private fun truncated(
+        text: String,
+        limit: Int,
+    ): String {
         // A surrogate pair is one glyph: walk the string by code point rather than by char.
         var taken = 0
         var index = 0
