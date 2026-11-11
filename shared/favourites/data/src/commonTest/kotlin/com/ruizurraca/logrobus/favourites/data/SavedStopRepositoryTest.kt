@@ -74,7 +74,7 @@ class SavedStopRepositoryTest {
             repository.add(stopId = 38, alias = alias)
 
             repository.observeSavedStops().test {
-                assertEquals(30, (awaitItem() as AppResult.Success).value.single().alias.length)
+                assertEquals(30, (awaitItem() as AppResult.Success).value.single().alias?.length)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -174,10 +174,16 @@ class SavedStopRepositoryTest {
 
     @Test
     fun lb208_theAliasIsCutByItsCodePoints_notByItsUtf16Units() {
-        // A 30-character alias in a script whose glyphs need two UTF-16 units each must not be cut mid-glyph.
-        val emoji = "\uD83D\uDE8C".repeat(20)
+        // Forty glyphs, each two UTF-16 units, plus a "C": 41 code points but 81 units. Thirty characters is the "C"
+        // plus twenty-nine whole glyphs; a cut by units would take thirty and end on the fifteenth glyph's high
+        // surrogate, which is half a character no screen can draw.
+        val emoji = "C" + "\uD83D\uDE8C".repeat(40)
 
-        assertEquals(30, SavedStopAlias.of(emoji)!!.length)
+        val alias = SavedStopAlias.of(emoji)!!
+
+        assertEquals(30, alias.codePointCount(0, alias.length), "the field's thirty characters")
+        val endsMidGlyph = alias.last().code in 0xD800..0xDBFF
+        assertEquals(false, endsMidGlyph, "the cut never splits a glyph")
     }
 
     @Test
