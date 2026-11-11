@@ -7,6 +7,10 @@ import com.ruizurraca.logrobus.core.network.RequestKind
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.network.decodeAs
 import com.ruizurraca.logrobus.core.network.decodeEach
+import com.ruizurraca.logrobus.transit.domain.WalkDestination
+import com.ruizurraca.logrobus.transit.domain.WalkDistance
+import com.ruizurraca.logrobus.transit.domain.WalkDistances
+import com.ruizurraca.logrobus.transit.domain.WalkDistancesRequest
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -15,7 +19,7 @@ import kotlinx.serialization.json.JsonElement
 
 /** A WGS84 position in a request body (api_spec.md §4.7–4.8). Never logged (NFR-PRIV-02). */
 @Serializable
-data class WalkLatLngDto(
+internal data class WalkLatLngDto(
     val lat: Double? = null,
     val lng: Double? = null,
 )
@@ -25,14 +29,14 @@ data class WalkLatLngDto(
  * straight-line distance within 800 m, nearest first (FR-HOME-03, FR-STOP-11).
  */
 @Serializable
-data class WalkDistancesRequestDto(
+internal data class WalkDistancesRequestDto(
     val origin: WalkLatLngDto? = null,
     val destinations: List<WalkDestinationDto> = emptyList(),
 )
 
 /** One stop the client asks the walking distance to (api_spec.md §4.8): its id, which comes back unchanged. */
 @Serializable
-data class WalkDestinationDto(
+internal data class WalkDestinationDto(
     val id: Int? = null,
     val lat: Double? = null,
     val lng: Double? = null,
@@ -45,13 +49,13 @@ data class WalkDestinationDto(
  * failing the response that feeds the whole nearby list (api_spec.md §3).
  */
 @Serializable
-data class WalkDistancesResponseDto(
+internal data class WalkDistancesResponseDto(
     val items: JsonArray? = null,
 )
 
 /** The walking distance and duration from the request's origin to one stop (api_spec.md §4.8). */
 @Serializable
-data class WalkDistanceDto(
+internal data class WalkDistanceDto(
     val id: Int? = null,
     val distanceM: Int? = null,
     val durationSec: Int? = null,
@@ -82,16 +86,43 @@ private val RequestJson =
 class WalkDistancesApi(
     private val client: SourceClient,
     private val logger: Logger,
-) {
-    /** The walking distance and duration to each destination, whose [WalkDistanceDto.id] comes back as sent. */
-    suspend fun walkDistances(request: WalkDistancesRequestDto): AppResult<Decoded<WalkDistanceDto>> =
-        client
-            .post(PATH_WALK_DISTANCES, RequestJson.encodeToJsonElement(WalkDistancesRequestDto.serializer(), request), RequestKind.Live)
-            .decodeBareCollection(
-                WalkDistancesResponseDto.serializer(),
-                WalkDistancesResponseDto::items,
-                WalkDistanceDto.serializer(),
-            )
+) : WalkDistances {
+    /**
+     * The walking distance and duration to each destination, whose id comes back as sent (api_spec.md §4.8). An item
+     * whose id or distance is missing is dropped and counted rather than failing the list, so one malformed answer
+     * never empties the section.
+     */
+    override suspend fun walkDistances(request: WalkDistancesRequest): AppResult<List<WalkDistance>> =
+        when (
+            val decoded =
+                client
+                    .post(PATH_WALK_DISTANCES, RequestJson.encodeToJsonElement(WalkDistancesRequestDto.serializer(), request.toDto()), RequestKind.Live)
+                    .decodeBareCollection(
+                        WalkDistancesResponseDto.serializer(),
+                        WalkDistancesResponseDto::items,
+                        WalkDistanceDto.serializer(),
+                    )
+        ) {
+            is AppResult.Failure -> {
+                decoded
+            }
+
+            is AppResult.Success -> {
+                AppResult.Success(decoded.value.items.mapNotNull { it.toDomain() })
+            }
+        }
+
+    private fun WalkDistancesRequest.toDto() =
+        WalkDistancesRequestDto(
+            origin = WalkLatLngDto(lat = originLat, lng = originLng),
+            destinations = destinations.map { WalkDestinationDto(id = it.id, lat = it.lat, lng = it.lng) },
+        )
+
+    private fun WalkDistanceDto.toDomain(): WalkDistance? {
+        val id = id ?: return null
+        val meters = distanceM ?: return null
+        return WalkDistance(stopId = id, distanceMeters = meters, durationSeconds = durationSec ?: 0)
+    }
 
     /**
      * The bare-object reply read as [R], then its collection — [collection] of the reply — decoded item by item. A

@@ -84,3 +84,12 @@ LEFT JOIN line l ON l.id = sl.line_id
 LEFT JOIN pattern p ON p.line_id = l.id
 WHERE s.id = :stopId
 ORDER BY l.code, p.headsign;
+
+-- LB-203 (FR-HOME-03, FR-STOP-11): the stops inside a bounding box, for Near Me's "Near you" list. The box is the cheap
+-- filter sqlite can use; the caller keeps the ones within the 800 m radius it asks for and sorts them by distance.
+-- Ordered by id, so the caller's sort is the only order the screen sees.
+selectStopsInBox:
+SELECT id, name, lat, lng
+FROM stop
+WHERE lat BETWEEN :south AND :north AND lng BETWEEN :west AND :east
+ORDER BY id;
