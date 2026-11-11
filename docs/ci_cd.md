@@ -146,6 +146,11 @@ Because `main` is protected, path-filtered workflows need a small always-running
     stack (FR-NAV-03). The tap is a synthesised event, and the run showed no other failure: the screen simply never came
     back. The audit now taps again while the root is not on screen, up to three times, and only then asserts; the
     assertion and its timeout are unchanged.
+  - **A Turbine timeout on a three-core runner** (PR #62, 2026-11-11): `Shared iOS tests` failed on
+    `LinesRepositoryTest.lb101_aDatabaseThatCannotBeReadGivesAFailure_notACrash`, which reads three queries on the IO
+    dispatcher before its failure reaches the collector. Turbine's 5 s default was the only bound, and the iOS runner
+    had three cores shared with every other job of the run; the same test passes locally and in earlier runs. The
+    collector now gets 30 s, and the assertions are untouched.
   - **macOS runners that are slow or never come** (PR #37 and PR #38, 2026-11-02): with five macOS jobs at once, one matrix job built the framework and the app in 18 minutes with cold caches and reached its 20-minute limit; twice, GitHub never assigned a job a runner ("not acquired … capacity constraints" on macOS arm64). The matrix jobs' limit is 30 minutes since PR #38 (owner decision). A job that gets no runner cannot be prevented from the pipeline: rerun it.
 - **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
   - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.
