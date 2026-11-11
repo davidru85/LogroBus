@@ -110,6 +110,11 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 - **Iconos de las apps (LB-413, parte 1):** un autobús blanco propio sobre el rojo municipal; vectores adaptativos e iconos temáticos en Android, y variantes clara, oscura y tintada en iOS. Los recursos se regeneran con `swift scripts/generate-app-icons.swift` en macOS.
 
 - **11-11-2026:**
+  - LB-208, parte 2: guardar una parada desde su detalle, y "Mis paradas" en Android.
+    - La barra de la parada lleva la misma estrella que una linea favorita: al tocarla pide un alias de hasta 30 caracteres y guarda la parada; al tocarla ya guardada, la quita.
+    - "Mis paradas" esta encima de "Cerca de ti" en Cerca de mi, en tu orden, cada fila bajo su alias, y una seccion vacia dice como guardar una.
+    - Una parada guardada desde su detalle aparece en "Mis paradas" al instante.
+- **11-11-2026:**
   - LB-208, parte 1: las paradas que guardas, con su alias.
     - Una parada guardada con alias lo conserva, recortado a 30 caracteres, y el alias es lo que muestra "Mis paradas"; sin alias se muestra el nombre de la parada.
     - Hasta 20 paradas, igual que las líneas favoritas; la vigésimo primera se rechaza con un mensaje y no se anade nada.
