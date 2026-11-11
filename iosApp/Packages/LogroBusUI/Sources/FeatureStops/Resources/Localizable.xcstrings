@@ -1,0 +1,186 @@
+{
+  "sourceLanguage": "es",
+  "strings": {
+    "freshness.tap_to_refresh": {
+      "comment": "FR-STOP-05: past 120 s the list is expired, so its ETAs are clock times and this action asks again.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to refresh"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca para actualizar"
+          }
+        }
+      }
+    },
+    "freshness.updated_ago %lld": {
+      "comment": "FR-STOP-05 (design_guidelines.md §7): how old the arrival list is; the argument is whole seconds.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated %lld s ago"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualizado hace %lld s"
+          }
+        }
+      }
+    },
+    "stop.arrivals": {
+      "comment": "LB-205: the section header over the stop's next arrivals (FR-STOP-04).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next arrivals"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximas llegadas"
+          }
+        }
+      }
+    },
+    "stop.eta.none": {
+      "comment": "LB-205: the ETA of an arrival the mapper could not place; the criterion's dash.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "–"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "–"
+          }
+        }
+      }
+    },
+    "stop.eta.none_spoken": {
+      "comment": "LB-205: how VoiceOver reads the dash of an arrival with no ETA.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no time"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sin hora"
+          }
+        }
+      }
+    },
+    "stop.loading": {
+      "comment": "What VoiceOver says while the stop detail's first load runs (spec §7.3, design_guidelines.md §8).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando parada"
+          }
+        }
+      }
+    },
+    "stop.no_lines": {
+      "comment": "LB-205: a stop that no line reaches says so rather than hiding the section (FR-STOP-03).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lines call at this stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna línea pasa por esta parada"
+          }
+        }
+      }
+    },
+    "stop.served_lines": {
+      "comment": "LB-205: the section header over the lines that call at the stop (FR-STOP-03).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lines"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líneas"
+          }
+        }
+      }
+    },
+    "stop.title.generic": {
+      "comment": "LB-205: the stop detail's title until the catalogue gives the stop's name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Parada"
+          }
+        }
+      }
+    },
+    "stop.towards %@": {
+      "comment": "LB-205: a served line's headsign, the last stop of the pattern that reaches the stop (DD-16); the argument is that headsign.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Towards %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hacia %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

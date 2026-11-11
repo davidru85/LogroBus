@@ -102,4 +102,5 @@ schemes:
         - package: LogroBusUI/FeatureNearMeTests
         - package: LogroBusUI/FeaturePlannerTests
         - package: LogroBusUI/FeatureSettingsTests
+        - package: LogroBusUI/FeatureStopsTests
         - package: LogroBusUI/DesignSystemTests

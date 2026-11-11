@@ -106,6 +106,13 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **10-11-2026:**
+  - LB-205, parte 1: el detalle de una parada, desde el catálogo y la fuente en vivo.
+    - Una parada con las líneas que la sirven, cada una con su distintivo y los destinos de los recorridos que pasan por ella, leídos del catálogo en caché para que la cabecera se vea de inmediato.
+    - Las llegadas previstas de la parada desde API-06, pedidas exactamente para las líneas que sirve dentro de los 60 minutos que fija la especificación, sondeadas cada 20 s mientras el detalle está visible.
+    - Cada llegada dice "Ahora", "4 min" o una hora de reloj; la "~" de una predicción imprecisa, el tachado de una cancelada, y una llegada de hace más de un minuto descartada. Cada fila toma el distintivo y el destino de su propia línea y sentido.
+    - "Actualizado hace 50 s" aparece en el color de aviso, y pasados dos minutos las horas pasan a hora de reloj con "Toca para actualizar", como pide la especificación.
+    - La hoja de Cerca de mí que lo abra desde un pin de parada espera a LB-203, y la pantalla empujada desde el detalle de línea a la siguiente parte.
+- **10-11-2026:**
   - LB-105: cada parada del detalle de una línea muestra su próximo autobús.
     - Bajo el selector de sentido, la fila de cada parada lleva su próxima llegada prevista, "4 min", o "–" cuando la fuente no da ninguna en 30 min. Una llegada que la fuente marca como predicción imprecisa muestra una "~", y una cancelada aparece tachada conservando su hora, así que la fila sigue diciendo cuándo tocaba el autobús.
     - El detalle pregunta a la fuente de ET por la línea cada 20 s mientras está en pantalla y deja de hacerlo al salir; dos pantallas mirando la misma línea comparten una sola petición. La ventana de 30 min es la que fija la especificación para API-05.

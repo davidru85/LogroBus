@@ -32,6 +32,7 @@ dependencies {
     implementation(projects.android.feature.nearme)
     implementation(projects.android.feature.planner)
     implementation(projects.android.feature.settings)
+    implementation(projects.android.feature.stops)
     implementation(libs.androidx.activity.compose)
     // The app's language and theme, chosen in Settings (ADR-0020).
     implementation(libs.androidx.appcompat)

@@ -5,6 +5,7 @@ import com.ruizurraca.logrobus.android.feature.lines.linesUiModule
 import com.ruizurraca.logrobus.android.feature.nearme.nearMeUiModule
 import com.ruizurraca.logrobus.android.feature.planner.plannerUiModule
 import com.ruizurraca.logrobus.android.feature.settings.settingsUiModule
+import com.ruizurraca.logrobus.android.feature.stops.stopsUiModule
 import com.ruizurraca.logrobus.umbrella.initKoin
 
 /**
@@ -29,7 +30,8 @@ open class LogroBusApplication : Application() {
             this,
             appVersion = BuildConfig.VERSION_NAME,
             debug = BuildConfig.DEBUG,
-            uiModules = listOf(linesUiModule, nearMeUiModule, plannerUiModule, settingsUiModule, shellModule),
+            uiModules =
+                listOf(linesUiModule, nearMeUiModule, plannerUiModule, settingsUiModule, stopsUiModule, shellModule),
         )
     }
 }

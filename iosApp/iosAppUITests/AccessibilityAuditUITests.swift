@@ -167,9 +167,17 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["About data"].tap()
         XCTAssertTrue(app.navigationBars["About data"].waitForExistence(timeout: 5))
         try audit.run("About data" + suffix, types, into: &issues)
-        // Re-selecting the tab pops its stack to its root (FR-NAV-03).
-        app.tabBars.buttons["Lines"].tap()
-        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        // Re-selecting the tab pops its stack to its root (FR-NAV-03). A tap on the bar is a synthesised event and can
+        // be dropped while the pushed screen is still settling (PR #62: the bar never came back within 5 s, with no
+        // other failure), so the tap is repeated while the root is not on screen. The assertion itself stays.
+        let linesRoot = app.navigationBars["Lines"]
+        var attempts = 0
+        while !linesRoot.exists, attempts < 3 {
+            attempts += 1
+            app.tabBars.buttons["Lines"].tap()
+            _ = linesRoot.waitForExistence(timeout: 2)
+        }
+        XCTAssertTrue(linesRoot.waitForExistence(timeout: 5))
     }
 
     /// Searches the Lines list: "varea" leaves lines 2 and B1, under both headings, and nothing beneath the tab bar.
@@ -215,8 +223,11 @@ final class AccessibilityAuditUITests: XCTestCase {
     @MainActor
     private func launch(textSize: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
-        // Location never asked, as on a fresh install, so Near Me shows its "Turn on location" row (LB-201).
-        app.resetAuthorizationStatus(for: .location)
+        // Location is scripted as never granted in the preview graph (`-logrobus.preview-data` gives
+        // `LocationPermission.NotGranted`), so Near Me shows its "Turn on location" row (LB-201) without touching the
+        // simulator's permission database. `resetAuthorizationStatus(for: .location)` was removed: on CI's simulator it
+        // timed out ("Error resetting authorization status"), failing the audit before it ran a single check, and the
+        // app never reads the real permission under the preview graph anyway.
         app.launchArguments += ["-AppleLanguages", "(\"en\")", "-AppleLocale", "en_GB"]
         if let textSize { app.launchArguments += ["-UIPreferredContentSizeCategoryName", textSize] }
         // The scripted graph: the audit looks at labels and touch targets, and its screens must not depend on the live

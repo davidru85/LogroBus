@@ -101,3 +101,18 @@ package.targets.append(
         linkerSettings: linksShared
     )
 )
+
+// The stop detail's ViewModel and snapshot tests (LB-205).
+package.targets.append(
+    .testTarget(
+        name: "FeatureStopsTests",
+        dependencies: [
+            "DesignSystem",
+            "FeatureStops",
+            "Shared",
+            .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
+        ],
+        exclude: ["__Snapshots__"],
+        linkerSettings: linksShared
+    )
+)

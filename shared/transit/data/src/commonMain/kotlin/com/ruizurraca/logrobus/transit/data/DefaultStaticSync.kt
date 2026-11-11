@@ -86,3 +86,23 @@ fun patternsOfLine(
             val direction = Direction.entries.firstOrNull { it.key == row.direction } ?: return@mapNotNull null
             direction to row.stop_id.toInt()
         }.groupBy({ (direction, _) -> direction }, { (_, stopId) -> stopId })
+
+/**
+ * LB-205: the stop's arrivals reader over the one source client and the one polling engine, assembled for the
+ * composition root. The endpoint class stays `internal`: the graph needs a reader, not the API behind it.
+ */
+fun stopArrivalsReader(
+    client: SourceClient,
+    polling: PollingEngine,
+    window: ArrivalsWindow,
+    logger: Logger,
+    patternsOf: (lineId: Int) -> Map<Direction, List<Int>> = { emptyMap() },
+): StopArrivalsReader =
+    StopArrivalsRepositoryImpl(
+        api = RealtimeApi(client, logger),
+        polling = polling,
+        interval = window.interval,
+        previewMinutes = window.previewMinutes,
+        logger = logger,
+        patternsOf = patternsOf,
+    )

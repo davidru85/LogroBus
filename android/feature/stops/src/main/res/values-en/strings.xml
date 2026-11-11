@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The stop detail (SC-05, LB-205, design_guidelines.md §3.2). -->
+    <!-- The detail's title while it loads, before the stop's name is known. -->
+    <string name="stop_detail_title_generic">Stop</string>
+    <!-- Spec §7.3 and design_guidelines.md §8: what TalkBack says while the first load runs. -->
+    <string name="stop_detail_loading">Loading stop</string>
+    <!-- FR-STOP-03 and DD-16: the headsign of the pattern that reaches the stop. -->
+    <string name="stop_detail_towards">Towards %1$s</string>
+    <!-- How TalkBack reads one served line: the badge's own label ("Line 1") and its headsign. -->
+    <string name="stop_detail_served_line_spoken">%1$s, %2$s</string>
+    <!-- FR-STOP-05 and design_guidelines.md §9 (key freshness.updated_ago): how old the arrivals are. -->
+    <string name="stop_detail_updated_ago">Updated %1$d s ago</string>
+    <!-- Spec §5.7: past 120 s the ETAs are clock times, and this action fetches the list again. -->
+    <string name="stop_detail_tap_to_refresh">Tap to refresh</string>
+    <!-- LB-205 (spec §5.7): a row's one utterance, "Line 1, Towards Hospital San Pedro, in 4 minutes", and the dash of a
+         row the mapper could not place. The ETA itself is the design system's (keys eta.*). -->
+    <string name="stop_detail_arrival_spoken">%1$s, %2$s</string>
+    <string name="stop_detail_arrival_headsign_spoken">%1$s, %2$s, %3$s</string>
+    <string name="stop_detail_eta_none">–</string>
+    <string name="stop_detail_eta_none_spoken">no calls</string>
+</resources>

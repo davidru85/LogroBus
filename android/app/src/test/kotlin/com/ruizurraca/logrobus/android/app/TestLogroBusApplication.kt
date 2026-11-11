@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.android.feature.lines.linesUiModule
 import com.ruizurraca.logrobus.android.feature.nearme.nearMeUiModule
 import com.ruizurraca.logrobus.android.feature.planner.plannerUiModule
 import com.ruizurraca.logrobus.android.feature.settings.settingsUiModule
+import com.ruizurraca.logrobus.android.feature.stops.stopsUiModule
 import com.ruizurraca.logrobus.umbrella.previewDataModule
 import com.ruizurraca.logrobus.umbrella.startPreviewGraph
 import org.koin.core.context.stopKoin
@@ -23,7 +24,8 @@ class TestLogroBusApplication : LogroBusApplication() {
         startPreviewGraph(
             this,
             data = previewDataModule(),
-            uiModules = listOf(linesUiModule, nearMeUiModule, plannerUiModule, settingsUiModule, shellModule),
+            uiModules =
+                listOf(linesUiModule, nearMeUiModule, plannerUiModule, settingsUiModule, stopsUiModule, shellModule),
         )
     }
 

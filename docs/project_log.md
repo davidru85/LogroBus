@@ -19,6 +19,39 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-10: LB-205 part 1, a stop's detail and its calls
+
+**Done**
+- **PR #61 (LB-105) merged** on 2026-11-10 and `main` synced to `8b9d2120`; CI was 63 of 63 after the two fixes that story's log records.
+- **LB-205 (`feat/LB-205-stop-detail`), split by me and reported to the owner:** part 1 is the data and shared layer plus both screens; part 2 is the doors, since the criterion's stop-pin path needs LB-202 and LB-203, both still `todo`.
+  - **Domain:** `Stop` and `ServedLine`, the latter carrying its pattern's headsign and direction, so a row takes the headsign of its own journey (DD-16) rather than another's.
+  - **Data:** `selectStopWithServedLines` joins a stop with its lines and their pattern headsigns, ordered by code; `StopRepositoryImpl` reads it; `StopArrivalsRepositoryImpl` polls API-06 with `lines=` the served lines and the 60 min FR-STOP-03 fixes, and returns the instant the answer arrived, which is what "Updated N s ago" measures.
+  - **Shared:** `DefaultObserveStopDetail` and `DefaultObserveStopArrivals` join the two; `StopDetailUiMapper` applies the criterion's boundaries; `ServedArrivalUi` and `StopUpdatedUi(ageSeconds, isStale, needsRefresh)`.
+  - **Screens:** Android and iOS both built, with the design system's ETA, the one-utterance row and the freshness footer; the Android module is in both applications' graphs and the iOS test target is in the scheme and the CI matrix.
+  - **Docs:** both READMEs, the criteria's evidence, and this entry.
+
+**Review**
+- **Six findings, each fixed rather than worked around:**
+  - **`StopArrivalUi` collided with LB-105's type,** and Swift's package flattening made one shadow the other: the new one is `ServedArrivalUi`.
+  - **`ServedLine` needed a direction,** or a stop served both ways would show one end's headsign on the other's arrivals.
+  - **The iOS preview passed a `useCases` the view does not take;** it now uses the view's own initialiser.
+  - **The Android ViewModel's `preferences` and `clock` were read only inside a property initialiser,** which detekt counts as unused; both moved into a function, as LB-105's did.
+  - **The iOS test left `observe()` un-restarted after Retry,** so nothing collected the new load; it now ends the first observation and starts a second, as `.task(id:)` does.
+  - **Two Android assertions expected a `Loading` frame** that a synchronous fake never yields; they assert the answer and say why in a comment.
+
+**Decisions**
+- **Agent:**
+  - **No shared `StopDetailEvent`:** Retry is the only event and carries nothing, so Android takes `onRetry` and Swift a two-case enum of its own; a shared sealed type for one payload-free case would make both platforms heavier for nothing.
+  - **The clock-time switch past 120 s overrides the user's format,** because that is what the criterion asks for; it is pinned by `lb205_pastTwoMinutesTheEtasSwitchToClockTimesWhateverTheUserChose`.
+- **Owner: the split.** Reported with the merge of this part's PR; the stop-pin path cannot be met until LB-203 exists.
+
+**Open / next**
+- **This part's pull request** is open, and its watch runs.
+- **Part 2:** a pushed stop detail from line detail, which needs a navigation key; the Near Me sheet needs LB-202 and LB-203 first.
+- **Waiting for the owner:** unchanged, plus the device pass on the new rows.
+
+---
+
 ## 2026-11-10: LB-105, each stop's next bus in the line detail
 
 **Done**
