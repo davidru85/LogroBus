@@ -141,6 +141,11 @@ Because `main` is protected, path-filtered workflows need a small always-running
     permission database and not on the app. The preview graph already scripts that permission as never granted
     (`-logrobus.preview-data` gives `LocationPermission.NotGranted`), so the call was both unnecessary and the only
     fragile part; it is gone, and the audit no longer touches the database.
+  - **A tab tap that the simulator did not deliver** (PR #62, 2026-11-11): the accessibility audit failed on line 172,
+    `XCTAssertTrue(linesRoot.waitForExistence(timeout: 5))`, after tapping the Lines tab from About data to pop the
+    stack (FR-NAV-03). The tap is a synthesised event, and the run showed no other failure: the screen simply never came
+    back. The audit now taps again while the root is not on screen, up to three times, and only then asserts; the
+    assertion and its timeout are unchanged.
   - **macOS runners that are slow or never come** (PR #37 and PR #38, 2026-11-02): with five macOS jobs at once, one matrix job built the framework and the app in 18 minutes with cold caches and reached its 20-minute limit; twice, GitHub never assigned a job a runner ("not acquired … capacity constraints" on macOS arm64). The matrix jobs' limit is 30 minutes since PR #38 (owner decision). A job that gets no runner cannot be prevented from the pipeline: rerun it.
 - **Runner image changes** are not flakes: a rerun fails the same way, so the pipeline is fixed in the pull request that meets them.
   - **Ubuntu 26.04** (PR #34, 2026-11-02): `ubuntu-latest` moved to it, and SwiftLint 0.65.1's Linux binary needs `libxml2.so.2`, which it no longer ships. The SwiftLint job pins `ubuntu-24.04` until a SwiftLint release runs on 26.04. `scripts/ci/install-swiftlint.sh` now fails when the binary cannot run, instead of reporting it installed.

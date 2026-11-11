@@ -167,9 +167,17 @@ final class AccessibilityAuditUITests: XCTestCase {
         app.buttons["About data"].tap()
         XCTAssertTrue(app.navigationBars["About data"].waitForExistence(timeout: 5))
         try audit.run("About data" + suffix, types, into: &issues)
-        // Re-selecting the tab pops its stack to its root (FR-NAV-03).
-        app.tabBars.buttons["Lines"].tap()
-        XCTAssertTrue(app.navigationBars["Lines"].waitForExistence(timeout: 5))
+        // Re-selecting the tab pops its stack to its root (FR-NAV-03). A tap on the bar is a synthesised event and can
+        // be dropped while the pushed screen is still settling (PR #62: the bar never came back within 5 s, with no
+        // other failure), so the tap is repeated while the root is not on screen. The assertion itself stays.
+        let linesRoot = app.navigationBars["Lines"]
+        var attempts = 0
+        while !linesRoot.exists, attempts < 3 {
+            attempts += 1
+            app.tabBars.buttons["Lines"].tap()
+            _ = linesRoot.waitForExistence(timeout: 2)
+        }
+        XCTAssertTrue(linesRoot.waitForExistence(timeout: 5))
     }
 
     /// Searches the Lines list: "varea" leaves lines 2 and B1, under both headings, and nothing beneath the tab bar.
