@@ -14,4 +14,15 @@
     <!-- LB-208 and LB-204 (FR-HOME-02, FR-NEAR-03): "My stops", above "Near you". -->
     <string name="nearme_my_stops_title">My stops</string>
     <string name="nearme_my_stops_empty">Save a stop to see its next buses here</string>
+    <!-- LB-208 part 3 (FR-FAV-02, FR-STOP-08): the "My stops" edit sheet. -->
+    <string name="nearme_my_stops_edit">Edit</string>
+    <string name="nearme_my_stops_edit_title">Edit my stops</string>
+    <string name="nearme_my_stops_done">Done</string>
+    <string name="nearme_my_stops_rename">Rename</string>
+    <string name="nearme_my_stops_delete">Remove</string>
+    <string name="nearme_my_stops_move_up">Move up</string>
+    <string name="nearme_my_stops_move_down">Move down</string>
+    <string name="nearme_my_stops_position">%1$d of %2$d</string>
+    <string name="nearme_my_stops_confirm">Save</string>
+    <string name="nearme_my_stops_cancel">Cancel</string>
 </resources>

@@ -105,6 +105,11 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 ### Recent changes
 
+- **2026-11-12:**
+  - LB-208, part 3: editing "My stops" on Android.
+    - The section now offers Edit while there is something to edit, and its sheet moves a stop up or down, renames it, or removes it.
+    - Moving is a TalkBack action on the row rather than a drag, as the favourite lines' editor already does, and the row's place is its state so a screen reader hears "2 of 2" and again after each move.
+    - The order, the new alias and the removal are the same ones part 1 stores, so they survive a restart.
 - **App icons (LB-413 part 1):** an original white bus on municipal red; Android adaptive vectors and themed icons, plus iOS light, dark and tinted artwork. Reproduce the exports with `swift scripts/generate-app-icons.swift` on macOS.
 
 - **2026-11-11:**

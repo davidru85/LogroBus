@@ -19,6 +19,39 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-12: LB-208 part 3, editing "My stops"
+
+**Done**
+- **LB-208 part 3 (`feat/LB-208-part3-edit-sheet`), Android:** the section offers Edit while there is something to edit, and the sheet moves a stop up or down, renames it or removes it, reusing part 1's repository and the shared `SavedStopsUiMapper` so the sheet and the section never disagree.
+  - **Moving is a custom accessibility action** on the row with the design system's drag handle, as the favourite lines' editor already does, and the row's place is its `stateDescription`, so TalkBack says "2 of 2" and again after each move.
+  - **The alias field** cuts at thirty characters as it is typed, the same rule as the save action's.
+  - **Docs:** both READMEs, `backlog.md`, and this entry.
+
+**Review**
+- **Detekt found three real defects, each fixed rather than silenced:** `NearMeScreen` and the sheet's row passed the parameter limit, so the row's move, rename and delete actions became one value; and `moved` had three returns, now two.
+- **My own test caught a real bug:** on an empty list `coerceIn(0, lastIndex)` throws, so `moved` answers the empty order before coercing.
+- **A mutation check on the move action:** replacing `rows.moved(index, -1)` with the unchanged order makes the sheet's test fail, which I ran and then reverted.
+
+**Open / next**
+- **iOS still owes this story's screens:** the Save star and "My stops", then the edit sheet there.
+- **The device pass** with TalkBack and VoiceOver on the rows, the place announcement and the alias dialog is with the owner.
+
+---
+
+## 2026-11-12: a commit landed on `main` locally, and the hook stopped it
+
+**Done**
+- **A process slip, recorded as the owner asked.** Starting LB-208 part 3, a `cd` typo left the shell in the wrong directory, so the `git switch -c` never ran and `docs(backlog): LB-208 part 3 begins` was committed on `main` locally.
+- **The `pre-push` hook refused the push** with its main-push bypass message, so `origin/main` was never touched. The commit was cherry-picked onto `feat/LB-208-part3-edit-sheet` and local `main` was reset to `origin/main`.
+- **Verified after the fact:** `git rev-parse main origin/main` prints the same `d464986a` for both, and the story branch carries only its own commit.
+
+**Decisions**
+- **Agent:** the branch-first rule held without intervention from the owner; the guard is the hook, not the agent's memory. Nothing about the protection needs changing.
+
+---
+
+---
+
 ## 2026-11-11: LB-413 part 1, native red bus app icons
 
 **Done**

@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasText
@@ -181,5 +184,105 @@ class NearMeScreenTest {
         }
 
         compose.onNodeWithText(context.getString(R.string.nearme_my_stops_empty)).assertExists()
+    }
+
+    @Test
+    fun lb208_editOpensTheSheet_whichMovesARow() {
+        // FR-FAV-02: Edit is offered while there is something to edit, and moving a row sends the new order.
+        val rows =
+            listOf(
+                SavedStopRowUi(stopId = 38, label = "Casa", position = 0),
+                SavedStopRowUi(stopId = 61, label = "Trabajo", position = 1),
+            )
+        var editTapped = 0
+        compose.setContent {
+            NearMeScreen(
+                NearMeUiState(myStops = MyStopsUi(rows = rows)),
+                onTurnOnLocation = {},
+                onOpenMore = {},
+                onEditMyStops = { editTapped++ },
+            )
+        }
+
+        compose.onNodeWithText(context.getString(R.string.nearme_my_stops_edit)).performClick()
+
+        assertEquals(1, editTapped)
+    }
+
+    @Test
+    fun lb208_withNothingSaved_thereIsNothingToEdit() {
+        compose.setContent {
+            NearMeScreen(NearMeUiState(), onTurnOnLocation = {}, onOpenMore = {})
+        }
+
+        compose.onNodeWithText(context.getString(R.string.nearme_my_stops_edit)).assertDoesNotExist()
+    }
+
+    @Test
+    fun lb208_theEditSheetMovesARow_andSaysItsPlace() {
+        // FR-FAV-02: the row's place is its state, so TalkBack reads it; moving it sends the reordered ids.
+        val rows =
+            listOf(
+                SavedStopRowUi(stopId = 38, label = "Casa", position = 0),
+                SavedStopRowUi(stopId = 61, label = "Trabajo", position = 1),
+            )
+        val orders = mutableListOf<List<Int>>()
+        compose.setContent {
+            MyStopsEditSheet(
+                rows = rows,
+                onReorder = { orders += it },
+                onRename = { _, _ -> },
+                onDelete = {},
+                onDismiss = {},
+            )
+        }
+
+        val last = compose.onNode(hasText("Trabajo"))
+        val place = context.getString(R.string.nearme_my_stops_position, 2, 2)
+        assertEquals(place, last.fetchSemanticsNode().config[SemanticsProperties.StateDescription])
+        // A last row has one move only, up.
+        assertEquals(listOf(context.getString(R.string.nearme_my_stops_move_up)), actionsOf(last))
+
+        perform(context.getString(R.string.nearme_my_stops_move_up), last)
+
+        assertEquals(listOf(listOf(61, 38)), orders)
+    }
+
+    @Test
+    fun lb208_theEditSheetDeletesASavedStop() {
+        val rows = listOf(SavedStopRowUi(stopId = 38, label = "Casa", position = 0))
+        val deleted = mutableListOf<Int>()
+        compose.setContent {
+            MyStopsEditSheet(
+                rows = rows,
+                onReorder = {},
+                onRename = { _, _ -> },
+                onDelete = { deleted += it },
+                onDismiss = {},
+            )
+        }
+
+        compose.onNodeWithContentDescription(context.getString(R.string.nearme_my_stops_delete)).performClick()
+
+        assertEquals(listOf(38), deleted)
+    }
+
+    /** The labels of a row's custom accessibility actions, in the order TalkBack lists them. */
+    private fun actionsOf(row: SemanticsNodeInteraction): List<String> =
+        row
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.CustomActions)
+            .orEmpty()
+            .map { it.label }
+
+    /** Runs the custom action labelled [label] on [row], as TalkBack does. */
+    private fun perform(
+        label: String,
+        row: SemanticsNodeInteraction,
+    ) {
+        val action = row.fetchSemanticsNode().config[SemanticsActions.CustomActions].first { it.label == label }
+        compose.runOnIdle { action.action() }
+        compose.waitForIdle()
     }
 }
