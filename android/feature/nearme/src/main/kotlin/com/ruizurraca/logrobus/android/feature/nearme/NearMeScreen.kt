@@ -1,6 +1,8 @@
 package com.ruizurraca.logrobus.android.feature.nearme
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,9 +12,14 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,8 +50,21 @@ import org.koin.androidx.compose.koinViewModel
 fun NearMeRoute(
     onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenStop: (stopId: Int) -> Unit = {},
+    editViewModel: MyStopsEditViewModel = koinViewModel(),
     viewModel: NearMeViewModel = koinViewModel(),
 ) {
+    val editing = remember { mutableStateOf(false) }
+    val rows by editViewModel.rows.collectAsStateWithLifecycle()
+    if (editing.value) {
+        MyStopsEditSheet(
+            rows = rows,
+            onReorder = editViewModel::reorder,
+            onRename = editViewModel::rename,
+            onDelete = editViewModel::delete,
+            onDismiss = { editing.value = false },
+        )
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val turnOnLocation = rememberLocationRequest { viewModel.onEvent(NearMeEvent.PermissionMayHaveChanged) }
     // Back from the system's settings, where the user may have turned location on.
@@ -52,13 +72,21 @@ fun NearMeRoute(
         viewModel.onEvent(NearMeEvent.PermissionMayHaveChanged)
         onPauseOrDispose {}
     }
-    NearMeScreen(state, onTurnOnLocation = turnOnLocation, onOpenMore = onOpenMore, modifier = modifier)
+    NearMeScreen(
+        state,
+        onTurnOnLocation = turnOnLocation,
+        onOpenMore = onOpenMore,
+        modifier = modifier,
+        onOpenStop = onOpenStop,
+        onEditMyStops = { editing.value = true },
+    )
 }
 
 /**
  * Renders [state] under its top app bar, with the More action (FR-NAV-04). Until the map (LB-202) and the sheet
  * (LB-203) land, it shows the "Near you" section only, and only without location (owner decision, 2026-11-05).
  */
+@Suppress("LongParameterList") // The state, its three actions, the modifier, and the two doors out of the sections.
 @Composable
 fun NearMeScreen(
     state: NearMeUiState,
@@ -66,6 +94,7 @@ fun NearMeScreen(
     onOpenMore: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenStop: (stopId: Int) -> Unit = {},
+    onEditMyStops: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -82,7 +111,7 @@ fun NearMeScreen(
         ) {
             // FR-HOME-02 and FR-NEAR-03: "My stops" sits above "Near you". An empty section says how to fill it,
             // with the action that will focus the search (LB-209).
-            item { MyStopsHeading() }
+            item { MyStopsHeading(onEdit = onEditMyStops, canEdit = !state.myStops.isEmpty) }
             if (state.myStops.isEmpty) {
                 item { MyStopsEmptyHint() }
             } else {
@@ -106,10 +135,23 @@ fun NearMeScreen(
     }
 }
 
-/** FR-HOME-02: the section title. */
+/**
+ * FR-HOME-02: the section title, with FR-FAV-02's Edit action while there is something to edit. Edit opens the sheet
+ * that reorders, renames and removes the saved stops.
+ */
 @Composable
-private fun MyStopsHeading() {
-    SectionHeading(stringResource(R.string.nearme_my_stops_title))
+private fun MyStopsHeading(
+    onEdit: () -> Unit,
+    canEdit: Boolean,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.weight(1f)) {
+            SectionHeading(stringResource(R.string.nearme_my_stops_title))
+        }
+        if (canEdit) {
+            TextButton(onClick = onEdit) { Text(stringResource(R.string.nearme_my_stops_edit)) }
+        }
+    }
 }
 
 /** FR-HOME-02: what the section says when nothing is saved. */

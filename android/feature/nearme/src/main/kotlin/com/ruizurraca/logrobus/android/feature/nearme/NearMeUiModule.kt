@@ -8,4 +8,6 @@ import org.koin.dsl.module
 val nearMeUiModule: Module =
     module {
         viewModelOf(::NearMeViewModel)
+        // LB-208 part 3 (FR-FAV-02): the edit sheet that reorders, renames and removes the saved stops.
+        viewModelOf(::MyStopsEditViewModel)
     }

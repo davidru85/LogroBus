@@ -107,6 +107,11 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 
 ### Cambios recientes
 
+- **12-11-2026:**
+  - LB-208, parte 3: editar "Mis paradas" en Android.
+    - La sección ofrece ahora Editar mientras haya algo que editar, y su hoja sube o baja una parada, la renombra o la quita.
+    - Mover es una acción de TalkBack sobre la fila, no un arrastre, como ya hace el editor de líneas favoritas, y el sitio de la fila es su estado, así que el lector de pantalla dice "2 de 2" y lo repite tras cada movimiento.
+    - El orden, el alias nuevo y la eliminación son los que guarda la parte 1, así que sobreviven a un reinicio.
 - **Iconos de las apps (LB-413, parte 1):** un autobús blanco propio sobre el rojo municipal; vectores adaptativos e iconos temáticos en Android, y variantes clara, oscura y tintada en iOS. Los recursos se regeneran con `swift scripts/generate-app-icons.swift` en macOS.
 
 - **11-11-2026:**

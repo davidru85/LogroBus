@@ -22,6 +22,9 @@ import androidx.compose.ui.test.performClick
 import androidx.core.app.ActivityOptionsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.common.AppResult
+import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
+import com.ruizurraca.logrobus.favourites.domain.SavedStop
+import com.ruizurraca.logrobus.favourites.domain.SavedStopRepository
 import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.MyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.NearYouState
@@ -198,6 +201,9 @@ class NearMeRouteTest {
                     factory<ObserveMyStops> {
                         ObserveMyStops { flowOf(AppResult.Success(MyStops(emptyList(), emptyMap()))) }
                     }
+                    // LB-208 part 3: the edit sheet's ViewModel reads and writes the saved stops, which these tests
+                    // are not about.
+                    factory<SavedStopRepository> { NoSavedStops() }
                 },
                 nearMeUiModule,
             )
@@ -270,4 +276,23 @@ class NearMeRouteTest {
 
         override fun invoke(): Flow<LocationAccess> = flowOf(access)
     }
+}
+
+/** No saved stops, and writes that change nothing: what these tests are not about. */
+private class NoSavedStops : SavedStopRepository {
+    override fun observeSavedStops(): Flow<AppResult<List<SavedStop>>> = flowOf(AppResult.Success(emptyList()))
+
+    override suspend fun add(
+        stopId: Int,
+        alias: String?,
+    ): AppResult<FavouriteAddition> = AppResult.Success(FavouriteAddition.ADDED)
+
+    override suspend fun rename(
+        stopId: Int,
+        alias: String?,
+    ): AppResult<Unit> = AppResult.Success(Unit)
+
+    override suspend fun remove(stopId: Int): AppResult<Unit> = AppResult.Success(Unit)
+
+    override suspend fun reorder(stopIds: List<Int>): AppResult<Unit> = AppResult.Success(Unit)
 }
