@@ -2,7 +2,9 @@ package com.ruizurraca.logrobus.android.feature.nearme
 
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
+import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.nearme.domain.LocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.MyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.NearYouState
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
@@ -43,7 +45,7 @@ class NearMeViewModelTest {
     fun lb201_untilAccessIsKnownNothingShows_thenTheSharedMappersState() =
         runTest {
             val sections = MutableSharedFlow<NearYouState>()
-            val viewModel = NearMeViewModel { sections }
+            val viewModel = NearMeViewModel({ sections }, { noStops() })
 
             viewModel.state.test {
                 assertEquals(NearMeUiState(NearYouUi.Unknown), awaitItem())
@@ -58,6 +60,7 @@ class NearMeViewModelTest {
             val viewModel =
                 NearMeViewModel(
                     Scripted(flowOf(NearYouState(LocationAccess.Off)), flowOf(NearYouState(LocationAccess.On))),
+                    { noStops() },
                 )
 
             viewModel.state.test {
@@ -74,7 +77,7 @@ class NearMeViewModelTest {
         runTest {
             val sections = MutableSharedFlow<NearYouState>()
             val observe = Scripted(sections)
-            val viewModel = NearMeViewModel(observe)
+            val viewModel = NearMeViewModel(observe, { noStops() })
 
             viewModel.state.test {
                 awaitItem()
@@ -94,7 +97,7 @@ class NearMeViewModelTest {
         runTest {
             val sections = MutableSharedFlow<NearYouState>()
             val observe = Scripted(sections, flowOf(NearYouState(LocationAccess.Off)))
-            val viewModel = NearMeViewModel(observe)
+            val viewModel = NearMeViewModel(observe, { noStops() })
 
             viewModel.state.test {
                 assertEquals(NearMeUiState(NearYouUi.Unknown), awaitItem())
@@ -111,7 +114,7 @@ class NearMeViewModelTest {
         runTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val sections = MutableSharedFlow<NearYouState>()
-            val viewModel = NearMeViewModel { sections }
+            val viewModel = NearMeViewModel({ sections }, { noStops() })
 
             val screen = backgroundScope.launch { viewModel.state.collect {} }
             runCurrent()
@@ -150,3 +153,6 @@ class NearMeViewModelTest {
         }
     }
 }
+
+/** No saved stops, which is what these tests are not about. */
+private fun noStops(): Flow<AppResult<MyStops>> = flowOf(AppResult.Success(MyStops(emptyList(), emptyMap())))

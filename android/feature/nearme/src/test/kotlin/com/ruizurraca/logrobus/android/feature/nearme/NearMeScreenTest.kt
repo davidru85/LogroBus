@@ -8,15 +8,19 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.feature.nearme.presentation.MyStopsUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearbyStopRowUi
+import com.ruizurraca.logrobus.feature.nearme.presentation.SavedStopRowUi
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -141,5 +145,41 @@ class NearMeScreenTest {
                 context.getString(R.string.nearme_nearby_walk_minutes, 2),
             )
         compose.onNodeWithContentDescription(spoken).assertExists()
+    }
+
+    @Test
+    fun lb208_myStopsListsTheSavedOnes_underTheirAliases() {
+        // FR-HOME-02: the section above "Near you", in the user's order, each row read as one utterance.
+        val opened = mutableListOf<Int>()
+        val state =
+            NearMeUiState(
+                nearYou = NearYouUi.LocationOn(),
+                myStops =
+                    MyStopsUi(
+                        rows =
+                            listOf(
+                                SavedStopRowUi(stopId = 38, label = "Casa", position = 0),
+                                SavedStopRowUi(stopId = 61, label = "Trabajo", position = 1),
+                            ),
+                    ),
+            )
+        compose.setContent {
+            NearMeScreen(state, onTurnOnLocation = {}, onOpenMore = {}, onOpenStop = { opened += it })
+        }
+
+        compose.onNode(isHeading() and hasText(context.getString(R.string.nearme_my_stops_title))).assertExists()
+        compose.onNodeWithContentDescription("Casa").performClick()
+        compose.onNodeWithContentDescription("Trabajo").assertExists()
+
+        assertEquals(listOf(38), opened)
+    }
+
+    @Test
+    fun lb208_withNoSavedStops_theSectionSaysHowToSaveOne() {
+        compose.setContent {
+            NearMeScreen(NearMeUiState(), onTurnOnLocation = {}, onOpenMore = {})
+        }
+
+        compose.onNodeWithText(context.getString(R.string.nearme_my_stops_empty)).assertExists()
     }
 }

@@ -19,4 +19,12 @@
     <string name="stop_detail_arrival_headsign_spoken">%1$s, %2$s, %3$s</string>
     <string name="stop_detail_eta_none">–</string>
     <string name="stop_detail_eta_none_spoken">no calls</string>
+    <!-- LB-208 (FR-STOP-08): saving a stop. The label says what a tap does, and the unsaved one is a button, not a
+         checkbox, as the favourite lines' star is. -->
+    <string name="stop_detail_save">Save stop</string>
+    <string name="stop_detail_unsave">Remove the saved stop: %1$s</string>
+    <string name="stop_detail_save_title">Save stop</string>
+    <string name="stop_detail_save_alias">Name (optional, %1$d characters)</string>
+    <string name="stop_detail_save_confirm">Save</string>
+    <string name="stop_detail_save_cancel">Cancel</string>
 </resources>

@@ -12,6 +12,8 @@
 build/
 local.properties
 captures/
+# Ad-hoc image dumps from local tooling; icon artwork belongs in assets/branding (LB-413).
+generated_images/
 *.hprof
 
 # Android

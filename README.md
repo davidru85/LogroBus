@@ -108,6 +108,12 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 - **App icons (LB-413 part 1):** an original white bus on municipal red; Android adaptive vectors and themed icons, plus iOS light, dark and tinted artwork. Reproduce the exports with `swift scripts/generate-app-icons.swift` on macOS.
 
 - **2026-11-11:**
+  - LB-208, part 2: saving a stop from its detail, and "My stops" on Android.
+    - The stop's toolbar carries the same star a favourite line has: tapping it asks for an alias of up to 30 characters and saves the stop; tapping it once saved removes it.
+    - "My stops" sits above "Near you" in Near Me, in your order, each row under its alias, and an empty section says how to save one.
+    - A save made from a stop shows in "My stops" at once.
+
+- **2026-11-11:**
   - LB-208, part 1: the stops you save, with their aliases.
     - A stop saved with an alias keeps it, cut at 30 characters, and the alias is what "My stops" shows; without one the stop's own name shows.
     - Up to 20 stops, as the favourite lines; the 21st is refused with a message and nothing is added.

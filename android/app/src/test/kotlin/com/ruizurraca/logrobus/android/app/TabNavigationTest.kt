@@ -194,6 +194,11 @@ class TabNavigationTest {
 
         tab("Lines").performClick()
 
+        // The scroll to the top animates: wait for it to settle rather than reading the frame it starts on. This
+        // assertion has failed twice on CI for that reason (docs/project_log.md: PR #36's run 2 and PR #66's run 3).
+        compose.waitUntil(AWAIT_MILLIS) {
+            runCatching { compose.onNodeWithContentDescription("Line 1").assertIsDisplayed() }.isSuccess
+        }
         compose.onNodeWithContentDescription("Line 1").assertIsDisplayed()
     }
 
