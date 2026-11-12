@@ -53,6 +53,9 @@ public struct MyStopsSection: View {
                         Text("nearme.my_stops.edit", bundle: .module)
                     }
                     .buttonStyle(.borderless)
+                    // NFR-A11Y-04: the header's action takes the whole 44 pt target, as the favourites header's does.
+                    .frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
+                    .contentShape(Rectangle())
                 }
             }
         }
@@ -119,6 +122,9 @@ struct MyStopsEditSheet: View {
                             renaming = row
                         } label: {
                             Text("nearme.my_stops.rename", bundle: .module)
+                                // NFR-A11Y-04: the words alone are a 20 pt target.
+                                .frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
                     }

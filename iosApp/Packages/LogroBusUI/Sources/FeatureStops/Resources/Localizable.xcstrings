@@ -91,6 +91,38 @@
         }
       }
     },
+    "stop.save.title": {
+      "comment": "LB-208 (FR-STOP-08): the alert that asks for the alias before saving a stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Save stop" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Guardar parada" } }
+      }
+    },
+    "stop.save.alias": {
+      "comment": "LB-208 (FR-STOP-08): the alias field's label; a blank field saves the stop under its own name. The argument is the limit of characters.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Name (optional, %lld characters)" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Nombre (opcional, %lld caracteres)" } }
+      }
+    },
+    "stop.save.confirm": {
+      "comment": "LB-208 (FR-STOP-08): the alias alert's confirm button, which saves the stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Save" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Guardar" } }
+      }
+    },
+    "stop.save.cancel": {
+      "comment": "LB-208 (FR-STOP-08): the alias alert's cancel button, which saves nothing.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Cancel" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cancelar" } }
+      }
+    },
     "stop.save.add": {
       "comment": "LB-208 (FR-STOP-08): the Save star's label while the stop is not saved.",
       "extractionState": "manual",

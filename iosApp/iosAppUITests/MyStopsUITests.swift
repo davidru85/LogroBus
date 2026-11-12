@@ -4,7 +4,7 @@ import XCTest
 /// the sheet that reorders, renames and removes. End to end through the app shell, over the scripted graph.
 ///
 /// The saved stops outlive a launch, as the favourites do, so each test clears them through the sheet first and reads a
-/// state it made rather than whatever the last run left.
+/// state it made rather than whatever the last run left. A save asks for the alias first, as Android's does.
 final class MyStopsUITests: XCTestCase {
     /// FR-FAV-05: the most saved stops there can be, which bounds the clearing loop.
     private let mostSavedStops = 20
@@ -22,6 +22,12 @@ final class MyStopsUITests: XCTestCase {
         )
         star.tap()
 
+        // FR-STOP-08: saving asks for the alias first, and the stop is listed under it.
+        let alias = app.textFields.firstMatch
+        XCTAssertTrue(alias.waitForExistence(timeout: 5), "the save alert asks for an alias")
+        alias.typeText("Casa")
+        app.buttons["Save"].tap()
+
         XCTAssertTrue(
             app.buttons["Remove this stop from saved stops"].waitForExistence(timeout: 5),
             "the star fills, and its label names what a tap does"
@@ -29,11 +35,8 @@ final class MyStopsUITests: XCTestCase {
 
         app.tabBars.buttons["Near me"].tap()
         XCTAssertTrue(app.staticTexts["My stops"].waitForExistence(timeout: 5))
-        let listed = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Campillo")).firstMatch
-        XCTAssertTrue(
-            listed.waitForExistence(timeout: 5),
-            "the saved stop is listed under its own name until it has an alias"
-        )
+        let listed = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Casa")).firstMatch
+        XCTAssertTrue(listed.waitForExistence(timeout: 5), "the saved stop is listed under the alias it was given")
     }
 
     @MainActor
@@ -45,6 +48,10 @@ final class MyStopsUITests: XCTestCase {
         let star = app.buttons["Save stop"]
         XCTAssertTrue(star.waitForExistence(timeout: 10))
         star.tap()
+        let alias = app.textFields.firstMatch
+        XCTAssertTrue(alias.waitForExistence(timeout: 5), "the save alert asks for an alias")
+        alias.typeText("Casa")
+        app.buttons["Save"].tap()
         XCTAssertTrue(app.buttons["Remove this stop from saved stops"].waitForExistence(timeout: 5))
 
         app.tabBars.buttons["Near me"].tap()
@@ -55,7 +62,7 @@ final class MyStopsUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Edit my stops"].waitForExistence(timeout: 5))
         // The stop and its place are one element, as Android's merged row is: its label carries both.
         let row = app.descendants(matching: .any).matching(
-            NSPredicate(format: "label BEGINSWITH %@", "Campillo")
+            NSPredicate(format: "label BEGINSWITH %@", "Casa")
         ).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         // FR-FAV-02: the row's place, which VoiceOver reads with the stop's name.
