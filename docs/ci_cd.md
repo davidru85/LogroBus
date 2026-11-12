@@ -164,6 +164,12 @@ Because `main` is protected, path-filtered workflows need a small always-running
     `logrobus.db` the graph binds and outlives the test, so it raced the next test's schema creation. The tests now
     start the same modules through `initGraphForTest`, the app's graph without the refresh; `initKoin` keeps the
     refresh for the app. Three consecutive local runs of the target are green, and this is the first occurrence.
+  - **A scroll to the top asserted before it settled** (PR #66, 2026-11-12; and PR #36's run 2, 2026-11-02):
+    `Android unit tests (:android:app)` failed on `TabNavigationTest.lb101_reselectingLinesAtItsRootScrollsTheListToItsTop`
+    at its last check: after re-selecting Lines, "Line 1" was not yet displayed. The list scrolls to its top with an
+    animation, and the assertion read the frame the animation starts on. PR #36's run recorded it as a flake, noting that
+    the test should wait for the scroll to settle if it recurred; it recurred here, so it now does: a bounded wait for
+    the row to be displayed, then the unchanged assertion. Three consecutive local runs are green.
   - **A shell screenshot captured before the list arrived** (PR #65, 2026-11-11): `Android screenshots
     (:android:app)` failed on `lb012_shellScreen_screenshot[shell_dark]`, and the artefact CI uploaded showed the Lines
     screen's loading placeholder, every row a grey block, rather than a colour difference. The capture took `AppShell()`
