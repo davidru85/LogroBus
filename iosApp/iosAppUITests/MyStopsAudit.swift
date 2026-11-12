@@ -17,18 +17,19 @@ enum MyStopsAudit {
         // The walk runs late, after every other screen, so on a busy runner the tab may not have drawn its lines yet:
         // the tab is tapped, and the row waited for, before anything is read from it.
         app.tabBars.buttons["Lines"].tap()
-        let line = app.descendants(matching: .any).matching(
+        // The full list names a line plainly, "Line 3, Campillo - El Cubo", while the carousel's card says where it
+        // heads; this takes the list's row, which opens the same line detail. Waited for, since the tab may not have
+        // drawn its content yet on a busy runner.
+        let line = app.buttons.matching(
             NSPredicate(format: "label BEGINSWITH %@ AND NOT label CONTAINS %@", "Line 3, ", "Towards")
         ).firstMatch
-        if !line.waitForExistence(timeout: 10) {
-            app.tabBars.buttons["Lines"].tap()
-        }
-        // At an accessibility text size the rows are taller, so line 3 may start below the fold: scroll it into view,
-        // as the rest of the audit does for its own rows, rather than reading a list it has not reached.
-        for _ in 0..<6 where !line.exists {
+        _ = line.waitForExistence(timeout: 5)
+        // At an accessibility text size the favourite carousel pushes the full list's first rows below the fold, so
+        // the list is scrolled a bounded number of times until the row is there.
+        for _ in 0..<4 where !line.exists {
             app.swipeUp()
         }
-        XCTAssertTrue(line.waitForExistence(timeout: 15), "the Lines tab shows the scripted lines")
+        XCTAssertTrue(line.waitForExistence(timeout: 20), "the Lines tab shows the scripted lines")
         line.tap()
         let stop = app.descendants(matching: .any).matching(
             NSPredicate(format: "label CONTAINS %@", "Stop 1, Campillo")
