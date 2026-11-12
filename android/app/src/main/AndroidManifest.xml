@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- FR-LOC-01: foreground location, asked for just in time on Near Me (LB-201). Coarse and fine together, so that
          the user may grant approximate location only. Never background location (security_privacy.md §3). -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <!-- The launcher icon arrives with the Figma designs (LB-413). The app's languages, which Android 13+ offers in
+    <!-- The app's languages, which Android 13+ offers in
          its per-app language setting (ADR-0020). The backups keep the user's own data only (FR-FAV-03): the rules
          from Android 12, the full backup content before it. -->
     <application
@@ -15,11 +14,12 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:localeConfig="@xml/locales_config"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:theme="@style/Theme.LogroBus"
-        tools:ignore="MissingApplicationIcon">
+        android:theme="@style/Theme.LogroBus">
 
         <!-- adjustResize: edge to edge, the window never resizes for the keyboard, but reports it as insets, which
              the Lines list pads by (LB-102). -->

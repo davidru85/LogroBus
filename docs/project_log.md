@@ -19,6 +19,35 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-11: LB-413 part 1, native red bus app icons
+
+**Done**
+- Built original minimalist bus artwork from an image-generated concept, with municipal red #C21632 from page 18 of the identity manual. The supplied municipal app icon is a visual reference, not reused artwork.
+- Android now selects a 108 dp vector adaptive icon, with a full-bleed background and a transparent monochrome glyph on API 33+. Both launcher attributes use the same resource and the old missing-icon lint suppression is removed.
+- iOS now selects AppIcon explicitly through XcodeGen: 1024 px sRGB light, transparent dark and grayscale tinted variants, with corners left to the system.
+- Added the macOS-only, dependency-free `scripts/generate-app-icons.swift` and its original SVG export; `--check` verifies every generated resource without writing.
+- Updated both READMEs, the backlog, acceptance criteria and design guidance. The Figma screen palette and typography remain LB-413 part 2.
+
+**Validation**
+- `swift -module-cache-path /tmp/logrobus-icons-swift-cache scripts/generate-app-icons.swift --check`: 10 native resources match their source.
+- Android SDK 36 `aapt2 compile` and `aapt2 link`: passed against android-36, minSdk 26; resource dump includes the adaptive and API 33 variants and #FFC21632.
+- Xcode `actool`: passed, generated Assets.car and AppIcon metadata; CoreSimulator access warnings in the restricted environment did not stop asset compilation.
+- `xcodegen generate --spec iosApp/project.yml --quiet`: passed; the generated target selects AppIcon.
+- Inspected the default artwork, all three PNG dimensions and alpha channels: 1024 x 1024, default and tinted opaque, dark transparent.
+- `scripts/checks/run-all.sh`: README parity, frozen spec, 113 doc links, secrets, identity and shellcheck passed. Gradle could not open its wrapper cache lock (Operation not permitted). SwiftLint reported zero violations in 83 files but could not write its cache; rerunning `swiftlint lint --strict --no-cache --quiet` passed.
+- No business logic changed; validation uses native resource compilers and export reproducibility rather than unit tests over static artwork.
+
+**Decisions**
+- The owner requested icons ahead of the Figma delivery. This completes only the icon slice of LB-413.
+- Used a separate clone and `feat/LB-413-platform-app-icons`, based on main at d935163c, because the active LB-208 checkout belongs to another LLM and its git metadata is read-only. The managed worktree operation was unavailable.
+- GitHub is unreachable from the local shell (DNS), and the connected GitHub integration rejects remote branch creation with 403 Resource not accessible by integration. The commit is local; push and pull request creation remain blocked until write access is available. The existing LB-208 pull request and checkout are left to their current agent.
+
+**Open / next**
+- Publish the local branch and open its pull request once GitHub write access is available, then watch CI to completion. Full local Gradle and device launcher checks are limited by the environment.
+- LB-413 part 2 still waits for Figma and OQ-18.
+
+---
+
 ## 2026-11-11: LB-208 part 1, the stops the user saves
 
 **Done**

@@ -90,6 +90,8 @@ You will need:
 
 ## Project status
 
+Both apps now have original red bus app icons, adapted to their platform (LB-413 part 1).
+
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | M0 Foundations | Project skeleton, data layer, CI | In progress |
@@ -102,6 +104,8 @@ You will need:
 The golden fixtures of the data source are recorded and kept under check (LB-003), so the stories that waited for them are unblocked: the contract tests of LB-005 part 2, and LB-006 part 2, LB-008 part 2 and LB-101 part 2.
 
 ### Recent changes
+
+- **App icons (LB-413 part 1):** an original white bus on municipal red; Android adaptive vectors and themed icons, plus iOS light, dark and tinted artwork. Reproduce the exports with `swift scripts/generate-app-icons.swift` on macOS.
 
 - **2026-11-11:**
   - LB-208, part 1: the stops you save, with their aliases.

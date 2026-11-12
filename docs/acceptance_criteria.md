@@ -1036,6 +1036,13 @@ Done when:
 ### LB-413 Apply the Figma designs
 Refs: OQ-18, NFR-MNT-04
 
+**Part 1, app icons (owner request, 2026-11-11):**
+- **Given** Android 26 or later, **when** a launcher masks the icon, **then** the original white bus stays recognisable on the municipal red background within the 66 dp safe circle; Android 33 or later also has a transparent monochrome layer for themed icons.
+- **Given** iOS 18 or later, **when** the app is installed, **then** Xcode uses the AppIcon catalog's 1024 px artwork, with separate light, dark and grayscale tinted variants and system-applied corner masks.
+- **Given** the committed icon exports, **when** `swift scripts/generate-app-icons.swift --check` runs on macOS, **then** all exports match the original vector geometry without downloading any artwork.
+
+**Part 2, waiting for Figma:**
+
 - **Given** the Figma file for the MVP, **when** it is applied, **then** only the token files, the design-system components and the app icons change; no feature code changes colours or typography directly.
 - **Given** the new theme, **when** the screenshot suites run, **then** every reference image is re-recorded and reviewed, and every `LineBadge` still reaches 4.5:1 contrast.
 - **Given** the Figma file, **then** `design_guidelines.md` links to it as the visual source of truth.

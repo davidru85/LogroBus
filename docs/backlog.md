@@ -107,7 +107,7 @@ Stories are numbered `LB-<epic><nn>`. Each one cites the requirements it impleme
 | LB-410 | Onboarding: 3 cards (value, favourites, location rationale) | FR-NAV-06, SC-18, FR-LOC-01 | P1 | todo |
 | LB-411 | Performance budgets: cold start, first ETA, search latency, map fps, download size | NFR-PERF-01 to 06 | P0 | todo |
 | LB-412 | Maestro flows for the five critical journeys (`architecture.md` §8); creates `nightly.yml`, moved from LB-002, unless an instrumented test needs it first | Spec §10.1 | P1 | todo |
-| LB-413 | Apply the Figma designs delivered near the end of the MVP: brand palette (light and dark), typography, app icon and screen refinements, replacing the neutral placeholder theme; re-record screenshots | OQ-18, NFR-MNT-04 | P1 | blocked (Figma delivery) |
+| LB-413 | Part 1 (owner request, 2026-11-11): original red bus app icons on both platforms, Android adaptive and themed vectors and iOS light, dark and tinted assets. Part 2: apply the Figma palette, typography and screen refinements; re-record screenshots | OQ-18, NFR-MNT-04 | P1 | part 1 done; part 2 blocked (Figma delivery) |
 | LB-414 | Privacy labels and disclosures, as the final MVP step: privacy policy (es and en), Google Data safety, Apple privacy nutrition label, consent texts if telemetry is active | NFR-PRIV-01 to 05, `security_privacy.md` §5–6, OQ-22 | P0 | todo |
 | LB-415 | Make the repository public before the MVP is completed: run the pre-public checklist, then protect `main` (`scripts/github/protect-main.sh`) and let CI run | `ci_cd.md` §1, OQ-20, OQ-21 | P0 | done |
 
