@@ -182,7 +182,7 @@ struct MyStopsEditSheet: View {
                 Button(role: .cancel) {
                     renaming = nil
                 } label: {
-                    Text("nearme.my_stops.remove", bundle: .module)
+                    Text("nearme.my_stops.cancel", bundle: .module)
                 }
             }
         }

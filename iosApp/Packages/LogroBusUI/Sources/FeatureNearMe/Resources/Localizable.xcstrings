@@ -17,6 +17,14 @@
         "es": { "stringUnit": { "state": "translated", "value": "Editar mis paradas" } }
       }
     },
+    "nearme.my_stops.cancel": {
+      "comment": "LB-208 (FR-STOP-08): the rename alert's cancel button, which leaves the alias as it was.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Cancel" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Cancelar" } }
+      }
+    },
     "nearme.my_stops.done": {
       "comment": "LB-208: the edit sheet's dismiss button.",
       "extractionState": "manual",
