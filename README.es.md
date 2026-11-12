@@ -114,6 +114,7 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
     - La barra de la parada lleva la misma estrella que una linea favorita: al tocarla pide un alias de hasta 30 caracteres y guarda la parada; al tocarla ya guardada, la quita.
     - "Mis paradas" esta encima de "Cerca de ti" en Cerca de mi, en tu orden, cada fila bajo su alias, y una seccion vacia dice como guardar una.
     - Una parada guardada desde su detalle aparece en "Mis paradas" al instante.
+
 - **11-11-2026:**
   - LB-208, parte 1: las paradas que guardas, con su alias.
     - Una parada guardada con alias lo conserva, recortado a 30 caracteres, y el alias es lo que muestra "Mis paradas"; sin alias se muestra el nombre de la parada.
