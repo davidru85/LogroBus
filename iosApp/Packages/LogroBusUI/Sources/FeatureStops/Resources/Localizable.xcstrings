@@ -100,11 +100,11 @@
       }
     },
     "stop.save.saved": {
-      "comment": "LB-208 (FR-STOP-08): the Save star's label while the stop is saved; tapping it removes the stop.",
+      "comment": "LB-208 (FR-STOP-08): the Save star's label while the stop is saved; it names the action the tap takes, as the lines' star does.",
       "extractionState": "manual",
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Saved stop" } },
-        "es": { "stringUnit": { "state": "translated", "value": "Parada guardada" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Remove this stop from saved stops" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Quitar esta parada de las guardadas" } }
       }
     },
     "stop.save.limit %lld": {

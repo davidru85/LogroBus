@@ -34,6 +34,14 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - a `.sheet` attached to a `Section` inside a `List` is never presented, so Edit did nothing; the screen presents the sheet now;
   - the UI test's own pre-clear left the app on the wrong tab when nothing was saved, which failed a line that had nothing to do with the change.
 - **One bridging fix:** SKIE hands a `suspend` result back with Kotlin's class for an enum, so the limit check casts to `AppResultSuccess<__FavouriteAddition>` and bridges to Swift's case.
+- **The reviewers found five more, all fixed:**
+  - the limit alert formatted Kotlin's `Int32` into a `%lld` key, which would have shown the raw key instead of the message; it takes a Swift `Int`, as the nearby rows already do;
+  - the UI test's clearing loop matched an accessibility identifier no view sets, so it removed nothing and compared zero with zero;
+  - the edit sheet truncated its title at 200 % text; the title is inline and the row wraps under an accessibility size, as the favourite lines' editor does;
+  - the row's `.contain` read the stop and its place twice; they are one `.combine`d element now, as Android's merged row is;
+  - the audit never reached these screens; `MyStopsAudit` walks them.
+- **The audit also caught a real 19 pt hit area** on the sheet's remove button, now 44 pt.
+- **Left for the owner:** visiting the stop detail in the audit surfaces LB-205's own Dynamic Type failures on its arrival rows, which predate this story; the audit reads only this story's states until that screen is fixed.
 
 **Open / next**
 - **The device pass** with VoiceOver on the star, the rows, the place and the sheet is with the owner.

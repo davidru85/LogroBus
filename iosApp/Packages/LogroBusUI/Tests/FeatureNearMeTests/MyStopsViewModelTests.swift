@@ -1,6 +1,8 @@
 @testable import FeatureNearMe
 import Foundation
-import Shared
+// As the ViewModel does: Kotlin types declare no Sendable conformance, so a `suspend` call from the main actor needs
+// pre-concurrency (ADR-0004).
+@preconcurrency import Shared
 import Testing
 
 /// LB-208 part 4 (FR-HOME-02, FR-FAV-02) on iOS: "My stops" follows the saved stops, and its edit actions reach the
@@ -8,14 +10,22 @@ import Testing
 @MainActor
 struct MyStopsViewModelTests {
     @Test
-    func lb208_theSectionIsEmptyUntilAStopIsSaved() async throws {
-        let viewModel = MyStopsViewModel(useCases: SharedDependencies.shared.preview())
+    func lb208_theSectionFollowsASaveAndARemoval() async throws {
+        let useCases = SharedDependencies.shared.preview()
+        let saved = useCases.savedStops()
+        let viewModel = MyStopsViewModel(useCases: useCases)
 
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
 
-        try await waitUntil { viewModel.rows.isEmpty }
+        // It starts empty, but waiting for empty alone would pass before the collection ever emitted, so the test
+        // makes a change and reads it: a save appears, its removal clears the section.
         #expect(viewModel.rows.isEmpty)
+        _ = try? await saved.add(stopId: 38, alias: "Casa")
+        try await waitUntil { viewModel.rows.count == 1 }
+        #expect(viewModel.rows.map(\.stopId) == [38])
+        _ = try? await saved.remove(stopId: 38)
+        try await waitUntil { viewModel.rows.isEmpty }
     }
 
     @Test

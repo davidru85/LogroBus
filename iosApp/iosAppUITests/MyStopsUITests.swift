@@ -23,8 +23,8 @@ final class MyStopsUITests: XCTestCase {
         star.tap()
 
         XCTAssertTrue(
-            app.buttons["Saved stop"].waitForExistence(timeout: 5),
-            "the star fills, and its label says the stop is saved"
+            app.buttons["Remove this stop from saved stops"].waitForExistence(timeout: 5),
+            "the star fills, and its label names what a tap does"
         )
 
         app.tabBars.buttons["Near me"].tap()
@@ -45,7 +45,7 @@ final class MyStopsUITests: XCTestCase {
         let star = app.buttons["Save stop"]
         XCTAssertTrue(star.waitForExistence(timeout: 10))
         star.tap()
-        XCTAssertTrue(app.buttons["Saved stop"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Remove this stop from saved stops"].waitForExistence(timeout: 5))
 
         app.tabBars.buttons["Near me"].tap()
         let edit = app.buttons["Edit"]
@@ -53,12 +53,13 @@ final class MyStopsUITests: XCTestCase {
         edit.tap()
 
         XCTAssertTrue(app.navigationBars["Edit my stops"].waitForExistence(timeout: 5))
-        // The row is one accessibility element: its label is the stop and its value its place, as Android's merges the
-        // same two.
-        let row = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Campillo")).firstMatch
+        // The stop and its place are one element, as Android's merged row is: its label carries both.
+        let row = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Campillo")
+        ).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
-        // FR-FAV-02: the row's place, which VoiceOver reads.
-        XCTAssertEqual(row.value as? String, "1 of 1")
+        // FR-FAV-02: the row's place, which VoiceOver reads with the stop's name.
+        XCTAssertTrue(row.label.contains("1 of 1"), "the row reads its place: \(row.label)")
 
         // The row's own Remove button, as Android's has.
         let remove = app.buttons["Remove"]
@@ -86,12 +87,18 @@ final class MyStopsUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Edit my stops"].waitForExistence(timeout: 5))
         // At most FAVOURITES_PER_TYPE rows. Bounded, so a swipe that removes nothing fails rather than looping.
         for _ in 0..<mostSavedStops {
-            let removes = app.buttons.matching(identifier: "Remove")
+            // Matched by label: the row's button carries no accessibility identifier, so an identifier query would
+            // find nothing and the loop would compare zero with zero.
+            let removes = app.buttons.matching(NSPredicate(format: "label == %@", "Remove"))
             guard !removes.allElementsBoundByIndex.isEmpty else { break }
             removes.element(boundBy: 0).tap()
             _ = removalsSettle(app)
         }
-        XCTAssertEqual(app.buttons.matching(identifier: "Remove").count, 0, "every saved stop was removed")
+        XCTAssertEqual(
+            app.buttons.matching(NSPredicate(format: "label == %@", "Remove")).count,
+            0,
+            "every saved stop was removed"
+        )
         app.buttons["Done"].tap()
         // The sheet animates out; tapping a tab while it is still there lands on the sheet, not the tab bar.
         XCTAssertTrue(app.buttons["Done"].waitForNonExistence(timeout: 5), "the sheet closes")

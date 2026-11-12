@@ -71,6 +71,7 @@ struct MyStopsEditSheet: View {
     let onRename: (Int32, String?) -> Void
     let onDelete: (Int32) -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var renaming: SavedStopRowUi?
     @State private var draft = ""
 
@@ -86,12 +87,18 @@ struct MyStopsEditSheet: View {
                 ForEach(rows, id: \.stopId) { row in
                     let index = rows.firstIndex { $0.stopId == row.stopId } ?? 0
                     // Android's row takes the same three things: a remove button, the label, and a rename button
-                    // beside the handle, so both platforms read and work alike.
-                    HStack(spacing: Tokens.Spacing.medium) {
+                    // beside the handle, so both platforms read and work alike. At an accessibility text size the
+                    // controls wrap under the label rather than squeezing it, as the favourite lines' editor does.
+                    let layout = dynamicTypeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: Tokens.Spacing.small))
+                        : AnyLayout(HStackLayout(spacing: Tokens.Spacing.medium))
+                    layout {
                         Button(role: .destructive) {
                             onDelete(row.stopId)
                         } label: {
                             Image(systemName: "minus.circle")
+                                // NFR-A11Y: a 44 pt target, which the glyph alone does not give.
+                                .frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
                                 .accessibilityLabel(Text("nearme.my_stops.remove", bundle: .module))
                         }
                         .buttonStyle(.borderless)
@@ -103,6 +110,9 @@ struct MyStopsEditSheet: View {
                                 .font(.caption)
                                 .foregroundStyle(Tokens.Colors.secondaryText)
                         }
+                        // The label and the place are one element, so VoiceOver reads "Campillo, 1 of 2" once, as
+                        // TalkBack's merged row is read.
+                        .accessibilityElement(children: .combine)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         Button {
                             draft = row.label
@@ -112,11 +122,6 @@ struct MyStopsEditSheet: View {
                         }
                         .buttonStyle(.borderless)
                     }
-                    // Formatted here rather than through an interpolated key: the key carries a positional format, and
-                    // an interpolated lookup falls back to reading the key itself aloud.
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel(Text(verbatim: row.label))
-                    .accessibilityValue(Text(verbatim: place(index + 1, of: rows.count)))
                     // VoiceOver's own custom actions, as TalkBack's on the same row.
                     .accessibilityActions {
                         if index > 0 {
@@ -154,6 +159,8 @@ struct MyStopsEditSheet: View {
                 }
             }
             .environment(\.editMode, .constant(.active))
+            // The title stays a line at 200 % text rather than being cut, as the favourite lines' editor does.
+            .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(Text("nearme.my_stops.edit_title", bundle: .module))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

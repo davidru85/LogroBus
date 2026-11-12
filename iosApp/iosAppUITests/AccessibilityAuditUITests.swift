@@ -79,6 +79,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         tap(app.tabBars.buttons["Near me"])
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me", types, into: &issues)
+        // LB-208: the story's own screens, which the walk above never reached. Its own file, as this one is at
+        // SwiftLint's length limit.
+        try MyStopsAudit.audit(audit, types, in: app, into: &issues)
         try auditDirections(audit, types, in: app, into: &issues)
     }
 
@@ -242,7 +245,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 /// One launch's audits: each runs Xcode's audit on the screen on display and reports what is not a known false
 /// positive.
 @MainActor
-private struct Audit {
+struct Audit {
     let test: XCTestCase
     let app: XCUIApplication
     let largestText: Bool

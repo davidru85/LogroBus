@@ -45,7 +45,7 @@ public struct StopDetailView: View {
                     }
                 }
             }
-            .stopSaveLimitAlert(viewModel.limitReached ? FAVOURITES_PER_TYPE : nil) {
+            .stopSaveLimitAlert(viewModel.limitReached ? Int(FAVOURITES_PER_TYPE) : nil) {
                 viewModel.clearLimit()
             }
             // Cancelled when the screen leaves, which stops API-06's polling; restarted by Retry.
