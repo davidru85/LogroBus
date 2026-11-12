@@ -172,6 +172,16 @@ Because `main` is protected, path-filtered workflows need a small always-running
     audit's own variance, the same kind this file already records for Settings' picker values and Near Me's rows, so the
     failed job is rerun once. **A recurring finding on a screen this story does not own belongs to that screen's story,
     not to an exemption here** (owner decision, 2026-11-11: an exemption is the owner's to grant).
+  - **Dependencies not found on a cold runner** (PR #68's run 1, 2026-11-12): `Shared unit tests (:shared:core:telemetry)`
+    failed three times in a row at about 20 s with `Could not find org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0` and
+    the same for `kotlinx-datetime` and `kotlin-stdlib`, all while configuring `:shared:core:common`. The branch changes no
+    build file and no dependency; a fresh runner resolves the whole graph from empty caches at once, which is the pattern
+    this file already records for the Gradle Plugin Portal and for Maven Central's 429s. The failed jobs are rerun once
+    when the run finishes, since a rerun is refused while a workflow is still running.
+  - **`AndroidGraphTest` releasing the graph** (PR #68's run 1, 2026-11-12): `Shared unit tests (:shared:umbrella)` failed
+    on `lb010_stoppingTheGraphReleasesItsScopeAndDatabase` at `assertFalse(scope.isActive)` after `stopKoin()`. The branch
+    touches no file under `shared/`, the test passes locally in isolation, and this log already records the same test
+    failing once inside a full `check` while two Gradle builds ran at once. It is rerun with the job above.
   - **A scroll to the top asserted before it settled** (PR #66, 2026-11-12; and PR #36's run 2, 2026-11-02):
     `Android unit tests (:android:app)` failed on `TabNavigationTest.lb101_reselectingLinesAtItsRootScrollsTheListToItsTop`
     at its last check: after re-selecting Lines, "Line 1" was not yet displayed. The list scrolls to its top with an
