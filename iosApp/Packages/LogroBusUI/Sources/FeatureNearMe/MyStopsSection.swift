@@ -13,8 +13,12 @@ public struct MyStopsSection: View {
 
     /// The section over the screen's own `viewModel`, which the screen keeps because the edit sheet it presents reads
     /// the same rows. A sheet cannot be presented from inside a `List`'s section — the section is not a presentation
-    /// context, and the tap would do nothing — so Edit only reports itself and the screen presents it.
-    public init(viewModel: MyStopsViewModel, onEdit: @escaping () -> Void, onOpenStop: @escaping (Int32) -> Void = { _ in }) {
+    /// context, and the tap would do nothing — so Edit reports itself and the screen presents the sheet.
+    public init(
+        viewModel: MyStopsViewModel,
+        onEdit: @escaping () -> Void,
+        onOpenStop: @escaping (Int32) -> Void = { _ in }
+    ) {
         self.viewModel = viewModel
         self.onEdit = onEdit
         self.onOpenStop = onOpenStop
@@ -79,53 +83,77 @@ struct MyStopsEditSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(Array(rows.enumerated()), id: \.element.stopId) { index, row in
-                    Text(verbatim: row.label)
-                        // Formatted here rather than through an interpolated key: the key carries a positional format,
-                        // and an interpolated lookup falls back to reading the key itself aloud.
-                        .accessibilityValue(Text(verbatim: place(index + 1, of: rows.count)))
-                        .accessibilityActions {
-                            if index > 0 {
-                                Button {
-                                    onReorder(rows.moved(index, -1))
-                                } label: {
-                                    Text("nearme.my_stops.move_up", bundle: .module)
-                                }
-                            }
-                            if index < rows.count - 1 {
-                                Button {
-                                    onReorder(rows.moved(index, 1))
-                                } label: {
-                                    Text("nearme.my_stops.move_down", bundle: .module)
-                                }
-                            }
+                ForEach(rows, id: \.stopId) { row in
+                    let index = rows.firstIndex { $0.stopId == row.stopId } ?? 0
+                    // Android's row takes the same three things: a remove button, the label, and a rename button
+                    // beside the handle, so both platforms read and work alike.
+                    HStack(spacing: Tokens.Spacing.medium) {
+                        Button(role: .destructive) {
+                            onDelete(row.stopId)
+                        } label: {
+                            Image(systemName: "minus.circle")
+                                .accessibilityLabel(Text("nearme.my_stops.remove", bundle: .module))
+                        }
+                        .buttonStyle(.borderless)
+                        VStack(alignment: .leading, spacing: Tokens.Spacing.xSmall) {
+                            Text(verbatim: row.label)
+                            // Android's row shows the place under the label too, so a sighted user reads the same
+                            // "1 of 2" a screen reader hears.
+                            Text(verbatim: place(index + 1, of: rows.count))
+                                .font(.caption)
+                                .foregroundStyle(Tokens.Colors.secondaryText)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Button {
+                            draft = row.label
+                            renaming = row
+                        } label: {
+                            Text("nearme.my_stops.rename", bundle: .module)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    // Formatted here rather than through an interpolated key: the key carries a positional format, and
+                    // an interpolated lookup falls back to reading the key itself aloud.
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel(Text(verbatim: row.label))
+                    .accessibilityValue(Text(verbatim: place(index + 1, of: rows.count)))
+                    // VoiceOver's own custom actions, as TalkBack's on the same row.
+                    .accessibilityActions {
+                        if index > 0 {
                             Button {
-                                draft = row.label
-                                renaming = row
+                                onReorder(rows.moved(index, -1))
                             } label: {
-                                Text("nearme.my_stops.rename", bundle: .module)
-                            }
-                            Button(role: .destructive) {
-                                onDelete(row.stopId)
-                            } label: {
-                                Text("nearme.my_stops.remove", bundle: .module)
+                                Text("nearme.my_stops.move_up", bundle: .module)
                             }
                         }
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                onDelete(row.stopId)
-                            } label: {
-                                Text("nearme.my_stops.remove", bundle: .module)
-                            }
+                        if index < rows.count - 1 {
                             Button {
-                                draft = row.label
-                                renaming = row
+                                onReorder(rows.moved(index, 1))
                             } label: {
-                                Text("nearme.my_stops.rename", bundle: .module)
+                                Text("nearme.my_stops.move_down", bundle: .module)
                             }
                         }
+                        Button {
+                            draft = row.label
+                            renaming = row
+                        } label: {
+                            Text("nearme.my_stops.rename", bundle: .module)
+                        }
+                        Button(role: .destructive) {
+                            onDelete(row.stopId)
+                        } label: {
+                            Text("nearme.my_stops.remove", bundle: .module)
+                        }
+                    }
+                }
+                // FR-FAV-02: dragging by the handle reorders, as does VoiceOver's own "Move up"/"Move down" on a
+                // reorderable row, so a sighted user and a screen-reader user take the same path. The sheet stays in
+                // edit mode, so the handles are always there to grab.
+                .onMove { source, destination in
+                    onReorder(rows.moved(source, to: destination))
                 }
             }
+            .environment(\.editMode, .constant(.active))
             .navigationTitle(Text("nearme.my_stops.edit_title", bundle: .module))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -163,6 +191,14 @@ struct MyStopsEditSheet: View {
 
 /// The rows with the item at `index` moved by `offset`, never past either end, as ids for the shared repository.
 extension Array where Element == SavedStopRowUi {
+    /// The same move as `List.onMove` describes: the item at `source` goes to `destination`, which is an index in the
+    /// list as it was before the move, so a move downwards takes one off.
+    func moved(_ source: IndexSet, to destination: Int) -> [KotlinInt] {
+        guard let from = source.first else { return map { KotlinInt(int: $0.stopId) } }
+        let target = from < destination ? destination - 1 : destination
+        return moved(from, target - from)
+    }
+
     func moved(_ index: Int, _ offset: Int) -> [KotlinInt] {
         guard !isEmpty else { return [] }
         let target = Swift.min(Swift.max(index + offset, 0), count - 1)

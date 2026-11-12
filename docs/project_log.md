@@ -25,7 +25,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **LB-208 part 4 (`feat/LB-208-part4-ios-screens`), iOS:** the story's screens, with which LB-208 completes.
   - **The Save star** on a stop's detail, over `SavedStopRepository` once the saved stops are known, so it never shows the wrong state; tapping it saves under the catalogue's name and tapping it again removes the stop.
   - **"My stops"** above "Near you", driven by the shared `ObserveMyStops` and `SavedStopsUiMapper`, so its rows are the ones Android shows; an empty section reads the shared `EMPTY_HINT` and offers no Edit.
-  - **The edit sheet** moves a stop up or down, renames it (thirty characters, cut as it is typed) and removes it. Moving is a VoiceOver custom action on the row, as it is a TalkBack action on Android, and the row's place is its accessibility value.
+  - **The edit sheet** takes the row Android's has: a remove button, the stop's label over its place, a Rename button and a drag handle. Dragging the handle reorders, which is also VoiceOver's own way through a reorderable row, and Move up and Move down remain as custom actions, as they are on TalkBack; the place is the row's accessibility value and the visible line under the label.
   - **Shared:** `SavedStopsUseCases` gains `observeMyStops()` so Swift reaches the same collection Android binds, and the preview script answers it from the sample lines.
 
 **Review**

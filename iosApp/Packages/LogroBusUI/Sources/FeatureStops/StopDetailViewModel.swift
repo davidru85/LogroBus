@@ -57,17 +57,17 @@ public final class StopDetailViewModel {
         self.useCases = useCases
     }
 
-    /// LB-208 (FR-STOP-08, FR-FAV-05): whether the stop is saved, and under which alias. `nil` until the saved stops
-    /// first arrive, so the star shows nothing rather than the wrong thing.
+    /// LB-208 (FR-STOP-08, FR-FAV-05): whether the stop is saved, and under which alias. `nil` until the saved
+    /// stops first arrive, so the star shows nothing rather than the wrong thing.
     public private(set) var saved: (isSaved: Bool, alias: String?)?
 
     /// FR-FAV-05: a save the limit refused, which the screen reports once.
     public private(set) var limitReached = false
 
-    /// FR-STOP-08: saves the stop. A stop already saved keeps its alias, so this only adds; removing and renaming are the
-    /// Edit sheet's, in Near Me.
+    /// FR-STOP-08: saves the stop. A stop already saved keeps its alias, so this only adds; removing and renaming are
+    /// the Edit sheet's, in Near Me.
     public func save(alias: String? = nil) async {
-        // SKIE hands the result back with Kotlin's own class for the enum, so it bridges to Swift's case here.
+        // SKIE hands the result back with Kotlin's own class for the enum; it bridges to Swift's case here.
         guard let result = try? await useCases.savedStops().add(stopId: stopId, alias: alias),
               let addition = (result as? AppResultSuccess<__FavouriteAddition>)?.value else { return }
         limitReached = FavouriteAddition._unconditionallyBridgeFromObjectiveC(addition) == .limitReached

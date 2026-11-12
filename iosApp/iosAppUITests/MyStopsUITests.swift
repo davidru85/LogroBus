@@ -6,6 +6,8 @@ import XCTest
 /// The saved stops outlive a launch, as the favourites do, so each test clears them through the sheet first and reads a
 /// state it made rather than whatever the last run left.
 final class MyStopsUITests: XCTestCase {
+    /// FR-FAV-05: the most saved stops there can be, which bounds the clearing loop.
+    private let mostSavedStops = 20
 
     @MainActor
     func test_lb208_theStarSavesTheStop_andNearMeListsItUnderItsName() {
@@ -51,16 +53,16 @@ final class MyStopsUITests: XCTestCase {
         edit.tap()
 
         XCTAssertTrue(app.navigationBars["Edit my stops"].waitForExistence(timeout: 5))
-        let row = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Campillo")).firstMatch
+        // The row is one accessibility element: its label is the stop and its value its place, as Android's merges the
+        // same two.
+        let row = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Campillo")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         // FR-FAV-02: the row's place, which VoiceOver reads.
         XCTAssertEqual(row.value as? String, "1 of 1")
 
-        // A slow swipe only reveals the actions: a fast one is a full swipe, which the destructive button takes as a
-        // removal before anything is asserted.
-        row.swipeLeft(velocity: .slow)
+        // The row's own Remove button, as Android's has.
         let remove = app.buttons["Remove"]
-        XCTAssertTrue(remove.waitForExistence(timeout: 5), "the row offers Remove once its actions are revealed")
+        XCTAssertTrue(remove.waitForExistence(timeout: 5), "the row offers Remove")
         remove.tap()
 
         app.buttons["Done"].tap()
@@ -82,24 +84,24 @@ final class MyStopsUITests: XCTestCase {
         }
         edit.tap()
         XCTAssertTrue(app.navigationBars["Edit my stops"].waitForExistence(timeout: 5))
-        // At most FAVOURITES_PER_TYPE rows; each swipe removes the first, until none is left.
-        var remaining = app.cells.count
-        while remaining > 0 {
-            app.cells.element(boundBy: 0).swipeLeft(velocity: .slow)
-            let remove = app.buttons["Remove"]
-            // A slow swipe reveals the action, which is tapped; should a full swipe have removed the row already, there
-            // is nothing left to tap and the loop reads the count again.
-            if remove.waitForExistence(timeout: 2) {
-                remove.tap()
-            }
-            remaining -= 1
-            _ = app.cells.element(boundBy: 0).waitForExistence(timeout: 0.5)
-            remaining = app.cells.count
+        // At most FAVOURITES_PER_TYPE rows. Bounded, so a swipe that removes nothing fails rather than looping.
+        for _ in 0..<mostSavedStops {
+            let removes = app.buttons.matching(identifier: "Remove")
+            guard !removes.allElementsBoundByIndex.isEmpty else { break }
+            removes.element(boundBy: 0).tap()
+            _ = removalsSettle(app)
         }
+        XCTAssertEqual(app.buttons.matching(identifier: "Remove").count, 0, "every saved stop was removed")
         app.buttons["Done"].tap()
         // The sheet animates out; tapping a tab while it is still there lands on the sheet, not the tab bar.
         XCTAssertTrue(app.buttons["Done"].waitForNonExistence(timeout: 5), "the sheet closes")
         goToLines(app)
+    }
+
+    /// One frame, so the sheet has redrawn before the next round counts its rows.
+    @MainActor
+    private func removalsSettle(_ app: XCUIApplication) -> Bool {
+        app.buttons["Done"].waitForExistence(timeout: 1)
     }
 
     /// The Lines tab, its first row waited for, so the screen the test came from is the one it acts on.

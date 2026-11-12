@@ -14,9 +14,9 @@ public final class MyStopsViewModel {
     /// The rows, in the user's order, each under its alias or the catalogue's name.
     public private(set) var rows: [SavedStopRowUi] = []
 
-    // Kept rather than resolved here, as the stop detail's ViewModel does: SwiftUI may build a view's ViewModel on every
-    // parent update and keep only the first, so the init stays cheap — and, more than cheap, it must not reach the graph
-    // at all, because a preview or a test builds the section without a saved-stops binding.
+    // Kept rather than resolved here, as the stop detail's ViewModel does: SwiftUI may build a view's ViewModel on
+    // every parent update and keep only the first, so the init stays cheap — and, more than cheap, it must not reach
+    // the graph at all, because a preview or a test builds the section without a saved-stops binding.
     private let useCases: any UseCases
     private let injected: (any SavedStopRepository)?
 

@@ -23,9 +23,11 @@ public struct NearMeView: View {
     public var body: some View {
         List {
             // FR-HOME-02 and FR-NEAR-03: "My stops" sits above "Near you", and follows the saved stops by itself.
-            MyStopsSection(viewModel: myStops, onEdit: { editingMyStops = true }) { stopId in
-                onOpenStop(Int(stopId))
-            }
+            MyStopsSection(
+                viewModel: myStops,
+                onEdit: { editingMyStops = true },
+                onOpenStop: { stopId in onOpenStop(Int(stopId)) }
+            )
             if let section = viewModel.state.nearYou as? NearYouUiLocationOn, !section.stops.isEmpty {
                 // LB-203 (FR-HOME-03, NFR-A11Y-04): the list is the map's equivalent, so every stop is reachable and
                 // openable here without the map. The heading shows only with rows, so an empty section says nothing.

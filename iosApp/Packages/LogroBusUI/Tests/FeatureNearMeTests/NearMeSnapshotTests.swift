@@ -23,6 +23,27 @@ struct NearMeSnapshotTests {
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
+    /// LB-208: the edit sheet over one saved stop, whose place is the row's accessibility value. Captured on its own,
+    /// since a sheet is a separate presentation context that a whole-screen capture of Near Me does not reach.
+    @Test(arguments: Appearance.allCases)
+    func lb208_theEditSheet(appearance: Appearance) async throws {
+        let useCases = SharedDependencies.shared.preview()
+        let saved = useCases.savedStops()
+        _ = try? await saved.add(stopId: 38, alias: "Casa")
+        _ = try? await saved.add(stopId: 61, alias: "Trabajo")
+        let viewModel = MyStopsViewModel(useCases: useCases)
+        let observation = Task { await viewModel.observe() }
+        defer { observation.cancel() }
+        try await waitUntil { viewModel.rows.count == 2 }
+        let sheet = MyStopsEditSheet(
+            rows: viewModel.rows,
+            onReorder: { _ in },
+            onRename: { _, _ in },
+            onDelete: { _ in }
+        )
+        assertSnapshot(of: appearance.apply(to: sheet), as: appearance.strategy, named: appearance.name)
+    }
+
     /// The screen in its navigation stack, once its view model shows `NearYou`, so that the capture never races the
     /// first read. The view's own `.task` then finds the same state.
     private func screen<NearYou>(

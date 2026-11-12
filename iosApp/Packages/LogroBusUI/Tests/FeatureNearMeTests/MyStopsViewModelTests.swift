@@ -1,4 +1,5 @@
 @testable import FeatureNearMe
+import Foundation
 import Shared
 import Testing
 
@@ -88,6 +89,18 @@ struct MyStopsViewModelTests {
         #expect(rows.moved(1, 1).map(\.intValue) == [38, 61])
         #expect(rows.moved(0, 1).map(\.intValue) == [61, 38])
         #expect([SavedStopRowUi]().moved(0, 1).isEmpty)
+    }
+
+    @Test
+    func lb208_aDragReportsTheMoveListOnMoveDescribes() {
+        let rows = [savedRow(38, "Casa", 0), savedRow(61, "Trabajo", 1), savedRow(72, "Piso", 2)]
+
+        // Down: onMove's destination counts the row as it still was, so the item lands one before it.
+        #expect(rows.moved(IndexSet(integer: 0), to: 2).map(\.intValue) == [61, 38, 72])
+        // Up: the same index it is given.
+        #expect(rows.moved(IndexSet(integer: 2), to: 0).map(\.intValue) == [72, 38, 61])
+        // The end, unchanged.
+        #expect(rows.moved(IndexSet(integer: 0), to: 0).map(\.intValue) == [38, 61, 72])
     }
 
     private func savedRow(_ stopId: Int32, _ label: String, _ position: Int32) -> SavedStopRowUi {

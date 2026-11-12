@@ -109,7 +109,7 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
   - LB-208, part 4: saving a stop and editing "My stops" on iOS, which completes the story.
     - A stop's detail carries the Save star once the saved stops are known: tapping it saves the stop under the catalogue's name, and tapping it again removes it.
     - "My stops" sits above "Near you" in Near Me and follows the saved stops; an empty section says how to fill it and offers no Edit.
-    - The edit sheet moves a stop up or down, renames it (up to 30 characters) or removes it. Moving is a VoiceOver custom action on the row, so a screen reader can reorder, and the row's place is its accessibility value.
+    - The edit sheet's rows read as Android's do: a remove button, the stop's name over its place, Rename and a drag handle. Dragging the handle reorders, and a screen reader can use the same row's Move up and Move down actions.
     - Its sheet is presented by the screen rather than the section: a section inside a list is not a presentation context, so the tap did nothing.
 - **2026-11-12:**
   - LB-208, part 3: editing "My stops" on Android.
