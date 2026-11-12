@@ -29,6 +29,9 @@ class IosGraphTest {
         SharedDependencies.clearCache()
         SharedDependencies.observeLocationAccess()
         SharedDependencies.readInitialOrigin()
+        // LB-208: the saved stops and their joined section, which the stop detail and "My stops" reach first.
+        SharedDependencies.savedStops()
+        SharedDependencies.observeMyStops()
     }
 
     @Test
