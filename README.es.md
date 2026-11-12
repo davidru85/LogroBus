@@ -109,7 +109,7 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 
 - **12-11-2026:**
   - LB-208, parte 4: guardar una parada y editar "Mis paradas" en iOS, con lo que la historia queda cerrada.
-    - El detalle de una parada lleva la estrella de Guardar en cuanto se conocen las paradas guardadas: al tocarla se guarda la parada con el nombre del catálogo, y al tocarla otra vez se quita.
+    - El detalle de una parada lleva la estrella de Guardar en cuanto se conocen las paradas guardadas: al tocarla pregunta primero el alias, cortado a 30 caracteres al teclear, y guarda con él (en blanco, se queda el nombre del catálogo); al tocarla otra vez se quita.
     - "Mis paradas" va encima de "Cerca de ti" en Cerca de mí y sigue a las paradas guardadas; una sección vacía dice cómo llenarla y no ofrece Editar.
     - Las filas de la hoja de edición se leen como en Android: un botón de quitar, el nombre de la parada sobre su sitio, Renombrar y un asa de arrastre. Arrastrar el asa reordena, y un lector de pantalla puede usar las acciones Subir y Bajar de la misma fila.
     - Su hoja la presenta la pantalla y no la sección: una sección dentro de una lista no es un contexto de presentación, así que el toque no hacía nada.
