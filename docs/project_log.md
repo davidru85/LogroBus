@@ -19,6 +19,20 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-12: a commit landed on `main` locally, and the hook stopped it
+
+**Done**
+- **A process slip, recorded as the owner asked.** Starting LB-208 part 3, a `cd` typo left the shell in the wrong directory, so the `git switch -c` never ran and `docs(backlog): LB-208 part 3 begins` was committed on `main` locally.
+- **The `pre-push` hook refused the push** with its main-push bypass message, so `origin/main` was never touched. The commit was cherry-picked onto `feat/LB-208-part3-edit-sheet` and local `main` was reset to `origin/main`.
+- **Verified after the fact:** `git rev-parse main origin/main` prints the same `d464986a` for both, and the story branch carries only its own commit.
+
+**Decisions**
+- **Agent:** the branch-first rule held without intervention from the owner; the guard is the hook, not the agent's memory. Nothing about the protection needs changing.
+
+---
+
+---
+
 ## 2026-11-11: LB-413 part 1, native red bus app icons
 
 **Done**
