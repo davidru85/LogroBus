@@ -10,14 +10,22 @@ public struct NearMeView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private let onOpenStop: (Int) -> Void
+    /// FR-HOME-02: the saved stops, kept by the screen so its edit sheet reads the same rows the section shows.
+    @State private var myStops: MyStopsViewModel
+    @State private var editingMyStops = false
 
     public init(viewModel: NearMeViewModel = NearMeViewModel(), onOpenStop: @escaping (Int) -> Void = { _ in }) {
         _viewModel = State(initialValue: viewModel)
+        _myStops = State(initialValue: MyStopsViewModel(useCases: viewModel.useCases))
         self.onOpenStop = onOpenStop
     }
 
     public var body: some View {
         List {
+            // FR-HOME-02 and FR-NEAR-03: "My stops" sits above "Near you", and follows the saved stops by itself.
+            MyStopsSection(viewModel: myStops, onEdit: { editingMyStops = true }) { stopId in
+                onOpenStop(Int(stopId))
+            }
             if let section = viewModel.state.nearYou as? NearYouUiLocationOn, !section.stops.isEmpty {
                 // LB-203 (FR-HOME-03, NFR-A11Y-04): the list is the map's equivalent, so every stop is reachable and
                 // openable here without the map. The heading shows only with rows, so an empty section says nothing.
@@ -58,6 +66,16 @@ public struct NearMeView: View {
         .scrollContentBackground(.hidden)
         .background(Tokens.Colors.groupedBackground)
         .navigationTitle(Text("nearme.title", bundle: .module))
+        // FR-FAV-02: the sheet that reorders, renames and removes the saved stops. Here rather than in the section,
+        // which a list cannot present from.
+        .sheet(isPresented: $editingMyStops) {
+            MyStopsEditSheet(
+                rows: myStops.rows,
+                onReorder: { ids in Task { await myStops.reorder(ids) } },
+                onRename: { stopId, alias in Task { await myStops.rename(stopId: stopId, alias: alias) } },
+                onDelete: { stopId in Task { await myStops.delete(stopId: stopId) } }
+            )
+        }
         .onAppear { isShowing = true }
         .onDisappear { isShowing = false }
         // FR-LOC-03: location runs while Near Me shows and the app is active. Another tab, a pushed screen or the

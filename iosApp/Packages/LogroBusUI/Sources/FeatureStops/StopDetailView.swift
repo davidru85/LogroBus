@@ -21,6 +21,33 @@ public struct StopDetailView: View {
     public var body: some View {
         content
             .navigationTitle(title)
+            // LB-208 (FR-STOP-08): the Save star, once the saved stops are known, so it never shows the wrong state.
+            // Filled means saved; the label carries the alias the user gave it.
+            .toolbar {
+                if let saved = viewModel.saved {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            Task { saved.isSaved ? await viewModel.remove() : await viewModel.save() }
+                        } label: {
+                            Label {
+                                Text(verbatim: saved.alias ?? "")
+                            } icon: {
+                                Image(systemName: saved.isSaved ? "star.fill" : "star")
+                            }
+                        }
+                        .accessibilityLabel(
+                            Text(
+                                saved.isSaved ? "stop.save.saved" : "stop.save.add",
+                                bundle: .module
+                            )
+                        )
+                        .accessibilityValue(Text(verbatim: saved.alias ?? ""))
+                    }
+                }
+            }
+            .stopSaveLimitAlert(viewModel.limitReached ? FAVOURITES_PER_TYPE : nil) {
+                viewModel.clearLimit()
+            }
             // Cancelled when the screen leaves, which stops API-06's polling; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }

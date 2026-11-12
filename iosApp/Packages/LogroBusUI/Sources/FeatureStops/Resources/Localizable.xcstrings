@@ -91,6 +91,38 @@
         }
       }
     },
+    "stop.save.add": {
+      "comment": "LB-208 (FR-STOP-08): the Save star's label while the stop is not saved.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Save stop" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Guardar parada" } }
+      }
+    },
+    "stop.save.saved": {
+      "comment": "LB-208 (FR-STOP-08): the Save star's label while the stop is saved; tapping it removes the stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Saved stop" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Parada guardada" } }
+      }
+    },
+    "stop.save.limit %lld": {
+      "comment": "FR-FAV-05: the alert's title when a stop is saved with the most saved stops already; the argument is the limit.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "You already have %lld saved stops, the most you can save." } },
+        "es": { "stringUnit": { "state": "translated", "value": "Ya tienes %lld paradas guardadas, el máximo que puedes guardar." } }
+      }
+    },
+    "stop.save.limit_hint": {
+      "comment": "FR-FAV-05: the alert's message, which says what to do to save another stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Remove one in Near Me, under My stops, to save another." } },
+        "es": { "stringUnit": { "state": "translated", "value": "Quita una en Cerca de mí, en Mis paradas, para guardar otra." } }
+      }
+    },
     "stop.loading": {
       "comment": "What VoiceOver says while the stop detail's first load runs (spec §7.3, design_guidelines.md §8).",
       "extractionState": "manual",

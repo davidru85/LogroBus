@@ -108,6 +108,12 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **12-11-2026:**
+  - LB-208, parte 4: guardar una parada y editar "Mis paradas" en iOS, con lo que la historia queda cerrada.
+    - El detalle de una parada lleva la estrella de Guardar en cuanto se conocen las paradas guardadas: al tocarla se guarda la parada con el nombre del catálogo, y al tocarla otra vez se quita.
+    - "Mis paradas" va encima de "Cerca de ti" en Cerca de mí y sigue a las paradas guardadas; una sección vacía dice cómo llenarla y no ofrece Editar.
+    - La hoja de edición sube o baja una parada, la renombra (hasta 30 caracteres) o la quita. Mover es una acción personalizada de VoiceOver sobre la fila, así que un lector de pantalla puede reordenar, y el sitio de la fila es su valor de accesibilidad.
+    - Su hoja la presenta la pantalla y no la sección: una sección dentro de una lista no es un contexto de presentación, así que el toque no hacía nada.
+- **12-11-2026:**
   - LB-208, parte 3: editar "Mis paradas" en Android.
     - La sección ofrece ahora Editar mientras haya algo que editar, y su hoja sube o baja una parada, la renombra o la quita.
     - Mover es una acción de TalkBack sobre la fila, no un arrastre, como ya hace el editor de líneas favoritas, y el sitio de la fila es su estado, así que el lector de pantalla dice "2 de 2" y lo repite tras cada movimiento.

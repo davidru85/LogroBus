@@ -1,6 +1,86 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "nearme.my_stops.edit": {
+      "comment": "LB-208 (FR-FAV-02): the action that opens the sheet to reorder, rename and remove saved stops.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Edit" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Editar" } }
+      }
+    },
+    "nearme.my_stops.edit_title": {
+      "comment": "LB-208 (FR-FAV-02): the edit sheet's title.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Edit my stops" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Editar mis paradas" } }
+      }
+    },
+    "nearme.my_stops.done": {
+      "comment": "LB-208: the edit sheet's dismiss button.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Done" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Listo" } }
+      }
+    },
+    "nearme.my_stops.empty": {
+      "comment": "LB-208 (FR-HOME-02): what My stops says when nothing is saved.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Save a stop to see its next buses here" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Guarda una parada para ver sus próximos autobuses aquí" } }
+      }
+    },
+    "nearme.my_stops.move_down": {
+      "comment": "LB-208 (FR-FAV-02): the row action that moves a saved stop down.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Move down" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Bajar" } }
+      }
+    },
+    "nearme.my_stops.move_up": {
+      "comment": "LB-208 (FR-FAV-02): the row action that moves a saved stop up.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Move up" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Subir" } }
+      }
+    },
+    "nearme.my_stops.position": {
+      "comment": "LB-208: a saved stop's place, read as the row's state: its position and the count, as a format string.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$lld of %2$lld" } },
+        "es": { "stringUnit": { "state": "translated", "value": "%1$lld de %2$lld" } }
+      }
+    },
+    "nearme.my_stops.remove": {
+      "comment": "LB-208 (FR-FAV-02): the row action that removes a saved stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Remove" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Quitar" } }
+      }
+    },
+    "nearme.my_stops.rename": {
+      "comment": "LB-208 (FR-FAV-02): the row action that renames a saved stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Rename" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Renombrar" } }
+      }
+    },
+    "nearme.my_stops.title": {
+      "comment": "LB-208 (FR-HOME-02): the section's title, above Near you.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "My stops" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Mis paradas" } }
+      }
+    },
     "nearme.nearby.distance_meters %lld": {
       "comment": "LB-203 (FR-HOME-03): how far a stop is in a straight line, until API-08 gives the walking distance.",
       "extractionState": "manual",

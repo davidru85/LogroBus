@@ -19,6 +19,28 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-12: LB-208 part 4, saving and editing a stop on iOS
+
+**Done**
+- **LB-208 part 4 (`feat/LB-208-part4-ios-screens`), iOS:** the story's screens, with which LB-208 completes.
+  - **The Save star** on a stop's detail, over `SavedStopRepository` once the saved stops are known, so it never shows the wrong state; tapping it saves under the catalogue's name and tapping it again removes the stop.
+  - **"My stops"** above "Near you", driven by the shared `ObserveMyStops` and `SavedStopsUiMapper`, so its rows are the ones Android shows; an empty section reads the shared `EMPTY_HINT` and offers no Edit.
+  - **The edit sheet** moves a stop up or down, renames it (thirty characters, cut as it is typed) and removes it. Moving is a VoiceOver custom action on the row, as it is a TalkBack action on Android, and the row's place is its accessibility value.
+  - **Shared:** `SavedStopsUseCases` gains `observeMyStops()` so Swift reaches the same collection Android binds, and the preview script answers it from the sample lines.
+
+**Review**
+- **Three real defects, all found by running the code rather than by reading it:**
+  - the "My stops" ViewModel resolved the graph in its initialiser, which a preview or a test builds without a saved-stops binding, so the section aborted the process; it now resolves on first use, as the stop detail's ViewModel does;
+  - a `.sheet` attached to a `Section` inside a `List` is never presented, so Edit did nothing; the screen presents the sheet now;
+  - the UI test's own pre-clear left the app on the wrong tab when nothing was saved, which failed a line that had nothing to do with the change.
+- **One bridging fix:** SKIE hands a `suspend` result back with Kotlin's class for an enum, so the limit check casts to `AppResultSuccess<__FavouriteAddition>` and bridges to Swift's case.
+
+**Open / next**
+- **The device pass** with VoiceOver on the star, the rows, the place and the sheet is with the owner.
+- **LB-306** carries the results-cleared and request-moved parts the owner has yet to confirm.
+
+---
+
 ## 2026-11-12: LB-208 part 3, editing "My stops"
 
 **Done**

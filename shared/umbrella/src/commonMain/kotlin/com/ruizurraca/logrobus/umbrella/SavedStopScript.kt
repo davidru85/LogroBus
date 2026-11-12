@@ -7,6 +7,8 @@ import com.ruizurraca.logrobus.favourites.domain.FavouriteAddition
 import com.ruizurraca.logrobus.favourites.domain.SavedStop
 import com.ruizurraca.logrobus.favourites.domain.SavedStopAlias
 import com.ruizurraca.logrobus.favourites.domain.SavedStopRepository
+import com.ruizurraca.logrobus.feature.nearme.domain.MyStops
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -27,6 +29,25 @@ internal class SavedStopScript :
     var failing = false
 
     override fun savedStops(): SavedStopRepository = this
+
+    /**
+     * LB-208: the scripted section. The names come from the sample lines' own stops, so a preview's row reads the stop
+     * it would show; a stop the samples no longer hold keeps its alias alone.
+     */
+    override fun observeMyStops(): ObserveMyStops =
+        ObserveMyStops {
+            stops.map { saved ->
+                AppResult.Success(
+                    MyStops(
+                        stops = saved,
+                        names =
+                            SampleLines.all
+                                .flatMap { line -> line.patterns.values.flatMap { pattern -> pattern.stops } }
+                                .associate { stop -> stop.stopId to stop.name },
+                    ),
+                )
+            }
+        }
 
     override fun observeSavedStops(): Flow<AppResult<List<SavedStop>>> = stops.map { AppResult.Success(it) }
 

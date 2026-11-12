@@ -16,7 +16,9 @@ public final class NearMeViewModel {
     public private(set) var checks = 0
     // Kept rather than resolved here: SwiftUI may build a view's ViewModel on every parent update and keep only the
     // first, so the init stays cheap. The authorization's location manager is made on first use for the same reason.
-    private let useCases: any UseCases
+    // The screen's graph, which its "My stops" section reads too, so both work over the same use cases and a preview or
+    // a test replaces them once.
+    let useCases: any UseCases
     @ObservationIgnored private let makeAuthorization: @MainActor () -> any LocationAuthorizing
     @ObservationIgnored private var madeAuthorization: (any LocationAuthorizing)?
 
