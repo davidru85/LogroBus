@@ -164,6 +164,14 @@ Because `main` is protected, path-filtered workflows need a small always-running
     `logrobus.db` the graph binds and outlives the test, so it raced the next test's schema creation. The tests now
     start the same modules through `initGraphForTest`, the app's graph without the refresh; `initKoin` keeps the
     refresh for the app. Three consecutive local runs of the target are green, and this is the first occurrence.
+  - **The accessibility audit reporting Dynamic Type on Directions** (PR #66's run 3, 2026-11-12):
+    `iOS build and tests` failed on `AccessibilityAuditUITests.test_lb406_everyScreenPassesTheAccessibilityAudit`, which
+    reported "Directions: Dynamic Type font sizes are partially unsupported" for "Leave now", "Where from?" and "Where
+    to?". This branch changes neither the planner nor the audit, and the same job passed on the same branch at
+    `08575c7b`; the four commits after it touch only LB-208's Android screens, the READMEs and one test's wait. It is the
+    audit's own variance, the same kind this file already records for Settings' picker values and Near Me's rows, so the
+    failed job is rerun once. **A recurring finding on a screen this story does not own belongs to that screen's story,
+    not to an exemption here** (owner decision, 2026-11-11: an exemption is the owner's to grant).
   - **A scroll to the top asserted before it settled** (PR #66, 2026-11-12; and PR #36's run 2, 2026-11-02):
     `Android unit tests (:android:app)` failed on `TabNavigationTest.lb101_reselectingLinesAtItsRootScrollsTheListToItsTop`
     at its last check: after re-selecting Lines, "Line 1" was not yet displayed. The list scrolls to its top with an

@@ -69,6 +69,32 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **Agent:** the saved stops live under `FavouriteTypes.STOP` in the existing `favourite` table, which already carries `label` and `position`; no schema migration is needed.
 - **Agent:** the alias is cut by code points, so a name in a script whose glyphs need two UTF-16 units is never cut mid-character.
 
+## 2026-11-12: LB-208 part 2, saving a stop and "My stops"
+
+**Done**
+- **PR #65 (LB-208 part 1) merged** on 2026-11-11; `main` synced.
+- **LB-208 part 2 (`feat/LB-208-part2-save-and-edit`), Android:** a stop's detail carries the design system's star, labelled with its alias once saved and offering to remove it; an unsaved stop's tap opens the alias field, which stops at thirty characters as it is typed. `SavedStopViewModel` owns that state and the writes. "My stops" sits above "Near you", in the user's order, each row under its alias and read as one utterance; an empty section says how to save one, and Near Me joins the two collections so a save shows at once.
+
+**Review**
+- **Detekt and ktlint caught four real defects, each fixed:** `PreviewUseCases` and `StopDetailScreen` passed their function and parameter limits as the story grew, a duplicated `@Composable` annotation from an earlier edit survived, and imports were unordered.
+- **The section rendered over an empty list** until the ViewModel joined the collections; a test now covers the empty state.
+
+**CI (PR #66)**
+- **Run 1:** `Android screenshots (:android:feature:nearme)` failed because the section is new. I compared CI's artefact with the reference first, saw that the only difference was "Mis paradas" and its hint, and re-recorded the six references.
+- **The same run's iOS targets failed to build** with `missing argument for parameter 'myStops'`: adding the field to the shared `NearMeUiState` broke Swift's call to its initialiser. The iOS ViewModel now passes an empty section, which is what it shows until the section lands there.
+- **Run 3:** `Android unit tests (:android:app)` failed on `TabNavigationTest.lb101_reselectingLinesAtItsRootScrollsTheListToItsTop`, at its last check. The list animates its scroll to the top and the assertion read the frame the animation starts on; PR #36's run 2 had recorded the same and left the instruction to wait if it recurred, so it now waits. `Kotlin gate` fell with it because it aggregates the Kotlin jobs.
+- **The rerun's audit failure** was the accessibility audit reporting Dynamic Type on Directions, a screen this story does not touch, on a branch where the same job had passed four commits earlier; the failed job is rerun once and the finding is recorded in `docs/ci_cd.md` §5 for the planner's story rather than exempted here.
+
+**Decisions**
+- **Agent:** the save action reuses `FavouriteToggle` rather than a new control, so a stop reads the way a favourite line does and no icon or colour enters the app.
+- **Agent:** a blanket `git add -A` swept a stray 1.2 MB icon dump into the branch; it is removed and `generated_images/` is ignored, since the icon script writes only versioned resources.
+
+**Open / next**
+- **The edit sheet** (reorder, rename, delete) and both of this part's screens on iOS are the rest of LB-208.
+- **The device pass** with TalkBack and VoiceOver on the rows and the alias dialog is with the owner.
+
+---
+
 **CI (PR #65)**
 - **Run 1:** `Android screenshots (:android:app)` failed on `lb012_shellScreen_screenshot[shell_dark]`. The artefact CI uploaded showed the Lines screen's loading placeholder, every row a grey block, rather than a colour difference: the shell capture took `AppShell()` straight after composition, while the catalogue read that fills the list runs on the I/O threads, and this branch's two extra graph bindings were enough to lose that race. The capture now waits for the list's scroll action first, the reference is unchanged, and three consecutive local runs are green. `docs/ci_cd.md` §5 records it.
 
