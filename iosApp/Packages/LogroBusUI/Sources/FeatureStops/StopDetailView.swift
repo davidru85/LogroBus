@@ -12,6 +12,14 @@ public struct StopDetailView: View {
     @State private var draft = ""
     @State private var askingAlias = false
 
+    /// The alias field's label: the key, with the share of characters it takes as its argument.
+    private var aliasPrompt: String {
+        String(
+            format: String(localized: "stop.save.alias", bundle: .module),
+            Int(SavedStopAlias.shared.MAX_LENGTH)
+        )
+    }
+
     public init(viewModel: StopDetailViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
@@ -62,7 +70,9 @@ public struct StopDetailView: View {
             // user's back, and a blank field saves the stop under its own name.
             .alert(Text("stop.save.title", bundle: .module), isPresented: $askingAlias) {
                 TextField(text: $draft) {
-                    Text("stop.save.alias \(Int(SavedStopAlias.shared.MAX_LENGTH))", bundle: .module)
+                    // The key carries the limit as a positional format, looked up verbatim: an interpolated key is a
+                    // different key, and the localisation test reads this one.
+                    Text(aliasPrompt)
                 }
                 Button {
                     let alias = draft.isEmpty ? nil : String(draft.prefix(Int(SavedStopAlias.shared.MAX_LENGTH)))
