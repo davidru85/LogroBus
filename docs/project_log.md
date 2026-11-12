@@ -40,7 +40,8 @@ A dated record of what was done and decided, newest first. Add an entry at the e
   - the edit sheet truncated its title at 200 % text; the title is inline and the row wraps under an accessibility size, as the favourite lines' editor does;
   - the row's `.contain` read the stop and its place twice; they are one `.combine`d element now, as Android's merged row is;
   - the audit never reached these screens; `MyStopsAudit` walks them.
-- **The audit also caught a real 19 pt hit area** on the sheet's remove button, now 44 pt.
+- **The third reviewer found the story's own gap:** iOS's star saved without asking for the alias, so FR-STOP-08's "and set an alias" held on Android alone. It asks now, through an alert with a thirty-character field, as Android's `SaveAction` does.
+- **The audit also caught a real 19 pt hit area** on the sheet's remove button, now 44 pt, and the same review found the header's Edit and the sheet's Rename under it too; all three take it.
 - **Left for the owner:** visiting the stop detail in the audit surfaces LB-205's own Dynamic Type failures on its arrival rows, which predate this story; the audit reads only this story's states until that screen is fixed.
 
 **Open / next**
