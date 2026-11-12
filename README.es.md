@@ -92,6 +92,8 @@ La documentación técnica está en inglés.
 
 ## Estado del proyecto
 
+Ambas apps ya tienen iconos propios de autobús en rojo, adaptados a su plataforma (LB-413, parte 1).
+
 | Hito | Alcance | Estado |
 | --- | --- | --- |
 | M0 Cimientos | Esqueleto del proyecto, capa de datos, integración continua | En curso |
@@ -104,6 +106,8 @@ La documentación técnica está en inglés.
 Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), así que las historias que esperaban a ellos ya no están bloqueadas: los tests de contrato de LB-005 parte 2, y LB-006 parte 2, LB-008 parte 2 y LB-101 parte 2.
 
 ### Cambios recientes
+
+- **Iconos de las apps (LB-413, parte 1):** un autobús blanco propio sobre el rojo municipal; vectores adaptativos e iconos temáticos en Android, y variantes clara, oscura y tintada en iOS. Los recursos se regeneran con `swift scripts/generate-app-icons.swift` en macOS.
 
 - **11-11-2026:**
   - LB-208, parte 1: las paradas que guardas, con su alias.

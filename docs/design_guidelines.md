@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft |
-| Last updated | 2026-11-05 |
+| Last updated | 2026-11-11 |
 | Based on | Spec §7; `requirements.md` (FR-NAV, FR-LINE-12 to 16, FR-NEAR, FR-PLAN-11 to 14); ADR-0002, ADR-0003, ADR-0005 |
 
 **Figma designs for the MVP will be delivered near the end of the MVP (LB-413).** Until then, this document's wireframes and the neutral placeholder theme are the reference. When the Figma file arrives, it becomes the visual source of truth and is linked here.
@@ -526,3 +526,12 @@ Automated since LB-406 (`testing_strategy.md` §4.7): on Android, `assertAccessi
 | `error.data` | No se han podido leer los datos. | The data couldn’t be read. |
 | `error.retry` | Reintentar | Retry |
 | `offline.banner` (v1.0) | Sin conexión. Mostrando datos guardados. | You are offline. Showing saved data. |
+
+
+## 8. App icons (LB-413 part 1)
+
+The owner requested the icons ahead of the Figma delivery on 2026-11-11. The original, front-facing white bus uses the municipal red **#C21632** (Pantone 200 C), from page 18 of the [municipal identity manual](https://logrono.es/imagen-corporativa). The supplied municipal app icon is a colour and simplicity reference; the bus does not reproduce its coat of arms or imply official endorsement. The screen theme still waits for Figma and OQ-18.
+
+- **Android:** flat vector foreground and full-bleed colour background, on 108 dp layers. The bus stays inside the centred 66 dp diameter safe circle. API 26 provides the adaptive icon and API 33 adds the same transparent glyph as its monochrome layer. Both manifest icon attributes resolve to that adaptive resource; minSdk 26 needs no legacy bitmap fallback. Do not bake in launcher masks or shadows.
+- **iOS:** a larger optical size (1.25 times the Android layer glyph) on a full-bleed 1024 px sRGB image. The default is opaque white on red; dark uses a bright red bus on transparency for the system background; tinted is grayscale. The system supplies rounded corners. XcodeGen selects `AppIcon` explicitly. These are asset-catalog icons supported on iOS 18+, not an Icon Composer layered glass asset.
+- **Source:** `scripts/generate-app-icons.swift` owns the geometry and exports `assets/branding/bus.svg`, Android XML and iOS PNGs with macOS frameworks only. Run it from the repository root; `--check` compares every export without writing. No image library or runtime dependency is added.
