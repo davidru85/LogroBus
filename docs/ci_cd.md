@@ -172,7 +172,12 @@ Because `main` is protected, path-filtered workflows need a small always-running
     audit's own variance, the same kind this file already records for Settings' picker values and Near Me's rows, so the
     failed job is rerun once. **A recurring finding on a screen this story does not own belongs to that screen's story,
     not to an exemption here** (owner decision, 2026-11-11: an exemption is the owner's to grant).
-  - **Dependencies not found on a cold runner** (PR #68's run 1, 2026-11-12): `Shared unit tests (:shared:core:telemetry)`
+  - **A sheet captured with its navigation bar differs run to run** (PR #69, 2026-11-12): `iOS ViewModel and snapshot tests (FeatureNearMeTests)`
+   failed on `lb208_theEditSheet` although the failure artifact and the reference looked identical. Rendered off screen, iOS 26's
+   bar draws its title and Done in fixed colours whatever the appearance — the title came out white on a light sheet — and
+   the bar's rendering is not stable enough to compare. The favourite lines' sheet avoids it by capturing its list without the
+   bar; the "My stops" sheet does the same now, and its UI tests check the title and Done.
+ - **Dependencies not found on a cold runner** (PR #68's run 1, 2026-11-12): `Shared unit tests (:shared:core:telemetry)`
     failed three times in a row at about 20 s with `Could not find org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0` and
     the same for `kotlinx-datetime` and `kotlin-stdlib`, all while configuring `:shared:core:common`. The branch changes no
     build file and no dependency; a fresh runner resolves the whole graph from empty caches at once, which is the pattern

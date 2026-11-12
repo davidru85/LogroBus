@@ -23,8 +23,10 @@ struct NearMeSnapshotTests {
         assertSnapshot(of: appearance.apply(to: screen), as: appearance.strategy, named: appearance.name)
     }
 
-    /// LB-208: the edit sheet over one saved stop, whose place is the row's accessibility value. Captured on its own,
-    /// since a sheet is a separate presentation context that a whole-screen capture of Near Me does not reach.
+    /// LB-208: the edit sheet over two saved stops, each with its remove button, its label over its place, Rename and
+    /// the drag handle. The list without its navigation bar: rendered off screen, iOS 26's bar draws its title and Done
+    /// in fixed colours whatever the appearance, which left the title white on a light sheet and made the capture
+    /// differ from run to run. The UI tests check the title and Done.
     @Test(arguments: Appearance.allCases)
     func lb208_theEditSheet(appearance: Appearance) async throws {
         let useCases = SharedDependencies.shared.preview()
@@ -35,13 +37,13 @@ struct NearMeSnapshotTests {
         let observation = Task { await viewModel.observe() }
         defer { observation.cancel() }
         try await waitUntil { viewModel.rows.count == 2 }
-        let sheet = MyStopsEditSheet(
+        let list = MyStopsEditList(
             rows: viewModel.rows,
             onReorder: { _ in },
             onRename: { _, _ in },
             onDelete: { _ in }
         )
-        assertSnapshot(of: appearance.apply(to: sheet), as: appearance.strategy, named: appearance.name)
+        assertSnapshot(of: appearance.apply(to: list), as: appearance.strategy, named: appearance.name)
     }
 
     /// The screen in its navigation stack, once its view model shows `NearYou`, so that the capture never races the

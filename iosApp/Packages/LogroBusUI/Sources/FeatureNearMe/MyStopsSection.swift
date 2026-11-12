@@ -86,6 +86,47 @@ struct MyStopsEditSheet: View {
 
     var body: some View {
         NavigationStack {
+            MyStopsEditList(
+                rows: rows,
+                onReorder: onReorder,
+                onRename: onRename,
+                onDelete: onDelete
+            )
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(Text("nearme.my_stops.edit_title", bundle: .module))
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("nearme.my_stops.done", bundle: .module)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// LB-208 (FR-FAV-02): the edit sheet's list. It is captured on its own, without the navigation bar: rendered off
+/// screen, iOS 26's bar draws its title and Done in fixed colours whatever the appearance, as the favourite lines'
+/// list is captured for the same reason.
+struct MyStopsEditList: View {
+    let rows: [SavedStopRowUi]
+    let onReorder: ([KotlinInt]) -> Void
+    let onRename: (Int32, String?) -> Void
+    let onDelete: (Int32) -> Void
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var renaming: SavedStopRowUi?
+    @State private var draft = ""
+
+    /// "1 of 2", for a row's accessibility value.
+    private func place(_ position: Int, of count: Int) -> String {
+        let format = String(localized: "nearme.my_stops.position", bundle: .module)
+        return String(format: format, position, count)
+    }
+
+    var body: some View {
+        Group {
             List {
                 ForEach(rows, id: \.stopId) { row in
                     let index = rows.firstIndex { $0.stopId == row.stopId } ?? 0
@@ -165,18 +206,6 @@ struct MyStopsEditSheet: View {
                 }
             }
             .environment(\.editMode, .constant(.active))
-            // The title stays a line at 200 % text rather than being cut, as the favourite lines' editor does.
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle(Text("nearme.my_stops.edit_title", bundle: .module))
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("nearme.my_stops.done", bundle: .module)
-                    }
-                }
-            }
             .alert(
                 Text("nearme.my_stops.rename", bundle: .module),
                 isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })
