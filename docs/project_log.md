@@ -44,7 +44,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - The first attempt could not reach GitHub from the local shell and the connected GitHub integration rejected the branch creation, so the commit stayed local. Write access through the `gh` CLI was available later in the session: the branch is pushed and pull request #67 is open. The existing LB-208 pull request and checkout are left to their current agent.
 
 **Open / next**
-- Pull request #67 (`feat/LB-413-platform-app-icons` against `main`) is open and watched until it is merged or closed.
+- Pull request #67 (`feat/LB-413-platform-app-icons` against `main`) is open. The owner waived the CI watch for this pull request on 2026-11-12, so no agent watches it; the owner merges it.
 - LB-413 part 2 still waits for Figma and OQ-18.
 
 ---
