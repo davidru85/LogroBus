@@ -43,6 +43,7 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The third reviewer found the story's own gap:** iOS's star saved without asking for the alias, so FR-STOP-08's "and set an alias" held on Android alone. It asks now, through an alert with a thirty-character field, as Android's `SaveAction` does.
 - **The audit also caught a real 19 pt hit area** on the sheet's remove button, now 44 pt, and the same review found the header's Edit and the sheet's Rename under it too; all three take it.
 - **Left for the owner:** visiting the stop detail in the audit surfaces LB-205's own Dynamic Type failures on its arrival rows, which predate this story; the audit reads only this story's states until that screen is fixed.
+- **The app's CI job ran out of margin, and its tests had passed:** `iOS build and tests` reported `cancelled` at 35:05 against its 35-minute limit, and the log shows `OK: iOS tests (iosAppTests iosAppUITests) passed` at 20:42:56 with the job killed 23 s later in its post-job cleanup. On `main` the same job takes 30:00, 30:43 and 32:05, so the story's longer audit walk spent the margin. The walk now reads the star from line 3's detail, which it already opens, and "My stops" and its sheet from Near Me, where it already ends: the same coverage over a shorter route. Recorded in `docs/ci_cd.md` §5, since a job cancelled in its cleanup reads as a test failure.
 
 **Open / next**
 - **The device pass** with VoiceOver on the star, the rows, the place and the sheet is with the owner.

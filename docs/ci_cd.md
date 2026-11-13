@@ -172,7 +172,13 @@ Because `main` is protected, path-filtered workflows need a small always-running
     audit's own variance, the same kind this file already records for Settings' picker values and Near Me's rows, so the
     failed job is rerun once. **A recurring finding on a screen this story does not own belongs to that screen's story,
     not to an exemption here** (owner decision, 2026-11-11: an exemption is the owner's to grant).
-  - **A sheet captured with its navigation bar differs run to run** (PR #69, 2026-11-12): `iOS ViewModel and snapshot tests (FeatureNearMeTests)`
+  - **A job that passes its tests and is cancelled in its cleanup** (PR #69, 2026-11-12/13): `iOS build and tests` was
+   `cancelled` at 35:05 against its 35-minute `timeout-minutes`, and the log shows why it looked like a test failure and was
+   not: `OK: iOS tests (iosAppTests iosAppUITests) passed` at 20:42:56, and the job killed 23 s later while its post-job
+   cleanup ran. GitHub reports a job that hits its limit as `cancelled`, so read the log's last `OK:` line before treating a
+   cancellation as a failure. The margin was small to begin with — 30:00, 30:43 and 32:05 on `main` for the same job — so a
+   longer accessibility walk spends it; LB-208's walk now takes its two steps along the route the audit already walks.
+ - **A sheet captured with its navigation bar differs run to run** (PR #69, 2026-11-12): `iOS ViewModel and snapshot tests (FeatureNearMeTests)`
    failed on `lb208_theEditSheet` although the failure artifact and the reference looked identical. Rendered off screen, iOS 26's
    bar draws its title and Done in fixed colours whatever the appearance — the title came out white on a light sheet — and
    the bar's rendering is not stable enough to compare. The favourite lines' sheet avoids it by capturing its list without the
