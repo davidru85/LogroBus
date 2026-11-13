@@ -19,6 +19,26 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-13: LB-206, empty arrivals and the night-service sentence
+
+**Done**
+- **LB-206 (`feat/LB-206-empty-arrivals-night-service`):** a stop with no calls now says "No buses in the next 60 minutes", and a stop only Búho lines serve adds the night-service sentence.
+  - **The rule lives once:** `LineKind.of(code)` (spec §5.1: a code starting with "B") — the catalogue's parser, the stop detail and the preview data had each been testing the letter themselves.
+  - **The sentence is config's:** `NightServiceText` reads `night_service_text` from remote config in the language the app runs in and falls back to the compiled default (NFR-REL-05, OQ-08). Shared code never spells the sentence out; `LocalizedText` is not exported to Swift, so the use case answers a plain string per language.
+  - **Both platforms** render it, from the shared mapper's `StopDetailEmptyUi`.
+  - **Docs:** both READMEs, the backlog, the criteria's evidence and this entry.
+
+**Review**
+- **A defect I caused and the sibling test caught:** reading config in `StopDetailViewModel.init` resolved `SharedDependencies` in a graph a UI test never starts, so the stop detail aborted and `StopDetailUITests`' LB-205 test failed. The read is now lazy, done only when the empty message needs it; that test passes again.
+- **A binding in the wrong module:** `NightServiceText` was bound in `transitDataModule`, which a preview graph replaces, so every Android screen test failed with `NoDefinitionFoundException`. It lives with the always-present bindings now.
+- **detekt's function limit** pushed the night text into its own group (`NightServiceUseCases`) with a script class, as the saved stops already are.
+
+**Open / next**
+- **The empty list has no end-to-end UI test:** the scripted graph gives every sample stop calls. The message is covered by the shared mapper and Android's screen test; a scripted empty stop is a preview-API change of its own.
+- **The device pass** with TalkBack and VoiceOver is with the owner.
+
+---
+
 ## 2026-11-12: LB-208 part 4, saving and editing a stop on iOS
 
 **Done**

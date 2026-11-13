@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -37,6 +38,7 @@ import com.ruizurraca.logrobus.android.core.designsystem.etaSpoken
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.core.presentation.EtaUi
 import com.ruizurraca.logrobus.feature.stops.presentation.ServedArrivalUi
+import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailEmptyUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailUiState
 import com.ruizurraca.logrobus.feature.stops.presentation.StopUpdatedUi
 import com.ruizurraca.logrobus.transit.domain.ServedLine
@@ -60,7 +62,16 @@ fun StopDetailRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val save by savedViewModel.state.collectAsStateWithLifecycle()
-    StopDetailScreen(state, viewModel::retry, onBack, modifier, save, savedViewModel::save)
+    val locale = LocalConfiguration.current.locales[0]
+    StopDetailScreen(
+        state,
+        viewModel::retry,
+        onBack,
+        modifier,
+        save,
+        savedViewModel::save,
+        viewModel.nightSentence(locale.language),
+    )
 }
 
 /**
@@ -80,6 +91,8 @@ fun StopDetailScreen(
     modifier: Modifier = Modifier,
     save: SavedStopUi? = null,
     onSave: (alias: String?) -> Unit = {},
+    /** LB-206 (FR-STOP-06): the night-service sentence, already worded for the screen's locale. */
+    nightSentence: String = "",
 ) {
     val stop = (state as? StopDetailUiState.Content)?.stop
     Scaffold(
@@ -101,7 +114,7 @@ fun StopDetailScreen(
             }
 
             is StopDetailUiState.Content -> {
-                StopDetailBody(state, padding, onRetry)
+                StopDetailBody(state, padding, onRetry, nightSentence)
             }
 
             is StopDetailUiState.Error -> {
@@ -135,6 +148,7 @@ private fun StopDetailBody(
     state: StopDetailUiState.Content,
     contentPadding: PaddingValues,
     onRetry: () -> Unit,
+    nightSentence: String,
 ) {
     LazyColumn(
         modifier = Modifier.consumeWindowInsets(contentPadding),
@@ -143,6 +157,11 @@ private fun StopDetailBody(
         item { StopHeader(state.stop) }
         state.updated?.let { updated ->
             item { UpdatedLine(updated, onRetry) }
+        }
+        if (state.arrivals.isEmpty()) {
+            state.empty?.let { empty ->
+                item { EmptyArrivals(empty, nightSentence) }
+            }
         }
         items(state.arrivals) { arrival -> ArrivalRow(arrival) }
     }
@@ -256,5 +275,35 @@ private fun ArrivalRow(arrival: ServedArrivalUi) {
             }
         },
         modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+    )
+}
+
+/**
+ * LB-206 (FR-STOP-06): what an empty arrival list says. A Búho-only stop adds the night-service sentence, which came
+ * from remote config or its compiled default (OQ-08, NFR-REL-05); no other stop does. One utterance, so TalkBack reads
+ * the whole message without a pause between its two parts.
+ */
+@Composable
+private fun EmptyArrivals(
+    empty: StopDetailEmptyUi,
+    nightSentence: String,
+) {
+    val message =
+        when (empty) {
+            StopDetailEmptyUi.NO_BUSES -> {
+                stringResource(R.string.stop_detail_no_buses)
+            }
+
+            StopDetailEmptyUi.NO_BUSES_THEN_NIGHT -> {
+                stringResource(R.string.stop_detail_no_buses_night, nightSentence)
+            }
+        }
+    Text(
+        text = message,
+        modifier =
+            Modifier
+                .padding(horizontal = Tokens.Spacing.l, vertical = Tokens.Spacing.m)
+                .fillMaxWidth(),
+        style = MaterialTheme.typography.bodyLarge,
     )
 }

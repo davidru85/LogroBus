@@ -106,6 +106,7 @@ class StopDetailViewModelTest {
                     },
                     preferences = preferences(MutableStateFlow(UserPreferences())),
                     clock = AppClock { now },
+                    nightServiceText = { language -> if (language == "es") "Noche en español" else "Night in English" },
                 )
 
             viewModel.state.test {
@@ -136,6 +137,7 @@ class StopDetailViewModelTest {
                     },
                     preferences = preferences(saved),
                     clock = AppClock { now },
+                    nightServiceText = { language -> if (language == "es") "Noche en español" else "Night in English" },
                 )
 
             viewModel.state.test {
@@ -168,6 +170,7 @@ class StopDetailViewModelTest {
                     observeArrivals = ObserveStopArrivals { _, _ -> answers.removeFirst() },
                     preferences = preferences(MutableStateFlow(UserPreferences())),
                     clock = AppClock { now },
+                    nightServiceText = { language -> if (language == "es") "Noche en español" else "Night in English" },
                 )
 
             viewModel.state.test {

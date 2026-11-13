@@ -10,6 +10,19 @@ import Testing
 @MainActor
 struct StopDetailViewModelTests {
     @Test
+    func lb206_theNightSentenceComesFromTheConfig_inEitherLanguage() {
+        // FR-STOP-06 (OQ-08): the sentence is config's, and the view asks for the language the app runs in.
+        let viewModel = StopDetailViewModel(stopId: 38, useCases: SharedDependencies.shared.preview())
+
+        let spanish = viewModel.nightSentence(language: "es")
+        let english = viewModel.nightSentence(language: "en")
+        #expect(!spanish.isEmpty)
+        #expect(!english.isEmpty)
+        #expect(spanish != english, "each shipped language words the sentence itself")
+        #expect(spanish.contains("nocturno"))
+    }
+
+    @Test
     func lb205_theDetailShowsTheStopsLinesAndArrivals_andRetryCollectsAgain() async throws {
         let useCases = SharedDependencies.shared.preview()
         let viewModel = StopDetailViewModel(stopId: 38, useCases: useCases)

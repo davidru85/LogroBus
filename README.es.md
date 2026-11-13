@@ -108,6 +108,7 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 ### Cambios recientes
 
 - **13-11-2026:**
+  - LB-206: una parada sin avisos dice "No hay autobuses en los próximos 60 minutos", y una parada a la que solo llegan líneas nocturnas (Búho) añade la frase del servicio nocturno, que viene de la configuración remota en el idioma de la app y, si no hay, de la frase compilada en la aplicación.
   - CI: un job que GitHub marca como `abandoned` perdió su runner y no es un fallo de la rama. No tiene log, y así se distingue del que agota su límite de tiempo; se relanza.
   - Los dos jobs de iOS tienen ahora 45 minutos: las pruebas de la app tardan unos 35 en los runners más lentos, contra un límite de 35.
 - **12-11-2026:**

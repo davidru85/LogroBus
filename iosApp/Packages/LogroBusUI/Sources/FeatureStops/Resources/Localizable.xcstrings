@@ -173,6 +173,22 @@
         }
       }
     },
+    "stop.no_buses": {
+      "comment": "LB-206 (FR-STOP-06): what an empty arrival list says. The night sentence itself comes from remote config, so it is not a key here.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No buses in the next 60 minutes" } },
+        "es": { "stringUnit": { "state": "translated", "value": "No hay autobuses en los próximos 60 minutos" } }
+      }
+    },
+    "stop.no_buses_night %@": {
+      "comment": "LB-206 (FR-STOP-06): the same message for a stop only night lines serve, followed by the sentence remote config supplies.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No buses in the next 60 minutes. %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "No hay autobuses en los próximos 60 minutos. %@" } }
+      }
+    },
     "stop.no_lines": {
       "comment": "LB-205: a stop that no line reaches says so rather than hiding the section (FR-STOP-03).",
       "extractionState": "manual",

@@ -22,6 +22,14 @@ public enum StopDetailEvent {
 @Observable
 public final class StopDetailViewModel {
     public private(set) var state: any StopDetailUiState = StopDetailUiStateLoading.shared
+
+    /// LB-206 (FR-STOP-06): the night-service sentence for a language, from remote config. Resolved on first use rather
+    /// than in the initialiser, as the saved-stops read is (LB-208): SwiftUI may build a ViewModel on every parent
+    /// update, and a graph read in the initialiser aborts a preview or a test that starts another graph.
+    public func nightSentence(language: String) -> String {
+        useCases.nightServiceText().forLanguage(language: language)
+    }
+
     /// Bumped by Retry. The view keys its `.task` on it, so a new value starts a new `observe()`.
     public private(set) var attempt = 0
     private let stopId: Int32

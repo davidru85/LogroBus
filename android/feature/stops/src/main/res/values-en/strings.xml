@@ -27,4 +27,8 @@
     <string name="stop_detail_save_alias">Name (optional, %1$d characters)</string>
     <string name="stop_detail_save_confirm">Save</string>
     <string name="stop_detail_save_cancel">Cancel</string>
+    <!-- LB-206 (FR-STOP-06): what an empty arrival list says. The night sentence itself comes from remote config
+         (OQ-08), so it is not a string here. -->
+    <string name="stop_detail_no_buses">No buses in the next 60 minutes</string>
+    <string name="stop_detail_no_buses_night">No buses in the next 60 minutes. %1$s</string>
 </resources>
