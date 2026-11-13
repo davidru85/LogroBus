@@ -159,6 +159,11 @@ Because `main` is protected, path-filtered workflows need a small always-running
     query before capturing; the reference and the assertion are untouched. It recurred once on PR #69 (2026-11-13) with
     the same single-control difference, so 100 ms is not always enough on a loaded runner: the wait is LB-102's to
     lengthen or to replace with a wait for the button itself.
+  - **A job reported `abandoned`** (`main` at `d1e78726`, 2026-11-13): `iOS build and tests` ran 22 minutes and ended
+    `cancelled`, and the gate then failed with `An iOS job ended with 'abandoned'` — GitHub's word for a runner that went
+    away mid-job, not a test failure and not the 45-minute limit. Its own log was never written (`log not found`), which is
+    how the two are told apart: a job that hits its limit still has a log, and one whose runner disappeared does not. Rerun
+    it; nothing in the branch is at fault.
   - **A database locked under `IosGraphTest`** (PR #64, 2026-11-11): `Shared iOS tests` failed on
     `IosGraphTest.lb010_theAppShellSetsTheVersion` with `SQLiteExceptionErrorCode: Sqlite operation failure database is
     locked`, and the run then reported "Test running process exited unexpectedly". The test started the graph through

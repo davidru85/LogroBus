@@ -105,6 +105,9 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 ### Recent changes
 
+- **2026-11-13:**
+  - CI: a job GitHub reports as `abandoned` lost its runner, and is not a failure of the branch. It has no log at all, which is how it is told apart from one that hits its time limit; rerun it.
+  - Both iOS jobs now get 45 minutes: the app's tests take about 35 on the slowest runners, against a 35-minute limit.
 - **2026-11-12:**
   - LB-208, part 4: saving a stop and editing "My stops" on iOS, which completes the story.
     - A stop's detail carries the Save star once the saved stops are known: tapping it asks for the alias first, cut at 30 characters as it is typed, and saves the stop under it (a blank field keeps the catalogue's name); tapping it again removes the stop.
