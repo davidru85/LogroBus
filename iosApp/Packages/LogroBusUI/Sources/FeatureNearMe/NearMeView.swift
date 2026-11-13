@@ -58,11 +58,6 @@ public struct NearMeView: View {
                         }
                         .contentShape(Rectangle())
                     }
-                    // One element with a text label, as the nearby rows are: the button's own label is not a text run
-                    // the audit can measure, so it read the row's font as not scaling (NFR-A11Y-01).
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text("nearme.nearby.turn_on_location", bundle: .module))
-                    .accessibilityAddTraits(.isButton)
                 } header: {
                     Text("nearme.nearby.title", bundle: .module)
                         .foregroundStyle(Tokens.Colors.secondaryText)
