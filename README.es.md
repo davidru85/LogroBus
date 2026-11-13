@@ -107,6 +107,9 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 
 ### Cambios recientes
 
+- **13-11-2026:**
+  - CI: un job que GitHub marca como `abandoned` perdió su runner y no es un fallo de la rama. No tiene log, y así se distingue del que agota su límite de tiempo; se relanza.
+  - Los dos jobs de iOS tienen ahora 45 minutos: las pruebas de la app tardan unos 35 en los runners más lentos, contra un límite de 35.
 - **12-11-2026:**
   - LB-208, parte 4: guardar una parada y editar "Mis paradas" en iOS, con lo que la historia queda cerrada.
     - El detalle de una parada lleva la estrella de Guardar en cuanto se conocen las paradas guardadas: al tocarla pregunta primero el alias, cortado a 30 caracteres al teclear, y guarda con él (en blanco, se queda el nombre del catálogo); al tocarla otra vez se quita.
