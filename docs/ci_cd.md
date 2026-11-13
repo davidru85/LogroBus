@@ -33,7 +33,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 1. **One concern per job.** A job answers exactly one question, such as "is the PR title valid?" or "do `:shared:data` unit tests pass?". Its job name is the status-check name.
 2. **Short by design.** Target under 5 minutes per job, with a hard `timeout-minutes` of 10 at most. If a job's typical duration exceeds 5 minutes, split it: by module, by test type, by platform or by shard.
    - **Exception: the macOS jobs.** The Kotlin/Native toolchain and the simulator's first boot dominate them, and splitting does not shorten them (§5). Their budgets are in §3 and their timeouts in `ios-checks.yml`.
-   - **`iOS build and tests` has a 10-minute budget** (owner decision, 2026-10-25), measured at 5–11 min. It has grown since: 17 to 23 minutes by LB-405, its tests alone about 10. LB-406's accessibility audits add 6 to 7 more, so its limit is 35 minutes (owner decision, 2026-11-04, §5).
+   - **`iOS build and tests` has a 10-minute budget** (owner decision, 2026-10-25), measured at 5–11 min. It has grown since: 17 to 23 minutes by LB-405, its tests alone about 10. LB-406's accessibility audits add 6 to 7 more, so its limit went to 35 minutes (owner decision, 2026-11-04) and to 45 (owner decision, 2026-11-13, §5), after a slow runner spent 15 of them on setup alone.
 3. **Parallel and independent.** Jobs do not depend on each other unless one consumes another's artefact, such as iOS tests needing the Kotlin framework.
 4. **Reproducible locally.** Each job runs a single script from `scripts/checks/` or `scripts/ci/`, or a single Gradle task. The failure message tells you the command to run locally.
 5. **Relevant only.** Workflows are split by area with path filters, so a docs-only PR does not build iOS.
@@ -68,7 +68,7 @@ The owner decides when to go public. This checklist was run on 2026-10-23, befor
 | SwiftLint | `ios-checks.yml` | `swiftlint --strict` (CI installs the pinned Linux binary, checked by SHA-256: `scripts/ci/install-swiftlint.sh`) | Linux | < 2 min | Active, through the gate |
 | Shared iOS tests | `ios-checks.yml` | `./gradlew iosSimulatorArm64Test` (one job, not a matrix: GitHub Free runs at most 5 macOS jobs at once) | macOS | < 8 min | Active, through the gate |
 | iOS build and tests (includes the Kotlin/Native framework) | `ios-checks.yml` | `scripts/ios/test.sh iosAppTests iosAppUITests`, the app's own test targets: generates the project, boots the iPhone 17e simulator (iOS 26.5) while `xcodebuild build-for-testing` runs, then runs `test-without-building` (Xcode 26.6), printing each phase's time; it retries the tests once if the simulator vanishes (§5) | macOS | < 10 min (measured exception, §5) | Active, through the gate |
-| iOS ViewModel and snapshot tests: one per test target of `LogroBusUI` (matrix) | `ios-checks.yml` | `scripts/ios/test.sh <Target>Tests`, which builds and runs that target alone (`-only-testing`): `DesignSystemTests`, `FeatureLinesTests`, `FeatureNearMeTests` (LB-201), `FeaturePlannerTests` (LB-301), `FeatureSettingsTests` | macOS | < 10 min each with warm caches; limit 30 min (owner decision, 2026-11-02) | Active, through the gate (LB-101; owner decision, 2026-11-02: one job per target, each rebuilding the framework, to take the package's tests out of the app's job). The app-hosted `GlassSnapshotTests` stay in the app's job. An architecture test fails when the matrix and `Package.swift`'s test targets differ |
+| iOS ViewModel and snapshot tests: one per test target of `LogroBusUI` (matrix) | `ios-checks.yml` | `scripts/ios/test.sh <Target>Tests`, which builds and runs that target alone (`-only-testing`): `DesignSystemTests`, `FeatureLinesTests`, `FeatureNearMeTests` (LB-201), `FeaturePlannerTests` (LB-301), `FeatureSettingsTests` | macOS | < 10 min each with warm caches; limit 45 min (owner decision, 2026-11-13; was 30 since 2026-11-02) | Active, through the gate (LB-101; owner decision, 2026-11-02: one job per target, each rebuilding the framework, to take the package's tests out of the app's job). The app-hosted `GlassSnapshotTests` stay in the app's job. An architecture test fails when the matrix and `Package.swift`'s test targets differ |
 
 `ciUnitTest` is an alias task registered by the convention plugins (LB-001). It gives every module a stable task name that does not depend on Kotlin Multiplatform target names.
 
@@ -124,7 +124,7 @@ Because `main` is protected, path-filtered workflows need a small always-running
   - **In both variants the tests never waited for the boot.** Besides the boot's contention, the rest of the time goes to the tests' first launches on the newly booted simulator.
   - **Splitting the job would not shorten it:** each part would need its own macOS runner, Gradle build and boot, and GitHub Free allows only 5 macOS jobs at once.
   - **Its budget is therefore 10 minutes** (owner decision, 2026-10-25, §2). The launch UI tests stay on every pull request.
-  - **The accessibility audits (LB-406, 2026-11-04):** `AccessibilityAuditUITests` walks every screen at the default and the largest text, and again in dark mode, about 3.5 minutes locally and 6 to 7 on CI's runner, which runs these tests about twice as slowly. With the job at 17 to 23 minutes, its limit went from 25 to 35 minutes (owner decision, 2026-11-04), rather than a job of its own, which would build the framework and the app again on a sixth macOS runner, or a nightly run, which would find a regression a day late.
+  - **The accessibility audits (LB-406, 2026-11-04):** `AccessibilityAuditUITests` walks every screen at the default and the largest text, and again in dark mode, about 3.5 minutes locally and 6 to 7 on CI's runner, which runs these tests about twice as slowly. With the job at 17 to 23 minutes, its limit went from 25 to 35 minutes (owner decision, 2026-11-04), rather than a job of its own, which would build the framework and the app again on a sixth macOS runner, or a nightly run, which would find a regression a day late. It went to 45 on 2026-11-13 (owner decision), when a runner spent 15 minutes of setup instead of 4 and the job's work reached 35.5 minutes.
   - **The package's tests left it (LB-101, 2026-11-02):** it took 19 minutes on PR #35. Since LB-101, it runs only the app's test targets, and each test target of `LogroBusUI` runs in a matrix job of its own (§3). Each of those jobs builds the framework again: with the app's job and the shared iOS tests, a pull request uses 5 macOS runners at once, the most that GitHub Free allows.
 - **Concurrency:** `concurrency` with `cancel-in-progress: true` per pull request, so a new push cancels the stale run.
 - **Monitoring:** if a job's p50 passes 5 minutes, split it in the next CI pull request and record the split in `project_log.md`.
@@ -156,7 +156,9 @@ Because `main` is protected, path-filtered workflows need a small always-running
     has not changed since 2026-11-04, the artefact's image differing by one control: the field's ✕ clear button, drawn
     on CI and absent from the committed reference. UIKit adds that button a run loop after the text reaches the field,
     so a capture taken the instant the view model settles can miss it. The test now waits 100 ms after a non-empty
-    query before capturing; the reference and the assertion are untouched.
+    query before capturing; the reference and the assertion are untouched. It recurred once on PR #69 (2026-11-13) with
+    the same single-control difference, so 100 ms is not always enough on a loaded runner: the wait is LB-102's to
+    lengthen or to replace with a wait for the button itself.
   - **A database locked under `IosGraphTest`** (PR #64, 2026-11-11): `Shared iOS tests` failed on
     `IosGraphTest.lb010_theAppShellSetsTheVersion` with `SQLiteExceptionErrorCode: Sqlite operation failure database is
     locked`, and the run then reported "Test running process exited unexpectedly". The test started the graph through
@@ -172,7 +174,23 @@ Because `main` is protected, path-filtered workflows need a small always-running
     audit's own variance, the same kind this file already records for Settings' picker values and Near Me's rows, so the
     failed job is rerun once. **A recurring finding on a screen this story does not own belongs to that screen's story,
     not to an exemption here** (owner decision, 2026-11-11: an exemption is the owner's to grant).
-  - **Dependencies not found on a cold runner** (PR #68's run 1, 2026-11-12): `Shared unit tests (:shared:core:telemetry)`
+  - **A job that passes its tests and is cancelled in its cleanup** (PR #69, 2026-11-12/13): `iOS build and tests` was
+   `cancelled` at 35:05 against its 35-minute `timeout-minutes`, and the log shows why it looked like a test failure and was
+   not: `OK: iOS tests (iosAppTests iosAppUITests) passed` at 20:42:56, and the job killed 23 s later while its post-job
+   cleanup ran. GitHub reports a job that hits its limit as `cancelled`, so read the log's last `OK:` line before treating a
+   cancellation as a failure. The margin was small to begin with — 30:00, 30:43 and 32:05 on `main` for the same job — so a
+   longer accessibility walk spends it; LB-208's walk now takes its two steps along the route the audit already walks.
+   The limit then went to 45 minutes for both iOS jobs (owner decision, 2026-11-13): a later attempt on the same branch
+   was still killed, with the tests never finishing, because the runner spent 15.6 minutes on setup — a 504 s build where
+   `main`'s builds took 380 and 499, and a 435 s project generation where they took 250 and 315. `FeatureLinesTests`, a target
+   that branch does not touch, was cancelled at 31:08 against its 30, so the shortfall was the runners' capacity as much as
+   the walk's length.
+ - **A sheet captured with its navigation bar differs run to run** (PR #69, 2026-11-12): `iOS ViewModel and snapshot tests (FeatureNearMeTests)`
+   failed on `lb208_theEditSheet` although the failure artifact and the reference looked identical. Rendered off screen, iOS 26's
+   bar draws its title and Done in fixed colours whatever the appearance — the title came out white on a light sheet — and
+   the bar's rendering is not stable enough to compare. The favourite lines' sheet avoids it by capturing its list without the
+   bar; the "My stops" sheet does the same now, and its UI tests check the title and Done.
+ - **Dependencies not found on a cold runner** (PR #68's run 1, 2026-11-12): `Shared unit tests (:shared:core:telemetry)`
     failed three times in a row at about 20 s with `Could not find org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0` and
     the same for `kotlinx-datetime` and `kotlin-stdlib`, all while configuring `:shared:core:common`. The branch changes no
     build file and no dependency; a fresh runner resolves the whole graph from empty caches at once, which is the pattern

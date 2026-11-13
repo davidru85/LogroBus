@@ -71,6 +71,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         let detail = app.navigationBars["Line 3"]
         XCTAssertTrue(detail.waitForExistence(timeout: 5))
         try audit.run("Line 3", types, into: &issues)
+        // LB-208: the stop's detail and its Save star, from the line the walk already has open, so neither the tab nor
+        // the list is walked again.
+        try MyStopsAudit.auditStar(audit, types, in: app, into: &issues)
         detail.buttons["Remove line 3 from favourites"].tap()
         XCTAssertTrue(detail.buttons["Add line 3 to favourites"].waitForExistence(timeout: 5))
         detail.buttons["Lines"].tap()
@@ -79,6 +82,9 @@ final class AccessibilityAuditUITests: XCTestCase {
         tap(app.tabBars.buttons["Near me"])
         XCTAssertTrue(app.buttons[Self.turnOnLocation].waitForExistence(timeout: 5))
         try audit.run("Near me", types, into: &issues)
+        // LB-208: "My stops" and its edit sheet, here where the walk already is, in its own file, as this one is at
+        // SwiftLint's length limit.
+        try MyStopsAudit.auditSection(audit, types, in: app, into: &issues)
         try auditDirections(audit, types, in: app, into: &issues)
     }
 
@@ -242,7 +248,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 /// One launch's audits: each runs Xcode's audit on the screen on display and reports what is not a known false
 /// positive.
 @MainActor
-private struct Audit {
+struct Audit {
     let test: XCTestCase
     let app: XCUIApplication
     let largestText: Bool

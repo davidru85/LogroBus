@@ -19,6 +19,38 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-12: LB-208 part 4, saving and editing a stop on iOS
+
+**Done**
+- **LB-208 part 4 (`feat/LB-208-part4-ios-screens`), iOS:** the story's screens, with which LB-208 completes.
+  - **The Save star** on a stop's detail, over `SavedStopRepository` once the saved stops are known, so it never shows the wrong state; tapping it saves under the catalogue's name and tapping it again removes the stop.
+  - **"My stops"** above "Near you", driven by the shared `ObserveMyStops` and `SavedStopsUiMapper`, so its rows are the ones Android shows; an empty section reads the shared `EMPTY_HINT` and offers no Edit.
+  - **The edit sheet** takes the row Android's has: a remove button, the stop's label over its place, a Rename button and a drag handle. Dragging the handle reorders, which is also VoiceOver's own way through a reorderable row, and Move up and Move down remain as custom actions, as they are on TalkBack; the place is the row's accessibility value and the visible line under the label.
+  - **Shared:** `SavedStopsUseCases` gains `observeMyStops()` so Swift reaches the same collection Android binds, and the preview script answers it from the sample lines.
+
+**Review**
+- **Three real defects, all found by running the code rather than by reading it:**
+  - the "My stops" ViewModel resolved the graph in its initialiser, which a preview or a test builds without a saved-stops binding, so the section aborted the process; it now resolves on first use, as the stop detail's ViewModel does;
+  - a `.sheet` attached to a `Section` inside a `List` is never presented, so Edit did nothing; the screen presents the sheet now;
+  - the UI test's own pre-clear left the app on the wrong tab when nothing was saved, which failed a line that had nothing to do with the change.
+- **One bridging fix:** SKIE hands a `suspend` result back with Kotlin's class for an enum, so the limit check casts to `AppResultSuccess<__FavouriteAddition>` and bridges to Swift's case.
+- **The reviewers found five more, all fixed:**
+  - the limit alert formatted Kotlin's `Int32` into a `%lld` key, which would have shown the raw key instead of the message; it takes a Swift `Int`, as the nearby rows already do;
+  - the UI test's clearing loop matched an accessibility identifier no view sets, so it removed nothing and compared zero with zero;
+  - the edit sheet truncated its title at 200 % text; the title is inline and the row wraps under an accessibility size, as the favourite lines' editor does;
+  - the row's `.contain` read the stop and its place twice; they are one `.combine`d element now, as Android's merged row is;
+  - the audit never reached these screens; `MyStopsAudit` walks them.
+- **The third reviewer found the story's own gap:** iOS's star saved without asking for the alias, so FR-STOP-08's "and set an alias" held on Android alone. It asks now, through an alert with a thirty-character field, as Android's `SaveAction` does.
+- **The audit also caught a real 19 pt hit area** on the sheet's remove button, now 44 pt, and the same review found the header's Edit and the sheet's Rename under it too; all three take it.
+- **Left for the owner:** visiting the stop detail in the audit surfaces LB-205's own Dynamic Type failures on its arrival rows, which predate this story; the audit reads only this story's states until that screen is fixed.
+- **The app's CI job ran out of margin, and its tests had passed:** `iOS build and tests` reported `cancelled` at 35:05 against its 35-minute limit, and the log shows `OK: iOS tests (iosAppTests iosAppUITests) passed` at 20:42:56 with the job killed 23 s later in its post-job cleanup. On `main` the same job takes 30:00, 30:43 and 32:05, so the story's longer audit walk spent the margin. The walk now reads the star from line 3's detail, which it already opens, and "My stops" and its sheet from Near Me, where it already ends: the same coverage over a shorter route. Recorded in `docs/ci_cd.md` §5, since a job cancelled in its cleanup reads as a test failure.
+
+**Open / next**
+- **The device pass** with VoiceOver on the star, the rows, the place and the sheet is with the owner.
+- **LB-306** carries the results-cleared and request-moved parts the owner has yet to confirm.
+
+---
+
 ## 2026-11-12: LB-208 part 3, editing "My stops"
 
 **Done**

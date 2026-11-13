@@ -8,6 +8,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.ObserveLinesWithFavourites
 import com.ruizurraca.logrobus.feature.lines.domain.ReorderFavouriteLines
 import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
+import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
@@ -40,6 +41,9 @@ interface SettingsUseCases {
  */
 interface SavedStopsUseCases {
     fun savedStops(): SavedStopRepository
+
+    /** LB-208 (FR-HOME-02): the saved stops joined with the catalogue's names, which "My stops" shows. */
+    fun observeMyStops(): ObserveMyStops
 }
 
 /** Near Me's own use cases for Swift (LB-201): location access. */
@@ -116,6 +120,8 @@ object SharedDependencies :
     override fun observeLineArrivals(): ObserveLineArrivals = graph().get()
 
     override fun savedStops(): SavedStopRepository = graph().get()
+
+    override fun observeMyStops(): ObserveMyStops = graph().get()
 
     override fun observeStopDetail(): ObserveStopDetail = DefaultObserveStopDetail(graph().get())
 

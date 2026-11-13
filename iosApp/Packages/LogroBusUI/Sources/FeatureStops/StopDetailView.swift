@@ -8,6 +8,17 @@ import SwiftUI
 /// (FR-NAV-07): pushed from line detail, or in Near Me's sheet (LB-203). Line filter and grouping are LB-207's.
 public struct StopDetailView: View {
     @State private var viewModel: StopDetailViewModel
+    /// The alias the save alert holds while it shows.
+    @State private var draft = ""
+    @State private var askingAlias = false
+
+    /// The alias field's label: the key, with the share of characters it takes as its argument.
+    private var aliasPrompt: String {
+        String(
+            format: String(localized: "stop.save.alias", bundle: .module),
+            Int(SavedStopAlias.shared.MAX_LENGTH)
+        )
+    }
 
     public init(viewModel: StopDetailViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -21,6 +32,58 @@ public struct StopDetailView: View {
     public var body: some View {
         content
             .navigationTitle(title)
+            // LB-208 (FR-STOP-08): the Save star, once the saved stops are known, so it never shows the wrong state.
+            // Filled means saved; the label carries the alias the user gave it. Saving asks for the alias first, as
+            // Android's Save action does, so a stop can be labelled "Casa" at the moment it is saved.
+            .toolbar {
+                if let saved = viewModel.saved {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            if saved.isSaved {
+                                Task { await viewModel.remove() }
+                            } else {
+                                draft = saved.alias ?? ""
+                                askingAlias = true
+                            }
+                        } label: {
+                            Label {
+                                Text(verbatim: saved.alias ?? "")
+                            } icon: {
+                                Image(systemName: saved.isSaved ? "star.fill" : "star")
+                            }
+                        }
+                        .accessibilityLabel(
+                            Text(
+                                saved.isSaved ? "stop.save.saved" : "stop.save.add",
+                                bundle: .module
+                            )
+                        )
+                        .accessibilityValue(Text(verbatim: saved.alias ?? ""))
+                        .frame(minWidth: Tokens.minTouchTarget, minHeight: Tokens.minTouchTarget)
+                    }
+                }
+            }
+            .stopSaveLimitAlert(viewModel.limitReached ? Int(FAVOURITES_PER_TYPE) : nil) {
+                viewModel.clearLimit()
+            }
+            // The alias, cut at thirty characters as it is typed, as Android's dialog is: nothing is cut behind the
+            // user's back, and a blank field saves the stop under its own name.
+            .alert(Text("stop.save.title", bundle: .module), isPresented: $askingAlias) {
+                TextField(text: $draft) {
+                    // The key carries the limit as a positional format, looked up verbatim: an interpolated key is a
+                    // different key, and the localisation test reads this one.
+                    Text(aliasPrompt)
+                }
+                Button {
+                    let alias = draft.isEmpty ? nil : String(draft.prefix(Int(SavedStopAlias.shared.MAX_LENGTH)))
+                    Task { await viewModel.save(alias: alias) }
+                } label: {
+                    Text("stop.save.confirm", bundle: .module)
+                }
+                Button(role: .cancel) {} label: {
+                    Text("stop.save.cancel", bundle: .module)
+                }
+            }
             // Cancelled when the screen leaves, which stops API-06's polling; restarted by Retry.
             .task(id: viewModel.attempt) { await viewModel.observe() }
     }

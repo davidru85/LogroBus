@@ -57,6 +57,47 @@ public final class StopDetailViewModel {
         self.useCases = useCases
     }
 
+    /// LB-208 (FR-STOP-08, FR-FAV-05): whether the stop is saved, and under which alias. `nil` until the saved
+    /// stops first arrive, so the star shows nothing rather than the wrong thing.
+    public private(set) var saved: (isSaved: Bool, alias: String?)?
+
+    /// FR-FAV-05: a save the limit refused, which the screen reports once.
+    public private(set) var limitReached = false
+
+    /// FR-STOP-08: saves the stop. A stop already saved keeps its alias, so this only adds; removing and renaming are
+    /// the Edit sheet's, in Near Me.
+    public func save(alias: String? = nil) async {
+        // SKIE hands the result back with Kotlin's own class for the enum; it bridges to Swift's case here.
+        guard let result = try? await useCases.savedStops().add(stopId: stopId, alias: alias),
+              let addition = (result as? AppResultSuccess<__FavouriteAddition>)?.value else { return }
+        limitReached = FavouriteAddition._unconditionallyBridgeFromObjectiveC(addition) == .limitReached
+    }
+
+    /// FR-STOP-08: removes the saved stop.
+    public func remove() async {
+        _ = try? await useCases.savedStops().remove(stopId: stopId)
+    }
+
+    /// FR-FAV-05: marks the limit's message as shown, so the next save reports it again.
+    public func clearLimit() {
+        limitReached = false
+    }
+
+    /// The stop's own save state: the saved stops' collection, filtered to this stop, so a removal made in Near Me's
+    /// sheet clears the star at once.
+    private func observeSaved() async {
+        for await result in useCases.observeMyStops().invoke() {
+            switch onEnum(of: result) {
+            case .failure:
+                continue
+            case .success(let success):
+                guard let stops = success.value else { continue }
+                let row = stops.stops.first { $0.stopId == stopId }
+                saved = (isSaved: row != nil, alias: row?.alias)
+            }
+        }
+    }
+
     public func onEvent(_ event: StopDetailEvent) {
         switch event {
         case .retry:
@@ -76,6 +117,7 @@ public final class StopDetailViewModel {
             group.addTask { await self.observeStop() }
             group.addTask { await self.observePreferences() }
             group.addTask { await self.observeArrivals() }
+            group.addTask { await self.observeSaved() }
         }
     }
 
