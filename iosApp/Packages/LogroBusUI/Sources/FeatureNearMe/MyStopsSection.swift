@@ -40,6 +40,10 @@ public struct MyStopsSection: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    // One element with a text label, as the nearby rows are: the button's own label is not a text run
+                    // the audit can measure, so it read the row's font as not scaling (NFR-A11Y-01).
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text(verbatim: row.label))
                     .accessibilityAddTraits(.isButton)
                 }
             }
