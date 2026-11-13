@@ -156,7 +156,9 @@ Because `main` is protected, path-filtered workflows need a small always-running
     has not changed since 2026-11-04, the artefact's image differing by one control: the field's ✕ clear button, drawn
     on CI and absent from the committed reference. UIKit adds that button a run loop after the text reaches the field,
     so a capture taken the instant the view model settles can miss it. The test now waits 100 ms after a non-empty
-    query before capturing; the reference and the assertion are untouched.
+    query before capturing; the reference and the assertion are untouched. It recurred once on PR #69 (2026-11-13) with
+    the same single-control difference, so 100 ms is not always enough on a loaded runner: the wait is LB-102's to
+    lengthen or to replace with a wait for the button itself.
   - **A database locked under `IosGraphTest`** (PR #64, 2026-11-11): `Shared iOS tests` failed on
     `IosGraphTest.lb010_theAppShellSetsTheVersion` with `SQLiteExceptionErrorCode: Sqlite operation failure database is
     locked`, and the run then reported "Test running process exited unexpectedly". The test started the graph through
