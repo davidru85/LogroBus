@@ -8,6 +8,10 @@ import Testing
 /// AGENTS.md §9: Near Me in light, dark and large text, in Spanish. Without location, "Near you" is one row that turns
 /// it on; with location, nothing shows until the nearby stops (LB-203). References live in __Snapshots__; a missing one
 /// is recorded, and that run fails until it is committed.
+///
+/// LB-209's search field is the system's own chrome and draws washed out in an off-window capture, as iOS 26's
+/// navigation bar does, so these references show it faintly at its resting place. The field itself — that a query finds
+/// its stop and an empty one says so — is covered end to end by `StopSearchUITests`.
 @MainActor
 struct NearMeSnapshotTests {
     @Test(arguments: Appearance.allCases)

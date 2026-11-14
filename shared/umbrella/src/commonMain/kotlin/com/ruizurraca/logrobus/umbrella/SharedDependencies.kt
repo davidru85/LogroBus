@@ -10,6 +10,7 @@ import com.ruizurraca.logrobus.feature.lines.domain.SetFavouriteLine
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
+import com.ruizurraca.logrobus.feature.nearme.domain.SearchStops
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
 import com.ruizurraca.logrobus.feature.settings.domain.ObserveLastSyncs
@@ -62,6 +63,15 @@ interface NearMeUseCases {
 }
 
 /**
+ * The stop search's own use case for Swift (LB-209), kept out of Near Me's group so a location script need not answer
+ * it.
+ */
+interface StopSearchUseCases {
+    /** FR-NEAR-05, DD-16: the stops a query finds, each with the lines that reach it. */
+    fun searchStops(): SearchStops
+}
+
+/**
  * How to Get There's own use cases for Swift: the origin a new plan starts from (LB-301), and the app clock, which
  * the departure's day and the pickers' start count from (LB-303, spec §8.6).
  */
@@ -80,6 +90,7 @@ interface UseCases :
     SettingsUseCases,
     NearMeUseCases,
     NightServiceUseCases,
+    StopSearchUseCases,
     PlannerUseCases {
     fun observeLastSyncs(): ObserveLastSyncs
 
@@ -108,6 +119,7 @@ object SharedDependencies :
     UseCases,
     SettingsUseCases by GraphSettingsUseCases,
     NearMeUseCases by GraphNearMeUseCases,
+    StopSearchUseCases by GraphStopSearchUseCases,
     PlannerUseCases by GraphPlannerUseCases {
     /** FR-NAV-02: the tab the app opens on. */
     val startDestination: TopLevelDestination
@@ -176,6 +188,11 @@ private object GraphNearMeUseCases : NearMeUseCases {
     override fun observeLocationAccess(): ObserveLocationAccess = graph().get()
 
     override fun observeNearYou(): ObserveNearYou = graph().get()
+}
+
+/** The stop search, from the graph (LB-209). */
+private object GraphStopSearchUseCases : StopSearchUseCases {
+    override fun searchStops(): SearchStops = graph().get()
 }
 
 /** How to Get There's own use cases, from the graph (LB-301, LB-303). */

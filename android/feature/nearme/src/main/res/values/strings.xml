@@ -27,4 +27,10 @@
     <string name="nearme_my_stops_position">%1$d de %2$d</string>
     <string name="nearme_my_stops_confirm">Guardar</string>
     <string name="nearme_my_stops_cancel">Cancelar</string>
+    <!-- LB-209 (FR-NEAR-05): the stop search. -->
+    <string name="nearme_search_prompt">Buscar una parada</string>
+    <string name="nearme_search_no_matches">Ninguna parada coincide con esa búsqueda</string>
+    <string name="nearme_search_clear">Borrar la búsqueda</string>
+    <!-- LB-209: the headsign that tells one stop from another of the same name. -->
+    <string name="nearme_search_towards">Hacia %1$s</string>
 </resources>

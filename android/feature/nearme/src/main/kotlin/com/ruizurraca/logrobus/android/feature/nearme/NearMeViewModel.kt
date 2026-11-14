@@ -5,13 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
+import com.ruizurraca.logrobus.feature.nearme.domain.SearchStops
+import com.ruizurraca.logrobus.feature.nearme.domain.StopSearchResultUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.MyStopsUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiMapper
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.SavedStopsUiMapper
+import com.ruizurraca.logrobus.feature.nearme.presentation.StopSearchUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +24,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * Near Me (LB-201). It orchestrates only: the shared use case and mapper build the state (ADR-0007). The location
@@ -29,7 +34,32 @@ import kotlinx.coroutines.flow.update
 class NearMeViewModel(
     observeNearYou: ObserveNearYou,
     observeMyStops: ObserveMyStops,
+    /** LB-209 (FR-NEAR-05): the stop search, over the catalogue the graph binds. */
+    private val searchStops: SearchStops,
 ) : ViewModel() {
+    // LB-209: the query and its answer, folded into the screen's one state. A search is asked on demand rather than
+    // collected, and the last answer a later query replaced must not land.
+    private val query = MutableStateFlow("")
+    private val found = MutableStateFlow<List<StopSearchResultUi>>(emptyList())
+
+    /** LB-209: searches [text]; a blank query clears the list without asking. */
+    fun onQueryChanged(text: String) {
+        query.value = text
+        searchJob?.cancel()
+        if (text.isBlank()) {
+            found.value = emptyList()
+            return
+        }
+        searchJob =
+            viewModelScope.launch {
+                val answer = searchStops(text)
+                // The query it answered for, so a slower answer cannot replace a newer one.
+                if (query.value == text) found.value = answer
+            }
+    }
+
+    private var searchJob: Job? = null
+
     // Each check bumps it, which reads location access again.
     private val checks = MutableStateFlow(0)
 
@@ -38,7 +68,9 @@ class NearMeViewModel(
             checks.flatMapLatest { observeNearYou() },
             // FR-HOME-02: "My stops" is its own collection, so a save from another screen shows here at once.
             observeMyStops(),
-        ) { section, saved ->
+            // LB-209: the search's query and its answer, so the screen keeps one state as every other screen does.
+            combine(query, found) { asked, results -> StopSearchUi(query = asked, results = results) },
+        ) { section, saved, search ->
             NearMeUiMapper.state(section.access, section.nearby).copy(
                 myStops =
                     when (saved) {
@@ -55,6 +87,7 @@ class NearMeViewModel(
                             )
                         }
                     },
+                search = search,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), NearMeUiState())
 

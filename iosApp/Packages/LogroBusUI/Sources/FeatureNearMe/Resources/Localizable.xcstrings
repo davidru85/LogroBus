@@ -1,6 +1,30 @@
 {
   "sourceLanguage": "es",
   "strings": {
+    "nearme.search.towards %@": {
+      "comment": "LB-209 (FR-NEAR-05, DD-16): the headsign of the line that reaches a search result's stop, which tells two stops with one name apart.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Towards %@" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Hacia %@" } }
+      }
+    },
+    "nearme.search.prompt": {
+      "comment": "LB-209 (FR-NEAR-05): the search field's placeholder.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Search a stop" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Buscar una parada" } }
+      }
+    },
+    "nearme.search.no_matches": {
+      "comment": "LB-209 (FR-NEAR-05): what the search says when a query finds no stop.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No stops match that search" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Ninguna parada coincide con esa búsqueda" } }
+      }
+    },
     "nearme.my_stops.edit": {
       "comment": "LB-208 (FR-FAV-02): the action that opens the sheet to reorder, rename and remove saved stops.",
       "extractionState": "manual",

@@ -13,15 +13,21 @@ public struct NearMeView: View {
     /// FR-HOME-02: the saved stops, kept by the screen so its edit sheet reads the same rows the section shows.
     @State private var myStops: MyStopsViewModel
     @State private var editingMyStops = false
+    /// LB-209: the stop search's own state, over the screen's use cases.
+    @State private var search: StopSearchViewModel
 
     public init(viewModel: NearMeViewModel = NearMeViewModel(), onOpenStop: @escaping (Int) -> Void = { _ in }) {
         _viewModel = State(initialValue: viewModel)
         _myStops = State(initialValue: MyStopsViewModel(useCases: viewModel.useCases))
+        _search = State(initialValue: StopSearchViewModel(useCases: viewModel.useCases))
         self.onOpenStop = onOpenStop
     }
 
     public var body: some View {
         List {
+            // LB-209 (FR-NEAR-05): the stop search, above the saved and nearby stops so its field is the first thing
+            // a rider reaches on this tab.
+            StopSearchSection(viewModel: search, onOpenStop: { stopId in onOpenStop(Int(stopId)) })
             // FR-HOME-02 and FR-NEAR-03: "My stops" sits above "Near you", and follows the saved stops by itself.
             MyStopsSection(
                 viewModel: myStops,
@@ -68,6 +74,12 @@ public struct NearMeView: View {
         .scrollContentBackground(.hidden)
         .background(Tokens.Colors.groupedBackground)
         .navigationTitle(Text("nearme.title", bundle: .module))
+        // LB-209 (FR-NEAR-05): the tab's own search field. It belongs to the screen, not to a section: attached to one,
+        // iOS left an empty row behind and drew the field outside the list.
+        .searchable(text: $search.query, prompt: Text("nearme.search.prompt", bundle: .module))
+        .task(id: search.query) {
+            await search.search()
+        }
         // FR-FAV-02: the sheet that reorders, renames and removes the saved stops. Here rather than in the section,
         // which a list cannot present from.
         .sheet(isPresented: $editingMyStops) {

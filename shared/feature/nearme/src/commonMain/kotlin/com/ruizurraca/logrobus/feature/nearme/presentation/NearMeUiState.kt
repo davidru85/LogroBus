@@ -12,6 +12,8 @@ data class NearMeUiState(
     val nearYou: NearYouUi = NearYouUi.Unknown,
     /** FR-HOME-02: the stops the user saved, above "Near you" (FR-NEAR-03). */
     val myStops: MyStopsUi = MyStopsUi(),
+    /** LB-209 (FR-NEAR-05): the stop search, above the saved and nearby stops. */
+    val search: StopSearchUi = StopSearchUi(),
 )
 
 /** The "Near you" section of Near Me's sheet. */
