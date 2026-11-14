@@ -19,6 +19,26 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-14: LB-204, the saved stops' live calls
+
+**Done**
+- **LB-204 (`feat/LB-204-my-stops-arrivals`):** each saved stop's row now carries its next three calls, so the section reads at a glance without opening a stop.
+  - **Worded once:** the rows come from the stop detail's own mapper, so a call reads the same on both screens, and the graph feeds them through that use case rather than a second implementation.
+  - **A cancelled call takes no slot** (the criterion's own wording), and a failed read keeps the row's previous list and marks it (FR-ERR-03).
+  - **`ServedArrivalUi` moved to `core:presentation`:** the architecture forbids one feature depending on another, and both screens draw a call. The build failed on the dependency rule until it moved, which is the rule doing its job.
+  - **Both platforms** draw the calls with the design system's ETA, and TalkBack reads the stop and its calls as one utterance.
+
+**Review**
+- **A test that passed at once, checked by mutation:** removing the spoken call from the row makes `NearMeScreenTest.lb204_aSavedStopShowsItsNextCalls_andTheyAreSpokenWithIt` fail, so it covers the behaviour and not the wiring.
+- **A design I started and threw away:** joining the calls inside `nearme`'s use case meant importing the stop feature's types, which the architecture test refused. The arrivals now arrive already worded, through a callback the graph supplies.
+- **No screenshot drift:** neither platform's references changed, because the preview graph has no saved stops with calls.
+
+**Open / next**
+- **"Find a stop"** waits for LB-209's Near Me search.
+- **The 3 s p75 budget** needs a device measurement; the owner's pass covers it with the rest.
+
+---
+
 ## 2026-11-13: LB-206, empty arrivals and the night-service sentence
 
 **Done**

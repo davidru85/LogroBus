@@ -19,6 +19,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruizurraca.logrobus.core.presentation.EtaDisplay
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.MyStopsUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
@@ -175,6 +177,55 @@ class NearMeScreenTest {
         compose.onNodeWithContentDescription("Trabajo").assertExists()
 
         assertEquals(listOf(38), opened)
+    }
+
+    @Test
+    fun lb204_aSavedStopShowsItsNextCalls_andTheyAreSpokenWithIt() {
+        // FR-HOME-02, NFR-A11Y-02: the row carries the stop's calls, and TalkBack reads the stop and them as one.
+        val state =
+            NearMeUiState(
+                nearYou = NearYouUi.LocationOn(),
+                myStops =
+                    MyStopsUi(
+                        rows =
+                            listOf(
+                                SavedStopRowUi(
+                                    stopId = 38,
+                                    label = "Casa",
+                                    position = 0,
+                                    arrivals =
+                                        listOf(
+                                            ServedArrivalUi(
+                                                "1",
+                                                0xFFE30613L,
+                                                0xFFFFFFFFL,
+                                                "El Arco",
+                                                EtaDisplay.Minutes(4),
+                                                false,
+                                                false,
+                                            ),
+                                            ServedArrivalUi(
+                                                "33",
+                                                0xFF1E7A3FL,
+                                                0xFFFFFFFFL,
+                                                "Varea",
+                                                EtaDisplay.Minutes(9),
+                                                false,
+                                                false,
+                                            ),
+                                        ),
+                                ),
+                            ),
+                    ),
+            )
+        compose.setContent {
+            NearMeScreen(state, onTurnOnLocation = {}, onOpenMore = {}, onOpenStop = {})
+        }
+
+        // The row is one utterance that starts with the stop and includes both calls, in the design system's words.
+        compose.onNodeWithContentDescription("Casa", substring = true).assertExists()
+        compose.onNodeWithContentDescription("4 min", substring = true).assertExists()
+        compose.onNodeWithContentDescription("9 min", substring = true).assertExists()
     }
 
     @Test

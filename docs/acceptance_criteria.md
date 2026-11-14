@@ -616,6 +616,13 @@ Refs: FR-NEAR-03, FR-HOME-02, FR-HOME-07, NFR-PERF-02
 - **Given** no saved stops, **when** the sheet renders, **then** "My stops" reads "Save a stop to see its next buses here", with a "Find a stop" action that focuses the Near Me search.
 - **Given** the arrivals request for a saved stop fails, **when** the sheet renders, **then** that stop keeps its previous arrivals with their freshness state, or shows an inline Retry if it has none (FR-ERR-03).
 
+**Part done (2026-11-14): the section's live arrivals.** "Find a stop" waits for LB-209.
+- **The next three, earliest first:** `MyStopsUiMapperTest.lb204_aRowShowsOnlyTheNextThreeArrivals`; the order and the past-drop are the stop detail mapper's own, tested at LB-205.
+- **A cancelled call takes no slot:** `lb204_aCancelledArrivalIsNotCountedAmongTheThree`.
+- **A failed read keeps the previous list:** `DefaultObserveMyStopsArrivalsTest.lb204_aStopWhoseReadFailedIsMarked_soItsRowKeepsWhatItShowed` and `lb204_theStopsArrivalsAreJoinedOntoItsRow`.
+- **Spoken with the stop, as one utterance:** `NearMeScreenTest.lb204_aSavedStopShowsItsNextCalls_andTheyAreSpokenWithIt`, which I checked by mutation: removing the spoken call makes it fail.
+- **Not yet met:** "Find a stop", which needs LB-209's search, and the 3 s p75 budget, which needs a device measurement.
+
 ### LB-205 Stop detail
 Refs: FR-NEAR-04, FR-NAV-07, FR-STOP-03 to 05, FR-ERR-06, spec §5.7, §8.6, DD-09, DD-16
 

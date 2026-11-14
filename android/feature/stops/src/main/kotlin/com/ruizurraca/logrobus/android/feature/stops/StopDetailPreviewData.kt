@@ -7,7 +7,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
-import com.ruizurraca.logrobus.feature.stops.presentation.ServedArrivalUi
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailUiState
 import com.ruizurraca.logrobus.feature.stops.presentation.StopUpdatedUi
 import com.ruizurraca.logrobus.transit.domain.Direction

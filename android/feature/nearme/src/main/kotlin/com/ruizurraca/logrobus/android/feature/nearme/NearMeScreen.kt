@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -32,9 +34,14 @@ import androidx.compose.ui.tooling.preview.PreviewFontScale
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruizurraca.logrobus.android.core.designsystem.EtaText
+import com.ruizurraca.logrobus.android.core.designsystem.LineBadge
 import com.ruizurraca.logrobus.android.core.designsystem.LogroBusTheme
 import com.ruizurraca.logrobus.android.core.designsystem.MoreActionButton
 import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
+import com.ruizurraca.logrobus.android.core.designsystem.Tokens
+import com.ruizurraca.logrobus.android.core.designsystem.etaSpoken
+import com.ruizurraca.logrobus.core.presentation.EtaUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
@@ -170,13 +177,53 @@ private fun MyStopRow(
     row: SavedStopRowUi,
     onOpenStop: (Int) -> Unit,
 ) {
+    // LB-204: the stop's next calls under its name, each worded by the design system's EtaText as the stop detail words
+    // one. One utterance: TalkBack reads the stop and its calls together, not four nodes in a row.
+    val resources = LocalResources.current
+    val spoken =
+        buildList {
+            add(row.label)
+            row.arrivals.forEach { arrival ->
+                val eta =
+                    arrival.eta?.let { display ->
+                        EtaUi(
+                            display,
+                            arrival.isLowConfidence,
+                            scheduled = false,
+                            delay = null,
+                            cancelled = arrival.isCancelled,
+                        )
+                    }
+                eta?.let { add(resources.etaSpoken(it)) }
+            }
+        }.joinToString(", ")
     ListItem(
         headlineContent = { Text(row.label, style = MaterialTheme.typography.bodyLarge) },
+        supportingContent = {
+            row.arrivals.forEach { arrival ->
+                val eta =
+                    arrival.eta?.let { display ->
+                        EtaUi(
+                            display,
+                            arrival.isLowConfidence,
+                            scheduled = false,
+                            delay = null,
+                            cancelled = arrival.isCancelled,
+                        )
+                    }
+                if (eta != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LineBadge(arrival.lineCode, arrival.color, arrival.onColor)
+                        EtaText(eta, Modifier.padding(start = Tokens.Spacing.s))
+                    }
+                }
+            }
+        },
         modifier =
             Modifier
                 .clickable(onClickLabel = stringResource(R.string.nearme_nearby_open_stop), role = Role.Button) {
                     onOpenStop(row.stopId)
-                }.clearAndSetSemantics { contentDescription = row.label },
+                }.clearAndSetSemantics { contentDescription = spoken },
     )
 }
 

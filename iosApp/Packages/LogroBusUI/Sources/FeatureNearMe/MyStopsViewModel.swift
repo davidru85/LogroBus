@@ -36,10 +36,13 @@ public final class MyStopsViewModel {
                 rows = []
             case .success(let success):
                 guard let stops = success.value else { continue }
+                // LB-204: the calls come with the join, already worded by the stop detail's own mapper.
                 rows = SavedStopsUiMapper.shared.myStops(
                     saved: stops.stops,
                     names: stops.names,
-                    limitReached: false
+                    limitReached: false,
+                    arrivals: stops.arrivals,
+                    failures: stops.failed
                 ).rows
             }
         }

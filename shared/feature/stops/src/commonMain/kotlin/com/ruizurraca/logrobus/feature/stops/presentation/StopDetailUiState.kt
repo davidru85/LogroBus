@@ -2,6 +2,7 @@ package com.ruizurraca.logrobus.feature.stops.presentation
 
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.transit.domain.Stop
 
 /**
@@ -34,24 +35,6 @@ sealed interface StopDetailUiState {
         val reason: ErrorReason,
     ) : StopDetailUiState
 }
-
-/**
- * One arrival of the stop detail (FR-STOP-04, spec §5.7): the badge of its line ([lineCode] on [color] in [onColor],
- * ARGB), the [headsign] of the journey it belongs to (DD-16, `null` when unknown, DD-04), its [eta], and the two
- * qualifiers the row draws — [isCancelled] struck through with the label "Cancelled", [isLowConfidence] DD-09's "~".
- *
- * [eta] is always filled by [StopDetailUiMapper.rows]; it is nullable so a platform can carry a row with no ETA of its
- * own. Each platform words the [EtaDisplay]; shared code never spells one out (AGENTS.md §5, rule 4).
- */
-data class ServedArrivalUi(
-    val lineCode: String,
-    val color: Long,
-    val onColor: Long,
-    val headsign: String?,
-    val eta: EtaDisplay?,
-    val isCancelled: Boolean,
-    val isLowConfidence: Boolean,
-)
 
 /**
  * How old the arrival list is (FR-STOP-05, spec §5.7, design_guidelines.md §7): [ageSeconds] words "Updated N s ago",

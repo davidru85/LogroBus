@@ -105,6 +105,8 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 
 ### Recent changes
 
+- **2026-11-14:**
+  - LB-204: "My stops" shows each saved stop's next three calls, worded as the stop detail words them, so the section reads at a glance without opening a stop.
 - **2026-11-13:**
   - LB-206: a stop with no calls says "No buses in the next 60 minutes", and a stop only night (Búho) lines serve adds the night-service sentence, which comes from remote config in the language the app runs in and falls back to the sentence compiled into the app.
   - CI: a job GitHub reports as `abandoned` lost its runner, and is not a failure of the branch. It has no log at all, which is how it is told apart from one that hits its time limit; rerun it.

@@ -1,15 +1,28 @@
 package com.ruizurraca.logrobus.feature.nearme.presentation
 
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.SavedStop
 import com.ruizurraca.logrobus.favourites.domain.SavedStopAlias
 
-/** One row of "My stops" (FR-HOME-02, FR-STOP-08): the stop, the alias it shows and its place in the user's order. */
+/**
+ * One row of "My stops" (FR-HOME-02, FR-STOP-08): the stop, the alias it shows, its place in the user's order, and the
+ * next calls there (FR-HOME-02, LB-204) — the three soonest, each worded as the stop detail words one.
+ */
 data class SavedStopRowUi(
     val stopId: Int,
     val label: String,
     val position: Int,
-)
+    /** FR-HOME-02, LB-204: at most [ARRIVALS_PER_ROW] calls, earliest first, cancelled ones left out. */
+    val arrivals: List<ServedArrivalUi> = emptyList(),
+    /** FR-ERR-03: the row's own read failed, so what it shows is what it last had. */
+    val hasFailed: Boolean = false,
+) {
+    companion object {
+        /** LB-204: how many calls a saved stop's row shows (FR-HOME-02, spec §7.6). */
+        const val ARRIVALS_PER_ROW = 3
+    }
+}
 
 /**
  * "My stops" (FR-HOME-02), the section above "Near you" in Near Me's sheet (FR-NEAR-03).
@@ -65,6 +78,8 @@ object SavedStopsUiMapper {
         saved: List<SavedStop>,
         names: Map<Int, String>,
         limitReached: Boolean = false,
+        arrivals: Map<Int, List<ServedArrivalUi>> = emptyMap(),
+        failures: Set<Int> = emptySet(),
     ): MyStopsUi =
         MyStopsUi(
             rows =
@@ -74,10 +89,19 @@ object SavedStopsUiMapper {
                         stopId = stop.stopId,
                         label = alias ?: names[stop.stopId] ?: UNKNOWN_STOP,
                         position = stop.position,
+                        arrivals = shown(arrivals[stop.stopId].orEmpty()),
+                        hasFailed = stop.stopId in failures,
                     )
                 },
             limitReached = limitReached,
         )
+
+    /**
+     * LB-204: the calls a row shows — the soonest [SavedStopRowUi.ARRIVALS_PER_ROW] that are still running. A cancelled
+     * call takes no slot, which is the criterion's own wording ("not counted among the 3 shown").
+     */
+    private fun shown(arrivals: List<ServedArrivalUi>): List<ServedArrivalUi> =
+        arrivals.filterNot { it.isCancelled }.take(SavedStopRowUi.ARRIVALS_PER_ROW)
 
     /** The most stops the user can save (FR-FAV-05). */
     val limit: Int get() = FAVOURITES_PER_TYPE
