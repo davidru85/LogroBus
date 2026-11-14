@@ -643,6 +643,13 @@ Refs: FR-STOP-06, OQ-08, NFR-REL-05
 - **Given** a stop served only by night lines (31 to 33), **when** the list is empty, **then** the message also shows `night_service_text` in the current language.
 - **Given** remote config is unavailable, **when** the night-service text is needed, **then** the compiled default is shown.
 
+**Done (2026-11-13), and how each criterion is evidenced.**
+- **The empty list's message:** `StopDetailUiMapperTest.lb206_anEmptyListOfADayStopShowsTheNoBusesMessage_andNoNightText` (shared, both platforms) and `StopDetailScreenTest.lb206_anEmptyListSaysThereAreNoBuses` (Android, the rendered text).
+- **The night-only stop adds the sentence:** `lb206_anEmptyListOfANightOnlyStop_alsoAsksForTheNightServiceText`, the night rule being `LineKindTest.lb206_aCodeStartingWithBMakesTheLineNight`; `StopDetailScreenTest.lb206_aNightOnlyStopAddsTheSentenceFromRemoteConfig` passes a sentence in and reads it back, so the message is shown to be config's wording rather than a second copy.
+- **The compiled default when config is unavailable:** `NightServiceTextTest.lb206_withNoConfigTheCompiledDefaultIsShown` and `lb206_eachLanguageGetsItsOwnSentence`; on iOS, `StopDetailViewModelTests.lb206_theNightSentenceComesFromTheConfig_inEitherLanguage`.
+- **Not covered end to end:** the scripted graph answers every sample stop with calls, so no UI test reaches an empty list. Adding a scripted empty stop is a preview-API change of its own; the message is covered by the shared mapper and by Android's screen test.
+- **The device pass** with TalkBack and VoiceOver over the message and its night sentence is with the owner.
+
 ### LB-207 Line filter and grouping
 Refs: FR-STOP-04, FR-STOP-07
 

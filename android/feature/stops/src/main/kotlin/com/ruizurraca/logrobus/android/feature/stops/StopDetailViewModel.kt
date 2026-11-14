@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruizurraca.logrobus.core.common.AppClock
 import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.preferences.PreferencesStore
+import com.ruizurraca.logrobus.feature.stops.domain.NightServiceText
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.StopArrivals
@@ -37,7 +38,15 @@ class StopDetailViewModel(
     private val observeArrivals: ObserveStopArrivals,
     private val preferences: PreferencesStore,
     private val clock: AppClock,
+    /** LB-206 (FR-STOP-06): the night-service sentence an empty list adds for a Búho-only stop (OQ-08). */
+    private val nightServiceText: NightServiceText,
 ) : ViewModel() {
+    /**
+     * LB-206: the night-service sentence for [language], which the screen passes from its own locale. Remote config
+     * does not change while the screen shows, and its default is compiled in, so it never fails.
+     */
+    fun nightSentence(language: String): String = nightServiceText.forLanguage(language)
+
     // Each Retry bumps it, which starts a new load.
     private val loads = MutableStateFlow(0)
 

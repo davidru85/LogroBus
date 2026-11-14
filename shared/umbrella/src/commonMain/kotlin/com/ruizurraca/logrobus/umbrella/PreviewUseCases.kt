@@ -68,6 +68,7 @@ class PreviewUseCases internal constructor(
     internal val arrivalsPreview: PreviewArrivals = PreviewArrivals(),
 ) : UseCases,
     SavedStopsUseCases by SavedStopScript(),
+    NightServiceUseCases by NightServiceScript(),
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
     PlannerUseCases by plannerPreview {

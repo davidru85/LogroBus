@@ -6,6 +6,8 @@ import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.feature.stops.domain.StopArrivalRow
 import com.ruizurraca.logrobus.feature.stops.domain.StopArrivals
+import com.ruizurraca.logrobus.transit.domain.LineKind
+import com.ruizurraca.logrobus.transit.domain.Stop
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -54,16 +56,40 @@ object StopDetailUiMapper {
                     val updated = updatedOf(answer.fetchedAt, now)
                     // Spec §5.7: an expired list replaces every ETA with a clock time, whatever the user's format is.
                     val shownFormat = if (updated?.needsRefresh == true) EtaFormat.CLOCK_TIME else format
+                    val rows = rows(answer.arrivals, now, shownFormat)
                     StopDetailUiState.Content(
                         stop = answer.stop,
-                        arrivals = rows(answer.arrivals, now, shownFormat),
+                        arrivals = rows,
                         updated = updated,
+                        empty = emptyOf(answer.stop, rows),
                     )
                 }
             }
 
             is AppResult.Failure -> {
                 StopDetailUiState.Error(ErrorReason.of(result.error))
+            }
+        }
+
+    /**
+     * FR-STOP-06: the message an empty list shows, or `null` while there are rows. A stop is night-only when every line
+     * that serves it is a Búho line ([LineKind.of]); the message is shared, its night sentence is the platform's.
+     */
+    private fun emptyOf(
+        stop: Stop,
+        rows: List<ServedArrivalUi>,
+    ): StopDetailEmptyUi? =
+        when {
+            rows.isNotEmpty() -> {
+                null
+            }
+
+            stop.servedLines.isNotEmpty() && stop.servedLines.all { LineKind.of(it.code) == LineKind.NIGHT } -> {
+                StopDetailEmptyUi.NO_BUSES_THEN_NIGHT
+            }
+
+            else -> {
+                StopDetailEmptyUi.NO_BUSES
             }
         }
 

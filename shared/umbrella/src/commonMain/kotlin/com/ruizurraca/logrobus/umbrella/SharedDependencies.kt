@@ -19,6 +19,7 @@ import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.NightServiceText
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import kotlinx.coroutines.flow.map
@@ -44,6 +45,12 @@ interface SavedStopsUseCases {
 
     /** LB-208 (FR-HOME-02): the saved stops joined with the catalogue's names, which "My stops" shows. */
     fun observeMyStops(): ObserveMyStops
+}
+
+/** The night-service sentence's own use case for Swift (LB-206), so `UseCases` stays within detekt's limit. */
+interface NightServiceUseCases {
+    /** FR-STOP-06 (LB-206): the night-service sentence an empty list adds for a Búho-only stop (OQ-08). */
+    fun nightServiceText(): NightServiceText
 }
 
 /** Near Me's own use cases for Swift (LB-201): location access. */
@@ -72,6 +79,7 @@ interface UseCases :
     SavedStopsUseCases,
     SettingsUseCases,
     NearMeUseCases,
+    NightServiceUseCases,
     PlannerUseCases {
     fun observeLastSyncs(): ObserveLastSyncs
 
@@ -124,6 +132,8 @@ object SharedDependencies :
     override fun observeMyStops(): ObserveMyStops = graph().get()
 
     override fun observeStopDetail(): ObserveStopDetail = DefaultObserveStopDetail(graph().get())
+
+    override fun nightServiceText(): NightServiceText = graph().get()
 
     override fun observeStopArrivals(): ObserveStopArrivals =
         DefaultObserveStopArrivals(stops = graph().get()) { stopId, lineIds ->

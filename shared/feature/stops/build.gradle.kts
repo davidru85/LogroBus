@@ -13,7 +13,8 @@ kotlin {
             implementation(projects.shared.core.preferences)
             implementation(projects.shared.core.polling)
             implementation(projects.shared.core.telemetry)
-            implementation(projects.shared.core.config)
+            // `api`: `NightServiceText` returns a `LocalizedText` (LB-206), which a screen must be able to name.
+            api(projects.shared.core.config)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

@@ -121,9 +121,15 @@ public struct StopDetailView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("stop.loading", bundle: .module))
         case .content(let content):
-            StopDetailBody(content: content) { event in
-                viewModel.onEvent(event)
-            }
+            // LB-206: read only when the list is empty and the stop is a Búho-only one, so a screen with calls never
+            // touches remote config.
+            StopDetailBody(
+                content: content,
+                nightSentence: {
+                    viewModel.nightSentence(language: Locale.current.language.languageCode?.identifier ?? "es")
+                },
+                onEvent: { event in viewModel.onEvent(event) }
+            )
         case .error(let error):
             ContentUnavailableView {
                 error.reason.message
@@ -139,6 +145,8 @@ public struct StopDetailView: View {
 /// The stop's header, the lines that serve it and the arrival list (FR-STOP-03 to FR-STOP-05).
 private struct StopDetailBody: View {
     let content: StopDetailUiStateContent
+    /// LB-206: the night-service sentence, read only if the list is empty and the stop needs it.
+    let nightSentence: () -> String
     let onEvent: (StopDetailEvent) -> Void
 
     var body: some View {
@@ -165,6 +173,14 @@ private struct StopDetailBody: View {
             }
 
             Section {
+                if content.arrivals.isEmpty {
+                    // LB-206 (FR-STOP-06): what an empty list says. A stop only Búho lines serve adds the night
+                    // sentence, which is remote config's wording, never this file's.
+                    if let empty = content.empty {
+                        Text(emptyMessage(empty))
+                            .foregroundStyle(Tokens.Colors.onSurface)
+                    }
+                }
                 ForEach(Array(content.arrivals.enumerated()), id: \.offset) { _, arrival in
                     ArrivalRow(arrival: arrival)
                 }
@@ -174,6 +190,16 @@ private struct StopDetailBody: View {
             } footer: {
                 FreshnessFooter(updated: content.updated) { onEvent(.retry) }
             }
+        }
+    }
+
+    /// LB-206: the empty list's message, with the night sentence in the language the app runs in.
+    private func emptyMessage(_ empty: StopDetailEmptyUi) -> String {
+        switch empty {
+        case .noBuses:
+            return String(localized: "stop.no_buses", bundle: .module)
+        case .noBusesThenNight:
+            return String(localized: "stop.no_buses_night \(nightSentence())", bundle: .module)
         }
     }
 

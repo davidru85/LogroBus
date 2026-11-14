@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.feature.stops.presentation.ServedArrivalUi
+import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailEmptyUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailUiState
 import com.ruizurraca.logrobus.feature.stops.presentation.StopUpdatedUi
 import com.ruizurraca.logrobus.transit.domain.Direction
@@ -101,6 +102,48 @@ class StopDetailScreenTest {
                 .single()
                 .layoutInput.style.textDecoration,
         )
+    }
+
+    @Test
+    fun lb206_anEmptyListSaysThereAreNoBuses() {
+        compose.setContent {
+            StopDetailScreen(
+                StopDetailUiState.Content(
+                    stop,
+                    emptyList(),
+                    StopUpdatedUi(12, isStale = false, needsRefresh = false),
+                    empty = StopDetailEmptyUi.NO_BUSES,
+                ),
+                onRetry = {},
+                onBack = {},
+            )
+        }
+
+        // The screen words its strings from the resources of the locale it runs in, which in these tests is English.
+        compose.onNodeWithText("No buses in the next 60 minutes").assertExists()
+    }
+
+    @Test
+    fun lb206_aNightOnlyStopAddsTheSentenceFromRemoteConfig() {
+        // FR-STOP-06: the night sentence is config's, so the test passes one and reads it back in the message.
+        compose.setContent {
+            StopDetailScreen(
+                StopDetailUiState.Content(
+                    stop,
+                    emptyList(),
+                    StopUpdatedUi(12, isStale = false, needsRefresh = false),
+                    empty = StopDetailEmptyUi.NO_BUSES_THEN_NIGHT,
+                ),
+                onRetry = {},
+                onBack = {},
+                nightSentence = "Night service, weekends.",
+            )
+        }
+
+        // The message's own words come from the resources; the night sentence is the one config supplied.
+        compose
+            .onNodeWithText("No buses in the next 60 minutes. Night service, weekends.")
+            .assertExists()
     }
 
     @Test

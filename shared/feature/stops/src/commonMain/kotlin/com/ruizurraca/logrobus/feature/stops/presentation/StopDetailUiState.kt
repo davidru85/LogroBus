@@ -21,6 +21,12 @@ sealed interface StopDetailUiState {
         val arrivals: List<ServedArrivalUi>,
         /** FR-ERR-06: how old the list is, or `null` until the first answer of this collection arrives. */
         val updated: StopUpdatedUi?,
+        /**
+         * FR-STOP-06: what the screen says when [arrivals] is empty, and `null` while there are rows to show. The night
+         * sentence is the platform's to word from remote config; this only says whether it belongs. Last, so the
+         * positional callers keep their meaning.
+         */
+        val empty: StopDetailEmptyUi? = null,
     ) : StopDetailUiState
 
     /** FR-ERR-05: the message for [reason], and Retry. */
@@ -61,3 +67,12 @@ data class StopUpdatedUi(
     val isStale: Boolean,
     val needsRefresh: Boolean,
 )
+
+/**
+ * FR-STOP-06: the message an empty arrival list shows. [NO_BUSES] is the spec's sentence; [NO_BUSES_THEN_NIGHT] adds
+ * the night-service text for a stop served only by Búho lines, whose wording comes from remote config (OQ-08).
+ */
+enum class StopDetailEmptyUi {
+    NO_BUSES,
+    NO_BUSES_THEN_NIGHT,
+}

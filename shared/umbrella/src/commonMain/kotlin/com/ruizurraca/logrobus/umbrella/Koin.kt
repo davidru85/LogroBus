@@ -54,6 +54,8 @@ import com.ruizurraca.logrobus.feature.settings.domain.SetTheme
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
+import com.ruizurraca.logrobus.feature.stops.domain.NightServiceText
+import com.ruizurraca.logrobus.feature.stops.domain.NightServiceTextOf
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
 import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
@@ -156,6 +158,9 @@ private val coreModule =
             SourceClient(get(), get(), { remoteConfig.get(RemoteConfigKey.ApiBaseUrl) }, get())
         }
         single { logroBusDatabase(get()) }
+        // LB-206 (FR-STOP-06): the night-service sentence for an empty list at a Búho-only stop (OQ-08). Here rather
+        // than in the transit data module, because a preview graph replaces that one and still needs the sentence.
+        single<NightServiceText> { NightServiceTextOf(get()) }
     }
 
 private val transitDataModule =

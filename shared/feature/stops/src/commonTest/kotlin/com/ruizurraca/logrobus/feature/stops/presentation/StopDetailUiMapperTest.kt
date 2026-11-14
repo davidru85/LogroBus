@@ -13,6 +13,7 @@ import com.ruizurraca.logrobus.transit.domain.Stop
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -57,6 +58,34 @@ class StopDetailUiMapperTest {
                 ),
         )
 
+    @Test
+    fun lb206_anEmptyListOfADayStopShowsTheNoBusesMessage_andNoNightText() {
+        val content = contentOf(arrivals())
+
+        assertTrue(content.arrivals.isEmpty())
+        assertEquals(StopDetailEmptyUi.NO_BUSES, content.empty)
+    }
+
+    @Test
+    fun lb206_anEmptyListOfANightOnlyStop_alsoAsksForTheNightServiceText() {
+        // FR-STOP-06: the message adds the night-service sentence for a stop served only by Búho lines. The stop's
+        // own served lines carry the answer, so no extra read of the line is needed.
+        // A stop only Búho lines serve: one line, whose code marks it as night.
+        val nightStop = stop38.copy(servedLines = listOf(stop38.servedLines.first().copy(lineId = 33, code = "B3")))
+
+        val content = contentOf(arrivals(stop = nightStop))
+
+        assertEquals(StopDetailEmptyUi.NO_BUSES_THEN_NIGHT, content.empty)
+    }
+
+    @Test
+    fun lb206_aStopWithArrivalsHasNoEmptyMessage() {
+        val content = contentOf(arrivals(row()))
+
+        assertTrue(content.arrivals.isNotEmpty())
+        assertNull(content.empty)
+    }
+
     private fun row(
         inTime: Duration = 4.minutes,
         isCancelled: Boolean = false,
@@ -71,6 +100,8 @@ class StopDetailUiMapperTest {
         isCancelled = isCancelled,
         isLowConfidence = isLowConfidence,
     )
+
+    private fun contentOf(answers: StopArrivals) = content(answers)
 
     private fun arrivals(
         vararg rows: StopArrivalRow,
