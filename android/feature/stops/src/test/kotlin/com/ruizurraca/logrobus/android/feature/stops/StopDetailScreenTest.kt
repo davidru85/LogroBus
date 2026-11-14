@@ -13,7 +13,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
-import com.ruizurraca.logrobus.feature.stops.presentation.ServedArrivalUi
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailEmptyUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailUiState
 import com.ruizurraca.logrobus.feature.stops.presentation.StopUpdatedUi

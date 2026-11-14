@@ -5,6 +5,7 @@ import com.ruizurraca.logrobus.core.common.AppResult
 import com.ruizurraca.logrobus.core.preferences.EtaFormat
 import com.ruizurraca.logrobus.core.presentation.ErrorReason
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.feature.stops.domain.StopArrivalRow
 import com.ruizurraca.logrobus.feature.stops.domain.StopArrivals
 import com.ruizurraca.logrobus.transit.domain.Direction

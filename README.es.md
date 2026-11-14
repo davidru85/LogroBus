@@ -107,6 +107,8 @@ Los datos de ejemplo grabados de la fuente están hechos y vigilados (LB-003), a
 
 ### Cambios recientes
 
+- **14-11-2026:**
+  - LB-204: "Mis paradas" muestra los próximos tres avisos de cada parada guardada, con la misma redacción que el detalle de la parada, para leer la sección de un vistazo sin abrir nada.
 - **13-11-2026:**
   - LB-206: una parada sin avisos dice "No hay autobuses en los próximos 60 minutos", y una parada a la que solo llegan líneas nocturnas (Búho) añade la frase del servicio nocturno, que viene de la configuración remota en el idioma de la app y, si no hay, de la frase compilada en la aplicación.
   - CI: un job que GitHub marca como `abandoned` perdió su runner y no es un fallo de la rama. No tiene log, y así se distingue del que agota su límite de tiempo; se relanza.

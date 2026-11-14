@@ -17,6 +17,7 @@ import com.ruizurraca.logrobus.core.database.logroBusDatabase
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
+import com.ruizurraca.logrobus.core.preferences.EtaFormat
 import com.ruizurraca.logrobus.favourites.data.FavouriteLinesRepositoryImpl
 import com.ruizurraca.logrobus.favourites.data.SavedStopRepositoryImpl
 import com.ruizurraca.logrobus.favourites.domain.FavouriteLinesRepository
@@ -58,6 +59,7 @@ import com.ruizurraca.logrobus.feature.stops.domain.NightServiceText
 import com.ruizurraca.logrobus.feature.stops.domain.NightServiceTextOf
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.ObserveStopDetail
+import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailUiMapper
 import com.ruizurraca.logrobus.transit.data.ArrivalsWindow
 import com.ruizurraca.logrobus.transit.data.DefaultStaticSync
 import com.ruizurraca.logrobus.transit.data.LinesRepositoryImpl
@@ -80,6 +82,9 @@ import com.ruizurraca.logrobus.transit.domain.WalkDistances
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.core.context.startKoin
@@ -267,8 +272,50 @@ private val nearMeModule =
         // API-08 live with the rest of the data layer (transitDataModule), so a preview can replace them.
         factory<GetNearbyStops> { DefaultGetNearbyStops(get(), get()) }
         factory<ObserveNearYou> { DefaultObserveNearYou(get(), get()) }
-        // LB-208 (FR-HOME-02): "My stops", the saved stops and the catalogue's names for them.
-        factory<ObserveMyStops> { DefaultObserveMyStops(get(), get()) }
+        // LB-208 (FR-HOME-02): "My stops", the saved stops and the catalogue's names for them. LB-204 adds each
+        // stop's calls: the same use case the stop detail collects, so a row here words a call as that screen does and
+        // no feature depends on another (ADR-0007).
+        factory<ObserveMyStops> {
+            val stops = get<StopRepository>()
+            val arrivals = get<ObserveStopArrivals>()
+            DefaultObserveMyStops(saved = get(), stops = stops) { stopId ->
+                // A `flow` builder, so the lines are read when this stop's row is collected, not when the section is
+                // built, and the lambda itself stays a plain function.
+                flow {
+                    val lineIds =
+                        (stops.observeStop(stopId).first() as? AppResult.Success)
+                            ?.value
+                            ?.servedLines
+                            ?.map { it.lineId }
+                            .orEmpty()
+                    emitAll(
+                        arrivals(stopId, lineIds).map { answer ->
+                            when (answer) {
+                                is AppResult.Success -> {
+                                    AppResult.Success(
+                                        // FR-ERR-06: the rows are measured against the answer's own instant. An
+                                        // answer with none cannot be aged, so the row shows no calls rather than
+                                        // inventing a clock the graph did not give.
+                                        answer.value.fetchedAt
+                                            ?.let { fetchedAt ->
+                                                StopDetailUiMapper.rows(
+                                                    answer.value.arrivals,
+                                                    fetchedAt,
+                                                    EtaFormat.MINUTES,
+                                                )
+                                            }.orEmpty(),
+                                    )
+                                }
+
+                                is AppResult.Failure -> {
+                                    answer
+                                }
+                            }
+                        },
+                    )
+                }
+            }
+        }
     }
 
 // How to Get There (LB-301): the initial origin, from the platform's location permission.

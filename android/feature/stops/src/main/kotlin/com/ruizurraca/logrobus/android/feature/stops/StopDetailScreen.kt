@@ -37,7 +37,7 @@ import com.ruizurraca.logrobus.android.core.designsystem.UpButton
 import com.ruizurraca.logrobus.android.core.designsystem.etaSpoken
 import com.ruizurraca.logrobus.android.core.designsystem.messageRes
 import com.ruizurraca.logrobus.core.presentation.EtaUi
-import com.ruizurraca.logrobus.feature.stops.presentation.ServedArrivalUi
+import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailEmptyUi
 import com.ruizurraca.logrobus.feature.stops.presentation.StopDetailUiState
 import com.ruizurraca.logrobus.feature.stops.presentation.StopUpdatedUi

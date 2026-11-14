@@ -34,10 +34,32 @@ public struct MyStopsSection: View {
                     Button {
                         onOpenStop(row.stopId)
                     } label: {
-                        Text(verbatim: row.label)
-                            .foregroundStyle(Tokens.Colors.onSurface)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                        VStack(alignment: .leading, spacing: Tokens.Spacing.xSmall) {
+                            Text(verbatim: row.label)
+                                .foregroundStyle(Tokens.Colors.onSurface)
+                            // LB-204: the stop's next calls, worded by the design system's EtaText as the stop detail
+                            // words them, so the same call reads the same on both screens.
+                            ForEach(Array(row.arrivals.enumerated()), id: \.offset) { _, arrival in
+                                HStack(spacing: Tokens.Spacing.small) {
+                                    LineBadge(code: arrival.lineCode, color: arrival.color, onColor: arrival.onColor)
+                                    // The same `EtaUi` the stop detail builds, so a cancelled call is struck through
+                                    // and DD-09's "~" shows here too.
+                                    if let display = arrival.eta {
+                                        EtaText(
+                                            eta: EtaUi(
+                                                display: display,
+                                                lowConfidence: arrival.isLowConfidence,
+                                                scheduled: false,
+                                                delay: nil,
+                                                cancelled: arrival.isCancelled
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     // One element with a text label, as the nearby rows are: the button's own label is not a text run

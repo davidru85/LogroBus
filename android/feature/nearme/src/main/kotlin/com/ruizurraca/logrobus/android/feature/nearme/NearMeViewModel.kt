@@ -42,8 +42,18 @@ class NearMeViewModel(
             NearMeUiMapper.state(section.access, section.nearby).copy(
                 myStops =
                     when (saved) {
-                        is AppResult.Failure -> MyStopsUi()
-                        is AppResult.Success -> SavedStopsUiMapper.myStops(saved.value.stops, saved.value.names)
+                        is AppResult.Failure -> {
+                            MyStopsUi()
+                        }
+
+                        is AppResult.Success -> {
+                            SavedStopsUiMapper.myStops(
+                                saved = saved.value.stops,
+                                names = saved.value.names,
+                                arrivals = saved.value.arrivals,
+                                failures = saved.value.failed,
+                            )
+                        }
                     },
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_DELAY_MILLIS), NearMeUiState())

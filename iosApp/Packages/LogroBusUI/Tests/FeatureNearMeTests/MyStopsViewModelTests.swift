@@ -114,6 +114,6 @@ struct MyStopsViewModelTests {
     }
 
     private func savedRow(_ stopId: Int32, _ label: String, _ position: Int32) -> SavedStopRowUi {
-        SavedStopRowUi(stopId: stopId, label: label, position: position)
+        SavedStopRowUi(stopId: stopId, label: label, position: position, arrivals: [], hasFailed: false)
     }
 }
