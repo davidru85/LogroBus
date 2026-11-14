@@ -339,8 +339,8 @@ struct Audit {
         switch issue.auditType {
         case .textClipped:
             let spokenInWords = Self.spokenInWords.contains(element.identifier)
-            let searchField = largestText && element.elementType == .searchField
-            return screen.hasPrefix("Lines") && (spokenInWords || searchField)
+            // UIKit owns a search bar's height, so its own field is exempt (SystemSearchFieldAudit).
+            return (screen.hasPrefix("Lines") && spokenInWords) || SystemSearchFieldAudit.isItsOwn(element)
         case .dynamicType:
             let barButton = element.elementType == .button && barButtons.contains(element.frame)
             let dataSection = screen.hasPrefix("Settings") &&

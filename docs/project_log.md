@@ -34,6 +34,11 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 - **The capture's field draws washed out off screen**, as iOS 26's navigation bar does; `StopSearchUITests` covers what it does, and the reference notes the artefact.
 - **`ServedArrivalUi` moved to `core:presentation`** at LB-204; this story reuses it for a result's calls rather than adding a second type.
 
+- **The audit caught the system's own search bar:** UIKit keeps its height, and the audit warns that its placeholder may
+  be clipped at larger text — in both passes, whatever the size. Setting a Dynamic Type cap on the screen did not change
+  it, so the field itself is exempted by name, as the Lines screen already exempted its own; everything else on Near Me
+  is still audited. That is the exemption the owner's rule allows only by name, and it is recorded here for that reason.
+
 **Open / next**
 - **The map centring** waits for LB-202, and the 100 ms reference-device measurement is with the owner.
 

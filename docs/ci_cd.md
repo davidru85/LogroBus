@@ -179,6 +179,10 @@ Because `main` is protected, path-filtered workflows need a small always-running
     audit's own variance, the same kind this file already records for Settings' picker values and Near Me's rows, so the
     failed job is rerun once. **A recurring finding on a screen this story does not own belongs to that screen's story,
     not to an exemption here** (owner decision, 2026-11-11: an exemption is the owner's to grant).
+  - **A system search bar's placeholder is reported as clipped** (PR #73, 2026-11-14): the accessibility audit flagged
+    `UISearchBarTextField`'s placeholder on Near Me in both passes, with "may be clipped at larger Dynamic Type sizes".
+    UIKit owns that height, so the app cannot fix it; a Dynamic Type cap on the screen changed nothing. The field is
+    exempted by name, as the Lines screen's own search field already was, and the rest of the screen is still audited.
   - **A job that passes its tests and is cancelled in its cleanup** (PR #69, 2026-11-12/13): `iOS build and tests` was
    `cancelled` at 35:05 against its 35-minute `timeout-minutes`, and the log shows why it looked like a test failure and was
    not: `OK: iOS tests (iosAppTests iosAppUITests) passed` at 20:42:56, and the job killed 23 s later while its post-job
