@@ -19,6 +19,26 @@ A dated record of what was done and decided, newest first. Add an entry at the e
 
 ---
 
+## 2026-11-14: LB-209, the stop search
+
+**Done**
+- **LB-209 (`feat/LB-209-stop-search`):** Near Me searches the catalogue by a stop's name or number, and each result carries the badge and headsign of the line that reaches it (DD-16), so two stops with one name are told apart.
+  - **The database's FTS does the matching** under 100 ms; each match is then read as a whole stop through the repository the detail uses, which is where its badges come from.
+  - **A blank query asks nothing** and an empty answer says so, rather than showing an empty list.
+  - **A preview or a UI test searches the sample catalogue it shows:** otherwise its search would read an empty test database and always find nothing, which is what the first UI test proved.
+  - **Both platforms** render the results and read each as one utterance.
+
+**Review**
+- **A probe that told me my premise was wrong, not the code:** the first UI test typed "campi" and got the empty message, because the test graph's search read the database while its screens showed the scripted stops. The fix was to bind the search per graph.
+- **A stray empty row the capture showed:** `.searchable` attached to a `List`'s section left an empty row and drew the field outside the list; it belongs to the screen, which is where iOS puts a tab's field.
+- **The capture's field draws washed out off screen**, as iOS 26's navigation bar does; `StopSearchUITests` covers what it does, and the reference notes the artefact.
+- **`ServedArrivalUi` moved to `core:presentation`** at LB-204; this story reuses it for a result's calls rather than adding a second type.
+
+**Open / next**
+- **The map centring** waits for LB-202, and the 100 ms reference-device measurement is with the owner.
+
+---
+
 ## 2026-11-14: LB-204, the saved stops' live calls
 
 **Done**

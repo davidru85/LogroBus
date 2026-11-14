@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,12 +45,15 @@ import com.ruizurraca.logrobus.android.core.designsystem.ScreenTitle
 import com.ruizurraca.logrobus.android.core.designsystem.Tokens
 import com.ruizurraca.logrobus.android.core.designsystem.etaSpoken
 import com.ruizurraca.logrobus.core.presentation.EtaUi
+import com.ruizurraca.logrobus.feature.nearme.domain.StopSearchResultUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeEvent
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearbyStopRowUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.SavedStopRowUi
+import com.ruizurraca.logrobus.feature.nearme.presentation.StopSearchUi
 import org.koin.androidx.compose.koinViewModel
+import com.ruizurraca.logrobus.android.core.designsystem.R as DS
 
 /**
  * Near Me with its ViewModel from the graph (ADR-0014): the root of the Near Me tab (LB-201). The location updates run
@@ -86,6 +92,7 @@ fun NearMeRoute(
         modifier = modifier,
         onOpenStop = onOpenStop,
         onEditMyStops = { editing.value = true },
+        onQueryChanged = viewModel::onQueryChanged,
     )
 }
 
@@ -102,6 +109,8 @@ fun NearMeScreen(
     modifier: Modifier = Modifier,
     onOpenStop: (stopId: Int) -> Unit = {},
     onEditMyStops: () -> Unit = {},
+    /** LB-209 (FR-NEAR-05): the search's query, above the saved and nearby stops. */
+    onQueryChanged: (String) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -116,8 +125,15 @@ fun NearMeScreen(
             modifier = Modifier.fillMaxSize().consumeWindowInsets(padding),
             contentPadding = padding,
         ) {
+            // LB-209 (FR-NEAR-05): the stop search first, so its field is the first thing a rider reaches here.
+            item { StopSearchField(query = state.search.query, onQueryChanged = onQueryChanged) }
+            if (state.search.results.isNotEmpty()) {
+                items(state.search.results, key = { it.stop.id }) { result -> StopSearchRow(result, onOpenStop) }
+            } else if (state.search.isEmptyAnswer) {
+                item { SearchNoMatches() }
+            }
             // FR-HOME-02 and FR-NEAR-03: "My stops" sits above "Near you". An empty section says how to fill it,
-            // with the action that will focus the search (LB-209).
+            // with the action that focuses the search above.
             item { MyStopsHeading(onEdit = onEditMyStops, canEdit = !state.myStops.isEmpty) }
             if (state.myStops.isEmpty) {
                 item { MyStopsEmptyHint() }

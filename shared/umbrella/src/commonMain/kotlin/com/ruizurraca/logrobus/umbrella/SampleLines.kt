@@ -7,6 +7,7 @@ import com.ruizurraca.logrobus.core.common.color.onColorFor
 import com.ruizurraca.logrobus.core.common.geo.BoundingBox
 import com.ruizurraca.logrobus.core.common.geo.GeoPoint
 import com.ruizurraca.logrobus.core.common.geo.distanceMetersTo
+import com.ruizurraca.logrobus.feature.nearme.domain.SearchStops
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopArrivals
 import com.ruizurraca.logrobus.feature.stops.domain.DefaultObserveStopDetail
 import com.ruizurraca.logrobus.feature.stops.domain.FetchedArrivals
@@ -231,6 +232,9 @@ fun previewDataModule(): Module =
         // LB-205: stop detail's header and its use cases, over the sample lines' own stops. The real module binds the
         // calls through API-06; a scripted graph draws its sample calls instead, so no test waits on a source.
         single<StopRepository> { SampleStopsRepository }
+        // LB-209 (FR-NEAR-05): a UI test's search finds the sample stops its screens show. Without this it would read
+        // the real module's database search, which an empty test database never matches.
+        single<SearchStops> { SampleStopSearch().searchStops() }
         factory<ObserveStopDetail> { DefaultObserveStopDetail(get()) }
         factory<ObserveStopArrivals> {
             // The calls are scripted on the same path the real module takes: the reader that polls API-06 is replaced

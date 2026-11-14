@@ -106,6 +106,7 @@ The golden fixtures of the data source are recorded and kept under check (LB-003
 ### Recent changes
 
 - **2026-11-14:**
+  - LB-209: Near Me has a stop search: a name or a stop number finds its stops, each with the badge and the headsign of the line that reaches it, and a query that finds nothing says so.
   - LB-204: "My stops" shows each saved stop's next three calls, worded as the stop detail words them, so the section reads at a glance without opening a stop.
 - **2026-11-13:**
   - LB-206: a stop with no calls says "No buses in the next 60 minutes", and a stop only night (Búho) lines serve adds the night-service sentence, which comes from remote config in the language the app runs in and falls back to the sentence compiled into the app.

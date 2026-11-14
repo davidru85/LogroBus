@@ -32,6 +32,7 @@ import com.ruizurraca.logrobus.feature.nearme.domain.NearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
+import com.ruizurraca.logrobus.feature.nearme.domain.SearchStops
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -204,6 +205,9 @@ class NearMeRouteTest {
                     // LB-208 part 3: the edit sheet's ViewModel reads and writes the saved stops, which these tests
                     // are not about.
                     factory<SavedStopRepository> { NoSavedStops() }
+                    // LB-209: the screen now offers a search; these tests are about the location prompt, so it finds
+                    // nothing and is never asked.
+                    factory<SearchStops> { SearchStops { emptyList() } }
                 },
                 nearMeUiModule,
             )

@@ -21,11 +21,16 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ruizurraca.logrobus.core.presentation.EtaDisplay
 import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
+import com.ruizurraca.logrobus.feature.nearme.domain.StopSearchResultUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.MyStopsUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearMeUiState
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearYouUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.NearbyStopRowUi
 import com.ruizurraca.logrobus.feature.nearme.presentation.SavedStopRowUi
+import com.ruizurraca.logrobus.feature.nearme.presentation.StopSearchUi
+import com.ruizurraca.logrobus.transit.domain.Direction
+import com.ruizurraca.logrobus.transit.domain.ServedLine
+import com.ruizurraca.logrobus.transit.domain.Stop
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -226,6 +231,62 @@ class NearMeScreenTest {
         compose.onNodeWithContentDescription("Casa", substring = true).assertExists()
         compose.onNodeWithContentDescription("4 min", substring = true).assertExists()
         compose.onNodeWithContentDescription("9 min", substring = true).assertExists()
+    }
+
+    @Test
+    fun lb209_aSearchShowsItsStops_withTheirLineAndHeadsign() {
+        // FR-NEAR-05, DD-16: the result carries the badge and the headsign that tell it apart, read as one utterance.
+        val state =
+            NearMeUiState(
+                nearYou = NearYouUi.LocationOn(),
+                search =
+                    StopSearchUi(
+                        query = "Ayuntamiento",
+                        results =
+                            listOf(
+                                StopSearchResultUi(
+                                    Stop(
+                                        id = 38,
+                                        name = "Ayuntamiento",
+                                        lat = 42.46,
+                                        lng = -2.44,
+                                        isOperational = true,
+                                        isProvisional = false,
+                                        servedLines =
+                                            listOf(
+                                                ServedLine(
+                                                    1,
+                                                    "1",
+                                                    "El Arco",
+                                                    Direction.OUTBOUND,
+                                                    0xFFE30613L,
+                                                    0xFFFFFFFFL,
+                                                ),
+                                            ),
+                                    ),
+                                ),
+                            ),
+                    ),
+            )
+        compose.setContent {
+            NearMeScreen(state, onTurnOnLocation = {}, onOpenMore = {}, onOpenStop = {}, onQueryChanged = {})
+        }
+
+        compose.onNodeWithContentDescription("Ayuntamiento, 1, Towards El Arco").assertExists()
+    }
+
+    @Test
+    fun lb209_aQueryThatFindsNothingSaysSo() {
+        compose.setContent {
+            NearMeScreen(
+                NearMeUiState(nearYou = NearYouUi.LocationOn(), search = StopSearchUi(query = "tranvía")),
+                onTurnOnLocation = {},
+                onOpenMore = {},
+                onQueryChanged = {},
+            )
+        }
+
+        compose.onNodeWithText("No stops match that search").assertExists()
     }
 
     @Test

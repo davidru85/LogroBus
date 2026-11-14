@@ -71,6 +71,7 @@ class PreviewUseCases internal constructor(
     NightServiceUseCases by NightServiceScript(),
     SettingsUseCases by settingsPreview,
     NearMeUseCases by locationPreview,
+    StopSearchUseCases by SampleStopSearch(),
     PlannerUseCases by plannerPreview {
     // Null scripts a first load that never ends.
     private val lastSuccesses =

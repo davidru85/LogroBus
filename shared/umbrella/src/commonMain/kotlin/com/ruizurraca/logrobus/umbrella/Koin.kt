@@ -14,6 +14,7 @@ import com.ruizurraca.logrobus.core.config.RemoteConfigKey
 import com.ruizurraca.logrobus.core.config.pollInterval
 import com.ruizurraca.logrobus.core.database.LogroBusDatabase
 import com.ruizurraca.logrobus.core.database.logroBusDatabase
+import com.ruizurraca.logrobus.core.database.searchStops
 import com.ruizurraca.logrobus.core.network.SourceClient
 import com.ruizurraca.logrobus.core.polling.DefaultPollingEngine
 import com.ruizurraca.logrobus.core.polling.PollingEngine
@@ -40,6 +41,8 @@ import com.ruizurraca.logrobus.feature.nearme.domain.GetNearbyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveLocationAccess
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveMyStops
 import com.ruizurraca.logrobus.feature.nearme.domain.ObserveNearYou
+import com.ruizurraca.logrobus.feature.nearme.domain.SearchStops
+import com.ruizurraca.logrobus.feature.nearme.domain.SearchStopsOf
 import com.ruizurraca.logrobus.feature.planner.domain.DefaultReadInitialOrigin
 import com.ruizurraca.logrobus.feature.planner.domain.ReadInitialOrigin
 import com.ruizurraca.logrobus.feature.settings.domain.ClearCache
@@ -174,6 +177,17 @@ private val transitDataModule =
         single<LinesRepository> { LinesRepositoryImpl(get(), get(), get()) }
         // LB-205: one stop with the lines that serve it, read from the cached catalogue so its header shows at once.
         single<StopRepository> { StopRepositoryImpl(get(), get()) }
+        // LB-209 (FR-NEAR-05): the stop search over the cached catalogue. It lives beside the repository it reads, so a
+        // preview graph, which replaces this module, scripts its own over the sample stops instead.
+        factory<SearchStops> {
+            val stops = get<StopRepository>()
+            val database = get<LogroBusDatabase>()
+            SearchStopsOf { query ->
+                database.searchStops(query).mapNotNull { row ->
+                    (stops.observeStop(row.id.toInt()).first() as? AppResult.Success)?.value
+                }
+            }
+        }
         // LB-205: the stop detail's two use cases, which the screens ask the graph for.
         factory<ObserveStopDetail> { DefaultObserveStopDetail(get()) }
         factory<ObserveStopArrivals> {
@@ -275,6 +289,9 @@ private val nearMeModule =
         // LB-208 (FR-HOME-02): "My stops", the saved stops and the catalogue's names for them. LB-204 adds each
         // stop's calls: the same use case the stop detail collects, so a row here words a call as that screen does and
         // no feature depends on another (ADR-0007).
+        // LB-209 (FR-NEAR-05): the stop search. The database's FTS answers the ids under 100 ms (NFR-PERF-03); each
+        // one is then read as a whole stop, through the same repository the detail uses, for its badges and headsigns.
+
         factory<ObserveMyStops> {
             val stops = get<StopRepository>()
             val arrivals = get<ObserveStopArrivals>()

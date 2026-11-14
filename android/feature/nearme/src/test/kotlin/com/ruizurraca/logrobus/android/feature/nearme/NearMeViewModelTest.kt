@@ -45,7 +45,7 @@ class NearMeViewModelTest {
     fun lb201_untilAccessIsKnownNothingShows_thenTheSharedMappersState() =
         runTest {
             val sections = MutableSharedFlow<NearYouState>()
-            val viewModel = NearMeViewModel({ sections }, { noStops() })
+            val viewModel = NearMeViewModel({ sections }, { noStops() }, { emptyList() })
 
             viewModel.state.test {
                 assertEquals(NearMeUiState(NearYouUi.Unknown), awaitItem())
@@ -61,6 +61,7 @@ class NearMeViewModelTest {
                 NearMeViewModel(
                     Scripted(flowOf(NearYouState(LocationAccess.Off)), flowOf(NearYouState(LocationAccess.On))),
                     { noStops() },
+                    { emptyList() },
                 )
 
             viewModel.state.test {
@@ -77,7 +78,7 @@ class NearMeViewModelTest {
         runTest {
             val sections = MutableSharedFlow<NearYouState>()
             val observe = Scripted(sections)
-            val viewModel = NearMeViewModel(observe, { noStops() })
+            val viewModel = NearMeViewModel(observe, { noStops() }, { emptyList() })
 
             viewModel.state.test {
                 awaitItem()
@@ -97,7 +98,7 @@ class NearMeViewModelTest {
         runTest {
             val sections = MutableSharedFlow<NearYouState>()
             val observe = Scripted(sections, flowOf(NearYouState(LocationAccess.Off)))
-            val viewModel = NearMeViewModel(observe, { noStops() })
+            val viewModel = NearMeViewModel(observe, { noStops() }, { emptyList() })
 
             viewModel.state.test {
                 assertEquals(NearMeUiState(NearYouUi.Unknown), awaitItem())
@@ -114,7 +115,7 @@ class NearMeViewModelTest {
         runTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val sections = MutableSharedFlow<NearYouState>()
-            val viewModel = NearMeViewModel({ sections }, { noStops() })
+            val viewModel = NearMeViewModel({ sections }, { noStops() }, { emptyList() })
 
             val screen = backgroundScope.launch { viewModel.state.collect {} }
             runCurrent()

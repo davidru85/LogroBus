@@ -4,6 +4,7 @@ import com.ruizurraca.logrobus.core.presentation.ServedArrivalUi
 import com.ruizurraca.logrobus.favourites.domain.FAVOURITES_PER_TYPE
 import com.ruizurraca.logrobus.favourites.domain.SavedStop
 import com.ruizurraca.logrobus.favourites.domain.SavedStopAlias
+import com.ruizurraca.logrobus.feature.nearme.domain.StopSearchResultUi
 
 /**
  * One row of "My stops" (FR-HOME-02, FR-STOP-08): the stop, the alias it shows, its place in the user's order, and the
@@ -108,4 +109,16 @@ object SavedStopsUiMapper {
 
     /** What a row says when the catalogue no longer holds its stop. */
     const val UNKNOWN_STOP = "Stop no longer in the catalogue"
+}
+
+/**
+ * LB-209 (FR-NEAR-05): the stop search's state. [query] is what the user typed, kept so the screen can tell an empty
+ * answer from no search at all; [results] are the stops the last answer found, each with its lines (DD-16).
+ */
+data class StopSearchUi(
+    val query: String = "",
+    val results: List<StopSearchResultUi> = emptyList(),
+) {
+    /** FR-NEAR-05: a search that found nothing says so, which only a query that was actually asked can. */
+    val isEmptyAnswer: Boolean get() = query.isNotBlank() && results.isEmpty()
 }

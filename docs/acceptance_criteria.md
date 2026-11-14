@@ -693,6 +693,13 @@ Refs: FR-NEAR-05, FR-STOP-01, FR-STOP-02, DD-16, NFR-PERF-03
 - **Given** a result is selected, **when** search closes, **then** the map centres on the stop and the sheet shows its detail.
 - **Given** a query with no matches, **when** results update, **then** an empty message is shown.
 
+**Part done (2026-11-14): the search and its results.**
+- **Two stops with one name are told apart:** `SearchStopsTest.lb209_twoStopsWithOneNameAreToldApartByTheirLines` and `lb209_eachResultCarriesItsLinesAndTheHeadsignThatReachesIt`; `NearMeScreenTest.lb209_aSearchShowsItsStops_withTheirLineAndHeadsign` reads the row's one utterance, and `StopSearchUITests.test_lb209_aNameFindsItsStops_andTheEmptyAnswerSaysSo` walks it end to end.
+- **A stop number finds that stop:** `StopSearchUITests.test_lb209_aStopNumberFindsThatStop`.
+- **An empty answer says so:** `lb209_aQueryThatFindsNothingSaysSo` (Android) and the same UI test's second half.
+- **A blank query reaches nothing:** `SearchStopsTest.lb209_aBlankQueryReturnsNothing`.
+- **Not yet met:** "the map centres on the stop" waits for the map (LB-202); the 100 ms figure is the database's own benchmark and the reference-device measurement is with the owner.
+
 ### LB-210 Directions to a stop and show on map
 Refs: FR-STOP-09, FR-PLAN-11, FR-PLAN-14
 

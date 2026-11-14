@@ -9,7 +9,9 @@ public final class NearMeViewModel {
     public private(set) var state = NearMeUiState(
         nearYou: NearYouUiUnknown.shared,
         // LB-208: "My stops" comes with the next slice, so the section starts empty here.
-        myStops: MyStopsUi(rows: [], limitReached: false)
+        myStops: MyStopsUi(rows: [], limitReached: false),
+        // LB-209: the search starts with no query, so its empty answer never shows before a rider types.
+        search: StopSearchUi(query: "", results: [])
     )
     /// Bumped when location access must be read again. The view keys its `.task` on it, so a new value starts a new
     /// `observe()`.
